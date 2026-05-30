@@ -2,6 +2,20 @@ database:
   path: "data/aigc_detection.db"
 
 detection:
+  mode: "api_first"
+  threshold: 0.5
+  deep_provenance_threshold: 0.6
+  demo_provider_enabled: true
+  api_providers:
+    hive:
+      enabled: true
+      api_key_env: "HIVE_API_KEY"
+    sightengine:
+      enabled: true
+      api_user_env: "SIGHTENGINE_API_USER"
+      api_secret_env: "SIGHTENGINE_API_SECRET"
+  local_models:
+    enabled: false
   text:
     model_name: "distilgpt2"
     threshold: 0.5
@@ -25,7 +39,20 @@ detection:
 
 provenance:
   fingerprint_db_path: "data/fingerprint_registry.db"
+  c2pa:
+    enabled: true
+    mode: "local"
+  watermark:
+    enabled: true
+    provider: "meta_seal"
+    mode: "reserved"
 
+report:
+  provider: "llm"
+  llm_provider: "deepseek"
+  api_key_env: "sk-3eb562cbc6ed4e5188c699b5f4735d4a"
+  base_url: "https://api.deepseek.com"
+  model: "deepseek-v4-flash"
 api:
   host: "0.0.0.0"
   port: 8000

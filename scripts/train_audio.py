@@ -1,4 +1,19 @@
-"""Audio AI detection model training script."""
+"""音频 AIGC/Deepfake 检测模型训练脚本。
+
+这个脚本属于后续“本地模型路线”，不是当前 API-first MVP 的必要步骤。
+当前内容是训练 scaffold：
+- 读取 data/audio/real 和 data/audio/ai
+- 把音频转成 mel spectrogram
+- 训练 detection/audio_detector.py 中定义的 AudioCNN
+
+后续需要补充：
+- 使用真实 audio deepfake 数据集
+- 支持不同格式、时长切片和静音过滤
+- train/val/test 切分
+- 指标评估：EER、AUC、F1、召回率
+- 保存 checkpoint metadata
+- 可替换为 AASIST、WavLM、DeepFense 等模型
+"""
 import sys
 from pathlib import Path
 
@@ -14,22 +29,32 @@ from detection.audio_detector import AudioCNN
 
 
 class AudioDataset(Dataset):
+    """音频训练数据集。
+
+    audio_paths 是音频文件路径，labels 中 0 表示 real，1 表示 ai/deepfake。
+    """
+
     def __init__(self, audio_paths, labels, sr=16000, duration=5):
+        """保存采样率和固定音频长度。"""
         self.audio_paths = audio_paths
         self.labels = labels
         self.sr = sr
         self.duration = duration
 
     def __len__(self):
+        """返回样本数量。"""
         return len(self.audio_paths)
 
     def __getitem__(self, idx):
+        """读取音频、裁剪/补齐长度，并转换为 mel spectrogram tensor。"""
         y, _ = librosa.load(str(self.audio_paths[idx]), sr=self.sr, duration=self.duration)
 
         target_len = self.sr * self.duration
         if len(y) < target_len:
+            # 不足固定长度时补零。
             y = np.pad(y, (0, target_len - len(y)))
         else:
+            # 超过固定长度时截断。
             y = y[:target_len]
 
         mel = librosa.feature.melspectrogram(y=y, sr=self.sr, n_mels=128, fmax=8000)
@@ -40,6 +65,7 @@ class AudioDataset(Dataset):
 
 
 def train():
+    """训练音频二分类模型。"""
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
 
@@ -89,4 +115,5 @@ def train():
 
 
 if __name__ == "__main__":
+    # 直接运行脚本时启动训练。
     train()

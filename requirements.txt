@@ -18,3 +18,4 @@ streamlit>=1.25.0
 plotly>=5.15.0
 sqlalchemy>=2.0.0
 pyyaml>=6.0
+requests>=2.31.0

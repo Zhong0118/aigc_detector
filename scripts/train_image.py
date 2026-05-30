@@ -1,4 +1,18 @@
-"""Image AI detection model training script."""
+"""图片 AIGC 检测模型训练脚本。
+
+这个脚本属于后续“本地模型路线”，不是当前 API-first MVP 的必要步骤。
+当前内容是训练 scaffold：
+- 使用 EfficientNetV2-S ImageNet 预训练权重
+- 修改分类头为 human/ai 二分类
+- 默认读取 data/images/real 和 data/images/ai
+
+后续需要补充：
+- 更丰富的数据集和数据增强
+- train/val/test 切分
+- 混淆矩阵、AUC、误报率评估
+- 保存 checkpoint metadata
+- 和 detection/image_detector.py 的 load_weights 对齐
+"""
 import sys
 from pathlib import Path
 
@@ -12,7 +26,13 @@ from PIL import Image
 
 
 class ImageDataset(Dataset):
+    """图片训练数据集。
+
+    image_paths 是图片路径列表，labels 中 0 表示 real/human，1 表示 ai。
+    """
+
     def __init__(self, image_paths, labels, transform=None):
+        """保存图片路径、标签和 transform。"""
         self.image_paths = image_paths
         self.labels = labels
         self.transform = transform or transforms.Compose([
@@ -22,9 +42,11 @@ class ImageDataset(Dataset):
         ])
 
     def __len__(self):
+        """返回样本数量。"""
         return len(self.image_paths)
 
     def __getitem__(self, idx):
+        """读取一张图片并转换成 tensor。"""
         img = Image.open(self.image_paths[idx]).convert("RGB")
         if self.transform:
             img = self.transform(img)
@@ -32,16 +54,18 @@ class ImageDataset(Dataset):
 
 
 def build_model():
+    """构建 EfficientNetV2-S 二分类模型。"""
     model = models.efficientnet_v2_s(weights="IMAGENET1K_V1")
     model.classifier[1] = nn.Linear(model.classifier[1].in_features, 2)
     return model
 
 
 def train():
+    """训练图片二分类模型。"""
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
 
-    # TODO: Replace with actual dataset paths
+    # TODO: 替换为真实数据集路径或配置化数据路径。
     data_dir = Path("data/images")
     if not data_dir.exists():
         print("No training data found in data/images/. Please prepare your dataset.")
@@ -88,4 +112,5 @@ def train():
 
 
 if __name__ == "__main__":
+    # 直接运行脚本时启动训练。
     train()
