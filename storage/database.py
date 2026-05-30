@@ -72,3 +72,17 @@ def get_session() -> Session:
         init_db()
 
     return _SessionFactory()
+
+
+def close_db() -> None:
+    """关闭当前数据库 engine。
+
+    主要用于测试切换临时 SQLite 文件时释放 Windows 文件锁。
+    生产服务通常不需要手动调用。
+    """
+    global _engine, _SessionFactory
+
+    if _engine is not None:
+        _engine.dispose()
+    _engine = None
+    _SessionFactory = None

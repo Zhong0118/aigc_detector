@@ -57,8 +57,14 @@ class AnalysisService:
         deep_threshold = float(
             self.config.get("detection", {}).get("deep_provenance_threshold", 0.6)
         )
+        provenance_cfg = self.config.get("provenance", {})
+        c2pa_tool_path = provenance_cfg.get("c2pa", {}).get("tool_path")
         # 溯源 pipeline 只关心检测结果和阈值，不直接关心检测来自哪个模型/API。
-        self.provenance = ProvenancePipeline(deep_threshold=deep_threshold)
+        self.provenance = ProvenancePipeline(
+            deep_threshold=deep_threshold,
+            c2pa_tool_path=c2pa_tool_path,
+            watermark_config=provenance_cfg.get("watermark", {}),
+        )
         # 报告生成器现在是模板版，后续可以在 reports/generator.py 内接 LLM。
         self.reporter = ReportGenerator()
 
@@ -80,7 +86,7 @@ class AnalysisService:
         detection = self.detector.detect(path, item.modality, item.raw_data)
         # provenance 根据检测分数判断是否触发深度溯源。
         # 约定：C2PA、Meta Seal、指纹库、模型归因都放在 provenance 层内部扩展。
-        provenance = self.provenance.analyze(path, item.modality, detection)
+        provenance = self.provenance.analyze(path, item.modality, detection, fingerprint=fingerprint)
 
         # analysis 是统一返回给前端的 JSON 主体。
         analysis = {

@@ -5,17 +5,31 @@ detection:
   mode: "api_first"
   threshold: 0.5
   deep_provenance_threshold: 0.6
-  demo_provider_enabled: true
+  demo_provider_enabled: false
   api_providers:
     hive:
       enabled: true
-      api_key_env: "HIVE_API_KEY"
+      api_version: "v3_vlm"
+      api_key_env: "LJ9NfOyoJrxKgomS9kfvPQ=="
     sightengine:
       enabled: true
-      api_user_env: "SIGHTENGINE_API_USER"
-      api_secret_env: "SIGHTENGINE_API_SECRET"
+      api_user_env: "1813021110"
+      api_secret_env: "YzYcSfvs93dSk7Quie7DgWpuvToZBmWJ"
   local_models:
-    enabled: false
+    enabled: true
+    text_yuchuan:
+      enabled: true
+      cache_dir: "models/huggingface"
+      device: "auto"
+      threshold: 0.5
+      short_text_chars: 200
+      max_length: 512
+      mixed_strategy: "max"
+      models:
+        zh_long: "yuchuantian/AIGC_detector_zhv3"
+        zh_short: "yuchuantian/AIGC_detector_zhv3short"
+        en_long: "yuchuantian/AIGC_detector_env3"
+        en_short: "yuchuantian/AIGC_detector_env3short"
   text:
     model_name: "distilgpt2"
     threshold: 0.5
@@ -42,10 +56,36 @@ provenance:
   c2pa:
     enabled: true
     mode: "local"
+    tool_path: "tools/c2patool/c2patool.exe"
   watermark:
     enabled: true
     provider: "meta_seal"
-    mode: "reserved"
+    mode: "local"
+    device: "auto"
+    threshold: 0.5
+    audio:
+      enabled: true
+      model: "audioseal_detector_16bits"
+      cache_dir: "models/audioseal"
+      sample_rate: 16000
+      threshold: 0.5
+    image:
+      enabled: true
+      provider: "videoseal"
+      package_root: "third_party/videoseal"
+      model: "videoseal"
+      threshold: 0.5
+    video:
+      enabled: true
+      provider: "videoseal"
+      package_root: "third_party/videoseal"
+      model: "videoseal"
+      threshold: 0.5
+      max_frames: 32
+    text:
+      enabled: false
+      provider: "textseal"
+      command: null
 
 report:
   provider: "llm"

@@ -24,15 +24,19 @@ detection 后续需要补充的内容：
 from __future__ import annotations
 
 import hashlib
+import base64
 import json
 import mimetypes
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import requests
 import yaml
+
+from detection.text_detector import RoutedTextAigcDetector
 
 
 @dataclass
@@ -94,7 +98,9 @@ class ApiFirstDetectionEngine:
         self.threshold = float(detection_cfg.get("threshold", 0.5))
         self.demo_enabled = bool(detection_cfg.get("demo_provider_enabled", True))
         self.api_providers = detection_cfg.get("api_providers", {})
-        self.local_enabled = bool(detection_cfg.get("local_models", {}).get("enabled", False))
+        self.local_cfg = detection_cfg.get("local_models", {})
+        self.local_enabled = bool(self.local_cfg.get("enabled", False))
+        self._local_text_detector: RoutedTextAigcDetector | None = None
         # 后续可以在这里初始化 provider registry，例如：
         # {"image": [SightengineProvider(), LocalImageProvider()], "text": [HiveProvider()]}
         # 当前为了 MVP 简化为 if/else 分发。
@@ -118,19 +124,8 @@ class ApiFirstDetectionEngine:
             results.append(self._run_demo_provider(path, modality, raw_data))
 
         if self.local_enabled:
-            # 本地模型开关预留。后续可把 text/image/audio/video detector 接到这里。
-            results.append(
-                ProviderResult(
-                    provider="local_models",
-                    provider_type="local_model",
-                    status="reserved",
-                    score=None,
-                    label="not_run",
-                    details={
-                        "note": "Local model adapters are reserved; enable concrete wrappers after model selection."
-                    },
-                )
-            )
+            # 本地模型作为额外检测分支，不改变 FastAPI 对外接口。
+            results.extend(self._run_local_model_providers(path, modality, raw_data))
 
         # 只融合 status=ok 且有 score 的 provider。
         # reserved/not_configured provider 不参与最终分数。
@@ -170,7 +165,14 @@ class ApiFirstDetectionEngine:
                 "name": "hive",
                 "type": "detection_api",
                 "enabled": bool(hive_cfg.get("enabled", False)),
-                "configured": bool(os.getenv(hive_cfg.get("api_key_env", "HIVE_API_KEY"))),
+                "configured": bool(
+                    self._credential_from_config(
+                        hive_cfg,
+                        env_field="api_key_env",
+                        value_field="api_key",
+                        default_env="HIVE_API_KEY",
+                    )
+                ),
                 "purpose": "Cloud AI-generated content detection for multiple modalities.",
             }
         )
@@ -182,8 +184,18 @@ class ApiFirstDetectionEngine:
                 "type": "detection_api",
                 "enabled": bool(sight_cfg.get("enabled", False)),
                 "configured": bool(
-                    os.getenv(sight_cfg.get("api_user_env", "SIGHTENGINE_API_USER"))
-                    and os.getenv(sight_cfg.get("api_secret_env", "SIGHTENGINE_API_SECRET"))
+                    self._credential_from_config(
+                        sight_cfg,
+                        env_field="api_user_env",
+                        value_field="api_user",
+                        default_env="SIGHTENGINE_API_USER",
+                    )
+                    and self._credential_from_config(
+                        sight_cfg,
+                        env_field="api_secret_env",
+                        value_field="api_secret",
+                        default_env="SIGHTENGINE_API_SECRET",
+                    )
                 ),
                 "purpose": "Cloud image/video AI detection and generator hints.",
             }
@@ -194,11 +206,93 @@ class ApiFirstDetectionEngine:
                 "name": "local_models",
                 "type": "local_model",
                 "enabled": self.local_enabled,
-                "configured": False,
-                "purpose": "Reserved adapters for text/image/audio/video local models.",
+                "configured": bool(self.local_cfg.get("text_yuchuan", {}).get("enabled", False)),
+                "purpose": "Local text detector branch with Hugging Face weights cached under models/huggingface.",
             }
         )
         return providers
+
+    def _run_local_model_providers(
+        self,
+        path: Path,
+        modality: str,
+        raw_data: object | None,
+    ) -> list[ProviderResult]:
+        """运行本地模型 provider。
+
+        当前先接入文本 AIGC 检测分支；图片/音频/视频本地模型仍然预留。
+        """
+        if modality != "text":
+            return [
+                ProviderResult(
+                    provider="local_models",
+                    provider_type="local_model",
+                    status="skipped",
+                    score=None,
+                    label="not_run",
+                    details={
+                        "modality": modality,
+                        "note": "Local model branch is currently enabled for text only.",
+                    },
+                )
+            ]
+
+        text_cfg = self.local_cfg.get("text_yuchuan", {})
+        if not text_cfg.get("enabled", False):
+            return [
+                ProviderResult(
+                    provider="local_text_detector",
+                    provider_type="local_model",
+                    status="disabled",
+                    score=None,
+                    label="not_run",
+                    details={"note": "Local YuchuanTian text detector is disabled in config."},
+                )
+            ]
+
+        try:
+            text = raw_data if isinstance(raw_data, str) else path.read_text(encoding="utf-8", errors="ignore")
+            detector = self._get_local_text_detector(text_cfg)
+            result = detector.detect(text)
+            return [
+                ProviderResult(
+                    provider="local_text_detector",
+                    provider_type="local_model",
+                    status="ok",
+                    score=result.score,
+                    label=result.label,
+                    details=result.details,
+                )
+            ]
+        except Exception as exc:  # noqa: BLE001 - provider errors must not break the whole API request.
+            return [
+                ProviderResult(
+                    provider="local_text_detector",
+                    provider_type="local_model",
+                    status="error",
+                    score=None,
+                    label="not_run",
+                    details={
+                        "cache_dir": text_cfg.get("cache_dir", "models/huggingface"),
+                        "note": "Local text detector failed. Check model download, cache path, or device config.",
+                    },
+                    error=str(exc),
+                )
+            ]
+
+    def _get_local_text_detector(self, cfg: dict[str, Any]) -> RoutedTextAigcDetector:
+        """懒加载本地文本检测器，避免后端启动时下载模型。"""
+        if self._local_text_detector is None:
+            self._local_text_detector = RoutedTextAigcDetector(
+                models=cfg.get("models", {}),
+                cache_dir=cfg.get("cache_dir", "models/huggingface"),
+                short_text_chars=int(cfg.get("short_text_chars", 200)),
+                threshold=float(cfg.get("threshold", self.threshold)),
+                device=str(cfg.get("device", "auto")),
+                mixed_strategy=str(cfg.get("mixed_strategy", "max")),
+                max_length=int(cfg.get("max_length", 512)),
+            )
+        return self._local_text_detector
 
     def _run_configured_api_providers(self, path: Path, modality: str) -> list[ProviderResult]:
         """运行配置中启用的外部 API provider。
@@ -227,7 +321,7 @@ class ApiFirstDetectionEngine:
             label="not_run",
             details={
                 "missing_env": missing,
-                "note": "Provider is enabled, but credentials are missing from environment variables.",
+                "note": "Provider is enabled, but credentials are missing from config or environment variables.",
             },
         )
 
@@ -237,8 +331,23 @@ class ApiFirstDetectionEngine:
         Hive 的文本检测用 JSON `text_data`；图片/视频/音频用 multipart `media`。
         返回后统一抽取 ai_generated 概率，后续前端不用理解 Hive 原始 JSON。
         """
+        api_version = str(cfg.get("api_version", "v2")).lower()
+        if api_version in {"v3", "v3_vlm", "vlm"}:
+            return self._run_hive_v3_vlm_provider(path, modality, cfg)
+        return self._run_hive_v2_provider(path, modality, cfg)
+
+    def _run_hive_v2_provider(self, path: Path, modality: str, cfg: dict[str, Any]) -> ProviderResult:
+        """调用 Hive V2 task/sync 检测接口。
+
+        这个分支需要 Hive Project/legacy key；Playground API Key 通常无权访问 V2。
+        """
         key_env = str(cfg.get("api_key_env", "HIVE_API_KEY"))
-        api_key = os.getenv(key_env)
+        api_key = self._credential_from_config(
+            cfg,
+            env_field="api_key_env",
+            value_field="api_key",
+            default_env="HIVE_API_KEY",
+        )
         if not api_key:
             return self._not_configured_result("hive", key_env)
 
@@ -324,6 +433,190 @@ class ApiFirstDetectionEngine:
                 error=str(exc),
             )
 
+    def _run_hive_v3_vlm_provider(self, path: Path, modality: str, cfg: dict[str, Any]) -> ProviderResult:
+        """调用 Hive V3 VLM，用提示词返回结构化 AIGC 判断。
+
+        V3 Playground Key 走 OpenAI-compatible Chat Completions。
+        它不是 V2 专用 detector 的同款接口，而是把 Hive VLM 当成可提示的分类器使用。
+        """
+        if modality == "audio":
+            return ProviderResult(
+                provider="hive",
+                provider_type="detection_api",
+                status="skipped",
+                score=None,
+                label="not_run",
+                details={
+                    "modality": modality,
+                    "api_version": "v3_vlm",
+                    "note": "Hive V3 VLM docs cover text/image/video inputs; use V2 ai_generated_audio for audio detection.",
+                },
+            )
+
+        key_env = str(cfg.get("api_key_env", "HIVE_API_KEY"))
+        api_key = self._credential_from_config(
+            cfg,
+            env_field="api_key_env",
+            value_field="api_key",
+            default_env="HIVE_API_KEY",
+        )
+        if not api_key:
+            return self._not_configured_result("hive", key_env)
+
+        endpoint = str(cfg.get("v3_endpoint", "https://api.thehive.ai/api/v3/chat/completions"))
+        timeout = float(cfg.get("timeout_seconds", 45))
+        model = str(cfg.get("v3_model", "hive/vision-language-model"))
+
+        try:
+            response = requests.post(
+                endpoint,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=self._build_hive_v3_payload(path, modality, model),
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            parsed = self._parse_hive_v3_message(payload)
+            score = self._extract_ai_score(parsed)
+            if score is None:
+                score = self._extract_ai_score(payload)
+            model_scores = self._extract_model_scores(parsed)
+            if score is None:
+                return ProviderResult(
+                    provider="hive",
+                    provider_type="detection_api",
+                    status="error",
+                    score=None,
+                    label="not_run",
+                    details={
+                        "modality": modality,
+                        "api_version": "v3_vlm",
+                        "model": model,
+                        "raw": payload,
+                        "parsed": parsed,
+                        "note": "Hive V3 VLM response did not contain ai_generated_score.",
+                    },
+                    error="Missing ai_generated_score in Hive V3 VLM response.",
+                )
+            return ProviderResult(
+                provider="hive",
+                provider_type="detection_api",
+                status="ok",
+                score=round(score, 4),
+                label="ai" if score >= self.threshold else "human",
+                details={
+                    "modality": modality,
+                    "api_version": "v3_vlm",
+                    "model": model,
+                    "model_scores": model_scores,
+                    "explanation": parsed.get("explanation"),
+                    "score_source": "Hive V3 VLM structured ai_generated_score",
+                    "raw": payload,
+                    "parsed": parsed,
+                },
+            )
+        except (requests.RequestException, OSError, ValueError, TypeError, KeyError, IndexError) as exc:
+            return ProviderResult(
+                provider="hive",
+                provider_type="detection_api",
+                status="error",
+                score=None,
+                label="not_run",
+                details={"modality": modality, "api_version": "v3_vlm", "model": model, "endpoint": endpoint},
+                error=str(exc),
+            )
+
+    def _build_hive_v3_payload(self, path: Path, modality: str, model: str) -> dict[str, Any]:
+        """构造 Hive V3 Chat Completions 请求体。"""
+        content: str | list[dict[str, Any]]
+        instruction = self._hive_v3_instruction(modality)
+
+        if modality == "text":
+            content = f"{instruction}\n\nContent to analyze:\n{self._read_text_payload(path)}"
+        else:
+            media_part = self._hive_v3_media_part(path, modality)
+            content = [media_part, {"type": "text", "text": instruction}]
+
+        return {
+            "model": model,
+            "temperature": 0,
+            "max_tokens": 500,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "aigc_detection_result",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "ai_generated_score": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
+                            },
+                            "label": {
+                                "type": "string",
+                                "enum": ["ai_generated", "not_ai_generated", "uncertain"],
+                            },
+                            "explanation": {"type": "string"},
+                            "model_scores": {
+                                "type": "object",
+                                "additionalProperties": {"type": "number"},
+                            },
+                        },
+                        "required": ["ai_generated_score", "label", "explanation", "model_scores"],
+                        "additionalProperties": False,
+                    },
+                },
+            },
+            "messages": [{"role": "user", "content": content}],
+        }
+
+    def _hive_v3_instruction(self, modality: str) -> str:
+        """给 Hive V3 VLM 的分类提示词。"""
+        return (
+            "You are an AIGC detection classifier. "
+            f"Analyze this {modality} content and estimate whether it is AI-generated. "
+            "Return JSON only. "
+            "`ai_generated_score` must be a probability from 0 to 1. "
+            "`label` must be ai_generated, not_ai_generated, or uncertain. "
+            "`explanation` must briefly cite observable evidence and uncertainty. "
+            "`model_scores` can include likely generator families when there is evidence, otherwise return an empty object. "
+            "Do not claim certainty from metadata alone."
+        )
+
+    def _hive_v3_media_part(self, path: Path, modality: str) -> dict[str, Any]:
+        """把本地图片/视频转成 Hive V3 支持的 data URI。"""
+        mime_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+        data_uri = f"data:{mime_type};base64,{encoded}"
+        if modality == "video":
+            return {
+                "type": "media_url",
+                "media_url": {
+                    "url": data_uri,
+                    "sampling": {"strategy": "fps", "fps": 1},
+                    "prompt_scope": "once",
+                },
+            }
+        return {"type": "image_url", "image_url": {"url": data_uri}}
+
+    def _parse_hive_v3_message(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """解析 Hive V3 message.content 中的 JSON。"""
+        content = payload["choices"][0]["message"]["content"]
+        if isinstance(content, dict):
+            return content
+        cleaned = str(content).strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.strip("`")
+            if cleaned.lower().startswith("json"):
+                cleaned = cleaned[4:].strip()
+        parsed = json.loads(cleaned)
+        return parsed if isinstance(parsed, dict) else {}
+
     def _run_sightengine_provider(self, path: Path, modality: str, cfg: dict[str, Any]) -> ProviderResult:
         """调用 Sightengine 图片/视频 AIGC 检测接口。
 
@@ -345,8 +638,18 @@ class ApiFirstDetectionEngine:
 
         user_env = str(cfg.get("api_user_env", "SIGHTENGINE_API_USER"))
         secret_env = str(cfg.get("api_secret_env", "SIGHTENGINE_API_SECRET"))
-        api_user = os.getenv(user_env)
-        api_secret = os.getenv(secret_env)
+        api_user = self._credential_from_config(
+            cfg,
+            env_field="api_user_env",
+            value_field="api_user",
+            default_env="SIGHTENGINE_API_USER",
+        )
+        api_secret = self._credential_from_config(
+            cfg,
+            env_field="api_secret_env",
+            value_field="api_secret",
+            default_env="SIGHTENGINE_API_SECRET",
+        )
         missing = [name for name, value in [(user_env, api_user), (secret_env, api_secret)] if not value]
         if missing:
             return self._not_configured_result("sightengine", missing)
@@ -472,6 +775,12 @@ class ApiFirstDetectionEngine:
     def _collect_model_scores(self, value: Any, scores: dict[str, float]) -> None:
         """递归收集可解释的模型来源分数。"""
         if isinstance(value, dict):
+            explicit_model_scores = value.get("model_scores")
+            if isinstance(explicit_model_scores, dict):
+                for key, item in explicit_model_scores.items():
+                    if self._is_number(item):
+                        scores[str(key)] = max(scores.get(str(key), 0.0), float(item))
+
             label_value = value.get("class") or value.get("label") or value.get("name")
             if (
                 isinstance(label_value, str)
@@ -502,11 +811,49 @@ class ApiFirstDetectionEngine:
         if not isinstance(value, str):
             return False
         normalized = value.lower().replace("-", "_").replace(" ", "_")
-        return normalized in {"ai_generated", "generated", "synthetic", "is_ai"}
+        return normalized in {
+            "ai_generated",
+            "ai_generated_score",
+            "generated",
+            "synthetic",
+            "is_ai",
+        }
 
     def _is_number(self, value: Any) -> bool:
         """判断值是否能作为 0-1 概率分数。"""
         return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+    def _credential_from_config(
+        self,
+        cfg: dict[str, Any],
+        env_field: str,
+        value_field: str,
+        default_env: str,
+    ) -> str | None:
+        """从配置里解析 API 凭据。
+
+        推荐写法：
+        - `api_key: "真实密钥"` / `api_user: "真实 user"` / `api_secret: "真实 secret"`
+        - 或 `api_key_env: "HIVE_API_KEY"` 这种环境变量名
+
+        为了兼容早期配置，如果 `_env` 字段里看起来不像环境变量名，
+        也会把它当成真实凭据使用。
+        """
+        direct_value = cfg.get(value_field)
+        if direct_value:
+            return str(direct_value)
+
+        env_or_value = str(cfg.get(env_field, default_env))
+        env_value = os.getenv(env_or_value)
+        if env_value:
+            return env_value
+        if env_or_value != default_env and not self._looks_like_env_name(env_or_value):
+            return env_or_value
+        return None
+
+    def _looks_like_env_name(self, value: str) -> bool:
+        """判断一个字符串是否像环境变量名，而不是实际密钥。"""
+        return bool(re.fullmatch(r"[A-Z][A-Z0-9_]*", value))
 
     def _run_demo_provider(self, path: Path, modality: str, raw_data: object | None) -> ProviderResult:
         """运行 demo provider。

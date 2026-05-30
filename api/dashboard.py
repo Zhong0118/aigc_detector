@@ -36,10 +36,47 @@ st.markdown(
         background: #f8fafc;
     }
     .small-muted {color: #64748b; font-size: 0.88rem;}
+    .evidence-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.8rem 0.95rem;
+        margin-bottom: 0.7rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+if "is_analyzing" not in st.session_state:
+    st.session_state["is_analyzing"] = False
+
+
+def public_branch_name(index: int) -> str:
+    """把 provider 名称匿名化为检测分支名称。
+
+    Raw JSON 仍然保留真实字段，方便开发调试；主页面面向演示和普通用户，
+    使用更中性的“检测分支A/B”。
+    """
+    return f"检测分支{chr(ord('A') + index)}"
+
+
+def public_evidence_text(text: str) -> str:
+    """清理主页面证据文字中的供应商和接口细节。"""
+    replacements = {
+        "Hive V3 VLM": "检测分支",
+        "Hive": "检测分支",
+        "hive": "检测分支",
+        "Sightengine": "检测分支",
+        "sightengine": "检测分支",
+        "AI-generation API": "AIGC 检测模块",
+        "api_version": "检测版本",
+        "v3_vlm": "检测模块",
+    }
+    cleaned = text
+    for old, new in replacements.items():
+        cleaned = cleaned.replace(old, new)
+    return cleaned
 
 
 def request_json(method: str, url: str, **kwargs):
@@ -57,6 +94,32 @@ def request_json(method: str, url: str, **kwargs):
         st.error(resp.text)
         return None
     return resp.json()
+
+
+def request_with_progress(method: str, url: str, **kwargs):
+    """带进度提示的 HTTP 请求封装。
+
+    Streamlit 不能知道后端每个内部步骤的实时进度，所以这里展示的是
+    前端侧的阶段性进度：提交任务、等待检测、整理结果。
+    """
+    progress = st.progress(0, text="准备提交检测任务...")
+    status = st.status("正在分析内容，请稍候...", expanded=True)
+    try:
+        st.session_state["is_analyzing"] = True
+        progress.progress(18, text="正在读取输入并识别内容类型...")
+        status.write("已接收输入，正在进入检测流程。")
+        progress.progress(42, text="正在运行多路检测模块...")
+        payload = request_json(method, url, **kwargs)
+        progress.progress(78, text="正在汇总分数与溯源证据...")
+        if payload:
+            status.write("检测完成，正在生成解释报告。")
+            progress.progress(100, text="分析完成。")
+            status.update(label="分析完成", state="complete", expanded=False)
+        else:
+            status.update(label="分析失败，请查看错误信息", state="error", expanded=True)
+        return payload
+    finally:
+        st.session_state["is_analyzing"] = False
 
 
 def render_score_gauge(score: float):
@@ -113,14 +176,16 @@ def render_analysis(data: dict):
     with left:
         # 左侧主要展示检测层证据。
         render_score_gauge(detection["score"])
-        st.subheader("Provider Evidence")
-        for provider in detection["providers"]:
+        st.subheader("Detection Evidence")
+        for idx, provider in enumerate(detection["providers"]):
             cols = st.columns([1.1, 0.8, 0.8, 1.4])
-            cols[0].write(provider["provider"])
+            cols[0].write(public_branch_name(idx))
             cols[1].write(provider["status"])
             score = provider["score"]
             cols[2].write("n/a" if score is None else f"{score:.2%}")
-            cols[3].caption(provider["details"].get("note", ""))
+            details = provider.get("details", {})
+            caption = details.get("explanation") or details.get("note") or details.get("score_source", "")
+            cols[3].caption(public_evidence_text(str(caption)))
 
         if detection["model_scores"]:
             # model_scores 当前来自 demo provider；未来可来自 Hive/Sightengine 或本地 attribution。
@@ -145,10 +210,23 @@ def render_analysis(data: dict):
     with right:
         # 右侧主要展示溯源层和报告层。
         st.subheader("Provenance")
-        pcols = st.columns(3)
+        pcols = st.columns(4)
         pcols[0].metric("Deep Check", "YES" if provenance["deep_triggered"] else "NO")
         pcols[1].metric("C2PA", provenance["c2pa"].get("status", "unknown"))
         pcols[2].metric("Watermark", provenance["watermark"].get("status", "unknown"))
+        registry = provenance.get("fingerprint_registry", {})
+        pcols[3].metric("Fingerprint Hits", registry.get("match_count", 0))
+
+        if registry.get("matches"):
+            with st.expander("Fingerprint Registry Matches", expanded=False):
+                for match in registry["matches"]:
+                    st.write(
+                        f"content_id={match.get('content_id')} | "
+                        f"type={match.get('match_type')} | "
+                        f"similarity={match.get('similarity'):.2%}"
+                    )
+                    if match.get("filename"):
+                        st.caption(match["filename"])
 
         st.subheader("Report")
         st.write(report["summary"])
@@ -190,11 +268,17 @@ with text_tab:
     # 文本输入页：直接调用 `/api/v1/analyze/text`。
     text = st.text_area("Text Input", height=220)
     filename = st.text_input("Virtual Filename", value="input.txt")
-    if st.button("Analyze Text", type="primary", use_container_width=True):
+    analyzing = st.session_state["is_analyzing"]
+    if st.button(
+        "Analyzing..." if analyzing else "Analyze Text",
+        type="primary",
+        use_container_width=True,
+        disabled=analyzing,
+    ):
         if not text.strip():
             st.warning("Text input is empty.")
         else:
-            payload = request_json(
+            payload = request_with_progress(
                 "POST",
                 f"{API_BASE}/analyze/text",
                 json={"text": text, "filename": filename or "input.txt"},
@@ -208,12 +292,18 @@ with file_tab:
         "File Upload",
         type=["txt", "md", "csv", "json", "html", "jpg", "jpeg", "png", "bmp", "webp", "tiff", "wav", "mp3", "flac", "ogg", "m4a", "mp4", "avi", "mov", "mkv", "webm"],
     )
-    if st.button("Analyze File", type="primary", use_container_width=True):
+    analyzing = st.session_state["is_analyzing"]
+    if st.button(
+        "Analyzing..." if analyzing else "Analyze File",
+        type="primary",
+        use_container_width=True,
+        disabled=analyzing,
+    ):
         if uploaded_file is None:
             st.warning("No file selected.")
         else:
             files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
-            payload = request_json("POST", f"{API_BASE}/analyze/file", files=files)
+            payload = request_with_progress("POST", f"{API_BASE}/analyze/file", files=files)
             if payload:
                 render_analysis(payload)
 
