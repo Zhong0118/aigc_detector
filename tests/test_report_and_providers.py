@@ -14,6 +14,120 @@ from reports.generator import ReportGenerator
 
 
 class ReportGeneratorLlmTests(unittest.TestCase):
+    def test_template_report_is_chinese_and_explains_evidence_layers(self) -> None:
+        analysis = {
+            "filename": "demo.png",
+            "modality": "image",
+            "detection": {
+                "score": 0.99,
+                "label": "ai",
+                "threshold": 0.5,
+                "providers": [],
+                "model_scores": {},
+            },
+            "provenance": {
+                "deep_triggered": True,
+                "c2pa": {"status": "not_found", "found": False},
+                "watermark": {"status": "ok", "result": {"detected": False}},
+                "fingerprint_registry": {"status": "ok", "match_count": 0, "matches": []},
+                "attribution": {"status": "not_configured"},
+            },
+        }
+
+        report = ReportGenerator(config={"report": {"provider": "template"}}).generate(analysis)
+        joined = json.dumps(report, ensure_ascii=False)
+
+        self.assertEqual(report["provider"], "template")
+        self.assertEqual(report["status"], "ok")
+        self.assertIn("疑似", report["summary"])
+        self.assertIn("综合检测分数", joined)
+        self.assertIn("内容凭证", joined)
+        self.assertIn("水印", joined)
+        self.assertIn("指纹库", joined)
+        self.assertNotIn("Primary detection score", joined)
+        self.assertNotIn("Reserved providers", joined)
+
+    def test_llm_failure_keeps_chinese_fallback_and_surfaces_error(self) -> None:
+        config = {
+            "report": {
+                "provider": "llm",
+                "llm_provider": "deepseek",
+                "api_key": "direct-test-key",
+                "base_url": "https://api.deepseek.com",
+                "model": "deepseek-v4-flash",
+            }
+        }
+        analysis = {
+            "filename": "demo.png",
+            "modality": "image",
+            "detection": {
+                "score": 0.99,
+                "label": "ai",
+                "threshold": 0.5,
+                "providers": [],
+                "model_scores": {},
+            },
+            "provenance": {"deep_triggered": True, "c2pa": {}, "watermark": {}},
+        }
+
+        response = Mock()
+        response.json.return_value = {"choices": [{"message": {"content": ""}}]}
+        response.raise_for_status.return_value = None
+
+        with patch("reports.generator.requests.post", return_value=response):
+            report = ReportGenerator(config=config).generate(analysis)
+
+        joined = json.dumps(report, ensure_ascii=False)
+        self.assertEqual(report["provider"], "deepseek")
+        self.assertEqual(report["status"], "error")
+        self.assertIn("解释模型调用失败", joined)
+        self.assertIn("综合检测分数", joined)
+        self.assertNotIn("Primary detection score", joined)
+
+    def test_llm_report_recovers_from_non_json_text_response(self) -> None:
+        config = {
+            "report": {
+                "provider": "llm",
+                "llm_provider": "deepseek",
+                "api_key": "direct-test-key",
+                "base_url": "https://api.deepseek.com",
+                "model": "deepseek-v4-flash",
+                "cache_enabled": False,
+            }
+        }
+        analysis = {
+            "filename": "demo.txt",
+            "modality": "text",
+            "fingerprint": "demo",
+            "detection": {
+                "score": 0.95,
+                "label": "ai",
+                "threshold": 0.5,
+                "providers": [],
+                "model_scores": {},
+            },
+            "provenance": {"deep_triggered": True, "c2pa": {}, "watermark": {}, "attribution": {}},
+        }
+
+        response = Mock()
+        response.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "content": "总结：该文本高度疑似 AIGC。\n证据：综合分数较高，语言模式稳定。\n建议：人工复核。"
+                    }
+                }
+            ]
+        }
+        response.raise_for_status.return_value = None
+
+        with patch("reports.generator.requests.post", return_value=response):
+            report = ReportGenerator(config=config).generate(analysis)
+
+        self.assertEqual(report["status"], "ok")
+        self.assertIn("高度疑似", report["summary"])
+        self.assertTrue(report["evidence"])
+
     def test_llm_report_uses_openai_compatible_chat_completion(self) -> None:
         config = {
             "report": {
@@ -57,10 +171,52 @@ class ReportGeneratorLlmTests(unittest.TestCase):
         self.assertEqual(report["summary"], "疑似 AI 生成文本")
         post.assert_called_once()
         self.assertEqual(post.call_args.kwargs["json"]["model"], "deepseek-v4-flash")
+        self.assertEqual(post.call_args.kwargs["json"]["thinking"], {"type": "disabled"})
+        self.assertLessEqual(post.call_args.kwargs["json"]["max_tokens"], 350)
         self.assertEqual(
             post.call_args.args[0],
             "https://api.deepseek.com/chat/completions",
         )
+
+    def test_llm_report_uses_fingerprint_cache_before_api_call(self) -> None:
+        config = {
+            "report": {
+                "provider": "llm",
+                "llm_provider": "deepseek",
+                "api_key": "direct-test-key",
+                "cache_enabled": True,
+            }
+        }
+        analysis = {
+            "filename": "same.txt",
+            "modality": "text",
+            "fingerprint": "same-fingerprint",
+            "detection": {
+                "score": 0.91,
+                "label": "ai",
+                "providers": [],
+                "model_scores": {},
+            },
+            "provenance": {"deep_triggered": True, "c2pa": {}, "watermark": {}},
+        }
+        cached = {
+            "provider": "deepseek",
+            "status": "ok",
+            "summary": "缓存报告",
+            "evidence": ["缓存命中"],
+            "limitations": [],
+            "recommendation": "无需重复调用",
+        }
+
+        generator = ReportGenerator(config=config)
+        with patch.object(generator, "_load_cached_report", return_value=cached) as cache:
+            with patch("reports.generator.requests.post") as post:
+                report = generator.generate(analysis)
+
+        self.assertEqual(report["summary"], "缓存报告")
+        self.assertEqual(report["status"], "cached")
+        cache.assert_called_once_with(analysis)
+        post.assert_not_called()
 
     def test_llm_report_accepts_direct_api_key_from_config(self) -> None:
         config = {

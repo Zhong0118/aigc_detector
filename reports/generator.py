@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -38,6 +39,12 @@ class ReportGenerator:
         """
         provider = str(self.report_cfg.get("provider", "template")).lower()
         if provider == "llm":
+            cached = self._load_cached_report(analysis)
+            if cached:
+                cached = dict(cached)
+                cached["status"] = "cached"
+                cached["cache_hit"] = True
+                return cached
             return self._generate_llm_report(analysis)
         return self._generate_template_report(analysis)
 
@@ -46,31 +53,59 @@ class ReportGenerator:
         detection = analysis["detection"]
         provenance = analysis["provenance"]
         modality = analysis["modality"]
-        score = detection["score"]
-        label = detection["label"]
+        score = float(detection["score"])
+        label = str(detection["label"])
+        threshold = float(detection.get("threshold", self.config.get("detection", {}).get("threshold", 0.5)))
+        modality_name = self._modality_name(modality)
 
         evidence = [
-            f"Primary detection score is {score:.2%}.",
-            f"Detected modality is {modality}.",
+            f"综合检测分数为 {score:.2%}，判定阈值为 {threshold:.2f}，当前标签为“{self._label_name(label)}”。",
+            f"系统识别输入类型为“{modality_name}”。",
         ]
 
         if provenance["deep_triggered"]:
-            evidence.append("Deep provenance checks were triggered by the score threshold.")
+            evidence.append("检测分数达到深层溯源阈值，已继续执行内容凭证、水印和指纹库检查。")
         else:
-            evidence.append("Deep provenance checks were skipped because the score is below threshold.")
+            evidence.append("检测分数未达到深层溯源阈值，深层溯源检查未作为主要证据触发。")
 
         c2pa = provenance.get("c2pa", {})
         if c2pa.get("found"):
-            evidence.append("C2PA metadata was found.")
+            evidence.append("检测到 C2PA/内容凭证元数据，可作为来源链路或编辑历史的强线索。")
         else:
-            evidence.append("No C2PA metadata was found in the current check.")
+            evidence.append("未检测到 C2PA/内容凭证元数据；这只能说明文件未携带可验证声明，不能反向证明其为人工创作。")
 
         watermark = provenance.get("watermark", {})
         watermark_result = watermark.get("result") or {}
         if watermark_result.get("detected"):
-            evidence.append("A watermark-like signal was detected.")
+            confidence = watermark_result.get("confidence")
+            confidence_text = f"，置信度约为 {float(confidence):.2%}" if confidence is not None else ""
+            evidence.append(f"本地水印检测确认存在水印信号{confidence_text}。")
         else:
-            evidence.append("No watermark signal was confirmed.")
+            watermark_status = watermark.get("status", "unknown")
+            evidence.append(f"本地水印检查状态为“{watermark_status}”，当前未确认有效水印信号。")
+
+        registry = provenance.get("fingerprint_registry", {})
+        match_count = int(registry.get("match_count") or 0)
+        if match_count:
+            evidence.append(f"指纹库命中 {match_count} 条历史相似记录，可用于重复传播或已登记样本追踪。")
+        else:
+            evidence.append("指纹库未命中历史相似样本；空库或未命中不参与最终真伪证明。")
+
+        attribution = provenance.get("attribution")
+        if isinstance(attribution, dict) and attribution:
+            status = attribution.get("status", "unknown")
+            confidence = attribution.get("confidence")
+            top_k = attribution.get("top_k") if isinstance(attribution.get("top_k"), list) else []
+            top_text = ""
+            if top_k:
+                first = top_k[0]
+                top_text = f"，首位候选来源为“{first.get('model')}”"
+            if confidence is not None:
+                evidence.append(f"来源归因模块状态为“{status}”{top_text}，候选来源置信度约为 {float(confidence):.2%}。")
+            else:
+                evidence.append(f"来源归因模块状态为“{status}”，当前未形成可用候选来源。")
+            if status == "data_mismatch":
+                evidence.append("实验性 LLMDet 分支的数据缓存不完整或版本不匹配，本次未采用其候选来源结果。")
 
         return {
             "provider": "template",
@@ -78,9 +113,9 @@ class ReportGenerator:
             "summary": self._summary(label, score, modality),
             "evidence": evidence,
             "limitations": [
-                "API or demo-provider scores are probabilistic and should be reviewed with provenance evidence.",
-                "Absence of C2PA or watermark data does not prove human authorship.",
-                "Reserved providers need API keys or local model weights before they become authoritative.",
+                "检测分数属于概率证据，不能单独作为最终结论，需要结合来源凭证、水印、指纹库和人工复核。",
+                "未发现 C2PA 或水印并不等于内容一定由人类创作，只表示当前文件没有携带这些可验证信号。",
+                "模型归因、重建误差、PPL 等被动法证特征只能提供候选来源或风险线索，不能替代签名凭证。",
             ],
             "recommendation": self._recommendation(label, score),
         }
@@ -142,7 +177,8 @@ class ReportGenerator:
                 },
             ],
             "temperature": float(self.report_cfg.get("temperature", 0.2)),
-            "max_tokens": int(self.report_cfg.get("max_tokens", 700)),
+            "max_tokens": int(self.report_cfg.get("max_tokens", 300)),
+            "thinking": {"type": str(self.report_cfg.get("thinking", "disabled"))},
             "stream": False,
         }
 
@@ -158,8 +194,8 @@ class ReportGenerator:
             )
             response.raise_for_status()
             content = response.json()["choices"][0]["message"]["content"]
-            parsed = self._parse_llm_json(content)
-            return {
+            parsed = self._parse_llm_response(content)
+            report = {
                 "provider": llm_provider,
                 "status": "ok",
                 "model": model,
@@ -176,8 +212,12 @@ class ReportGenerator:
                     float(analysis["detection"]["score"]),
                 ),
             }
+            self._save_cached_report(analysis, report)
+            return report
         except (requests.RequestException, KeyError, IndexError, TypeError, ValueError) as exc:
             template = self._generate_template_report(analysis)
+            template["evidence"].insert(0, "解释模型调用失败，系统已改用本地中文模板生成报告。")
+            template["limitations"].insert(0, "本次报告不是大语言模型生成结果，而是规则模板回退结果；请检查报告模型配置、网络或返回格式。")
             template.update(
                 {
                     "provider": llm_provider,
@@ -187,6 +227,46 @@ class ReportGenerator:
                 }
             )
             return template
+
+    def _load_cached_report(self, analysis: dict[str, Any]) -> dict[str, Any] | None:
+        """按内容指纹读取报告缓存，减少重复 LLM 扣费。"""
+        if not self.report_cfg.get("cache_enabled", True):
+            return None
+        path = self._cache_path(analysis)
+        if not path or not path.exists():
+            return None
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        return payload if isinstance(payload, dict) else None
+
+    def _save_cached_report(self, analysis: dict[str, Any], report: dict[str, Any]) -> None:
+        """保存成功生成的 LLM 报告。"""
+        if not self.report_cfg.get("cache_enabled", True):
+            return
+        path = self._cache_path(analysis)
+        if not path:
+            return
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            cache_payload = dict(report)
+            cache_payload["cache_hit"] = False
+            path.write_text(json.dumps(cache_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError:
+            return
+
+    def _cache_path(self, analysis: dict[str, Any]) -> Path | None:
+        """生成报告缓存路径。"""
+        fingerprint = analysis.get("fingerprint") or analysis.get("provenance", {}).get("fingerprint")
+        if not fingerprint:
+            return None
+        provider = str(self.report_cfg.get("llm_provider", "deepseek")).lower()
+        model = str(self.report_cfg.get("model", "deepseek-v4-flash"))
+        modality = str(analysis.get("modality", "unknown"))
+        key = hashlib.sha256(f"{provider}|{model}|{modality}|{fingerprint}".encode("utf-8")).hexdigest()
+        cache_dir = Path(str(self.report_cfg.get("cache_dir", "data/report_cache")))
+        return cache_dir / f"{key}.json"
 
     def _report_context(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """抽取给 LLM 的最小证据包，避免把大文件或敏感内容发给报告模型。
@@ -210,6 +290,9 @@ class ReportGenerator:
                 "deep_triggered": provenance.get("deep_triggered"),
                 "content_credentials_status": provenance.get("c2pa", {}).get("status"),
                 "watermark_status": provenance.get("watermark", {}).get("status"),
+                "provider_hints_top_k": provenance.get("provider_hints", {}).get("top_k", [])
+                if isinstance(provenance.get("provider_hints"), dict)
+                else [],
                 "fingerprint_registry": {
                     "status": provenance.get("fingerprint_registry", {}).get("status"),
                     "match_count": provenance.get("fingerprint_registry", {}).get("match_count"),
@@ -218,6 +301,9 @@ class ReportGenerator:
                 "attribution_confidence": provenance.get("attribution", {}).get("confidence")
                 if isinstance(provenance.get("attribution"), dict)
                 else None,
+                "attribution_top_k": provenance.get("attribution", {}).get("top_k", [])
+                if isinstance(provenance.get("attribution"), dict)
+                else [],
             },
         }
 
@@ -292,6 +378,50 @@ class ReportGenerator:
         parsed = json.loads(cleaned)
         return parsed if isinstance(parsed, dict) else {}
 
+    def _parse_llm_response(self, content: str) -> dict[str, Any]:
+        """解析 LLM 响应，JSON 失败时降级解析普通文本。
+
+        DeepSeek 偶尔会返回被截断或未严格转义的 JSON。报告模型只是解释层，
+        不应该因为格式问题让整个分析显得失败，所以这里保留可读内容。
+        """
+        try:
+            return self._parse_llm_json(content)
+        except json.JSONDecodeError:
+            return self._parse_plaintext_report(content)
+
+    def _parse_plaintext_report(self, content: str) -> dict[str, Any]:
+        """把非 JSON 报告文本整理成统一字段。"""
+        lines = [line.strip(" -\t") for line in content.splitlines() if line.strip()]
+        if not lines:
+            raise ValueError("LLM response is empty.")
+
+        summary = lines[0]
+        evidence: list[str] = []
+        limitations: list[str] = []
+        recommendation = ""
+
+        for line in lines[1:]:
+            lowered = line.lower()
+            if line.startswith(("证据", "Evidence", "evidence")):
+                evidence.append(line.split("：", 1)[-1].split(":", 1)[-1].strip() or line)
+            elif line.startswith(("限制", "局限", "Limitations", "limitations")):
+                limitations.append(line.split("：", 1)[-1].split(":", 1)[-1].strip() or line)
+            elif line.startswith(("建议", "Recommendation", "recommendation")):
+                recommendation = line.split("：", 1)[-1].split(":", 1)[-1].strip() or line
+            elif "limitation" in lowered:
+                limitations.append(line)
+            elif "recommend" in lowered:
+                recommendation = line
+            else:
+                evidence.append(line)
+
+        return {
+            "summary": summary.replace("总结：", "").replace("Summary:", "").strip(),
+            "evidence": evidence or ["解释模型返回了非 JSON 文本，系统已保留可读内容。"],
+            "limitations": limitations or ["该报告由非严格 JSON 响应恢复生成，建议结合结构化检测结果复核。"],
+            "recommendation": recommendation or "建议结合检测分支、溯源证据和人工复核做最终判断。",
+        }
+
     def _ensure_string_list(self, value: Any) -> list[str]:
         """把 LLM 返回值规整成字符串列表，避免前端遇到奇怪类型。"""
         if isinstance(value, list):
@@ -330,16 +460,35 @@ class ReportGenerator:
         return bool(re.fullmatch(r"[A-Z][A-Z0-9_]*", value))
 
     def _summary(self, label: str, score: float, modality: str) -> str:
+        modality_name = self._modality_name(modality)
         if label == "ai":
-            return f"The {modality} content is likely AI-generated based on the current detection evidence."
-        return f"The {modality} content is not strongly indicated as AI-generated by the current checks."
+            if score >= 0.8:
+                return f"当前多路检测结果认为该{modality_name}高度疑似 AIGC 内容，综合风险分数为 {score:.2%}。"
+            return f"当前多路检测结果认为该{modality_name}存在 AIGC 风险，综合风险分数为 {score:.2%}。"
+        return f"当前证据未显示该{modality_name}具有明显 AIGC 特征，综合风险分数为 {score:.2%}。"
 
     def _recommendation(self, label: str, score: float) -> str:
         if label == "ai" and score >= 0.8:
-            return "Treat this as high-risk AI-generated content and review provenance or source files."
+            return "建议将该内容标记为高风险样本，优先复核检测分支证据，并继续查看 C2PA、水印、指纹库和来源归因结果。"
         if label == "ai":
-            return "Review the content manually and compare provider/model evidence before making a final decision."
-        return "Keep the analysis record; run deeper checks if external context suggests the content is suspicious."
+            return "建议保留当前检测记录，结合人工复核和后续溯源模块再做最终判断。"
+        return "建议保留分析记录；如果外部上下文仍然可疑，再补充更深层的溯源或人工复核。"
+
+    def _modality_name(self, modality: str) -> str:
+        """把内部模态名转换成报告用中文。"""
+        return {
+            "text": "文本",
+            "image": "图片",
+            "audio": "音频",
+            "video": "视频",
+        }.get(str(modality), str(modality))
+
+    def _label_name(self, label: str) -> str:
+        """把内部标签转换成报告用中文。"""
+        return {
+            "ai": "疑似 AIGC",
+            "human": "未明显检出 AIGC",
+        }.get(str(label), str(label))
 
     def _load_config(self, config_path: str) -> dict[str, Any]:
         """读取 YAML 配置文件。"""

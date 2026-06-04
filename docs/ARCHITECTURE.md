@@ -26,9 +26,14 @@ The frontend is not raw HTML. It is a Streamlit app, which is useful for fast pr
 Typical startup commands:
 
 ```bash
-uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
-streamlit run api/dashboard.py --server.port 8501
+powershell -ExecutionPolicy Bypass -File scripts/run_api.ps1
+powershell -ExecutionPolicy Bypass -File scripts/run_dashboard.ps1
 ```
+
+Do not use `uvicorn --reload` during model/data testing. The project stores
+Hugging Face caches and trained artifacts under `models/`, so reload mode can
+watch dataset downloads and repeatedly restart the backend while the frontend is
+submitting requests.
 
 ## High-Level Flow
 
@@ -231,4 +236,3 @@ FastAPI-stable
 ```
 
 This gives fast visible progress now, while preserving a path toward a more rigorous multi-model detection system later.
-

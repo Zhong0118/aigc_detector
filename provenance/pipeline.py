@@ -10,7 +10,7 @@
 - image watermark 按 deep_threshold 调用 LSB placeholder
 - text/audio/video watermark 只返回 reserved
 - 指纹库会对历史内容做 exact/near lookup
-- attribution 优先使用 detection provider 给出的 model_scores
+- attribution 优先使用 detection provider 给出的 model_scores；否则按配置调用文本/图片候选来源归因器
 
 后续需要补充：
 - c2patool adapter：支持更多文件和签名验证
@@ -28,6 +28,7 @@ from typing import Any
 from detection.providers import DetectionPackage
 from ingestion import compute_fingerprint
 from .c2pa_reader import read_c2pa_metadata
+from .attribution import ProvenanceAttributionEngine
 from .fingerprint_registry import FingerprintRegistry
 from .metaseal_adapter import MetaSealWatermarkDetector
 
@@ -44,6 +45,7 @@ class ProvenancePipeline:
         deep_threshold: float = 0.6,
         c2pa_tool_path: str | None = None,
         watermark_config: dict[str, Any] | None = None,
+        attribution_config: dict[str, Any] | None = None,
     ) -> None:
         """初始化深度溯源阈值。
 
@@ -54,6 +56,8 @@ class ProvenancePipeline:
         self.registry = FingerprintRegistry()
         self.watermark_config = watermark_config or {}
         self.watermark_detector = MetaSealWatermarkDetector(self.watermark_config)
+        self.attribution_config = attribution_config or {}
+        self.attributor = ProvenanceAttributionEngine(self.attribution_config)
 
     def analyze(
         self,
@@ -79,7 +83,8 @@ class ProvenancePipeline:
             "c2pa": self._run_c2pa(path, modality),
             "watermark": self._skipped("watermark") if not deep_triggered else self._run_watermark(path, modality),
             "fingerprint_registry": self._run_fingerprint_registry(fingerprint, modality),
-            "attribution": self._attribution_from_detection(detection, modality),
+            "provider_hints": self._provider_hints_from_detection(detection),
+            "attribution": self._run_attribution(path, modality, detection, deep_triggered),
         }
         return result
 
@@ -158,24 +163,30 @@ class ProvenancePipeline:
             }
         return self.watermark_detector.detect(path, modality)
 
-    def _attribution_from_detection(self, detection: DetectionPackage, modality: str) -> dict[str, Any]:
+    def _run_attribution(
+        self,
+        path: Path,
+        modality: str,
+        detection: DetectionPackage,
+        deep_triggered: bool,
+    ) -> dict[str, Any]:
         """生成模型来源提示。
 
         当前优先复用 detection provider 返回的 model_scores。
-        如果真实 API 给出 Midjourney/SDXL/GPT family 等分数，就会在这里转成 Top-K。
-        如果没有，则返回 local attribution reserved。
+        如果真实 API 给出 Midjourney/SDXL/GPT family 等分数，就会转成 Top-K。
+        如果没有 provider 分数，并且达到深层阈值，则调用配置的本地/外部候选归因器。
         """
-        if detection.model_scores:
-            top_k = [
-                {"model": model, "probability": score}
-                for model, score in list(detection.model_scores.items())[:3]
-            ]
+        if not deep_triggered:
             return {
-                "status": "ok",
-                "source": "detection_provider_model_scores",
-                "top_k": top_k,
-                "confidence": top_k[0]["probability"] if top_k else 0.0,
+                "status": "skipped",
+                "source": "local_attribution_model",
+                "top_k": [],
+                "confidence": 0.0,
+                "note": "Attribution skipped because the AI score did not reach the deep provenance threshold.",
             }
+
+        if self.attribution_config.get("enabled", False):
+            return self.attributor.attribute(path, modality)
 
         return {
             "status": "reserved",
@@ -183,6 +194,30 @@ class ProvenancePipeline:
             "top_k": [],
             "confidence": 0.0,
             "note": f"Local model attribution is reserved for {modality}.",
+        }
+
+    def _provider_hints_from_detection(self, detection: DetectionPackage) -> dict[str, Any]:
+        """把 detection provider 给出的模型提示单独保存。
+
+        这些分数可能来自本地检测分支或外部 API/VLM，不等同于本地来源归因模型。
+        """
+        if not detection.model_scores:
+            return {
+                "status": "empty",
+                "source": "detection_model_scores",
+                "top_k": [],
+                "confidence": 0.0,
+            }
+        top_k = [
+            {"model": model, "probability": float(score)}
+            for model, score in list(detection.model_scores.items())[:5]
+        ]
+        return {
+            "status": "ok",
+            "source": "detection_model_scores",
+            "top_k": top_k,
+            "confidence": top_k[0]["probability"] if top_k else 0.0,
+            "note": "Provider hints are detection-side model scores, not definitive attribution.",
         }
 
     def _skipped(self, name: str) -> dict[str, Any]:

@@ -86,13 +86,131 @@ provenance:
       enabled: false
       provider: "textseal"
       command: null
+  attribution:
+    enabled: true
+    fusion:
+      enabled: true
+      top_k: 5
+    text:
+      enabled: true
+      top_k: 5
+      providers:
+        trained_classifier:
+          enabled: true
+          provider: "trained_classifier"
+          model_path: "models/attribution/text_source_classifier.joblib"
+          top_k: 5
+          note: "Self-trained text source classifier. Train it with scripts/train_text_attribution.py."
+        llmdet:
+          enabled: false
+          provider: "llmdet"
+          top_k: 5
+          min_chars: 30
+          cache_dir: "models/huggingface"
+          shim_unilm: true
+          load_probability: true
+          timeout_seconds: 45
+          expected_npz:
+            - "gpt2"
+            - "opt"
+            - "unilm"
+            - "llama"
+            - "bart"
+            - "t5"
+            - "bloom"
+            - "neo"
+            - "vicuna"
+            - "gpt2_large"
+            - "opt_3b"
+          note: "LLMDet is an experimental candidate-source attribution branch; it is not definitive proof."
+        openturingbench:
+          enabled: true
+          provider: "openturingbench"
+          mode: "prototype_dataset"
+          dataset_name: "MLNTeam-Unical/OpenTuringBench"
+          dataset_subset: "in_domain"
+          dataset_split: "train"
+          prototypes_path: "data/attribution/text/openturingbench_prototypes.jsonl"
+          top_k: 5
+          min_chars: 30
+          note: "Build prototypes from OpenTuringBench before this branch becomes active."
+        embedding_prototype:
+          enabled: true
+          provider: "embedding_prototype"
+          prototypes_path: "data/attribution/text/custom_text_prototypes.jsonl"
+          analyzer: "char_wb"
+          ngram_range: [3, 5]
+          max_features: 50000
+          aggregate_top_n: 5
+          top_k: 5
+          min_chars: 30
+          note: "Local text style/prototype branch; add your own labeled candidate-model samples."
+    image:
+      enabled: true
+      top_k: 5
+      providers:
+        trained_classifier:
+          enabled: true
+          provider: "trained_classifier"
+          model_path: "models/attribution/image_source_classifier.joblib"
+          feature_type: "clip"
+          clip_model_name: "openai/clip-vit-base-patch32"
+          cache_dir: "models/huggingface"
+          top_k: 5
+          note: "Self-trained image source classifier. Train it with scripts/train_image_attribution.py."
+        ofa_attribution:
+          enabled: true
+          provider: "ofa_attribution"
+          command: null
+          json_arg: true
+          timeout_seconds: 180
+          note: "Set command after preparing OFAAttribution inference weights/script."
+        universal_attribution:
+          enabled: true
+          provider: "universal_attribution"
+          command: null
+          json_arg: true
+          timeout_seconds: 180
+          note: "Set command after cloning/configuring a UniversalAttribution JSON-output inference script."
+        clip_prototype:
+          enabled: true
+          provider: "clip_prototype"
+          feature: "phash"
+          prototypes_path: "data/attribution/image/image_prototypes.jsonl"
+          aggregate_top_n: 5
+          top_k: 5
+          note: "Local image prototype branch. It currently uses pHash unless command points to a CLIP/DINO script."
+    audio:
+      enabled: false
+    video:
+      enabled: true
+      top_k: 5
+      providers:
+        frame_image_fusion:
+          enabled: true
+          provider: "frame_image_fusion"
+          max_frames: 8
+          frame_interval: 30
+          top_k: 5
+          note: "Sample video frames and reuse image attribution branches."
+        saga:
+          enabled: false
+          provider: "saga"
+          command: null
+          json_arg: true
+          timeout_seconds: 300
+          note: "SAGA requires separate research implementation/training before inference."
 
 report:
   provider: "llm"
   llm_provider: "deepseek"
-  api_key_env: "sk-3eb562cbc6ed4e5188c699b5f4735d4a"
+  api_key_env: "sk-de748f2605c1471abacaa9bff382c250"
   base_url: "https://api.deepseek.com"
   model: "deepseek-v4-flash"
+  thinking: "disabled"
+  max_tokens: 1000
+  cache_enabled: true
+  cache_dir: "data/report_cache"
 api:
   host: "0.0.0.0"
   port: 8000

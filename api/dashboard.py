@@ -216,6 +216,46 @@ def render_analysis(data: dict):
         pcols[2].metric("Watermark", provenance["watermark"].get("status", "unknown"))
         registry = provenance.get("fingerprint_registry", {})
         pcols[3].metric("Fingerprint Hits", registry.get("match_count", 0))
+        attribution = provenance.get("attribution", {})
+        st.caption(
+            "Attribution: "
+            f"{attribution.get('status', 'unknown')} | "
+            f"confidence={float(attribution.get('confidence') or 0.0):.2%}"
+        )
+        if attribution.get("status") == "data_mismatch":
+            st.warning("LLMDet data cache is incomplete or inconsistent; local text attribution was skipped.")
+            missing = attribution.get("missing_npz") or []
+            bad = attribution.get("bad_npz") or []
+            if missing:
+                st.caption(f"Missing n-gram tables: {', '.join(missing)}")
+            if bad:
+                st.caption(f"Unreadable n-gram tables: {', '.join(bad)}")
+        if attribution.get("error"):
+            st.warning(f"Attribution failed: {attribution['error']}")
+        if attribution.get("install_hint"):
+            st.caption(attribution["install_hint"])
+        if attribution.get("note") and attribution.get("status") in {"skipped", "not_configured", "dependency_missing"}:
+            st.caption(attribution["note"])
+
+        top_k = attribution.get("top_k") or []
+        if top_k:
+            with st.expander("Attribution Candidates", expanded=True):
+                for item in top_k:
+                    st.write(
+                        f"- {item.get('model', 'unknown')}: "
+                        f"{float(item.get('probability') or 0.0):.2%}"
+                    )
+
+        provider_hints = provenance.get("provider_hints", {})
+        provider_top_k = provider_hints.get("top_k") or []
+        if provider_top_k:
+            with st.expander("Provider Model Hints", expanded=False):
+                st.caption("These are detection-side hints, not local attribution-model results.")
+                for item in provider_top_k:
+                    st.write(
+                        f"- {item.get('model', 'unknown')}: "
+                        f"{float(item.get('probability') or 0.0):.2%}"
+                    )
 
         if registry.get("matches"):
             with st.expander("Fingerprint Registry Matches", expanded=False):
@@ -229,6 +269,11 @@ def render_analysis(data: dict):
                         st.caption(match["filename"])
 
         st.subheader("Report")
+        report_status = report.get("status", "unknown")
+        report_provider = report.get("provider", "unknown")
+        st.caption(f"报告来源：{report_provider} | 状态：{report_status}")
+        if report.get("error"):
+            st.warning(f"报告模型未正常返回，当前展示本地回退报告：{report['error']}")
         st.write(report["summary"])
         st.write("Evidence")
         for item in report["evidence"]:

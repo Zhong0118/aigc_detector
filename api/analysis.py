@@ -64,6 +64,7 @@ class AnalysisService:
             deep_threshold=deep_threshold,
             c2pa_tool_path=c2pa_tool_path,
             watermark_config=provenance_cfg.get("watermark", {}),
+            attribution_config=provenance_cfg.get("attribution", {}),
         )
         # 报告生成器现在是模板版，后续可以在 reports/generator.py 内接 LLM。
         self.reporter = ReportGenerator()
