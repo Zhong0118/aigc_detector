@@ -3,9 +3,41 @@ database:
 
 detection:
   mode: "api_first"
-  threshold: 0.5
+  threshold: 0.8
   deep_provenance_threshold: 0.6
   demo_provider_enabled: false
+  text_false_positive_control:
+    enabled: true
+    artifact_path: "artifacts/text_fp_controller/thresholds.json"
+    target_fpr: 0.02
+    default_low_threshold: 0.4
+    default_high_threshold: 0.8
+    min_effective_chars: 120
+    short_text_chars: 200
+    min_analyzed_coverage: 0.7
+    min_high_coverage: 0.3
+    min_adjacent_high_segments: 2
+    min_group_calibration_humans: 50
+    min_group_validation_humans: 50
+    bootstrap_sample_limit: 5000
+    bootstrap_validation_limit: 1000
+    bootstrap_validation_fraction: 0.2
+    bootstrap_sampling_seed: 20260722
+    bootstrap_max_source_items: 120000
+    bootstrap_max_windows_per_document: 1
+    domain_thresholds:
+      literature:
+        low_threshold: 0.35
+        high_threshold: 0.92
+      academic_technical:
+        low_threshold: 0.35
+        high_threshold: 0.88
+      official_news:
+        low_threshold: 0.4
+        high_threshold: 0.86
+      general_qa:
+        low_threshold: 0.4
+        high_threshold: 0.8
   api_providers:
     hive:
       enabled: true
@@ -21,28 +53,31 @@ detection:
       enabled: true
       cache_dir: "models/huggingface"
       device: "auto"
-      threshold: 0.5
+      threshold: 0.8
       short_text_chars: 200
       max_length: 512
-      mixed_strategy: "max"
+      mixed_strategy: "mean"
       models:
         zh_long: "yuchuantian/AIGC_detector_zhv3"
         zh_short: "yuchuantian/AIGC_detector_zhv3short"
         en_long: "yuchuantian/AIGC_detector_env3"
         en_short: "yuchuantian/AIGC_detector_env3short"
+      segment_target_chars: 480
+      segment_max_chars: 640
+      segment_overlap_sentences: 1
   text:
     model_name: "distilgpt2"
-    threshold: 0.5
+    threshold: 0.8
   image:
     model_name: "efficientnet_v2_s"
-    threshold: 0.5
+    threshold: 0.8
   audio:
     model_name: "yamnet"
     sample_rate: 16000
-    threshold: 0.5
+    threshold: 0.8
   video:
     frame_interval: 30
-    threshold: 0.5
+    threshold: 0.8
   fusion:
     method: "weighted_average"
     weights:
@@ -204,11 +239,11 @@ provenance:
 report:
   provider: "llm"
   llm_provider: "deepseek"
-  api_key_env: "sk-de748f2605c1471abacaa9bff382c250"
+  api_key_env: "sk-ccae2f2b91ea47f6944000b577d051a3"
   base_url: "https://api.deepseek.com"
   model: "deepseek-v4-flash"
   thinking: "disabled"
-  max_tokens: 1000
+  max_tokens: 300
   cache_enabled: true
   cache_dir: "data/report_cache"
 api:

@@ -3,22 +3,6 @@
 这个文件是当前检测主路径。FastAPI 不直接调用模型，
 而是通过 `ApiFirstDetectionEngine` 得到统一的检测结果。
 
-当前真实状态：
-- demo_api 已实现，用于快速跑通端到端流程
-- Hive/Sightengine 只预留接口，还没有真实 HTTP 请求
-- local_models 只预留开关，还没有接入到主流程
-
-后续真实接 API 时，建议保持 ProviderResult 这个统一返回格式，
-这样前端、报告、数据库都不用改。
-
-detection 后续需要补充的内容：
-- 真实 API 请求：Hive、Sightengine 或其他服务的 HTTP client
-- 超时/重试/限流：避免外部 API 卡住整个后端
-- provider registry：按 modality 自动选择可用 provider
-- 分数校准：不同 provider 的 0.8 不一定含义相同，需要统一校准
-- 本地模型权重管理：模型路径、版本、device、懒加载、缓存
-- 评估集脚本：用固定测试集评估准确率、召回率、误报率
-- 审计日志：保存每个 provider 的请求 ID、耗时、错误原因
 """
 
 from __future__ import annotations
@@ -36,6 +20,7 @@ from typing import Any
 import requests
 import yaml
 
+from detection.false_positive_controller import FalsePositiveController
 from detection.text_detector import RoutedTextAigcDetector
 
 
@@ -71,6 +56,7 @@ class DetectionPackage:
     provider_results: list[ProviderResult]
     modality_scores: dict[str, float]
     model_scores: dict[str, float]
+    decision_details: dict[str, Any] = field(default_factory=dict)
 
 
 class ApiFirstDetectionEngine:
@@ -98,8 +84,10 @@ class ApiFirstDetectionEngine:
         self.threshold = float(detection_cfg.get("threshold", 0.5))
         self.demo_enabled = bool(detection_cfg.get("demo_provider_enabled", True))
         self.api_providers = detection_cfg.get("api_providers", {})
+        self.text_fp_cfg = detection_cfg.get("text_false_positive_control", {})
         self.local_cfg = detection_cfg.get("local_models", {})
         self.local_enabled = bool(self.local_cfg.get("enabled", False))
+        self._text_fp_controller = FalsePositiveController(self.text_fp_cfg)
         self._local_text_detector: RoutedTextAigcDetector | None = None
         # 后续可以在这里初始化 provider registry，例如：
         # {"image": [SightengineProvider(), LocalImageProvider()], "text": [HiveProvider()]}
@@ -117,15 +105,41 @@ class ApiFirstDetectionEngine:
 
         # 如果 config 中打开 Hive/Sightengine，这里会进入对应 provider。
         # provider 失败不会中断全流程，而是返回 status=error，方便前端展示。
-        results.extend(self._run_configured_api_providers(path, modality))
+        api_results = self._run_configured_api_providers(path, modality)
+        results.extend(api_results)
 
         if self.demo_enabled:
             # demo_api 是当前唯一真正返回分数的 provider。
-            results.append(self._run_demo_provider(path, modality, raw_data))
+            demo_result = self._run_demo_provider(
+                path,
+                modality,
+                raw_data,
+            )
+            results.append(demo_result)
 
         if self.local_enabled:
             # 本地模型作为额外检测分支，不改变 FastAPI 对外接口。
-            results.extend(self._run_local_model_providers(path, modality, raw_data))
+            local_results = self._run_local_model_providers(
+                path,
+                modality,
+                raw_data,
+            )
+            results.extend(local_results)
+
+        if modality == "text" and bool(self.text_fp_cfg.get("enabled", False)):
+            text = raw_data if isinstance(raw_data, str) else path.read_text(encoding="utf-8", errors="ignore")
+            decision = self._text_fp_controller.evaluate(text, results)
+            final_score = float(decision.score or 0.0)
+            high_threshold = float(decision.high_threshold or self.threshold)
+            return DetectionPackage(
+                score=round(final_score, 4),
+                label=decision.decision,
+                threshold=high_threshold,
+                provider_results=results,
+                modality_scores={modality: round(final_score, 4)},
+                model_scores=self._merge_model_scores(results),
+                decision_details=decision.to_dict(),
+            )
 
         # 只融合 status=ok 且有 score 的 provider。
         # reserved/not_configured provider 不参与最终分数。
@@ -210,6 +224,17 @@ class ApiFirstDetectionEngine:
                 "purpose": "Local text detector branch with Hugging Face weights cached under models/huggingface.",
             }
         )
+        fp_status = self._text_fp_controller.status()
+        providers.append(
+            {
+                "name": "text_false_positive_controller",
+                "type": "decision_controller",
+                "enabled": bool(self.text_fp_cfg.get("enabled", True)),
+                "configured": fp_status["artifact_loaded"],
+                "purpose": "Offline segmented aggregation with calibrated low/uncertain/high-risk decisions.",
+                "details": fp_status,
+            }
+        )
         return providers
 
     def _run_local_model_providers(
@@ -289,12 +314,20 @@ class ApiFirstDetectionEngine:
                 short_text_chars=int(cfg.get("short_text_chars", 200)),
                 threshold=float(cfg.get("threshold", self.threshold)),
                 device=str(cfg.get("device", "auto")),
-                mixed_strategy=str(cfg.get("mixed_strategy", "max")),
+                mixed_strategy=str(cfg.get("mixed_strategy", "mean")),
                 max_length=int(cfg.get("max_length", 512)),
+                segment_target_chars=int(cfg.get("segment_target_chars", 480)),
+                segment_max_chars=int(cfg.get("segment_max_chars", 640)),
+                segment_overlap_sentences=int(cfg.get("segment_overlap_sentences", 1)),
             )
         return self._local_text_detector
 
-    def _run_configured_api_providers(self, path: Path, modality: str) -> list[ProviderResult]:
+    def _run_configured_api_providers(
+        self,
+        path: Path,
+        modality: str,
+        text_override: str | None = None,
+    ) -> list[ProviderResult]:
         """运行配置中启用的外部 API provider。
 
         当前 Hive/Sightengine 已经会按配置真实请求。
@@ -303,7 +336,7 @@ class ApiFirstDetectionEngine:
         results: list[ProviderResult] = []
         hive_cfg = self.api_providers.get("hive", {})
         if hive_cfg.get("enabled", False):
-            results.append(self._run_hive_provider(path, modality, hive_cfg))
+            results.append(self._run_hive_provider(path, modality, hive_cfg, text_override=text_override))
 
         sight_cfg = self.api_providers.get("sightengine", {})
         if sight_cfg.get("enabled", False):
@@ -325,7 +358,13 @@ class ApiFirstDetectionEngine:
             },
         )
 
-    def _run_hive_provider(self, path: Path, modality: str, cfg: dict[str, Any]) -> ProviderResult:
+    def _run_hive_provider(
+        self,
+        path: Path,
+        modality: str,
+        cfg: dict[str, Any],
+        text_override: str | None = None,
+    ) -> ProviderResult:
         """调用 Hive 同步检测接口。
 
         Hive 的文本检测用 JSON `text_data`；图片/视频/音频用 multipart `media`。
@@ -333,10 +372,16 @@ class ApiFirstDetectionEngine:
         """
         api_version = str(cfg.get("api_version", "v2")).lower()
         if api_version in {"v3", "v3_vlm", "vlm"}:
-            return self._run_hive_v3_vlm_provider(path, modality, cfg)
-        return self._run_hive_v2_provider(path, modality, cfg)
+            return self._run_hive_v3_vlm_provider(path, modality, cfg, text_override=text_override)
+        return self._run_hive_v2_provider(path, modality, cfg, text_override=text_override)
 
-    def _run_hive_v2_provider(self, path: Path, modality: str, cfg: dict[str, Any]) -> ProviderResult:
+    def _run_hive_v2_provider(
+        self,
+        path: Path,
+        modality: str,
+        cfg: dict[str, Any],
+        text_override: str | None = None,
+    ) -> ProviderResult:
         """调用 Hive V2 task/sync 检测接口。
 
         这个分支需要 Hive Project/legacy key；Playground API Key 通常无权访问 V2。
@@ -360,7 +405,7 @@ class ApiFirstDetectionEngine:
             if modality == "text":
                 payload = {
                     "models": [model],
-                    "text_data": self._read_text_payload(path),
+                    "text_data": self._read_text_payload(path, text_override=text_override),
                     "user_id": "local-aigc-detector",
                     "post_id": path.stem,
                 }
@@ -433,7 +478,13 @@ class ApiFirstDetectionEngine:
                 error=str(exc),
             )
 
-    def _run_hive_v3_vlm_provider(self, path: Path, modality: str, cfg: dict[str, Any]) -> ProviderResult:
+    def _run_hive_v3_vlm_provider(
+        self,
+        path: Path,
+        modality: str,
+        cfg: dict[str, Any],
+        text_override: str | None = None,
+    ) -> ProviderResult:
         """调用 Hive V3 VLM，用提示词返回结构化 AIGC 判断。
 
         V3 Playground Key 走 OpenAI-compatible Chat Completions。
@@ -474,7 +525,7 @@ class ApiFirstDetectionEngine:
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
                 },
-                json=self._build_hive_v3_payload(path, modality, model),
+                json=self._build_hive_v3_payload(path, modality, model, text_override=text_override),
                 timeout=timeout,
             )
             response.raise_for_status()
@@ -529,13 +580,22 @@ class ApiFirstDetectionEngine:
                 error=str(exc),
             )
 
-    def _build_hive_v3_payload(self, path: Path, modality: str, model: str) -> dict[str, Any]:
+    def _build_hive_v3_payload(
+        self,
+        path: Path,
+        modality: str,
+        model: str,
+        text_override: str | None = None,
+    ) -> dict[str, Any]:
         """构造 Hive V3 Chat Completions 请求体。"""
         content: str | list[dict[str, Any]]
         instruction = self._hive_v3_instruction(modality)
 
         if modality == "text":
-            content = f"{instruction}\n\nContent to analyze:\n{self._read_text_payload(path)}"
+            content = (
+                f"{instruction}\n\nContent to analyze:\n"
+                f"{self._read_text_payload(path, text_override=text_override)}"
+            )
         else:
             media_part = self._hive_v3_media_part(path, modality)
             content = [media_part, {"type": "text", "text": instruction}]
@@ -732,8 +792,10 @@ class ApiFirstDetectionEngine:
             "audio": "ai_generated_audio",
         }.get(modality, "ai_generated_media")
 
-    def _read_text_payload(self, path: Path) -> str:
+    def _read_text_payload(self, path: Path, text_override: str | None = None) -> str:
         """读取文本内容给 Hive 文本检测接口。"""
+        if text_override is not None:
+            return text_override
         return path.read_text(encoding="utf-8", errors="ignore")
 
     def _extract_ai_score(self, payload: Any) -> float | None:

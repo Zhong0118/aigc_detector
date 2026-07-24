@@ -62,6 +62,26 @@ class ReportGenerator:
             f"综合检测分数为 {score:.2%}，判定阈值为 {threshold:.2f}，当前标签为“{self._label_name(label)}”。",
             f"系统识别输入类型为“{modality_name}”。",
         ]
+        decision = detection.get("decision") if isinstance(detection.get("decision"), dict) else {}
+        if decision:
+            low = float(decision.get("low_threshold") or 0.0)
+            high = float(decision.get("high_threshold") or threshold)
+            domain = self._domain_name(str(decision.get("domain") or "unknown"))
+            coverage = float(decision.get("analyzed_coverage") or 0.0)
+            evidence[0] = (
+                f"校准 AI 风险分数为 {score:.2%}，低风险阈值为 {low:.2%}，"
+                f"高风险阈值为 {high:.2%}，当前结论为“{self._label_name(label)}”。"
+            )
+            evidence.append(
+                f"文本路由为“{domain}”，实际检测覆盖率为 {coverage:.2%}，"
+                f"阈值组为“{decision.get('threshold_group', 'unknown')}”。"
+            )
+            reason_names = [
+                self._uncertainty_reason(str(reason))
+                for reason in decision.get("uncertainty_reasons", [])
+            ]
+            if reason_names:
+                evidence.append("不确定/拒判原因：" + "；".join(reason_names) + "。")
 
         if provenance["deep_triggered"]:
             evidence.append("检测分数达到深层溯源阈值，已继续执行内容凭证、水印和指纹库检查。")
@@ -283,6 +303,7 @@ class ReportGenerator:
                 "score": detection.get("score"),
                 "label": detection.get("label"),
                 "threshold": detection.get("threshold"),
+                "decision": detection.get("decision"),
                 "branches": self._provider_branches(detection.get("providers", [])),
                 "source_hints": self._public_score_map(detection.get("model_scores", {})),
             },
@@ -461,16 +482,24 @@ class ReportGenerator:
 
     def _summary(self, label: str, score: float, modality: str) -> str:
         modality_name = self._modality_name(modality)
-        if label == "ai":
+        if label == "uncertain":
+            return f"该{modality_name}的校准风险处于不确定区间，当前不能可靠判为人类或 AI。"
+        if label == "insufficient_evidence":
+            return f"该{modality_name}证据不足，本次没有形成有效的人类或 AI 判定。"
+        if label in {"ai", "high_risk_ai"}:
             if score >= 0.8:
                 return f"当前多路检测结果认为该{modality_name}高度疑似 AIGC 内容，综合风险分数为 {score:.2%}。"
             return f"当前多路检测结果认为该{modality_name}存在 AIGC 风险，综合风险分数为 {score:.2%}。"
         return f"当前证据未显示该{modality_name}具有明显 AIGC 特征，综合风险分数为 {score:.2%}。"
 
     def _recommendation(self, label: str, score: float) -> str:
-        if label == "ai" and score >= 0.8:
+        if label == "uncertain":
+            return "建议进行人工复核，并结合文本来源、上下文和片段分数，不要把不确定结果当作 AI 定论。"
+        if label == "insufficient_evidence":
+            return "建议检查检测模型是否成功加载，或补充更长文本后重新检测；证据恢复前不要作作者身份判断。"
+        if label in {"ai", "high_risk_ai"} and score >= 0.8:
             return "建议将该内容标记为高风险样本，优先复核检测分支证据，并继续查看 C2PA、水印、指纹库和来源归因结果。"
-        if label == "ai":
+        if label in {"ai", "high_risk_ai"}:
             return "建议保留当前检测记录，结合人工复核和后续溯源模块再做最终判断。"
         return "建议保留分析记录；如果外部上下文仍然可疑，再补充更深层的溯源或人工复核。"
 
@@ -488,7 +517,29 @@ class ReportGenerator:
         return {
             "ai": "疑似 AIGC",
             "human": "未明显检出 AIGC",
+            "high_risk_ai": "高风险疑似 AIGC",
+            "low_risk": "未明显检出 AIGC",
+            "uncertain": "不确定",
+            "insufficient_evidence": "证据不足",
         }.get(str(label), str(label))
+
+    def _domain_name(self, domain: str) -> str:
+        return {
+            "literature": "经典文学",
+            "academic_technical": "论文/技术文档",
+            "official_news": "公文/新闻",
+            "general_qa": "普通写作/问答",
+        }.get(domain, domain)
+
+    def _uncertainty_reason(self, reason: str) -> str:
+        return {
+            "no_usable_detector_score": "没有可用的检测模型分数",
+            "text_too_short": "文本短于可靠检测长度",
+            "score_in_uncertain_interval": "分数位于低风险与高风险阈值之间",
+            "isolated_high_segment": "仅有孤立片段达到高风险",
+            "insufficient_high_risk_coverage": "高风险片段覆盖不足",
+            "insufficient_analyzed_coverage": "实际检测覆盖不足",
+        }.get(reason, reason)
 
     def _load_config(self, config_path: str) -> dict[str, Any]:
         """读取 YAML 配置文件。"""

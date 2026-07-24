@@ -122,7 +122,7 @@ def request_with_progress(method: str, url: str, **kwargs):
         st.session_state["is_analyzing"] = False
 
 
-def render_score_gauge(score: float):
+def render_score_gauge(score: float, low_threshold: float = 0.4, high_threshold: float = 0.8):
     """渲染 AI 概率仪表盘。
 
     score 范围是 0 到 1。颜色区间用于帮助用户快速判断风险：
@@ -137,11 +137,11 @@ def render_score_gauge(score: float):
                 "axis": {"range": [0, 1]},
                 "bar": {"color": "#0f766e"},
                 "steps": [
-                    {"range": [0, 0.5], "color": "#e2e8f0"},
-                    {"range": [0.5, 0.75], "color": "#fde68a"},
-                    {"range": [0.75, 1], "color": "#fecaca"},
+                    {"range": [0, low_threshold], "color": "#dbeafe"},
+                    {"range": [low_threshold, high_threshold], "color": "#fde68a"},
+                    {"range": [high_threshold, 1], "color": "#fecaca"},
                 ],
-                "threshold": {"line": {"color": "#111827", "width": 3}, "value": 0.5},
+                "threshold": {"line": {"color": "#991b1b", "width": 3}, "value": high_threshold},
             },
         )
     )
@@ -162,20 +162,72 @@ def render_analysis(data: dict):
     - 原始 JSON
     """
     detection = data["detection"]
+    decision = detection.get("decision") or {}
     provenance = data["provenance"]
     report = data["report"]
 
     # 顶部四个 metric 用来快速回答：分数多少、标签是什么、类型是什么、记录 ID 是多少。
-    top = st.columns([1.2, 1, 1, 1])
-    top[0].metric("AI Score", f"{detection['score']:.2%}")
-    top[1].metric("Label", detection["label"].upper())
-    top[2].metric("Modality", data["modality"].upper())
-    top[3].metric("Content ID", data["content_id"])
+    label_names = {
+        "low_risk": "未明显检出",
+        "uncertain": "不确定",
+        "high_risk_ai": "高风险疑似 AI",
+        "insufficient_evidence": "证据不足",
+        "human": "未明显检出",
+        "ai": "疑似 AI",
+    }
+    domain_names = {
+        "literature": "经典文学",
+        "academic_technical": "论文/技术",
+        "official_news": "公文/新闻",
+        "general_qa": "普通写作/问答",
+    }
+    top = st.columns([1.15, 1.15, 1, 0.8])
+    top[0].metric("校准 AI 风险", f"{detection['score']:.2%}")
+    top[1].metric("检测结论", label_names.get(detection["label"], detection["label"]))
+    top[2].metric("文本类型", domain_names.get(decision.get("domain"), data["modality"].upper()))
+    top[3].metric("记录 ID", data["content_id"])
+
+    if detection["label"] == "uncertain":
+        st.warning("当前分数位于不确定区间，不能直接判为 AI。")
+    elif detection["label"] == "insufficient_evidence":
+        st.info("当前没有足够的有效模型证据，系统没有把 0 分解释为人类文本。")
 
     left, right = st.columns([0.92, 1.08])
     with left:
         # 左侧主要展示检测层证据。
-        render_score_gauge(detection["score"])
+        low_threshold = float(decision.get("low_threshold") or 0.4)
+        high_threshold = float(decision.get("high_threshold") or detection.get("threshold") or 0.8)
+        render_score_gauge(detection["score"], low_threshold, high_threshold)
+        if decision:
+            threshold_cols = st.columns(3)
+            threshold_cols[0].metric("低风险阈值", f"{low_threshold:.2%}")
+            threshold_cols[1].metric("高风险阈值", f"{high_threshold:.2%}")
+            threshold_cols[2].metric("检测覆盖", f"{float(decision.get('analyzed_coverage') or 0.0):.2%}")
+            st.caption(
+                f"阈值组：{decision.get('threshold_group', 'unknown')} | "
+                f"校准版本：{decision.get('artifact_version', 'built-in')}"
+            )
+            validation_samples = int(decision.get("threshold_validation_samples") or 0)
+            validation_fpr = decision.get("threshold_validation_fpr")
+            if validation_samples and validation_fpr is not None:
+                st.caption(
+                    f"独立验证样本：{validation_samples} | "
+                    f"留出集误报率：{float(validation_fpr):.2%}"
+                )
+            if decision.get("threshold_reliability_status") == "warning":
+                warning_names = {
+                    "calibrated_threshold_near_score_ceiling": "校准阈值接近模型分数上限",
+                    "holdout_fpr_above_target": "留出集误报率显著高于目标",
+                }
+                warnings = [
+                    warning_names.get(str(item), str(item))
+                    for item in decision.get("threshold_warnings") or []
+                ]
+                st.warning("阈值可靠性提示：" + "；".join(warnings))
+            reasons = decision.get("uncertainty_reasons") or []
+            if reasons:
+                st.caption("判定说明：" + "、".join(str(reason) for reason in reasons))
+
         st.subheader("Detection Evidence")
         for idx, provider in enumerate(detection["providers"]):
             cols = st.columns([1.1, 0.8, 0.8, 1.4])
@@ -186,6 +238,33 @@ def render_analysis(data: dict):
             details = provider.get("details", {})
             caption = details.get("explanation") or details.get("note") or details.get("score_source", "")
             cols[3].caption(public_evidence_text(str(caption)))
+
+        segments = decision.get("segments") or []
+        if segments:
+            st.subheader("片段风险分布")
+            segment_scores = [float(item.get("score") or 0.0) for item in segments]
+            colors = [
+                "#b91c1c" if value > high_threshold else "#ca8a04" if value > low_threshold else "#2563eb"
+                for value in segment_scores
+            ]
+            fig = go.Figure(
+                data=[
+                    go.Bar(
+                        x=[f"片段 {int(item.get('index', idx)) + 1}" for idx, item in enumerate(segments)],
+                        y=segment_scores,
+                        marker_color=colors,
+                        customdata=[
+                            f"字符 {item.get('start', 0)}-{item.get('end', 0)}"
+                            for item in segments
+                        ],
+                        hovertemplate="%{x}<br>风险=%{y:.2%}<br>%{customdata}<extra></extra>",
+                    )
+                ]
+            )
+            fig.add_hline(y=low_threshold, line_dash="dot", line_color="#2563eb")
+            fig.add_hline(y=high_threshold, line_dash="dash", line_color="#b91c1c")
+            fig.update_layout(height=250, yaxis_range=[0, 1], margin={"l": 20, "r": 20, "t": 10, "b": 20})
+            st.plotly_chart(fig, use_container_width=True)
 
         if detection["model_scores"]:
             # model_scores 当前来自 demo provider；未来可来自 Hive/Sightengine 或本地 attribution。

@@ -101,6 +101,7 @@ class AnalysisService:
                 "threshold": detection.threshold,
                 "modality_scores": detection.modality_scores,
                 "model_scores": detection.model_scores,
+                "decision": detection.decision_details,
                 # providers 保存每个检测来源的原始归一化结果，方便前端解释和后续调试。
                 "providers": [result.__dict__ for result in detection.provider_results],
             },

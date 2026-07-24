@@ -19,6 +19,8 @@ import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoModelForSequenceClassification, AutoTokenizer
 
+from detection.text_segmentation import SentenceAwareSegmenter
+
 
 @dataclass
 class DetectionResult:
@@ -109,6 +111,9 @@ class RoutedTextAigcDetector:
         device: str = "auto",
         mixed_strategy: str = "max",
         max_length: int = 512,
+        segment_target_chars: int = 480,
+        segment_max_chars: int = 640,
+        segment_overlap_sentences: int = 1,
     ) -> None:
         """初始化本地文本路由器。
 
@@ -122,32 +127,72 @@ class RoutedTextAigcDetector:
         self.device = self._resolve_device(device)
         self.mixed_strategy = mixed_strategy
         self.max_length = int(max_length)
+        self.segmenter = SentenceAwareSegmenter(
+            target_chars=int(segment_target_chars),
+            max_chars=int(segment_max_chars),
+            overlap_sentences=int(segment_overlap_sentences),
+        )
         self._loaded: dict[str, tuple[Any, Any]] = {}
 
     def detect(self, text: str) -> DetectionResult:
         """执行一次本地文本检测。"""
-        selected_keys = self.select_model_keys(text)
-        branch_scores: dict[str, float] = {}
+        segments = self.segmenter.split(text)
+        branch_score_lists: dict[str, list[float]] = {}
         branch_details: dict[str, Any] = {}
+        segment_details: list[dict[str, Any]] = []
+        weighted_scores: list[tuple[float, int]] = []
+        previous_end = 0
 
-        for key in selected_keys:
-            model_name = self.models[key]
-            score = self._run_model(key, model_name, text)
-            public_name = f"local-text-{key.replace('_', '-')}"
-            branch_scores[public_name] = round(score, 4)
-            branch_details[key] = {"model": model_name, "score": round(score, 4)}
+        for segment in segments:
+            selected_keys = self.select_model_keys(segment.text)
+            segment_branch_scores: dict[str, float] = {}
+            for key in selected_keys:
+                model_name = self.models[key]
+                score = self._run_model(key, model_name, segment.text)
+                public_name = f"local-text-{key.replace('_', '-')}"
+                segment_branch_scores[public_name] = round(score, 4)
+                branch_score_lists.setdefault(public_name, []).append(score)
+                branch_details[key] = {"model": model_name}
 
-        final_score = self._merge_branch_scores(list(branch_scores.values()))
+            segment_score = self._merge_branch_scores(list(segment_branch_scores.values()))
+            unique_start = max(segment.start, previous_end)
+            weight = max(1, segment.end - unique_start)
+            previous_end = max(previous_end, segment.end)
+            weighted_scores.append((segment_score, weight))
+            segment_details.append(
+                {
+                    "index": segment.index,
+                    "start": segment.start,
+                    "end": segment.end,
+                    "text": segment.text,
+                    "score": round(segment_score, 4),
+                    "model_scores": segment_branch_scores,
+                }
+            )
+
+        total_weight = sum(weight for _, weight in weighted_scores)
+        final_score = (
+            sum(score * weight for score, weight in weighted_scores) / total_weight
+            if total_weight
+            else 0.0
+        )
+        branch_scores = {
+            name: round(sum(scores) / len(scores), 4)
+            for name, scores in branch_score_lists.items()
+            if scores
+        }
         return DetectionResult(
             score=round(final_score, 4),
             label="ai" if final_score >= self.threshold else "human",
             details={
                 "language": self.detect_language(text),
                 "length_bucket": self.length_bucket(text),
-                "selected_models": selected_keys,
+                "selected_models": sorted(branch_details),
                 "cache_dir": self.cache_dir,
                 "model_scores": branch_scores,
                 "branch_details": branch_details,
+                "segments": segment_details,
+                "aggregation": "unique-character-weighted-mean",
                 "note": "Local open-source text detector branch with language/length routing.",
             },
         )

@@ -1,0 +1,256 @@
+{
+  "version": "fp-20260722T095059Z",
+  "calibration_kind": "human_only_split_conformal",
+  "decision_operator": "score > high_threshold",
+  "target_fpr": 0.02,
+  "sample_limit_per_dataset": 5000,
+  "validation_limit_per_dataset": 1000,
+  "minimum_group_samples": 50,
+  "minimum_validation_samples": 50,
+  "sources": {
+    "chinese_poetry": 5000,
+    "chinese_classical_corpus": 1516,
+    "csl": 8100
+  },
+  "validation_sources": {
+    "chinese_poetry": 1000,
+    "chinese_classical_corpus": 379,
+    "csl": 1898
+  },
+  "source_length_buckets": {
+    "chinese_poetry": {
+      "short": 5000,
+      "long": 0
+    },
+    "chinese_classical_corpus": {
+      "short": 0,
+      "long": 1516
+    },
+    "csl": {
+      "short": 4504,
+      "long": 3596
+    }
+  },
+  "validation_source_length_buckets": {
+    "chinese_poetry": {
+      "short": 1000,
+      "long": 0
+    },
+    "chinese_classical_corpus": {
+      "short": 0,
+      "long": 379
+    },
+    "csl": {
+      "short": 1000,
+      "long": 898
+    }
+  },
+  "licenses": {
+    "chinese_poetry": "MIT",
+    "chinese_classical_corpus": "CC0-1.0",
+    "csl": "Apache-2.0"
+  },
+  "sampling": {
+    "method": "deterministic_reservoir_without_cross_document_concatenation",
+    "seed": 20260722,
+    "validation_fraction_when_limited": 0.2,
+    "max_source_items": 120000,
+    "max_windows_per_document": 1,
+    "long_window_target_chars": 480,
+    "long_window_max_chars": 640
+  },
+  "groups": {
+    "global": {
+      "low_threshold": 0.4,
+      "high_threshold": 0.896,
+      "threshold_floor": 0.8,
+      "human_samples": 14616,
+      "calibration_quantiles": {
+        "p50": 0.1455,
+        "p90": 0.5771,
+        "p95": 0.735,
+        "p98": 0.8958,
+        "p99": 0.9565,
+        "max": 0.9996
+      },
+      "validation_samples": 3277,
+      "validation_false_positives": 66,
+      "validation_fpr": 0.02014,
+      "validation_fpr_interval_95": [
+        0.015862,
+        0.025542
+      ],
+      "reliability_status": "ok",
+      "warnings": [],
+      "target_fpr": 0.02
+    },
+    "zh": {
+      "low_threshold": 0.4,
+      "high_threshold": 0.896,
+      "threshold_floor": 0.8,
+      "human_samples": 14616,
+      "calibration_quantiles": {
+        "p50": 0.1455,
+        "p90": 0.5771,
+        "p95": 0.735,
+        "p98": 0.8958,
+        "p99": 0.9565,
+        "max": 0.9996
+      },
+      "validation_samples": 3277,
+      "validation_false_positives": 66,
+      "validation_fpr": 0.02014,
+      "validation_fpr_interval_95": [
+        0.015862,
+        0.025542
+      ],
+      "reliability_status": "ok",
+      "warnings": [],
+      "target_fpr": 0.02
+    },
+    "zh:academic_technical": {
+      "low_threshold": 0.35,
+      "high_threshold": 0.88,
+      "threshold_floor": 0.88,
+      "human_samples": 8100,
+      "calibration_quantiles": {
+        "p50": 0.0154,
+        "p90": 0.5046,
+        "p95": 0.5168,
+        "p98": 0.7855,
+        "p99": 0.9537,
+        "max": 0.9996
+      },
+      "validation_samples": 1898,
+      "validation_false_positives": 27,
+      "validation_fpr": 0.014226,
+      "validation_fpr_interval_95": [
+        0.009795,
+        0.020619
+      ],
+      "reliability_status": "ok",
+      "warnings": [],
+      "target_fpr": 0.02
+    },
+    "zh:academic_technical:long": {
+      "low_threshold": 0.35,
+      "high_threshold": 0.9449,
+      "threshold_floor": 0.88,
+      "human_samples": 3596,
+      "calibration_quantiles": {
+        "p50": 0.0161,
+        "p90": 0.5083,
+        "p95": 0.5706,
+        "p98": 0.9442,
+        "p99": 0.9821,
+        "max": 0.9995
+      },
+      "validation_samples": 898,
+      "validation_false_positives": 11,
+      "validation_fpr": 0.012249,
+      "validation_fpr_interval_95": [
+        0.006853,
+        0.021801
+      ],
+      "reliability_status": "ok",
+      "warnings": [],
+      "target_fpr": 0.02
+    },
+    "zh:academic_technical:short": {
+      "low_threshold": 0.35,
+      "high_threshold": 0.88,
+      "threshold_floor": 0.88,
+      "human_samples": 4504,
+      "calibration_quantiles": {
+        "p50": 0.0147,
+        "p90": 0.4816,
+        "p95": 0.5008,
+        "p98": 0.5993,
+        "p99": 0.8221,
+        "max": 0.9996
+      },
+      "validation_samples": 1000,
+      "validation_false_positives": 10,
+      "validation_fpr": 0.01,
+      "validation_fpr_interval_95": [
+        0.005441,
+        0.01831
+      ],
+      "reliability_status": "ok",
+      "warnings": [],
+      "target_fpr": 0.02
+    },
+    "zh:literature": {
+      "low_threshold": 0.35,
+      "high_threshold": 0.92,
+      "threshold_floor": 0.92,
+      "human_samples": 6516,
+      "calibration_quantiles": {
+        "p50": 0.2937,
+        "p90": 0.7011,
+        "p95": 0.8205,
+        "p98": 0.9187,
+        "p99": 0.961,
+        "max": 0.9993
+      },
+      "validation_samples": 1379,
+      "validation_false_positives": 37,
+      "validation_fpr": 0.026831,
+      "validation_fpr_interval_95": [
+        0.019528,
+        0.036763
+      ],
+      "reliability_status": "ok",
+      "warnings": [],
+      "target_fpr": 0.02
+    },
+    "zh:literature:long": {
+      "low_threshold": 0.35,
+      "high_threshold": 0.92,
+      "threshold_floor": 0.92,
+      "human_samples": 1516,
+      "calibration_quantiles": {
+        "p50": 0.2377,
+        "p90": 0.6693,
+        "p95": 0.7963,
+        "p98": 0.9167,
+        "p99": 0.9568,
+        "max": 0.9984
+      },
+      "validation_samples": 379,
+      "validation_false_positives": 10,
+      "validation_fpr": 0.026385,
+      "validation_fpr_interval_95": [
+        0.014394,
+        0.047882
+      ],
+      "reliability_status": "ok",
+      "warnings": [],
+      "target_fpr": 0.02
+    },
+    "zh:literature:short": {
+      "low_threshold": 0.35,
+      "high_threshold": 0.92,
+      "threshold_floor": 0.92,
+      "human_samples": 5000,
+      "calibration_quantiles": {
+        "p50": 0.3119,
+        "p90": 0.714,
+        "p95": 0.8257,
+        "p98": 0.9187,
+        "p99": 0.961,
+        "max": 0.9993
+      },
+      "validation_samples": 1000,
+      "validation_false_positives": 27,
+      "validation_fpr": 0.027,
+      "validation_fpr_interval_95": [
+        0.018621,
+        0.038999
+      ],
+      "reliability_status": "ok",
+      "warnings": [],
+      "target_fpr": 0.02
+    }
+  }
+}
