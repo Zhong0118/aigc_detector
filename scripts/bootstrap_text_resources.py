@@ -599,7 +599,7 @@ def _group_artifact(
     warnings: list[str] = []
     if threshold >= 0.99:
         warnings.append("calibrated_threshold_near_score_ceiling")
-    if fpr is not None and fpr > alpha:
+    if fpr_interval is not None and fpr_interval[0] > alpha:
         warnings.append("holdout_fpr_above_target")
     if len(human_validation) < minimum_validation_samples:
         warnings.append("insufficient_human_validation")
@@ -664,8 +664,12 @@ def _artifact_payload(
     source_buckets: dict[str, Counter[str]] = defaultdict(Counter)
     validation_source_buckets: dict[str, Counter[str]] = defaultdict(Counter)
     selected_group_counts: dict[str, dict[str, int]] = defaultdict(dict)
+    selected_identity_keys: dict[str, dict[str, list[str]]] = defaultdict(dict)
     for (group_name, role), candidates in selection.items():
         selected_group_counts[group_name][role] = len(candidates)
+        selected_identity_keys[group_name][role] = sorted(
+            candidate.sample.identity_key for candidate in candidates
+        )
         for candidate in candidates:
             source = candidate.sample.source
             if role == ROLE_HUMAN_CALIBRATION:
@@ -710,6 +714,10 @@ def _artifact_payload(
             "selected_group_counts": {
                 key: dict(sorted(value.items()))
                 for key, value in sorted(selected_group_counts.items())
+            },
+            "selected_identity_keys": {
+                key: dict(sorted(value.items()))
+                for key, value in sorted(selected_identity_keys.items())
             },
             "max_source_items": max_source_items,
             "max_windows_per_document": max_windows_per_document,

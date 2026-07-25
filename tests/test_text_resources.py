@@ -2813,6 +2813,78 @@ class TextResourceManagerTests(unittest.TestCase):
                 thresholds.append(result["groups"]["en:general_qa:short"]["high_threshold"])
         self.assertEqual(thresholds, [0.4, 0.4])
 
+    def test_artifact_records_selected_identity_keys_for_reproducibility(self) -> None:
+        class Detector:
+            def detect(self, text: str):
+                return type("Result", (), {"score": 0.2})()
+
+        spec = DatasetSpec(
+            name="identity_evidence",
+            url="https://example.invalid/identity.zip",
+            license="CC0-1.0",
+            domain="general_qa",
+            source="https://example.invalid/identity",
+            language="en",
+        )
+        samples = [
+            TextSample(
+                text=f"Stable calibration identity sample {index}",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id=f"identity-{index}",
+            )
+            for index in range(6)
+        ]
+        expected_keys = sorted(sample.identity_key for sample in samples)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp), dataset_specs=(spec,))
+            with patch.object(manager, "iter_source_samples", return_value=iter(samples)):
+                payload = build_threshold_artifact(
+                    manager,
+                    Detector(),
+                    human_calibration_limit=10,
+                    human_validation_limit=0,
+                    ai_validation_limit=0,
+                    validation_fraction=0,
+                    minimum_group_samples=3,
+                    minimum_validation_samples=0,
+                    minimum_ai_validation_samples=0,
+                    alpha=0.25,
+                    sampling_seed=79,
+                    min_effective_chars=5,
+                    high_threshold_floors={"default": 0.0},
+                )
+
+        recorded = payload["sampling"]["selected_identity_keys"]
+        self.assertEqual(
+            recorded["en:general_qa:short"]["human_calibration"],
+            expected_keys,
+        )
+
+    def test_holdout_fpr_warning_requires_wilson_lower_bound_above_target(self) -> None:
+        group = bootstrap_text_resources._group_artifact(
+            human_calibration=[0.1, 0.2, 0.3, 0.4],
+            human_validation=[0.9, *([0.1] * 19)],
+            ai_validation=[0.9, 0.8],
+            threshold=0.4,
+            threshold_floor=0.0,
+            low_threshold=0.2,
+            alpha=0.02,
+            minimum_validation_samples=1,
+            minimum_ai_validation_samples=1,
+            minimum_ai_recall=0.5,
+        )
+
+        self.assertGreater(group["validation_fpr"], group["target_fpr"])
+        self.assertLessEqual(
+            group["validation_fpr_interval_95"][0],
+            group["target_fpr"],
+        )
+        self.assertNotIn("holdout_fpr_above_target", group["warnings"])
+
     def test_partition_assignment_keeps_paired_samples_together(self) -> None:
         for partition in ("question-1", "question-2", "question-3"):
             human = TextSample(
