@@ -8,6 +8,7 @@ import itertools
 import json
 import math
 import os
+import shutil
 import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -170,6 +171,19 @@ RESOURCE_PROFILES = {
     "all": MULTIDOMAIN_DATASETS,
 }
 
+_LEGACY_MARKER_FIELDS = frozenset(
+    {
+        "name",
+        "url",
+        "license",
+        "domain",
+        "source",
+        "download_kind",
+        "filename",
+        "calibration_buckets",
+    }
+)
+
 
 def conformal_high_threshold(scores: Sequence[float], alpha: float = 0.02) -> float:
     """Return the finite-sample corrected human-score threshold."""
@@ -238,6 +252,7 @@ class TextResourceManager:
         spec = self.resource_spec(spec)
         target = self.dataset_dir / spec.name
         if self.is_source_ready(spec):
+            self._migrate_legacy_marker(spec)
             return target
         target.mkdir(parents=True, exist_ok=True)
         if spec.source_kind == "legacy_zip":
@@ -245,7 +260,7 @@ class TextResourceManager:
         elif spec.source_kind in {"legacy_file", "raid_csv"}:
             self._download_file(spec, target)
         elif spec.source_kind == "hf_dataset":
-            dataset = self._load_hf_dataset(spec)
+            dataset = self._load_hf_dataset(spec, streaming=False)
             self._validate_hf_splits(spec, dataset)
         else:
             raise ValueError(f"Unsupported dataset source kind: {spec.source_kind}")
@@ -303,7 +318,7 @@ class TextResourceManager:
         """Yield canonical samples without materializing the complete source in RAM."""
         spec = self.resource_spec(resource)
         if spec.source_kind == "hf_dataset":
-            dataset = self._load_hf_dataset(spec)
+            dataset = self._load_hf_dataset(spec, streaming=True)
             self._validate_hf_splits(spec, dataset)
             for split in spec.splits:
                 rows = dataset[split]
@@ -340,8 +355,9 @@ class TextResourceManager:
         marker = self.normalized_marker_path(spec)
         marker_partial = marker.with_suffix(marker.suffix + ".part")
         sample_count = 0
+        content_hasher = hashlib.sha256()
         try:
-            with partial.open("w", encoding="utf-8", newline="\n") as handle:
+            with partial.open("wb") as handle:
                 for sample in samples:
                     if not isinstance(sample, TextSample):
                         raise TypeError("normalized samples must be TextSample instances")
@@ -349,8 +365,9 @@ class TextResourceManager:
                         raise ValueError(
                             f"Sample source {sample.source!r} does not match {spec.name!r}"
                         )
-                    handle.write(_stable_json_dumps(asdict(sample)))
-                    handle.write("\n")
+                    line = f"{_stable_json_dumps(asdict(sample))}\n".encode("utf-8")
+                    handle.write(line)
+                    content_hasher.update(line)
                     sample_count += 1
                 handle.flush()
                 os.fsync(handle.fileno())
@@ -361,6 +378,7 @@ class TextResourceManager:
                     "source_spec_fingerprint": spec.fingerprint,
                     "sample_count": sample_count,
                     "normalized_path": output.name,
+                    "content_sha256": content_hasher.hexdigest(),
                 },
                 partial_path=marker_partial,
             )
@@ -396,7 +414,8 @@ class TextResourceManager:
         if payload is None:
             return False
         if spec.source_kind == "hf_dataset":
-            if not (self.dataset_dir / spec.name / "hf_cache").is_dir():
+            cache = self.dataset_dir / spec.name / "hf_cache"
+            if not cache.is_dir() or not any(path.is_file() for path in cache.rglob("*")):
                 return False
         elif spec.source_kind == "raid_csv":
             filename = spec.filename or "train_none.csv"
@@ -404,7 +423,7 @@ class TextResourceManager:
                 return False
         fingerprint = payload.get("source_spec_fingerprint")
         if fingerprint is None and spec.source_kind in {"legacy_zip", "legacy_file"}:
-            return True
+            return self._legacy_marker_matches(spec, payload)
         return fingerprint == spec.fingerprint
 
     def is_normalized_ready(self, resource: str | DatasetSpec) -> bool:
@@ -412,10 +431,15 @@ class TextResourceManager:
         if not self.normalized_path(spec).is_file():
             return False
         payload = self._read_json(self.normalized_marker_path(spec))
+        if not payload:
+            return False
+        expected_hash = payload.get("content_sha256")
+        if not isinstance(expected_hash, str) or len(expected_hash) != 64:
+            return False
         return bool(
-            payload
-            and payload.get("source_spec_fingerprint") == spec.fingerprint
+            payload.get("source_spec_fingerprint") == spec.fingerprint
             and payload.get("normalized_path") == self.normalized_path(spec).name
+            and self._file_sha256(self.normalized_path(spec)) == expected_hash
         )
 
     def _marker_path(self, spec: DatasetSpec) -> Path:
@@ -427,13 +451,32 @@ class TextResourceManager:
         return self.dataset_dir / spec.name / ".source.complete.json"
 
     def _download_and_extract(self, spec: DatasetSpec, target: Path) -> None:
-        archive = target / ".download.zip"
+        parent = target.parent
+        archive = parent / f".{spec.name}.download.zip"
+        staging = parent / f".{spec.name}.staging"
+        backup = parent / f".{spec.name}.backup"
+        parent.mkdir(parents=True, exist_ok=True)
+        self._remove_path(staging)
+        self._remove_path(backup)
         try:
             self._download_to_path(spec.url, archive)
+            staging.mkdir()
             with zipfile.ZipFile(archive) as bundle:
-                self._safe_extract(bundle, target)
+                self._safe_extract(bundle, staging)
+            if target.exists():
+                target.replace(backup)
+            try:
+                staging.replace(target)
+            except Exception:
+                if backup.exists() and not target.exists():
+                    backup.replace(target)
+                raise
+            self._remove_path(backup)
         finally:
             archive.unlink(missing_ok=True)
+            self._remove_path(staging)
+            if backup.exists() and not target.exists():
+                backup.replace(target)
 
     def _download_file(self, spec: DatasetSpec, target: Path) -> None:
         filename = spec.filename or Path(spec.url.split("?", 1)[0]).name
@@ -468,7 +511,7 @@ class TextResourceManager:
         finally:
             partial.unlink(missing_ok=True)
 
-    def _load_hf_dataset(self, spec: DatasetSpec) -> Any:
+    def _load_hf_dataset(self, spec: DatasetSpec, *, streaming: bool) -> Any:
         loader = self._dataset_loader
         if loader is None:
             from datasets import load_dataset
@@ -479,7 +522,7 @@ class TextResourceManager:
         args = [spec.dataset_id]
         if spec.dataset_config is not None:
             args.append(spec.dataset_config)
-        return loader(*args, cache_dir=str(cache_dir))
+        return loader(*args, cache_dir=str(cache_dir), streaming=streaming)
 
     def _adapt_rows(
         self,
@@ -575,6 +618,53 @@ class TextResourceManager:
         except (OSError, json.JSONDecodeError):
             return None
         return payload if isinstance(payload, dict) else None
+
+    def _legacy_marker_matches(
+        self,
+        spec: DatasetSpec,
+        payload: Mapping[str, Any],
+    ) -> bool:
+        if not _LEGACY_MARKER_FIELDS.issubset(payload):
+            return False
+        current = asdict(spec)
+        recorded_fields = {
+            key: value for key, value in payload.items() if key in current
+        }
+        expected_fields = {key: current[key] for key in recorded_fields}
+        return _stable_json_dumps(recorded_fields) == _stable_json_dumps(expected_fields)
+
+    def _migrate_legacy_marker(self, spec: DatasetSpec) -> None:
+        if spec.source_kind not in {"legacy_zip", "legacy_file"}:
+            return
+        marker = self._source_marker_path(spec)
+        payload = self._read_json(marker)
+        if not payload or payload.get("source_spec_fingerprint") is not None:
+            return
+        if not self._legacy_marker_matches(spec, payload):
+            return
+        self._write_json_atomic(
+            marker,
+            {
+                "source_spec_fingerprint": spec.fingerprint,
+                "source": asdict(spec),
+            },
+        )
+
+    def _file_sha256(self, path: Path) -> str | None:
+        digest = hashlib.sha256()
+        try:
+            with path.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    digest.update(chunk)
+        except OSError:
+            return None
+        return digest.hexdigest()
+
+    def _remove_path(self, path: Path) -> None:
+        if path.is_symlink() or path.is_file():
+            path.unlink(missing_ok=True)
+        elif path.exists():
+            shutil.rmtree(path)
 
     def _write_json_atomic(
         self,

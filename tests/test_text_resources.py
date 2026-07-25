@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from dataclasses import FrozenInstanceError
+import zipfile
+from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -427,6 +428,7 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertEqual([sample.label for sample in samples], ["human", "ai"])
         self.assertEqual([sample.language for sample in samples], ["en", "en"])
         self.assertEqual(loader_calls[0][0:2], ("Hello-SimpleAI/HC3", None))
+        self.assertIs(loader_calls[0][2]["streaming"], True)
         self.assertEqual(
             Path(loader_calls[0][2]["cache_dir"]),
             root / "data" / "text_false_positive" / "corpora" / "hc3_en" / "hf_cache",
@@ -511,6 +513,7 @@ class TextResourceManagerTests(unittest.TestCase):
             self.assertTrue(manager.is_normalized_ready("hc3_en"))
             self.assertFalse(output.with_suffix(output.suffix + ".part").exists())
             self.assertEqual(payload["sample_count"], 1)
+            self.assertEqual(len(payload["content_sha256"]), 64)
             self.assertEqual(
                 payload["source_spec_fingerprint"],
                 manager.resource_spec("hc3_en").fingerprint,
@@ -569,6 +572,40 @@ class TextResourceManagerTests(unittest.TestCase):
 
             self.assertFalse(changed_manager.is_normalized_ready(changed))
 
+    def test_failed_marker_publish_cannot_validate_replaced_normalized_content(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, profile="multidomain")
+            original = TextSample(
+                text="Original normalized content.",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source="hc3_en",
+                source_id="hc3_en:train:original:human:0",
+            )
+            replacement = replace(
+                original,
+                text="Replacement normalized content.",
+                source_id="hc3_en:train:replacement:human:0",
+            )
+            output = manager.write_normalized_samples("hc3_en", [original])
+            old_marker = manager.normalized_marker_path("hc3_en").read_bytes()
+
+            with patch.object(
+                manager,
+                "_write_json_atomic",
+                side_effect=OSError("marker publish failed"),
+            ):
+                with self.assertRaisesRegex(OSError, "marker publish failed"):
+                    manager.write_normalized_samples("hc3_en", [replacement])
+
+            self.assertIn("Replacement", output.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manager.normalized_marker_path("hc3_en").read_bytes(),
+                old_marker,
+            )
+            self.assertFalse(manager.is_normalized_ready("hc3_en"))
+
     def test_stale_source_fingerprint_and_missing_payload_are_not_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(project_root=tmp, profile="multidomain")
@@ -593,6 +630,99 @@ class TextResourceManagerTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertTrue(manager.is_source_ready(spec))
+
+    def test_empty_hf_cache_is_not_source_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, profile="multidomain")
+            spec = manager.resource_spec("hc3_en")
+            source = manager.dataset_dir / spec.name
+            cache = source / "hf_cache"
+            cache.mkdir(parents=True)
+            (source / ".source.complete.json").write_text(
+                json.dumps({"source_spec_fingerprint": spec.fingerprint}),
+                encoding="utf-8",
+            )
+
+            self.assertFalse(manager.is_source_ready(spec))
+            (cache / "prepared.arrow").write_bytes(b"fixture")
+            self.assertTrue(manager.is_source_ready(spec))
+
+    def test_legacy_marker_must_match_current_spec_before_compatibility_acceptance(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manager = TextResourceManager(project_root=root)
+            spec = manager.resource_spec("chinese_poetry")
+            target = manager.dataset_dir / spec.name
+            target.mkdir(parents=True)
+            legacy_marker = {
+                "name": spec.name,
+                "url": spec.url,
+                "license": spec.license,
+                "domain": spec.domain,
+                "source": spec.source,
+                "download_kind": spec.download_kind,
+                "filename": spec.filename,
+                "calibration_buckets": list(spec.calibration_buckets),
+            }
+            (target / ".complete.json").write_text(
+                json.dumps(legacy_marker),
+                encoding="utf-8",
+            )
+
+            self.assertTrue(manager.is_source_ready(spec))
+            changed = replace(spec, url="https://example.invalid/new-poetry.zip")
+            changed_manager = TextResourceManager(
+                project_root=root,
+                dataset_specs=(changed,),
+            )
+            self.assertFalse(changed_manager.is_source_ready(changed))
+
+            with patch.object(manager, "_download_and_extract") as download:
+                manager.ensure_dataset(spec)
+            migrated = json.loads(
+                (target / ".complete.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(download.call_count, 0)
+            self.assertEqual(
+                migrated["source_spec_fingerprint"],
+                spec.fingerprint,
+            )
+            self.assertFalse(changed_manager.is_source_ready(changed))
+
+    def test_zip_refresh_replaces_old_tree_without_stale_files(self) -> None:
+        spec = DatasetSpec(
+            name="zip_fixture",
+            url="https://example.invalid/archive.zip",
+            license="MIT",
+            domain="literature",
+            source="https://example.invalid/project",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, dataset_specs=(spec,))
+            target = manager.dataset_dir / spec.name
+            target.mkdir(parents=True)
+            (target / "obsolete.txt").write_text("old", encoding="utf-8")
+
+            def write_fixture_archive(url, destination):
+                with zipfile.ZipFile(destination, "w") as bundle:
+                    bundle.writestr("prepared/new.txt", "new")
+
+            with patch.object(
+                manager,
+                "_download_to_path",
+                side_effect=write_fixture_archive,
+            ):
+                prepared = manager.ensure_dataset(spec)
+
+            new_text = (prepared / "prepared" / "new.txt").read_text(encoding="utf-8")
+            obsolete_exists = (prepared / "obsolete.txt").exists()
+            staging_exists = (prepared.parent / ".zip_fixture.staging").exists()
+            backup_exists = (prepared.parent / ".zip_fixture.backup").exists()
+
+        self.assertEqual(new_text, "new")
+        self.assertFalse(obsolete_exists)
+        self.assertFalse(staging_exists)
+        self.assertFalse(backup_exists)
 
 
     def test_dataset_download_is_idempotent_after_complete_marker(self) -> None:
