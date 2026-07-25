@@ -3019,6 +3019,7 @@ class TextResourceManagerTests(unittest.TestCase):
                         alpha=0.25,
                         sampling_seed=71,
                         min_effective_chars=10,
+                        max_source_items=5,
                         high_threshold_floors={"default": 0.0},
                     )
                 normalized_outputs.append(
@@ -3033,6 +3034,107 @@ class TextResourceManagerTests(unittest.TestCase):
             payloads[1]["sampling"]["selected_group_counts"],
         )
         self.assertEqual(payloads[0]["sampling"]["excluded_short_total"], 1)
+        self.assertEqual(
+            payloads[0]["source_evidence"][spec.name]["scanned_samples"],
+            len(samples),
+        )
+        self.assertEqual(payloads[0]["sampling"]["source_scan_mode"], "complete")
+        self.assertFalse(payloads[0]["sampling"]["max_source_items_applied"])
+
+    def test_source_item_limit_never_splits_paired_partition(self) -> None:
+        spec = DatasetSpec(
+            name="paired_fixture",
+            url="https://example.invalid/paired.zip",
+            license="CC0-1.0",
+            domain="general_qa",
+            source="https://example.invalid/paired",
+            language="en",
+        )
+        samples = [
+            TextSample(
+                text="Human answer from a paired question.",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id="pair-1:human",
+                partition_id="pair-1",
+            ),
+            TextSample(
+                text="AI answer from the same paired question.",
+                label="ai",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id="pair-1:ai",
+                partition_id="pair-1",
+                generator="fixture-model",
+            ),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp), dataset_specs=(spec,))
+            with patch.object(
+                manager,
+                "iter_source_samples",
+                return_value=iter(samples),
+            ):
+                selection, evidence = (
+                    bootstrap_text_resources._select_multilingual_candidates(
+                        manager,
+                        human_calibration_limit=0,
+                        human_validation_limit=5,
+                        ai_validation_limit=5,
+                        validation_fraction=1,
+                        short_text_chars=200,
+                        long_target_chars=480,
+                        long_max_chars=640,
+                        min_effective_chars=5,
+                        sampling_seed=79,
+                        max_source_items=1,
+                        max_windows_per_document=1,
+                    )
+                )
+
+        selected_roles = {
+            role for (_, role), candidates in selection.items() if candidates
+        }
+        self.assertEqual(
+            selected_roles,
+            {
+                bootstrap_text_resources.ROLE_HUMAN_VALIDATION,
+                bootstrap_text_resources.ROLE_AI_VALIDATION,
+            },
+        )
+        self.assertEqual(evidence[spec.name]["scanned_samples"], 2)
+
+    def test_hash_reservoir_equal_priorities_use_identity_tie_breaker(self) -> None:
+        identity_keys: dict[str, str] = {}
+
+        def selected(source_ids: list[str]) -> list[str]:
+            reservoir = bootstrap_text_resources._HashPriorityReservoir(2)
+            for source_id in source_ids:
+                sample = TextSample(
+                    text=f"Stable tie-break sample {source_id}",
+                    label="human",
+                    language="en",
+                    domain="general_qa",
+                    source="tie_fixture",
+                    source_id=source_id,
+                )
+                identity_keys[source_id] = sample.identity_key
+                reservoir.add(
+                    bootstrap_text_resources._Candidate(
+                        sample=sample,
+                        length_bucket="short",
+                        role=bootstrap_text_resources.ROLE_HUMAN_CALIBRATION,
+                        priority=7,
+                    )
+                )
+            return [candidate.sample.identity_key for candidate in reservoir.values()]
+
+        expected = selected(["a", "m", "z"])
+        self.assertEqual(expected, selected(["z", "m", "a"]))
+        self.assertEqual(expected, sorted(identity_keys.values())[:2])
 
     def test_successful_artifact_records_detector_exception_classes(self) -> None:
         class Detector:
@@ -3087,6 +3189,28 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertEqual(
             payload["detector_failures"]["by_role"]["human_calibration"],
             {"TimeoutError": 1},
+        )
+        self.assertEqual(
+            payload["detector_failures"]["by_source"][spec.name],
+            {"TimeoutError": 1},
+        )
+        self.assertEqual(
+            payload["detector_failures"]["by_exact_group"][
+                "en:general_qa:short"
+            ],
+            {"TimeoutError": 1},
+        )
+        self.assertEqual(
+            payload["detector_failures"]["details"],
+            [
+                {
+                    "source": spec.name,
+                    "exact_group": "en:general_qa:short",
+                    "role": "human_calibration",
+                    "exception_class": "TimeoutError",
+                    "count": 1,
+                }
+            ],
         )
 
     def test_artifact_replace_failure_preserves_existing_bytes(self) -> None:

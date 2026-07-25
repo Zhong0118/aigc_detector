@@ -45,12 +45,24 @@ class _Candidate:
         return self.sample.group_key(self.length_bucket)
 
 
+@dataclass(frozen=True)
+class _DescendingIdentity:
+    """Reverse lexical ordering so heap root remains the worst identity."""
+
+    value: str
+
+    def __lt__(self, other: _DescendingIdentity) -> bool:
+        return self.value > other.value
+
+
 class _HashPriorityReservoir:
     """Keep the stable lowest-hash items without depending on input order."""
 
     def __init__(self, limit: int) -> None:
         self.limit = max(0, int(limit))
-        self._heap: list[tuple[int, str, _Candidate]] = []
+        self._heap: list[
+            tuple[int, _DescendingIdentity, str, _Candidate]
+        ] = []
         self._selected: set[str] = set()
 
     def add(self, candidate: _Candidate) -> None:
@@ -59,25 +71,30 @@ class _HashPriorityReservoir:
         identity = candidate.sample.identity_key
         if identity in self._selected:
             return
-        entry = (-candidate.priority, identity, candidate)
+        entry = (
+            -candidate.priority,
+            _DescendingIdentity(identity),
+            identity,
+            candidate,
+        )
         if len(self._heap) < self.limit:
             heapq.heappush(self._heap, entry)
             self._selected.add(identity)
             return
         worst_priority = -self._heap[0][0]
-        worst_identity = self._heap[0][1]
+        worst_identity = self._heap[0][2]
         if (candidate.priority, identity) >= (worst_priority, worst_identity):
             return
         removed = heapq.heapreplace(self._heap, entry)
-        self._selected.discard(removed[1])
+        self._selected.discard(removed[2])
         self._selected.add(identity)
 
     def values(self) -> list[_Candidate]:
         return [
-            entry[2]
+            entry[3]
             for entry in sorted(
                 self._heap,
-                key=lambda item: (-item[0], item[1]),
+                key=lambda item: (-item[0], item[2]),
             )
         ]
 
@@ -165,6 +182,11 @@ def build_threshold_artifact(
     )
     detector_failures: Counter[str] = Counter()
     detector_failures_by_role: dict[str, Counter[str]] = defaultdict(Counter)
+    detector_failures_by_source: dict[str, Counter[str]] = defaultdict(Counter)
+    detector_failures_by_exact_group: dict[str, Counter[str]] = defaultdict(
+        Counter
+    )
+    detector_failure_details: Counter[tuple[str, str, str, str]] = Counter()
     scored_by_source: dict[str, Counter[str]] = defaultdict(Counter)
     exact_groups = sorted({key[0] for key in selection})
     total_selected = sum(len(values) for values in selection.values())
@@ -178,6 +200,18 @@ def build_threshold_artifact(
             if error_name is not None:
                 detector_failures[error_name] += 1
                 detector_failures_by_role[role][error_name] += 1
+                detector_failures_by_source[candidate.sample.source][
+                    error_name
+                ] += 1
+                detector_failures_by_exact_group[exact_group][error_name] += 1
+                detector_failure_details[
+                    (
+                        candidate.sample.source,
+                        exact_group,
+                        role,
+                        error_name,
+                    )
+                ] += 1
                 continue
             assert score is not None
             for group_name in _group_fallbacks(
@@ -256,6 +290,9 @@ def build_threshold_artifact(
         scored_by_source=scored_by_source,
         detector_failures=detector_failures,
         detector_failures_by_role=detector_failures_by_role,
+        detector_failures_by_source=detector_failures_by_source,
+        detector_failures_by_exact_group=detector_failures_by_exact_group,
+        detector_failure_details=detector_failure_details,
         alpha=alpha,
         human_calibration_limit=human_calibration_limit,
         human_validation_limit=human_validation_limit,
@@ -324,10 +361,7 @@ def _select_multilingual_candidates(
         evidence[spec.name] = source_evidence
         try:
             source_samples = manager.iter_source_samples(spec)
-            for source_index, sample in enumerate(source_samples):
-                if max_source_items is not None and source_index >= max_source_items:
-                    source_evidence["scan_truncated_at"] = max_source_items
-                    break
+            for sample in source_samples:
                 source_evidence["scanned_samples"] += 1
                 source_evidence["labels"][sample.label] += 1
                 candidates, excluded_short = _candidate_samples(
@@ -643,6 +677,9 @@ def _artifact_payload(
     scored_by_source: dict[str, Counter[str]],
     detector_failures: Counter[str],
     detector_failures_by_role: dict[str, Counter[str]],
+    detector_failures_by_source: dict[str, Counter[str]],
+    detector_failures_by_exact_group: dict[str, Counter[str]],
+    detector_failure_details: Counter[tuple[str, str, str, str]],
     alpha: float,
     human_calibration_limit: int,
     human_validation_limit: int,
@@ -720,6 +757,13 @@ def _artifact_payload(
                 for key, value in sorted(selected_identity_keys.items())
             },
             "max_source_items": max_source_items,
+            "source_scan_mode": "complete",
+            "max_source_items_applied": False,
+            "max_source_items_semantics": (
+                "compatibility setting retained for configuration audit; "
+                "source scans are complete so input order and paired "
+                "partition boundaries cannot change selection"
+            ),
             "max_windows_per_document": max_windows_per_document,
             "min_effective_chars": min_effective_chars,
             "short_text_chars": short_text_chars,
@@ -735,6 +779,31 @@ def _artifact_payload(
                 role: dict(sorted(counts.items()))
                 for role, counts in sorted(detector_failures_by_role.items())
             },
+            "by_source": {
+                source: dict(sorted(counts.items()))
+                for source, counts in sorted(detector_failures_by_source.items())
+            },
+            "by_exact_group": {
+                group: dict(sorted(counts.items()))
+                for group, counts in sorted(
+                    detector_failures_by_exact_group.items()
+                )
+            },
+            "details": [
+                {
+                    "source": source,
+                    "exact_group": exact_group,
+                    "role": role,
+                    "exception_class": exception_class,
+                    "count": count,
+                }
+                for (
+                    source,
+                    exact_group,
+                    role,
+                    exception_class,
+                ), count in sorted(detector_failure_details.items())
+            ],
         },
         "groups": groups,
         # v1 compatibility fields
