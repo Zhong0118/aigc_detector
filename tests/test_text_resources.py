@@ -7,6 +7,8 @@ from dataclasses import FrozenInstanceError
 from pathlib import Path
 from unittest.mock import patch
 
+import requests
+
 from detection.text_resource_adapters import (
     TextSample,
     adapt_hc3_rows,
@@ -15,7 +17,13 @@ from detection.text_resource_adapters import (
     adapt_tnews_rows,
     normalize_source_domain,
 )
-from detection.text_resources import DatasetSpec, TextResourceManager, conformal_high_threshold
+from detection.text_resources import (
+    CORE_DATASETS,
+    MULTIDOMAIN_DATASETS,
+    DatasetSpec,
+    TextResourceManager,
+    conformal_high_threshold,
+)
 from scripts.bootstrap_text_resources import _balanced_human_samples, build_threshold_artifact
 
 
@@ -321,6 +329,51 @@ class TextResourceAdapterTests(unittest.TestCase):
 
 
 class TextResourceManagerTests(unittest.TestCase):
+    def test_resource_profiles_register_official_multidomain_sources(self) -> None:
+        core_names = {spec.name for spec in CORE_DATASETS}
+        multidomain = {spec.name: spec for spec in MULTIDOMAIN_DATASETS}
+
+        self.assertEqual(core_names, {"chinese_poetry", "chinese_classical_corpus", "csl"})
+        self.assertEqual(
+            set(multidomain),
+            core_names
+            | {"hc3_en", "hc3_zh", "tnews", "m4_multilingual", "raid_no_adversarial"},
+        )
+        self.assertEqual(multidomain["hc3_en"].dataset_id, "Hello-SimpleAI/HC3")
+        self.assertEqual(multidomain["hc3_zh"].dataset_id, "Hello-SimpleAI/HC3-Chinese")
+        self.assertEqual(multidomain["tnews"].dataset_id, "clue")
+        self.assertEqual(multidomain["tnews"].dataset_config, "tnews")
+        self.assertEqual(multidomain["tnews"].license, "unknown")
+        self.assertEqual(multidomain["m4_multilingual"].dataset_id, "d0rj/SemEval2024-task8")
+        self.assertEqual(
+            multidomain["m4_multilingual"].dataset_config,
+            "subtaskA_multilingual",
+        )
+        self.assertEqual(multidomain["m4_multilingual"].splits, ("train", "dev"))
+        self.assertEqual(multidomain["m4_multilingual"].license, "Apache-2.0")
+        self.assertEqual(
+            multidomain["m4_multilingual"].attribution_url,
+            "https://github.com/mbzuai-nlp/SemEval2024-task8",
+        )
+        self.assertEqual(
+            multidomain["raid_no_adversarial"].url,
+            "https://dataset.raid-bench.xyz/train_none.csv",
+        )
+        self.assertEqual(multidomain["raid_no_adversarial"].source_kind, "raid_csv")
+        self.assertEqual(multidomain["raid_no_adversarial"].license, "MIT")
+
+    def test_profile_aliases_select_expected_resources(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            core = TextResourceManager(project_root=tmp, profile="core")
+            multidomain = TextResourceManager(project_root=tmp, profile="multidomain")
+            all_resources = TextResourceManager(project_root=tmp, profile="all")
+
+        self.assertEqual(core.dataset_specs, CORE_DATASETS)
+        self.assertEqual(multidomain.dataset_specs, MULTIDOMAIN_DATASETS)
+        self.assertEqual(all_resources.dataset_specs, MULTIDOMAIN_DATASETS)
+        with self.assertRaisesRegex(ValueError, "profile"):
+            TextResourceManager(project_root=".", profile="unknown")
+
     def test_default_resources_stay_inside_project_directories(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -330,6 +383,10 @@ class TextResourceManagerTests(unittest.TestCase):
 
         self.assertEqual(Path(status["model_dir"]), root / "models" / "huggingface")
         self.assertEqual(Path(status["data_dir"]), root / "data" / "text_false_positive" / "corpora")
+        self.assertEqual(
+            Path(status["normalized_dir"]),
+            root / "data" / "text_false_positive" / "normalized",
+        )
         self.assertEqual(Path(status["artifact_path"]), root / "artifacts" / "text_fp_controller" / "thresholds.json")
         self.assertEqual(
             {item["name"] for item in status["datasets"]},
@@ -340,6 +397,203 @@ class TextResourceManagerTests(unittest.TestCase):
         )
         self.assertEqual(classical["license"], "CC0-1.0")
         self.assertEqual(classical["calibration_buckets"], ("long",))
+        self.assertIn("source_ready", classical)
+        self.assertIn("normalized_ready", classical)
+
+    def test_hugging_face_adapter_dispatch_is_streamed_from_project_cache(self) -> None:
+        loader_calls = []
+
+        def loader(dataset_id, dataset_config=None, **kwargs):
+            loader_calls.append((dataset_id, dataset_config, kwargs))
+            return {
+                "train": [
+                    {
+                        "id": "question-1",
+                        "human_answers": ["A human response."],
+                        "chatgpt_answers": ["An AI response."],
+                    }
+                ]
+            }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manager = TextResourceManager(
+                project_root=root,
+                profile="multidomain",
+                dataset_loader=loader,
+            )
+            samples = list(manager.iter_samples("hc3_en"))
+
+        self.assertEqual([sample.label for sample in samples], ["human", "ai"])
+        self.assertEqual([sample.language for sample in samples], ["en", "en"])
+        self.assertEqual(loader_calls[0][0:2], ("Hello-SimpleAI/HC3", None))
+        self.assertEqual(
+            Path(loader_calls[0][2]["cache_dir"]),
+            root / "data" / "text_false_positive" / "corpora" / "hc3_en" / "hf_cache",
+        )
+
+    def test_m4_dispatch_keeps_supported_languages_and_skips_others(self) -> None:
+        def loader(*args, **kwargs):
+            rows = [
+                {
+                    "id": "english",
+                    "text": "A human encyclopedia article.",
+                    "label": 0,
+                    "source": "wikipedia",
+                },
+                {
+                    "id": "chinese",
+                    "text": "这是一段机器生成的中文内容。",
+                    "label": 1,
+                    "source": "Chinese",
+                    "model": "chatgpt",
+                },
+                {
+                    "id": "arabic",
+                    "text": "نص عربي",
+                    "label": 0,
+                    "source": "Arabic",
+                },
+            ]
+            return {"train": rows, "dev": []}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                profile="multidomain",
+                dataset_loader=loader,
+            )
+            samples = list(manager.iter_samples("m4_multilingual"))
+
+        self.assertEqual([sample.language for sample in samples], ["en", "zh"])
+        self.assertEqual([sample.label for sample in samples], ["human", "ai"])
+
+    def test_raid_csv_is_processed_sequentially_without_bulk_materialization(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, profile="multidomain")
+            csv_path = manager.dataset_dir / "raid_no_adversarial" / "train_none.csv"
+            csv_path.parent.mkdir(parents=True)
+            csv_path.write_text(
+                "id,generation,model,domain,attack\n"
+                "human-1,A human report.,human,news,none\n"
+                "ai-1,A generated review.,gpt2,reviews,none\n"
+                "attacked,A modified sample.,gpt2,reviews,homoglyph\n",
+                encoding="utf-8",
+            )
+
+            sample_iterator = manager.iter_samples("raid_no_adversarial")
+            self.assertFalse(isinstance(sample_iterator, list))
+            samples = list(sample_iterator)
+
+        self.assertEqual([sample.label for sample in samples], ["human", "ai"])
+        self.assertEqual(
+            [sample.domain for sample in samples],
+            ["official_news", "general_qa"],
+        )
+
+    def test_normalized_samples_and_fingerprint_marker_are_published_atomically(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, profile="multidomain")
+            sample = TextSample(
+                text="A stable fixture sample.",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source="hc3_en",
+                source_id="hc3_en:train:fixture:human:0",
+            )
+
+            output = manager.write_normalized_samples("hc3_en", [sample])
+            marker = manager.normalized_marker_path("hc3_en")
+            payload = json.loads(marker.read_text(encoding="utf-8"))
+            serialized = output.read_text(encoding="utf-8").strip()
+
+            self.assertTrue(manager.is_normalized_ready("hc3_en"))
+            self.assertFalse(output.with_suffix(output.suffix + ".part").exists())
+            self.assertEqual(payload["sample_count"], 1)
+            self.assertEqual(
+                payload["source_spec_fingerprint"],
+                manager.resource_spec("hc3_en").fingerprint,
+            )
+            self.assertEqual(json.loads(serialized)["source_id"], sample.source_id)
+            self.assertEqual(
+                serialized,
+                json.dumps(
+                    json.loads(serialized),
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+            )
+
+    def test_stale_normalized_fingerprint_is_not_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            original = DatasetSpec(
+                name="fixture",
+                url="https://example.invalid/v1.csv",
+                license="CC0-1.0",
+                domain="general_qa",
+                source="https://example.invalid/project",
+                source_kind="raid_csv",
+                adapter="raid",
+                filename="fixture.csv",
+                language="en",
+            )
+            manager = TextResourceManager(project_root=root, dataset_specs=(original,))
+            manager.write_normalized_samples(
+                original,
+                [
+                    TextSample(
+                        text="A fixture sample.",
+                        label="human",
+                        language="en",
+                        domain="general_qa",
+                        source="fixture",
+                        source_id="fixture:train:1",
+                    )
+                ],
+            )
+            changed = DatasetSpec(
+                name="fixture",
+                url="https://example.invalid/v2.csv",
+                license="CC0-1.0",
+                domain="general_qa",
+                source="https://example.invalid/project",
+                source_kind="raid_csv",
+                adapter="raid",
+                filename="fixture.csv",
+                language="en",
+            )
+            changed_manager = TextResourceManager(project_root=root, dataset_specs=(changed,))
+
+            self.assertFalse(changed_manager.is_normalized_ready(changed))
+
+    def test_stale_source_fingerprint_and_missing_payload_are_not_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, profile="multidomain")
+            spec = manager.resource_spec("raid_no_adversarial")
+            source = manager.dataset_dir / spec.name
+            source.mkdir(parents=True)
+            marker = source / ".source.complete.json"
+            marker.write_text(
+                json.dumps({"source_spec_fingerprint": "stale"}),
+                encoding="utf-8",
+            )
+
+            self.assertFalse(manager.is_source_ready(spec))
+            marker.write_text(
+                json.dumps({"source_spec_fingerprint": spec.fingerprint}),
+                encoding="utf-8",
+            )
+            self.assertFalse(manager.is_source_ready(spec))
+
+            (source / "train_none.csv").write_text(
+                "id,generation,model,domain,attack\n",
+                encoding="utf-8",
+            )
+            self.assertTrue(manager.is_source_ready(spec))
+
 
     def test_dataset_download_is_idempotent_after_complete_marker(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -384,6 +638,49 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(request.call_count, 1)
         self.assertEqual(downloaded_bytes, b'{"content":"classical text"}\n')
+
+    def test_direct_download_retries_and_leaves_no_partial_file(self) -> None:
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield b"id,generation,model,domain,attack\n"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                profile="multidomain",
+                download_retries=3,
+            )
+            spec = manager.resource_spec("raid_no_adversarial")
+            with patch(
+                "detection.text_resources.requests.get",
+                side_effect=[
+                    requests.ConnectTimeout("first"),
+                    requests.ConnectTimeout("second"),
+                    Response(),
+                ],
+            ) as request:
+                target = manager.ensure_dataset(spec)
+
+            destination = target / "train_none.csv"
+            partial = destination.with_suffix(destination.suffix + ".part")
+            downloaded_text = destination.read_text(encoding="utf-8")
+            partial_exists = partial.exists()
+
+        self.assertEqual(request.call_count, 3)
+        self.assertEqual(
+            downloaded_text,
+            "id,generation,model,domain,attack\n",
+        )
+        self.assertFalse(partial_exists)
 
     def test_iter_human_texts_reads_poetry_and_csl_formats(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
