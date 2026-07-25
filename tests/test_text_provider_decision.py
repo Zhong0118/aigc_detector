@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -79,6 +80,59 @@ class TextProviderDecisionTests(unittest.TestCase):
 
         self.assertNotIn("public_source_matcher", names)
         self.assertIn("text_false_positive_controller", names)
+
+    def test_provider_decision_exposes_artifact_v2_reliability_evidence(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        artifact = root / "thresholds.json"
+        artifact.write_text(
+            json.dumps(
+                {
+                    "artifact_schema_version": 2,
+                    "version": "provider-v2",
+                    "groups": {
+                        "en:academic_technical:short": {
+                            "low_threshold": 0.4,
+                            "high_threshold": 0.92,
+                            "human_validation_samples": 80,
+                            "validation_fpr": 0.0125,
+                            "ai_validation_samples": 75,
+                            "ai_recall": 0.84,
+                            "validation_auroc": 0.9,
+                            "reliability_status": "ok",
+                            "warnings": [],
+                        }
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        engine, engine_root, engine_tmp = self._engine(
+            {
+                "threshold": 0.8,
+                "demo_provider_enabled": True,
+                "local_models": {"enabled": False},
+                "text_false_positive_control": {
+                    "enabled": True,
+                    "artifact_path": str(artifact),
+                    "min_effective_chars": 8,
+                },
+            }
+        )
+        self.addCleanup(engine_tmp.cleanup)
+        text_path = engine_root / "input.txt"
+        text = "This study proposes a neural method and reports experimental results."
+        text_path.write_text(text, encoding="utf-8")
+        demo_result = ProviderResult("demo", "test", "ok", 0.7, "ai")
+
+        with patch.object(engine, "_run_demo_provider", return_value=demo_result):
+            package = engine.detect(text_path, "text", text)
+
+        self.assertEqual(package.decision_details["threshold_ai_recall"], 0.84)
+        self.assertEqual(package.decision_details["threshold_ai_validation_samples"], 75)
+        self.assertEqual(package.decision_details["threshold_validation_auroc"], 0.9)
+        self.assertEqual(package.decision_details["threshold_reliability_status"], "ok")
 
 
 if __name__ == "__main__":

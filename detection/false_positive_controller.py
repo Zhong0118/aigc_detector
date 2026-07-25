@@ -9,6 +9,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
+from detection.text_domain import TextDomainRouter
+
 
 @dataclass
 class FalsePositiveDecision:
@@ -25,6 +27,9 @@ class FalsePositiveDecision:
     adjacent_high_segments: int
     threshold_validation_fpr: float | None = None
     threshold_validation_samples: int = 0
+    threshold_ai_recall: float | None = None
+    threshold_ai_validation_samples: int = 0
+    threshold_validation_auroc: float | None = None
     threshold_reliability_status: str = "not_evaluated"
     threshold_warnings: list[str] = field(default_factory=list)
     uncertainty_reasons: list[str] = field(default_factory=list)
@@ -39,23 +44,6 @@ class FalsePositiveDecision:
 class FalsePositiveController:
     """Apply routing, calibrated thresholds and a four-way decision policy."""
 
-    _LITERATURE_MARKERS = (
-        "宝玉",
-        "黛玉",
-        "贾母",
-        "悟空",
-        "唐僧",
-        "八戒",
-        "诗曰",
-        "词曰",
-        "却说",
-        "只见",
-        "公子",
-        "姑娘",
-    )
-    _ACADEMIC_MARKERS = ("本文", "研究", "实验", "方法", "结果表明", "算法", "模型", "数据集", "关键词")
-    _OFFICIAL_MARKERS = ("通知", "公告", "决定", "根据", "现将", "有关事项", "记者", "会议指出")
-
     def __init__(self, config: dict[str, Any] | None = None) -> None:
         self.config = config or {}
         self.min_effective_chars = int(self.config.get("min_effective_chars", 120))
@@ -65,6 +53,7 @@ class FalsePositiveController:
         self.min_high_coverage = float(self.config.get("min_high_coverage", 0.3))
         self.min_adjacent = int(self.config.get("min_adjacent_high_segments", 2))
         self.domain_thresholds = self.config.get("domain_thresholds", {})
+        self.domain_router = TextDomainRouter()
         self.artifact = self._load_artifact(self.config.get("artifact_path"))
         self.artifact_version = str(self.artifact.get("version", "built-in"))
 
@@ -73,7 +62,11 @@ class FalsePositiveController:
         language = self._language(text)
         domain, domain_confidence = self._domain(text)
         length_bucket = "short" if effective_chars <= self.short_text_chars else "long"
-        group, low_threshold, high_threshold = self._thresholds(language, domain, length_bucket)
+        group, low_threshold, high_threshold, threshold_warnings = self._thresholds(
+            language,
+            domain,
+            length_bucket,
+        )
         usable = [
             result
             for result in provider_results
@@ -91,6 +84,7 @@ class FalsePositiveController:
                 domain_confidence=domain_confidence,
                 length_bucket=length_bucket,
                 reasons=["no_usable_detector_score"],
+                threshold_warnings=threshold_warnings,
             )
 
         provider_scores = [float(result.score) for result in usable]
@@ -138,6 +132,7 @@ class FalsePositiveController:
             adjacent=adjacent,
             reasons=reasons,
             segments=segments,
+            threshold_warnings=threshold_warnings,
         )
 
     def status(self) -> dict[str, Any]:
@@ -147,6 +142,7 @@ class FalsePositiveController:
             "artifact_path": path,
             "artifact_loaded": bool(self.artifact),
             "artifact_version": self.artifact_version,
+            "artifact_schema_version": self.artifact.get("artifact_schema_version"),
             "target_fpr": float(self.config.get("target_fpr", 0.02)),
         }
 
@@ -166,8 +162,12 @@ class FalsePositiveController:
         adjacent: int = 0,
         reasons: list[str] | None = None,
         segments: list[dict[str, Any]] | None = None,
+        threshold_warnings: list[str] | None = None,
     ) -> FalsePositiveDecision:
-        diagnostics = self._threshold_diagnostics(group)
+        diagnostics = self._threshold_diagnostics(
+            group,
+            extra_warnings=threshold_warnings or [],
+        )
         return FalsePositiveDecision(
             score=None if score is None else round(score, 4),
             decision=decision,
@@ -182,27 +182,45 @@ class FalsePositiveController:
             adjacent_high_segments=adjacent,
             threshold_validation_fpr=diagnostics[0],
             threshold_validation_samples=diagnostics[1],
-            threshold_reliability_status=diagnostics[2],
-            threshold_warnings=diagnostics[3],
+            threshold_ai_recall=diagnostics[2],
+            threshold_ai_validation_samples=diagnostics[3],
+            threshold_validation_auroc=diagnostics[4],
+            threshold_reliability_status=diagnostics[5],
+            threshold_warnings=diagnostics[6],
             uncertainty_reasons=reasons or [],
             segments=segments or [],
             artifact_version=self.artifact_version,
         )
 
-    def _thresholds(self, language: str, domain: str, length_bucket: str) -> tuple[str, float, float]:
-        groups = self.artifact.get("groups", {})
-        calibrated_candidates = (
-            f"{language}:{domain}:{length_bucket}",
-            f"{language}:{domain}",
+    def _thresholds(
+        self,
+        language: str,
+        domain: str,
+        length_bucket: str,
+    ) -> tuple[str, float, float, list[str]]:
+        if language != "mixed":
+            return (*self._language_thresholds(language, domain, length_bucket), [])
+
+        mixed = self._calibrated_thresholds("mixed", domain, length_bucket)
+        if mixed is not None:
+            return (*mixed, [])
+
+        candidates = (
+            self._language_thresholds("zh", domain, length_bucket),
+            self._language_thresholds("en", domain, length_bucket),
         )
-        for candidate in calibrated_candidates:
-            entry = groups.get(candidate)
-            if isinstance(entry, dict):
-                return (
-                    candidate,
-                    float(entry.get("low_threshold", self.default_low)),
-                    float(entry.get("high_threshold", self.default_high)),
-                )
+        selected = max(candidates, key=lambda item: (item[2], item[1], item[0]))
+        return (*selected, ["mixed_language_threshold_fallback"])
+
+    def _language_thresholds(
+        self,
+        language: str,
+        domain: str,
+        length_bucket: str,
+    ) -> tuple[str, float, float]:
+        calibrated = self._calibrated_thresholds(language, domain, length_bucket)
+        if calibrated is not None:
+            return calibrated
         entry = self.domain_thresholds.get(domain)
         if isinstance(entry, dict):
             return (
@@ -210,7 +228,27 @@ class FalsePositiveController:
                 float(entry.get("low_threshold", self.default_low)),
                 float(entry.get("high_threshold", self.default_high)),
             )
-        for candidate in (language, "global"):
+        groups = self.artifact.get("groups", {})
+        entry = groups.get(language)
+        if isinstance(entry, dict):
+            return (
+                language,
+                float(entry.get("low_threshold", self.default_low)),
+                float(entry.get("high_threshold", self.default_high)),
+            )
+        return f"built-in:{domain}:{length_bucket}", self.default_low, self.default_high
+
+    def _calibrated_thresholds(
+        self,
+        language: str,
+        domain: str,
+        length_bucket: str,
+    ) -> tuple[str, float, float] | None:
+        groups = self.artifact.get("groups", {})
+        for candidate in (
+            f"{language}:{domain}:{length_bucket}",
+            f"{language}:{domain}",
+        ):
             entry = groups.get(candidate)
             if isinstance(entry, dict):
                 return (
@@ -218,18 +256,49 @@ class FalsePositiveController:
                     float(entry.get("low_threshold", self.default_low)),
                     float(entry.get("high_threshold", self.default_high)),
                 )
-        return f"built-in:{domain}:{length_bucket}", self.default_low, self.default_high
+        return None
 
-    def _threshold_diagnostics(self, group: str) -> tuple[float | None, int, str, list[str]]:
+    def _threshold_diagnostics(
+        self,
+        group: str,
+        *,
+        extra_warnings: list[str],
+    ) -> tuple[
+        float | None,
+        int,
+        float | None,
+        int,
+        float | None,
+        str,
+        list[str],
+    ]:
         entry = self.artifact.get("groups", {}).get(group)
         if not isinstance(entry, dict):
-            return None, 0, "not_evaluated", []
+            return None, 0, None, 0, None, "not_evaluated", list(extra_warnings)
         validation_fpr = entry.get("validation_fpr")
+        ai_recall = entry.get("ai_recall")
+        validation_auroc = entry.get("validation_auroc")
+        warnings = [
+            *[str(item) for item in entry.get("warnings", [])],
+            *extra_warnings,
+        ]
+        warnings = list(dict.fromkeys(warnings))
+        reliability = str(entry.get("reliability_status", "not_evaluated"))
+        if extra_warnings and reliability == "ok":
+            reliability = "warning"
         return (
             None if validation_fpr is None else round(float(validation_fpr), 6),
-            int(entry.get("validation_samples", 0)),
-            str(entry.get("reliability_status", "not_evaluated")),
-            [str(item) for item in entry.get("warnings", [])],
+            int(
+                entry.get(
+                    "human_validation_samples",
+                    entry.get("validation_samples", 0),
+                )
+            ),
+            None if ai_recall is None else round(float(ai_recall), 6),
+            int(entry.get("ai_validation_samples", 0)),
+            None if validation_auroc is None else round(float(validation_auroc), 6),
+            reliability,
+            warnings,
         )
 
     def _segments(self, usable: list[Any]) -> list[dict[str, Any]]:
@@ -269,13 +338,8 @@ class FalsePositiveController:
         return len(covered) / text_length, len(high) / text_length, longest
 
     def _domain(self, text: str) -> tuple[str, float]:
-        if any(marker in text for marker in self._LITERATURE_MARKERS):
-            return "literature", 0.9
-        if any(marker in text for marker in self._ACADEMIC_MARKERS):
-            return "academic_technical", 0.8
-        if any(marker in text for marker in self._OFFICIAL_MARKERS):
-            return "official_news", 0.8
-        return "general_qa", 0.55
+        decision = self.domain_router.classify(text)
+        return decision.domain, decision.confidence
 
     def _language(self, text: str) -> str:
         chinese = sum(1 for char in text if "\u4e00" <= char <= "\u9fff")

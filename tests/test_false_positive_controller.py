@@ -246,6 +246,127 @@ class FalsePositiveControllerTests(unittest.TestCase):
         self.assertEqual(decision.high_threshold, 0.8)
         self.assertEqual(decision.decision, "high_risk_ai")
 
+    def test_english_exact_group_propagates_artifact_v2_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "thresholds.json"
+            artifact.write_text(
+                json.dumps(
+                    {
+                        "artifact_schema_version": 2,
+                        "version": "fp-v2",
+                        "groups": {
+                            "en:academic_technical:short": {
+                                "low_threshold": 0.35,
+                                "high_threshold": 0.91,
+                                "human_validation_samples": 120,
+                                "validation_fpr": 0.016667,
+                                "ai_validation_samples": 110,
+                                "ai_recall": 0.81,
+                                "validation_auroc": 0.88,
+                                "reliability_status": "warning",
+                                "warnings": ["ai_recall_below_minimum"],
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            controller = FalsePositiveController(
+                {
+                    "artifact_path": str(artifact),
+                    "min_effective_chars": 8,
+                    "short_text_chars": 200,
+                }
+            )
+
+            decision = controller.evaluate(
+                "This study proposes a neural method and reports experimental results.",
+                [FakeProviderResult(score=0.7)],
+            )
+
+        self.assertEqual(decision.domain, "academic_technical")
+        self.assertEqual(decision.threshold_group, "en:academic_technical:short")
+        self.assertEqual(decision.threshold_validation_samples, 120)
+        self.assertEqual(decision.threshold_ai_validation_samples, 110)
+        self.assertEqual(decision.threshold_ai_recall, 0.81)
+        self.assertEqual(decision.threshold_validation_auroc, 0.88)
+        self.assertEqual(decision.threshold_reliability_status, "warning")
+        self.assertEqual(decision.threshold_warnings, ["ai_recall_below_minimum"])
+
+    def test_chinese_news_uses_exact_calibrated_group(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "thresholds.json"
+            artifact.write_text(
+                json.dumps(
+                    {
+                        "version": "news-v2",
+                        "groups": {
+                            "zh:official_news:short": {
+                                "low_threshold": 0.4,
+                                "high_threshold": 0.94,
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            controller = FalsePositiveController(
+                {
+                    "artifact_path": str(artifact),
+                    "min_effective_chars": 8,
+                }
+            )
+
+            decision = controller.evaluate(
+                "有关部门发布公告，会议指出将进一步落实相关工作。",
+                [FakeProviderResult(score=0.9)],
+            )
+
+        self.assertEqual(decision.domain, "official_news")
+        self.assertEqual(decision.threshold_group, "zh:official_news:short")
+        self.assertEqual(decision.high_threshold, 0.94)
+        self.assertEqual(decision.decision, "uncertain")
+
+    def test_mixed_language_uses_stricter_language_threshold_and_warns(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "thresholds.json"
+            artifact.write_text(
+                json.dumps(
+                    {
+                        "version": "mixed-v2",
+                        "groups": {
+                            "zh:academic_technical:short": {
+                                "low_threshold": 0.4,
+                                "high_threshold": 0.93,
+                                "ai_recall": 0.7,
+                            },
+                            "en:academic_technical:short": {
+                                "low_threshold": 0.4,
+                                "high_threshold": 0.86,
+                                "ai_recall": 0.9,
+                            },
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            controller = FalsePositiveController(
+                {
+                    "artifact_path": str(artifact),
+                    "min_effective_chars": 8,
+                }
+            )
+
+            decision = controller.evaluate(
+                "本研究 proposes a neural method 并报告实验结果。",
+                [FakeProviderResult(score=0.9)],
+            )
+
+        self.assertEqual(decision.threshold_group, "zh:academic_technical:short")
+        self.assertEqual(decision.high_threshold, 0.93)
+        self.assertEqual(decision.decision, "uncertain")
+        self.assertIn("mixed_language_threshold_fallback", decision.threshold_warnings)
+
     def test_long_document_requires_distributed_segment_evidence(self) -> None:
         controller = FalsePositiveController(
             {
