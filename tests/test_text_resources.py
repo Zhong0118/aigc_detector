@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 import unittest
@@ -368,12 +369,25 @@ class TextResourceManagerTests(unittest.TestCase):
             core = TextResourceManager(project_root=tmp, profile="core")
             multidomain = TextResourceManager(project_root=tmp, profile="multidomain")
             all_resources = TextResourceManager(project_root=tmp, profile="all")
+            documented = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+            )
 
         self.assertEqual(core.dataset_specs, CORE_DATASETS)
         self.assertEqual(multidomain.dataset_specs, MULTIDOMAIN_DATASETS)
         self.assertEqual(all_resources.dataset_specs, MULTIDOMAIN_DATASETS)
+        self.assertEqual(documented.dataset_specs, MULTIDOMAIN_DATASETS)
+        self.assertEqual(documented.dataset_profile, "multidomain")
+        self.assertEqual(documented.profile, "multidomain")
         with self.assertRaisesRegex(ValueError, "profile"):
             TextResourceManager(project_root=".", profile="unknown")
+        with self.assertRaisesRegex(ValueError, "conflicting.*profile"):
+            TextResourceManager(
+                project_root=".",
+                dataset_profile="multidomain",
+                profile="core",
+            )
 
     def test_default_resources_stay_inside_project_directories(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -469,6 +483,83 @@ class TextResourceManagerTests(unittest.TestCase):
 
         self.assertEqual([sample.language for sample in samples], ["en", "zh"])
         self.assertEqual([sample.label for sample in samples], ["human", "ai"])
+
+    def test_hf_ensure_scans_every_configured_split_before_publishing_manifest(self) -> None:
+        loader_calls = []
+
+        def loader(*args, **kwargs):
+            loader_calls.append(kwargs)
+            return {
+                "train": [{"id": "train-1", "sentence": "训练新闻样本。"}],
+                "validation": [{"id": "validation-1", "sentence": "验证新闻样本。"}],
+            }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+                dataset_loader=loader,
+            )
+            spec = manager.resource_spec("tnews")
+
+            manager.ensure_dataset(spec)
+            marker = json.loads(
+                (manager.dataset_dir / spec.name / ".source.complete.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+
+            self.assertTrue(manager.is_source_ready(spec))
+
+        self.assertIs(loader_calls[0]["streaming"], True)
+        self.assertEqual(marker["validated_splits"], ["train", "validation"])
+        self.assertEqual(set(marker["split_evidence"]), {"train", "validation"})
+        self.assertEqual(marker["split_evidence"]["train"]["raw_rows"], 1)
+        self.assertEqual(marker["split_evidence"]["validation"]["adapted_samples"], 1)
+        self.assertEqual(len(marker["scan_sha256"]), 64)
+        self.assertEqual(
+            marker["cache_evidence"],
+            {
+                "kind": "streaming_content_digest",
+                "cache_dir": "hf_cache",
+                "scan_sha256": marker["scan_sha256"],
+            },
+        )
+
+    def test_hf_incomplete_or_corrupt_split_manifest_is_not_ready(self) -> None:
+        def incomplete_loader(*args, **kwargs):
+            return {"train": [{"id": "train-1", "sentence": "只有训练集。"}]}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+                dataset_loader=incomplete_loader,
+            )
+            spec = manager.resource_spec("tnews")
+            marker_path = manager.dataset_dir / spec.name / ".source.complete.json"
+
+            with self.assertRaisesRegex(RuntimeError, "validation"):
+                manager.ensure_dataset(spec)
+            self.assertFalse(marker_path.exists())
+            self.assertFalse(manager.is_source_ready(spec))
+
+            corrupt = {
+                "preparation_kind": "hf_stream_scan_v1",
+                "source_spec_fingerprint": spec.fingerprint,
+                "validated_splits": ["train"],
+                "split_evidence": {
+                    "train": {
+                        "raw_rows": 1,
+                        "adapted_samples": 1,
+                        "content_sha256": "0" * 64,
+                    }
+                },
+                "scan_sha256": "0" * 64,
+            }
+            marker_path.parent.mkdir(parents=True, exist_ok=True)
+            marker_path.write_text(json.dumps(corrupt), encoding="utf-8")
+            self.assertFalse(manager.is_source_ready(spec))
 
     def test_raid_csv_is_processed_sequentially_without_bulk_materialization(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -629,9 +720,9 @@ class TextResourceManagerTests(unittest.TestCase):
                 "id,generation,model,domain,attack\n",
                 encoding="utf-8",
             )
-            self.assertTrue(manager.is_source_ready(spec))
+            self.assertFalse(manager.is_source_ready(spec))
 
-    def test_empty_hf_cache_is_not_source_ready(self) -> None:
+    def test_arbitrary_hf_cache_files_without_scan_manifest_are_not_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(project_root=tmp, profile="multidomain")
             spec = manager.resource_spec("hc3_en")
@@ -645,7 +736,7 @@ class TextResourceManagerTests(unittest.TestCase):
 
             self.assertFalse(manager.is_source_ready(spec))
             (cache / "prepared.arrow").write_bytes(b"fixture")
-            self.assertTrue(manager.is_source_ready(spec))
+            self.assertFalse(manager.is_source_ready(spec))
 
     def test_legacy_marker_must_match_current_spec_before_compatibility_acceptance(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -670,12 +761,31 @@ class TextResourceManagerTests(unittest.TestCase):
             )
 
             self.assertTrue(manager.is_source_ready(spec))
-            changed = replace(spec, url="https://example.invalid/new-poetry.zip")
-            changed_manager = TextResourceManager(
-                project_root=root,
-                dataset_specs=(changed,),
+            for changes in (
+                {"url": "https://example.invalid/new-poetry.zip"},
+                {"language": "en"},
+                {"adapter": "hc3"},
+                {"required": False},
+            ):
+                with self.subTest(changes=changes):
+                    changed = replace(spec, **changes)
+                    changed_manager = TextResourceManager(
+                        project_root=root,
+                        dataset_specs=(changed,),
+                    )
+                    self.assertFalse(changed_manager.is_source_ready(changed))
+
+            incomplete_marker = dict(legacy_marker)
+            incomplete_marker.pop("calibration_buckets")
+            (target / ".complete.json").write_text(
+                json.dumps(incomplete_marker),
+                encoding="utf-8",
             )
-            self.assertFalse(changed_manager.is_source_ready(changed))
+            self.assertFalse(manager.is_source_ready(spec))
+            (target / ".complete.json").write_text(
+                json.dumps(legacy_marker),
+                encoding="utf-8",
+            )
 
             with patch.object(manager, "_download_and_extract") as download:
                 manager.ensure_dataset(spec)
@@ -687,7 +797,6 @@ class TextResourceManagerTests(unittest.TestCase):
                 migrated["source_spec_fingerprint"],
                 spec.fingerprint,
             )
-            self.assertFalse(changed_manager.is_source_ready(changed))
 
     def test_zip_refresh_replaces_old_tree_without_stale_files(self) -> None:
         spec = DatasetSpec(
@@ -804,6 +913,10 @@ class TextResourceManagerTests(unittest.TestCase):
             partial = destination.with_suffix(destination.suffix + ".part")
             downloaded_text = destination.read_text(encoding="utf-8")
             partial_exists = partial.exists()
+            marker = json.loads(
+                (target / ".source.complete.json").read_text(encoding="utf-8")
+            )
+            source_ready = manager.is_source_ready(spec)
 
         self.assertEqual(request.call_count, 3)
         self.assertEqual(
@@ -811,6 +924,45 @@ class TextResourceManagerTests(unittest.TestCase):
             "id,generation,model,domain,attack\n",
         )
         self.assertFalse(partial_exists)
+        self.assertTrue(source_ready)
+        self.assertEqual(marker["byte_size"], len(downloaded_text.encode("utf-8")))
+        self.assertEqual(
+            marker["content_sha256"],
+            hashlib.sha256(downloaded_text.encode("utf-8")).hexdigest(),
+        )
+
+    def test_raid_readiness_detects_file_corruption_and_ignores_part_debris(self) -> None:
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield b"id,generation,model,domain,attack\n"
+                yield b"1,A human sample.,human,news,none\n"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+            )
+            spec = manager.resource_spec("raid_no_adversarial")
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=Response(),
+            ):
+                target = manager.ensure_dataset(spec)
+
+            data_path = target / "train_none.csv"
+            self.assertTrue(manager.is_source_ready(spec))
+            data_path.write_bytes(data_path.read_bytes() + b"corruption")
+            (target / "train_none.csv.part").write_bytes(b"temporary")
+            self.assertFalse(manager.is_source_ready(spec))
 
     def test_iter_human_texts_reads_poetry_and_csl_formats(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

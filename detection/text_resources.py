@@ -206,13 +206,20 @@ class TextResourceManager:
         project_root: str | Path | None = None,
         dataset_specs: Sequence[DatasetSpec] | None = None,
         *,
-        profile: str = "core",
+        dataset_profile: str | None = None,
+        profile: str | None = None,
         dataset_loader: Callable[..., Any] | None = None,
         download_retries: int = 3,
         request_timeout: tuple[float, float] = (10, 120),
     ) -> None:
-        if profile not in RESOURCE_PROFILES:
-            raise ValueError(f"Unknown text resource profile: {profile}")
+        if dataset_profile is not None and profile is not None and dataset_profile != profile:
+            raise ValueError(
+                "conflicting dataset_profile and profile values: "
+                f"{dataset_profile!r} != {profile!r}"
+            )
+        selected_profile = dataset_profile or profile or "core"
+        if selected_profile not in RESOURCE_PROFILES:
+            raise ValueError(f"Unknown text resource profile: {selected_profile}")
         if download_retries < 1:
             raise ValueError("download_retries must be at least one")
         self.project_root = Path(project_root or Path(__file__).resolve().parent.parent).resolve()
@@ -221,9 +228,10 @@ class TextResourceManager:
         self.normalized_dir = self.project_root / "data" / "text_false_positive" / "normalized"
         self.artifact_path = self.project_root / "artifacts" / "text_fp_controller" / "thresholds.json"
         self.dataset_specs = tuple(
-            RESOURCE_PROFILES[profile] if dataset_specs is None else dataset_specs
+            RESOURCE_PROFILES[selected_profile] if dataset_specs is None else dataset_specs
         )
-        self.profile = profile
+        self.dataset_profile = selected_profile
+        self.profile = selected_profile
         self._dataset_loader = dataset_loader
         self.download_retries = download_retries
         self.request_timeout = request_timeout
@@ -235,17 +243,18 @@ class TextResourceManager:
             "normalized_dir": str(self.normalized_dir),
             "artifact_path": str(self.artifact_path),
             "artifact_ready": self.artifact_path.exists(),
-            "datasets": [
-                {
-                    **asdict(spec),
-                    "ready": self.is_source_ready(spec),
-                    "source_ready": self.is_source_ready(spec),
-                    "normalized_ready": self.is_normalized_ready(spec),
-                    "path": str(self.dataset_dir / spec.name),
-                    "normalized_path": str(self.normalized_path(spec)),
-                }
-                for spec in self.dataset_specs
-            ],
+            "datasets": [self._dataset_status(spec) for spec in self.dataset_specs],
+        }
+
+    def _dataset_status(self, spec: DatasetSpec) -> dict[str, Any]:
+        source_ready = self.is_source_ready(spec)
+        return {
+            **asdict(spec),
+            "ready": source_ready,
+            "source_ready": source_ready,
+            "normalized_ready": self.is_normalized_ready(spec),
+            "path": str(self.dataset_dir / spec.name),
+            "normalized_path": str(self.normalized_path(spec)),
         }
 
     def ensure_dataset(self, spec: DatasetSpec) -> Path:
@@ -255,21 +264,23 @@ class TextResourceManager:
             self._migrate_legacy_marker(spec)
             return target
         target.mkdir(parents=True, exist_ok=True)
+        marker_payload: dict[str, Any]
         if spec.source_kind == "legacy_zip":
             self._download_and_extract(spec, target)
+            marker_payload = self._standard_source_manifest(spec)
         elif spec.source_kind in {"legacy_file", "raid_csv"}:
             self._download_file(spec, target)
+            if spec.source_kind == "raid_csv":
+                marker_payload = self._direct_file_manifest(spec, target)
+            else:
+                marker_payload = self._standard_source_manifest(spec)
         elif spec.source_kind == "hf_dataset":
-            dataset = self._load_hf_dataset(spec, streaming=False)
-            self._validate_hf_splits(spec, dataset)
+            marker_payload = self._prepare_hf_source(spec)
         else:
             raise ValueError(f"Unsupported dataset source kind: {spec.source_kind}")
         self._write_json_atomic(
             self._source_marker_path(spec),
-            {
-                "source_spec_fingerprint": spec.fingerprint,
-                "source": asdict(spec),
-            },
+            marker_payload,
         )
         return target
 
@@ -414,13 +425,9 @@ class TextResourceManager:
         if payload is None:
             return False
         if spec.source_kind == "hf_dataset":
-            cache = self.dataset_dir / spec.name / "hf_cache"
-            if not cache.is_dir() or not any(path.is_file() for path in cache.rglob("*")):
-                return False
+            return self._hf_manifest_matches(spec, payload)
         elif spec.source_kind == "raid_csv":
-            filename = spec.filename or "train_none.csv"
-            if not (self.dataset_dir / spec.name / filename).is_file():
-                return False
+            return self._direct_file_manifest_matches(spec, payload)
         fingerprint = payload.get("source_spec_fingerprint")
         if fingerprint is None and spec.source_kind in {"legacy_zip", "legacy_file"}:
             return self._legacy_marker_matches(spec, payload)
@@ -524,6 +531,61 @@ class TextResourceManager:
             args.append(spec.dataset_config)
         return loader(*args, cache_dir=str(cache_dir), streaming=streaming)
 
+    def _prepare_hf_source(self, spec: DatasetSpec) -> dict[str, Any]:
+        dataset = self._load_hf_dataset(spec, streaming=True)
+        self._validate_hf_splits(spec, dataset)
+        split_evidence: dict[str, dict[str, Any]] = {}
+
+        for split in spec.splits:
+            raw_rows = 0
+            adapted_samples = 0
+            content_hasher = hashlib.sha256()
+
+            def observed_rows() -> Iterator[Mapping[str, Any]]:
+                nonlocal raw_rows
+                for row in dataset[split]:
+                    if not isinstance(row, Mapping):
+                        raise TypeError(
+                            f"Dataset {spec.name!r} split {split!r} yielded a non-mapping row"
+                        )
+                    encoded = _evidence_json_dumps(row).encode("utf-8")
+                    content_hasher.update(len(encoded).to_bytes(8, "big"))
+                    content_hasher.update(encoded)
+                    raw_rows += 1
+                    yield row
+
+            for _sample in self._adapt_rows(spec, observed_rows(), split):
+                adapted_samples += 1
+
+            if raw_rows == 0:
+                raise RuntimeError(
+                    f"Dataset {spec.name!r} split {split!r} is empty or incomplete"
+                )
+            split_evidence[split] = {
+                "raw_rows": raw_rows,
+                "adapted_samples": adapted_samples,
+                "content_sha256": content_hasher.hexdigest(),
+            }
+
+        scan_sha256 = hashlib.sha256(
+            _stable_json_dumps(split_evidence).encode("utf-8")
+        ).hexdigest()
+        return {
+            "manifest_version": 1,
+            "preparation_kind": "hf_stream_scan_v1",
+            "source_spec_fingerprint": spec.fingerprint,
+            "dataset_id": spec.dataset_id,
+            "dataset_config": spec.dataset_config,
+            "validated_splits": list(spec.splits),
+            "split_evidence": split_evidence,
+            "scan_sha256": scan_sha256,
+            "cache_evidence": {
+                "kind": "streaming_content_digest",
+                "cache_dir": "hf_cache",
+                "scan_sha256": scan_sha256,
+            },
+        }
+
     def _adapt_rows(
         self,
         spec: DatasetSpec,
@@ -624,14 +686,18 @@ class TextResourceManager:
         spec: DatasetSpec,
         payload: Mapping[str, Any],
     ) -> bool:
-        if not _LEGACY_MARKER_FIELDS.issubset(payload):
+        if set(payload) != _LEGACY_MARKER_FIELDS:
             return False
-        current = asdict(spec)
-        recorded_fields = {
-            key: value for key, value in payload.items() if key in current
-        }
-        expected_fields = {key: current[key] for key in recorded_fields}
-        return _stable_json_dumps(recorded_fields) == _stable_json_dumps(expected_fields)
+        try:
+            historical_values = dict(payload)
+            buckets = historical_values.get("calibration_buckets")
+            if not isinstance(buckets, (list, tuple)):
+                return False
+            historical_values["calibration_buckets"] = tuple(buckets)
+            reconstructed = DatasetSpec(**historical_values)
+        except (TypeError, ValueError):
+            return False
+        return _stable_json_dumps(asdict(reconstructed)) == _stable_json_dumps(asdict(spec))
 
     def _migrate_legacy_marker(self, spec: DatasetSpec) -> None:
         if spec.source_kind not in {"legacy_zip", "legacy_file"}:
@@ -644,10 +710,106 @@ class TextResourceManager:
             return
         self._write_json_atomic(
             marker,
-            {
-                "source_spec_fingerprint": spec.fingerprint,
-                "source": asdict(spec),
-            },
+            self._standard_source_manifest(spec),
+        )
+
+    def _standard_source_manifest(self, spec: DatasetSpec) -> dict[str, Any]:
+        return {
+            "manifest_version": 1,
+            "preparation_kind": "standard_download_v1",
+            "source_spec_fingerprint": spec.fingerprint,
+            "source": asdict(spec),
+        }
+
+    def _direct_file_manifest(
+        self,
+        spec: DatasetSpec,
+        target: Path,
+    ) -> dict[str, Any]:
+        filename = spec.filename or Path(spec.url.split("?", 1)[0]).name
+        path = target / filename
+        content_sha256 = self._file_sha256(path)
+        if content_sha256 is None:
+            raise RuntimeError(f"Downloaded source file is unavailable: {path}")
+        return {
+            "manifest_version": 1,
+            "preparation_kind": "direct_file_v1",
+            "source_spec_fingerprint": spec.fingerprint,
+            "filename": filename,
+            "byte_size": path.stat().st_size,
+            "content_sha256": content_sha256,
+        }
+
+    def _direct_file_manifest_matches(
+        self,
+        spec: DatasetSpec,
+        payload: Mapping[str, Any],
+    ) -> bool:
+        filename = spec.filename or Path(spec.url.split("?", 1)[0]).name
+        path = self.dataset_dir / spec.name / filename
+        if (
+            payload.get("manifest_version") != 1
+            or payload.get("preparation_kind") != "direct_file_v1"
+            or payload.get("source_spec_fingerprint") != spec.fingerprint
+            or payload.get("filename") != filename
+            or not path.is_file()
+        ):
+            return False
+        byte_size = payload.get("byte_size")
+        content_sha256 = payload.get("content_sha256")
+        if (
+            not isinstance(byte_size, int)
+            or isinstance(byte_size, bool)
+            or byte_size <= 0
+            or path.stat().st_size != byte_size
+            or not _is_sha256(content_sha256)
+        ):
+            return False
+        return self._file_sha256(path) == content_sha256
+
+    def _hf_manifest_matches(
+        self,
+        spec: DatasetSpec,
+        payload: Mapping[str, Any],
+    ) -> bool:
+        if (
+            payload.get("manifest_version") != 1
+            or payload.get("preparation_kind") != "hf_stream_scan_v1"
+            or payload.get("source_spec_fingerprint") != spec.fingerprint
+            or payload.get("dataset_id") != spec.dataset_id
+            or payload.get("dataset_config") != spec.dataset_config
+            or payload.get("validated_splits") != list(spec.splits)
+        ):
+            return False
+        split_evidence = payload.get("split_evidence")
+        if not isinstance(split_evidence, dict) or set(split_evidence) != set(spec.splits):
+            return False
+        for split in spec.splits:
+            evidence = split_evidence.get(split)
+            if not isinstance(evidence, dict):
+                return False
+            raw_rows = evidence.get("raw_rows")
+            adapted_samples = evidence.get("adapted_samples")
+            if (
+                not isinstance(raw_rows, int)
+                or isinstance(raw_rows, bool)
+                or raw_rows <= 0
+                or not isinstance(adapted_samples, int)
+                or isinstance(adapted_samples, bool)
+                or adapted_samples < 0
+                or not _is_sha256(evidence.get("content_sha256"))
+            ):
+                return False
+        expected_scan = hashlib.sha256(
+            _stable_json_dumps(split_evidence).encode("utf-8")
+        ).hexdigest()
+        cache_evidence = payload.get("cache_evidence")
+        return bool(
+            payload.get("scan_sha256") == expected_scan
+            and isinstance(cache_evidence, dict)
+            and cache_evidence.get("kind") == "streaming_content_digest"
+            and cache_evidence.get("cache_dir") == "hf_cache"
+            and cache_evidence.get("scan_sha256") == expected_scan
         )
 
     def _file_sha256(self, path: Path) -> str | None:
@@ -771,3 +933,26 @@ def _stable_json_dumps(payload: Any) -> str:
         separators=(",", ":"),
         allow_nan=False,
     )
+
+
+def _evidence_json_dumps(payload: Any) -> str:
+    return json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=lambda value: {
+            "type": type(value).__qualname__,
+            "value": str(value),
+        },
+    )
+
+
+def _is_sha256(value: Any) -> bool:
+    if not isinstance(value, str) or len(value) != 64:
+        return False
+    try:
+        int(value, 16)
+    except ValueError:
+        return False
+    return True
