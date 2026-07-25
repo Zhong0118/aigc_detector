@@ -356,6 +356,44 @@ class TextResourceAdapterTests(unittest.TestCase):
 
 
 class TextResourceManagerTests(unittest.TestCase):
+    def test_dataset_spec_rejects_unsafe_portable_resource_names(self) -> None:
+        unsafe_names = (
+            "",
+            ".",
+            "..",
+            "../escape",
+            "nested/name",
+            r"nested\name",
+            "C:drive",
+            r"C:\drive",
+            r"\\server\share",
+            "bad:name",
+            "bad*name",
+            "trailing.",
+            "CON",
+        )
+        for name in unsafe_names:
+            with self.subTest(name=name), self.assertRaisesRegex(
+                ValueError,
+                "dataset name",
+            ):
+                DatasetSpec(
+                    name=name,
+                    url="https://example.invalid/source.zip",
+                    license="MIT",
+                    domain="literature",
+                    source="https://example.invalid/project",
+                )
+
+        safe = DatasetSpec(
+            name="safe_resource-1.0",
+            url="https://example.invalid/source.zip",
+            license="MIT",
+            domain="literature",
+            source="https://example.invalid/project",
+        )
+        self.assertEqual(safe.name, "safe_resource-1.0")
+
     def test_resource_profiles_register_official_multidomain_sources(self) -> None:
         core_names = {spec.name for spec in CORE_DATASETS}
         multidomain = {spec.name: spec for spec in MULTIDOMAIN_DATASETS}
@@ -568,6 +606,11 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertEqual(set(marker["split_evidence"]), {"train", "validation"})
         self.assertEqual(marker["split_evidence"]["train"]["raw_rows"], 1)
         self.assertEqual(marker["split_evidence"]["validation"]["adapted_samples"], 1)
+        self.assertEqual(marker["expected_labels"], ["human"])
+        self.assertEqual(
+            marker["split_evidence"]["train"]["label_counts"],
+            {"human": 1, "ai": 0},
+        )
         self.assertEqual(len(marker["scan_sha256"]), 64)
         self.assertEqual(marker["preparation_kind"], "hf_disk_cache_v1")
         self.assertEqual(marker["cache_evidence"]["kind"], "file_inventory_sha256_v1")
@@ -604,13 +647,23 @@ class TextResourceManagerTests(unittest.TestCase):
             cache_file = manager.dataset_dir / spec.name / "hf_cache" / "train.arrow"
 
             self.assertTrue(manager.is_source_ready(spec))
+            original_stat = cache_file.stat()
             original = cache_file.read_bytes()
             cache_file.unlink()
             self.assertFalse(manager.is_source_ready(spec))
             cache_file.write_bytes(original)
+            os.utime(
+                cache_file,
+                ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns),
+            )
             self.assertTrue(manager.is_source_ready(spec))
             cache_file.write_bytes(b"x" * len(original))
-            self.assertFalse(manager.is_source_ready(spec))
+            os.utime(
+                cache_file,
+                ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns),
+            )
+            self.assertTrue(manager.is_source_ready(spec))
+            self.assertFalse(manager.is_source_ready(spec, deep=True))
 
     def test_hf_incomplete_or_corrupt_split_manifest_is_not_ready(self) -> None:
         def incomplete_loader(*args, **kwargs):
@@ -725,7 +778,6 @@ class TextResourceManagerTests(unittest.TestCase):
                 source="hc3_en",
                 source_id="hc3_en:train:fixture:human:0",
             )
-
             output = manager.write_normalized_samples("hc3_en", [sample])
             marker = manager.normalized_marker_path("hc3_en")
             payload = json.loads(marker.read_text(encoding="utf-8"))
@@ -749,6 +801,36 @@ class TextResourceManagerTests(unittest.TestCase):
                     separators=(",", ":"),
                 ),
             )
+
+    def test_empty_normalized_output_is_rejected_and_never_marked_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, profile="multidomain")
+
+            with self.assertRaisesRegex(ValueError, "at least one"):
+                manager.write_normalized_samples("hc3_en", [])
+
+            self.assertFalse(manager.normalized_path("hc3_en").exists())
+            self.assertFalse(manager.normalized_marker_path("hc3_en").exists())
+            self.assertFalse(manager.is_normalized_ready("hc3_en"))
+
+    def test_normalized_readiness_rejects_nonpositive_marker_count(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, profile="multidomain")
+            sample = TextSample(
+                text="A normalized fixture.",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source="hc3_en",
+                source_id="hc3_en:train:fixture:human:0",
+            )
+            manager.write_normalized_samples("hc3_en", [sample])
+            marker = manager.normalized_marker_path("hc3_en")
+            payload = json.loads(marker.read_text(encoding="utf-8"))
+            payload["sample_count"] = 0
+            marker.write_text(json.dumps(payload), encoding="utf-8")
+
+            self.assertFalse(manager.is_normalized_ready("hc3_en"))
 
     def test_stale_normalized_fingerprint_is_not_ready(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -876,7 +958,10 @@ class TextResourceManagerTests(unittest.TestCase):
             target = manager.dataset_dir / spec.name
             target.mkdir(parents=True)
             (target / "poems.json").write_text(
-                json.dumps([{"title": "诗", "paragraphs": ["床前明月光"]}], ensure_ascii=False),
+                json.dumps(
+                    [{"title": "诗", "paragraphs": ["床前明月光疑是地上霜"]}],
+                    ensure_ascii=False,
+                ),
                 encoding="utf-8",
             )
             legacy_marker = {
@@ -948,9 +1033,14 @@ class TextResourceManagerTests(unittest.TestCase):
             target.mkdir(parents=True)
             (target / "obsolete.txt").write_text("old", encoding="utf-8")
 
-            def write_fixture_archive(url, destination):
+            def write_fixture_archive(url, destination, **_kwargs):
                 with zipfile.ZipFile(destination, "w") as bundle:
-                    bundle.writestr("prepared/new.txt", "new")
+                    bundle.writestr(
+                        "prepared/new.json",
+                        json.dumps(
+                            [{"content": "authenticated replacement text"}]
+                        ),
+                    )
 
             with patch.object(
                 manager,
@@ -959,7 +1049,7 @@ class TextResourceManagerTests(unittest.TestCase):
             ):
                 prepared = manager.ensure_dataset(spec)
 
-            new_text = (prepared / "prepared" / "new.txt").read_text(encoding="utf-8")
+            new_text = (prepared / "prepared" / "new.json").read_text(encoding="utf-8")
             obsolete_exists = (prepared / "obsolete.txt").exists()
             staging_exists = (prepared.parent / ".zip_fixture.staging").exists()
             backup_exists = (prepared.parent / ".zip_fixture.backup").exists()
@@ -967,39 +1057,116 @@ class TextResourceManagerTests(unittest.TestCase):
                 (prepared / ".complete.json").read_text(encoding="utf-8")
             )
             source_ready = manager.is_source_ready(spec)
-            (prepared / "prepared" / "new.txt").write_text("bad", encoding="utf-8")
+            (prepared / "prepared" / "new.json").write_text("bad", encoding="utf-8")
             changed_ready = manager.is_source_ready(spec)
-            (prepared / "prepared" / "new.txt").unlink()
+            (prepared / "prepared" / "new.json").unlink()
             deleted_ready = manager.is_source_ready(spec)
 
-        self.assertEqual(new_text, "new")
+        self.assertIn("authenticated replacement text", new_text)
         self.assertFalse(obsolete_exists)
         self.assertFalse(staging_exists)
         self.assertFalse(backup_exists)
         self.assertEqual(marker["preparation_kind"], "legacy_zip_tree_v1")
-        self.assertEqual(
-            marker["files"],
-            [{"path": "prepared/new.txt", "byte_size": 3}],
-        )
+        self.assertEqual(marker["files"][0]["path"], "prepared/new.json")
+        self.assertGreater(marker["files"][0]["byte_size"], 3)
+        self.assertEqual(len(marker["files"][0]["content_sha256"]), 64)
+        self.assertIsInstance(marker["files"][0]["mtime_ns"], int)
         self.assertTrue(source_ready)
         self.assertFalse(changed_ready)
         self.assertFalse(deleted_ready)
 
+    def test_zip_marker_failure_restores_the_previous_resource_tree(self) -> None:
+        spec = DatasetSpec(
+            name="zip_transaction",
+            url="https://example.invalid/archive.zip",
+            license="MIT",
+            domain="literature",
+            source="https://example.invalid/project",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, dataset_specs=(spec,))
+            target = manager.dataset_dir / spec.name
+            target.mkdir(parents=True)
+            (target / "old.txt").write_text("old", encoding="utf-8")
+
+            def write_fixture_archive(url, destination, **_kwargs):
+                with zipfile.ZipFile(destination, "w") as bundle:
+                    bundle.writestr(
+                        "new.json",
+                        json.dumps([{"content": "authenticated new text"}]),
+                    )
+
+            original_write = manager._write_json_atomic
+
+            def fail_staged_marker(path, payload, **kwargs):
+                if path.name == ".complete.json" and ".staging" in path.parent.name:
+                    raise OSError("marker publish failed")
+                return original_write(path, payload, **kwargs)
+
+            with patch.object(
+                manager,
+                "_download_to_path",
+                side_effect=write_fixture_archive,
+            ), patch.object(
+                manager,
+                "_write_json_atomic",
+                side_effect=fail_staged_marker,
+            ):
+                with self.assertRaisesRegex(OSError, "marker publish failed"):
+                    manager.ensure_dataset(spec)
+
+            self.assertEqual((target / "old.txt").read_text(encoding="utf-8"), "old")
+            self.assertFalse((target / "new.json").exists())
+            self.assertFalse((manager.dataset_dir / ".zip_transaction.staging").exists())
+
+    def test_zip_retry_preserves_the_only_recoverable_backup_until_staging_is_ready(
+        self,
+    ) -> None:
+        spec = DatasetSpec(
+            name="zip_recovery",
+            url="https://example.invalid/archive.zip",
+            license="MIT",
+            domain="literature",
+            source="https://example.invalid/project",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, dataset_specs=(spec,))
+            target = manager.dataset_dir / spec.name
+            backup = manager.dataset_dir / ".zip_recovery.backup"
+            backup.mkdir(parents=True)
+            (backup / "recoverable.txt").write_text("recoverable", encoding="utf-8")
+
+            with patch.object(
+                manager,
+                "_download_to_path",
+                side_effect=OSError("download failed"),
+            ):
+                with self.assertRaisesRegex(OSError, "download failed"):
+                    manager.ensure_dataset(spec)
+
+            self.assertEqual(
+                (target / "recoverable.txt").read_text(encoding="utf-8"),
+                "recoverable",
+            )
 
     def test_dataset_download_is_idempotent_after_complete_marker(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(project_root=Path(tmp))
             spec = manager.dataset_specs[0]
 
-            def prepare_fixture(_spec, target):
-                (target / "poems.json").write_text(
-                    json.dumps([{"title": "诗", "paragraphs": ["内容"]}], ensure_ascii=False),
-                    encoding="utf-8",
-                )
+            def prepare_fixture(_url, destination, **_kwargs):
+                with zipfile.ZipFile(destination, "w") as bundle:
+                    bundle.writestr(
+                        "poems.json",
+                        json.dumps(
+                            [{"title": "诗", "paragraphs": ["认证诗歌正文内容"]}],
+                            ensure_ascii=False,
+                        ),
+                    )
 
             with patch.object(
                 manager,
-                "_download_and_extract",
+                "_download_to_path",
                 side_effect=prepare_fixture,
             ) as download:
                 first = manager.ensure_dataset(spec)
@@ -1011,6 +1178,10 @@ class TextResourceManagerTests(unittest.TestCase):
 
     def test_single_file_dataset_download_is_atomic_and_idempotent(self) -> None:
         class Response:
+            status_code = 200
+            payload = b'{"content":"classical text"}\n'
+            headers = {"Content-Length": str(len(payload))}
+
             def __enter__(self):
                 return self
 
@@ -1022,7 +1193,7 @@ class TextResourceManagerTests(unittest.TestCase):
 
             def iter_content(self, chunk_size: int):
                 self.chunk_size = chunk_size
-                yield b'{"content":"classical text"}\n'
+                yield self.payload
 
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(project_root=Path(tmp))
@@ -1045,8 +1216,11 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertTrue(source_ready)
         self.assertFalse(changed_ready)
 
-    def test_direct_download_retries_and_leaves_no_partial_file(self) -> None:
+    def test_fast_readiness_uses_metadata_and_deep_verification_rehashes(self) -> None:
         class Response:
+            status_code = 200
+            headers = {"Content-Length": "39"}
+
             def __enter__(self):
                 return self
 
@@ -1057,9 +1231,107 @@ class TextResourceManagerTests(unittest.TestCase):
                 return None
 
             def iter_content(self, chunk_size: int):
-                yield b"id,generation,model,domain,attack\n"
-                yield b"human-1,A human report.,human,news,none\n"
-                yield b"ai-1,A generated review.,gpt2,reviews,none\n"
+                yield b'{"content":"authenticated human text"}\n'
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp))
+            spec = manager.resource_spec("chinese_classical_corpus")
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=Response(),
+            ):
+                target = manager.ensure_dataset(spec)
+            source = target / "corpus.jsonl"
+            original_stat = source.stat()
+            original = source.read_bytes()
+
+            with patch.object(
+                manager,
+                "_file_sha256",
+                side_effect=AssertionError("fast readiness must not hash"),
+            ):
+                self.assertTrue(manager.is_source_ready(spec))
+                self.assertEqual(manager.ensure_dataset(spec), target)
+
+            source.write_bytes(b"x" * len(original))
+            os.utime(
+                source,
+                ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns),
+            )
+            self.assertTrue(manager.is_source_ready(spec))
+            self.assertFalse(manager.is_source_ready(spec, deep=True))
+            self.assertFalse(manager.verify_source(spec))
+
+    def test_legacy_file_rejects_truncated_jsonl_before_marker_publication(self) -> None:
+        class Response:
+            status_code = 200
+            payload = (
+                b'{"content":"valid authenticated text"}\n'
+                b'{"content":'
+            )
+            headers = {"Content-Length": str(len(payload))}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield self.payload
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp)
+            spec = manager.resource_spec("chinese_classical_corpus")
+            marker = manager.dataset_dir / spec.name / ".complete.json"
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=Response(),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "Malformed authenticated"):
+                    manager.ensure_dataset(spec)
+
+            self.assertFalse(marker.exists())
+            self.assertFalse(manager.is_source_ready(spec))
+
+    def test_authenticated_legacy_file_iteration_surfaces_malformed_jsonl(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp)
+            spec = manager.resource_spec("chinese_classical_corpus")
+            source = manager.dataset_dir / spec.name
+            source.mkdir(parents=True)
+            (source / spec.filename).write_text(
+                '{"content":"valid authenticated text"}\n{"content":',
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(RuntimeError, "Malformed authenticated"):
+                list(manager.iter_human_texts(spec.name))
+
+    def test_direct_download_retries_and_leaves_no_partial_file(self) -> None:
+        class Response:
+            status_code = 200
+            payload = (
+                b"id,generation,model,domain,attack\n"
+                b"human-1,A human report.,human,news,none\n"
+                b"ai-1,A generated review.,gpt2,reviews,none\n"
+            )
+            headers = {"Content-Length": str(len(payload))}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield self.payload
 
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(
@@ -1100,8 +1372,14 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertEqual(marker["row_count"], 2)
         self.assertEqual(marker["label_counts"], {"human": 1, "ai": 1})
 
-    def test_raid_readiness_detects_file_corruption_and_ignores_part_debris(self) -> None:
+    def test_download_resumes_partial_content_with_range_and_backoff(self) -> None:
         class Response:
+            def __init__(self, status_code, headers, chunks, error=None):
+                self.status_code = status_code
+                self.headers = headers
+                self._chunks = chunks
+                self._error = error
+
             def __enter__(self):
                 return self
 
@@ -1112,9 +1390,101 @@ class TextResourceManagerTests(unittest.TestCase):
                 return None
 
             def iter_content(self, chunk_size: int):
-                yield b"id,generation,model,domain,attack\n"
-                yield b"1,A human sample.,human,news,none\n"
-                yield b"2,A generated sample.,gpt2,reviews,none\n"
+                yield from self._chunks
+                if self._error is not None:
+                    raise self._error
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, download_retries=2)
+            destination = manager.dataset_dir / "resume.bin"
+            destination.parent.mkdir(parents=True)
+            responses = [
+                Response(
+                    200,
+                    {"Content-Length": "6", "ETag": '"fixture-v1"'},
+                    [b"abc"],
+                    requests.ConnectTimeout("interrupted"),
+                ),
+                Response(
+                    206,
+                    {
+                        "Content-Length": "3",
+                        "Content-Range": "bytes 3-5/6",
+                        "ETag": '"fixture-v1"',
+                    },
+                    [b"def"],
+                ),
+            ]
+
+            with patch(
+                "detection.text_resources.requests.get",
+                side_effect=responses,
+            ) as request, patch("detection.text_resources.time.sleep") as sleep:
+                manager._download_to_path("https://example.invalid/file", destination)
+
+            self.assertEqual(destination.read_bytes(), b"abcdef")
+            self.assertFalse(destination.with_suffix(".bin.part").exists())
+            self.assertEqual(
+                request.call_args_list[1].kwargs["headers"],
+                {
+                    "Range": "bytes=3-",
+                    "If-Range": '"fixture-v1"',
+                },
+            )
+            sleep.assert_called_once_with(1.0)
+
+    def test_download_restarts_when_server_ignores_range(self) -> None:
+        class Response:
+            status_code = 200
+            headers = {"Content-Length": "3"}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield b"new"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp)
+            destination = manager.dataset_dir / "restart.bin"
+            destination.parent.mkdir(parents=True)
+            destination.with_suffix(".bin.part").write_bytes(b"old")
+
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=Response(),
+            ):
+                manager._download_to_path("https://example.invalid/file", destination)
+
+            self.assertEqual(destination.read_bytes(), b"new")
+
+    def test_raid_readiness_detects_file_corruption_and_ignores_part_debris(self) -> None:
+        class Response:
+            status_code = 200
+            payload = (
+                b"id,generation,model,domain,attack\n"
+                b"1,A human sample.,human,news,none\n"
+                b"2,A generated sample.,gpt2,reviews,none\n"
+            )
+            headers = {"Content-Length": str(len(payload))}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield self.payload
 
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(
@@ -1154,6 +1524,9 @@ class TextResourceManagerTests(unittest.TestCase):
         for name, payload in payloads.items():
             with self.subTest(name=name), tempfile.TemporaryDirectory() as tmp:
                 class Response:
+                    status_code = 200
+                    headers = {"Content-Length": str(len(payload))}
+
                     def __enter__(self):
                         return self
 
@@ -1244,6 +1617,694 @@ class TextResourceManagerTests(unittest.TestCase):
             texts = list(manager.iter_human_texts(spec.name))
 
         self.assertEqual(texts, ["这是清单认证的古籍正文内容。"])
+
+    def test_safe_zip_extraction_rejects_duplicate_encrypted_and_oversized_members(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                zip_max_members=1,
+                zip_max_total_uncompressed=16,
+                zip_max_file_uncompressed=12,
+                zip_max_compression_ratio=2.0,
+            )
+            archive = Path(tmp) / "fixture.zip"
+            target = manager.dataset_dir / "zip_target"
+            target.mkdir(parents=True)
+
+            with zipfile.ZipFile(archive, "w") as bundle:
+                bundle.writestr("same/file.txt", "a")
+                bundle.writestr(r"same\file.txt", "b")
+            with zipfile.ZipFile(archive) as bundle:
+                with self.assertRaisesRegex(ValueError, "member count|Duplicate"):
+                    manager._safe_extract(bundle, target)
+
+            encrypted = zipfile.ZipInfo("secret.txt")
+            encrypted.flag_bits |= 0x1
+            encrypted.file_size = 1
+            encrypted.compress_size = 1
+
+            class EncryptedBundle:
+                def infolist(self):
+                    return [encrypted]
+
+            with self.assertRaisesRegex(ValueError, "encrypted"):
+                manager._safe_extract(EncryptedBundle(), target)
+
+            manager.zip_max_members = 10
+            with zipfile.ZipFile(
+                archive,
+                "w",
+                compression=zipfile.ZIP_DEFLATED,
+            ) as bundle:
+                bundle.writestr("large.txt", "0" * 20)
+            with zipfile.ZipFile(archive) as bundle:
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "per-file|total|compression ratio",
+                ):
+                    manager._safe_extract(bundle, target)
+
+    def test_resume_rejects_unknown_total_and_never_publishes_partial(self) -> None:
+        class Response:
+            def __init__(self, status_code, headers, chunks, error=None):
+                self.status_code = status_code
+                self.headers = headers
+                self._chunks = chunks
+                self._error = error
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield from self._chunks
+                if self._error is not None:
+                    raise self._error
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                download_retries=2,
+            )
+            destination = manager.dataset_dir / "unknown-total.bin"
+            destination.parent.mkdir(parents=True)
+            responses = [
+                Response(
+                    200,
+                    {"Content-Length": "5", "ETag": '"fixture-v1"'},
+                    [b"abc"],
+                    requests.ConnectTimeout("interrupted"),
+                ),
+                Response(
+                    206,
+                    {
+                        "Content-Length": "2",
+                        "Content-Range": "bytes 3-4/*",
+                        "ETag": '"fixture-v1"',
+                    },
+                    [b"de"],
+                ),
+            ]
+
+            with patch(
+                "detection.text_resources.requests.get",
+                side_effect=responses,
+            ), patch("detection.text_resources.time.sleep"):
+                with self.assertRaisesRegex(RuntimeError, "total"):
+                    manager._download_to_path(
+                        "https://example.invalid/unknown-total",
+                        destination,
+                    )
+
+            self.assertFalse(destination.exists())
+
+    def test_http_416_finalizes_only_an_exact_complete_partial(self) -> None:
+        class Response:
+            def __init__(self, status_code, headers, chunks=(), error=None):
+                self.status_code = status_code
+                self.headers = headers
+                self._chunks = chunks
+                self._error = error
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield from self._chunks
+                if self._error is not None:
+                    raise self._error
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, download_retries=2)
+            destination = manager.dataset_dir / "complete.bin"
+            destination.parent.mkdir(parents=True)
+            responses = [
+                Response(
+                    200,
+                    {
+                        "Content-Length": "3",
+                        "ETag": '"fixture-v1"',
+                    },
+                    [b"abc"],
+                    requests.ConnectTimeout("response ended late"),
+                ),
+                Response(
+                    416,
+                    {
+                        "Content-Range": "bytes */3",
+                        "ETag": '"fixture-v1"',
+                    },
+                ),
+            ]
+
+            with patch(
+                "detection.text_resources.requests.get",
+                side_effect=responses,
+            ), patch("detection.text_resources.time.sleep"):
+                manager._download_to_path(
+                    "https://example.invalid/complete",
+                    destination,
+                )
+
+            self.assertEqual(destination.read_bytes(), b"abc")
+            self.assertFalse(
+                destination.with_name(destination.name + ".part").exists()
+            )
+            self.assertFalse(
+                destination.with_name(destination.name + ".part.json").exists()
+            )
+
+    def test_http_416_with_changed_validator_discards_partial_and_restarts(self) -> None:
+        class Response:
+            def __init__(self, status_code, headers, chunks=(), error=None):
+                self.status_code = status_code
+                self.headers = headers
+                self._chunks = chunks
+                self._error = error
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield from self._chunks
+                if self._error is not None:
+                    raise self._error
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, download_retries=3)
+            destination = manager.dataset_dir / "changed.bin"
+            destination.parent.mkdir(parents=True)
+            responses = [
+                Response(
+                    200,
+                    {"Content-Length": "3", "ETag": '"fixture-v1"'},
+                    [b"old"],
+                    requests.ConnectTimeout("response ended late"),
+                ),
+                Response(
+                    416,
+                    {"Content-Range": "bytes */3", "ETag": '"fixture-v2"'},
+                ),
+                Response(
+                    200,
+                    {"Content-Length": "3", "ETag": '"fixture-v2"'},
+                    [b"new"],
+                ),
+            ]
+
+            with patch(
+                "detection.text_resources.requests.get",
+                side_effect=responses,
+            ) as request, patch("detection.text_resources.time.sleep"):
+                manager._download_to_path(
+                    "https://example.invalid/changed",
+                    destination,
+                )
+
+            self.assertEqual(destination.read_bytes(), b"new")
+            self.assertEqual(request.call_count, 3)
+            self.assertEqual(request.call_args_list[2].kwargs["headers"], {})
+
+    def test_http_416_without_a_numeric_total_discards_before_retry(self) -> None:
+        class Response:
+            def __init__(self, status_code, headers, chunks=(), error=None):
+                self.status_code = status_code
+                self.headers = headers
+                self._chunks = chunks
+                self._error = error
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield from self._chunks
+                if self._error is not None:
+                    raise self._error
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, download_retries=3)
+            destination = manager.dataset_dir / "invalid-416.bin"
+            destination.parent.mkdir(parents=True)
+            responses = [
+                Response(
+                    200,
+                    {"Content-Length": "3", "ETag": '"fixture-v1"'},
+                    [b"old"],
+                    requests.ConnectTimeout("response ended late"),
+                ),
+                Response(
+                    416,
+                    {"Content-Range": "bytes */*", "ETag": '"fixture-v1"'},
+                ),
+                Response(
+                    200,
+                    {"Content-Length": "3", "ETag": '"fixture-v2"'},
+                    [b"new"],
+                ),
+            ]
+
+            with patch(
+                "detection.text_resources.requests.get",
+                side_effect=responses,
+            ) as request, patch("detection.text_resources.time.sleep"):
+                manager._download_to_path(
+                    "https://example.invalid/invalid-416",
+                    destination,
+                )
+
+            self.assertEqual(destination.read_bytes(), b"new")
+            self.assertEqual(request.call_args_list[2].kwargs["headers"], {})
+
+    def test_resume_sidecar_uses_if_range_and_restarts_for_a_new_source(self) -> None:
+        class Response:
+            def __init__(self, status_code, headers, chunks, error=None):
+                self.status_code = status_code
+                self.headers = headers
+                self._chunks = chunks
+                self._error = error
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield from self._chunks
+                if self._error is not None:
+                    raise self._error
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp, download_retries=1)
+            destination = manager.dataset_dir / "sidecar.bin"
+            destination.parent.mkdir(parents=True)
+            interrupted = Response(
+                200,
+                {"Content-Length": "6", "ETag": '"fixture-v1"'},
+                [b"abc"],
+                requests.ConnectTimeout("interrupted"),
+            )
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=interrupted,
+            ):
+                with self.assertRaises(requests.ConnectTimeout):
+                    manager._download_to_path(
+                        "https://example.invalid/source-a",
+                        destination,
+                        source_fingerprint="spec-a",
+                    )
+
+            sidecar = destination.with_name(destination.name + ".part.json")
+            self.assertTrue(sidecar.is_file())
+
+            resumed = Response(
+                206,
+                {
+                    "Content-Length": "3",
+                    "Content-Range": "bytes 3-5/6",
+                    "ETag": '"fixture-v1"',
+                },
+                [b"def"],
+            )
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=resumed,
+            ) as request:
+                manager._download_to_path(
+                    "https://example.invalid/source-a",
+                    destination,
+                    source_fingerprint="spec-a",
+                )
+
+            self.assertEqual(
+                request.call_args.kwargs["headers"],
+                {
+                    "Range": "bytes=3-",
+                    "If-Range": '"fixture-v1"',
+                },
+            )
+            self.assertEqual(destination.read_bytes(), b"abcdef")
+
+            destination.unlink()
+            interrupted = Response(
+                200,
+                {"Content-Length": "6", "ETag": '"fixture-v1"'},
+                [b"old"],
+                requests.ConnectTimeout("interrupted"),
+            )
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=interrupted,
+            ):
+                with self.assertRaises(requests.ConnectTimeout):
+                    manager._download_to_path(
+                        "https://example.invalid/source-a",
+                        destination,
+                        source_fingerprint="spec-a",
+                    )
+
+            replacement = Response(
+                200,
+                {"Content-Length": "3", "ETag": '"fixture-v2"'},
+                [b"new"],
+            )
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=replacement,
+            ) as request:
+                manager._download_to_path(
+                    "https://example.invalid/source-b",
+                    destination,
+                    source_fingerprint="spec-b",
+                )
+
+            self.assertEqual(request.call_args.kwargs["headers"], {})
+            self.assertEqual(destination.read_bytes(), b"new")
+
+    def test_download_limit_is_enforced_before_and_during_streaming(self) -> None:
+        class Response:
+            status_code = 200
+
+            def __init__(self, headers, chunks):
+                self.headers = headers
+                self._chunks = chunks
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield from self._chunks
+
+        cases = (
+            Response({"Content-Length": "4"}, [b"data"]),
+            Response({}, [b"toolarge"]),
+        )
+        for response in cases:
+            with self.subTest(headers=response.headers), tempfile.TemporaryDirectory() as tmp:
+                manager = TextResourceManager(
+                    project_root=tmp,
+                    download_retries=1,
+                    max_download_bytes=3,
+                )
+                destination = manager.dataset_dir / "bounded.bin"
+                destination.parent.mkdir(parents=True)
+                with patch(
+                    "detection.text_resources.requests.get",
+                    return_value=response,
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "size limit|total"):
+                        manager._download_to_path(
+                            "https://example.invalid/bounded",
+                            destination,
+                        )
+                self.assertFalse(destination.exists())
+
+    def test_zip_rejects_windows_unsafe_components_and_hierarchy_collisions(self) -> None:
+        unsafe_names = (
+            "dir/file.txt:stream",
+            "dir/CON",
+            "dir/con.txt",
+            "dir/trailing.",
+            "dir/trailing ",
+            "dir//empty.txt",
+            "dir/./dot.txt",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp)
+            archive = Path(tmp) / "unsafe.zip"
+            target = manager.dataset_dir / "unsafe"
+            for name in unsafe_names:
+                with self.subTest(name=name):
+                    with zipfile.ZipFile(archive, "w") as bundle:
+                        bundle.writestr(name, "content")
+                    with zipfile.ZipFile(archive) as bundle:
+                        with self.assertRaisesRegex(ValueError, "Unsafe"):
+                            manager._safe_extract(bundle, target)
+
+            with zipfile.ZipFile(archive, "w") as bundle:
+                bundle.writestr("Folder", "file")
+                bundle.writestr("folder/child.txt", "child")
+            with zipfile.ZipFile(archive) as bundle:
+                with self.assertRaisesRegex(ValueError, "collision"):
+                    manager._safe_extract(bundle, target)
+
+    def test_zip_manifest_authenticates_parseable_inputs_and_iteration_ignores_extras(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=tmp)
+            spec = manager.resource_spec("chinese_poetry")
+
+            def valid_archive(_url, destination, **_kwargs):
+                with zipfile.ZipFile(destination, "w") as bundle:
+                    bundle.writestr(
+                        "poems.json",
+                        json.dumps(
+                            [{"title": "诗", "paragraphs": ["认证正文内容"]}],
+                            ensure_ascii=False,
+                        ),
+                    )
+
+            with patch.object(
+                manager,
+                "_download_to_path",
+                side_effect=valid_archive,
+            ):
+                target = manager.ensure_dataset(spec)
+
+            marker = json.loads(
+                (target / ".complete.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(marker["corpus_files"], ["poems.json"])
+            self.assertEqual(marker["usable_text_count"], 1)
+
+            (target / "untracked.json").write_text(
+                json.dumps(
+                    [{"title": "旧文件", "paragraphs": ["未认证旧正文内容"]}],
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                list(manager.iter_human_texts(spec.name)),
+                ["诗。认证正文内容"],
+            )
+
+            marker["corpus_files"].append("untracked.json")
+            (target / ".complete.json").write_text(
+                json.dumps(marker),
+                encoding="utf-8",
+            )
+            self.assertFalse(manager.is_source_ready(spec))
+            self.assertEqual(list(manager.iter_human_texts(spec.name)), [])
+
+            invalid_manager = TextResourceManager(
+                project_root=Path(tmp) / "invalid",
+            )
+            invalid_spec = invalid_manager.resource_spec("chinese_poetry")
+
+            def malformed_archive(_url, destination, **_kwargs):
+                with zipfile.ZipFile(destination, "w") as bundle:
+                    bundle.writestr("broken.json", '{"paragraphs":')
+
+            with patch.object(
+                invalid_manager,
+                "_download_to_path",
+                side_effect=malformed_archive,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "Malformed"):
+                    invalid_manager.ensure_dataset(invalid_spec)
+            self.assertFalse(
+                (
+                    invalid_manager.dataset_dir
+                    / invalid_spec.name
+                    / ".complete.json"
+                ).exists()
+            )
+
+    def test_file_resource_update_is_transactional_for_legacy_and_raid(self) -> None:
+        fixtures = (
+            (
+                "core",
+                "chinese_classical_corpus",
+                b'{"content":"last known valid classical text"}\n',
+                b'{"content":',
+            ),
+            (
+                "multidomain",
+                "raid_no_adversarial",
+                (
+                    b"id,generation,model,domain,attack\n"
+                    b"1,A human sample.,human,news,none\n"
+                    b"2,A generated sample.,gpt2,reviews,none\n"
+                ),
+                b"id,generation,model,domain,attack\n",
+            ),
+        )
+
+        for profile, resource_name, valid, malformed in fixtures:
+            with self.subTest(resource=resource_name), tempfile.TemporaryDirectory() as tmp:
+                manager = TextResourceManager(project_root=tmp, profile=profile)
+                spec = manager.resource_spec(resource_name)
+
+                class Response:
+                    status_code = 200
+
+                    def __init__(self, payload):
+                        self.payload = payload
+                        self.headers = {"Content-Length": str(len(payload))}
+
+                    def __enter__(self):
+                        return self
+
+                    def __exit__(self, *args):
+                        return False
+
+                    def raise_for_status(self) -> None:
+                        return None
+
+                    def iter_content(self, chunk_size: int):
+                        yield self.payload
+
+                with patch(
+                    "detection.text_resources.requests.get",
+                    return_value=Response(valid),
+                ):
+                    target = manager.ensure_dataset(spec)
+                filename = spec.filename or "train_none.csv"
+                original_marker = manager._source_marker_path(spec).read_bytes()
+                self.assertEqual((target / filename).read_bytes(), valid)
+
+                changed_spec = replace(
+                    spec,
+                    url=spec.url + "?revision=broken",
+                )
+                changed_manager = TextResourceManager(
+                    project_root=tmp,
+                    dataset_specs=(changed_spec,),
+                )
+                with patch(
+                    "detection.text_resources.requests.get",
+                    return_value=Response(malformed),
+                ):
+                    with self.assertRaises(RuntimeError):
+                        changed_manager.ensure_dataset(changed_spec)
+
+                self.assertEqual((target / filename).read_bytes(), valid)
+                self.assertEqual(
+                    manager._source_marker_path(spec).read_bytes(),
+                    original_marker,
+                )
+                self.assertTrue(manager.is_source_ready(spec))
+
+    def test_hf_requires_adapted_samples_and_expected_label_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            def empty_loader(*args, **kwargs):
+                return DiskBackedRows(
+                    Path(kwargs["cache_dir"]) / f"{kwargs['split']}.arrow",
+                    [{"id": "empty", "sentence": ""}],
+                )
+
+            manager = TextResourceManager(
+                project_root=Path(tmp) / "empty",
+                profile="multidomain",
+                dataset_loader=empty_loader,
+            )
+            spec = manager.resource_spec("tnews")
+            with self.assertRaisesRegex(RuntimeError, "adapted"):
+                manager.ensure_dataset(spec)
+            self.assertFalse(manager.is_source_ready(spec))
+
+            def human_only_hc3_loader(*args, **kwargs):
+                return DiskBackedRows(
+                    Path(kwargs["cache_dir"]) / f"{kwargs['split']}.arrow",
+                    [
+                        {
+                            "id": "hc3-human-only",
+                            "question": "Question?",
+                            "human_answers": ["A human answer."],
+                            "chatgpt_answers": [],
+                        }
+                    ],
+                )
+
+            manager = TextResourceManager(
+                project_root=Path(tmp) / "labels",
+                profile="multidomain",
+                dataset_loader=human_only_hc3_loader,
+            )
+            spec = manager.resource_spec("hc3_en")
+            with self.assertRaisesRegex(RuntimeError, "human and AI|labels"):
+                manager.ensure_dataset(spec)
+            self.assertFalse(manager.is_source_ready(spec))
+
+            def paired_hc3_loader(*args, **kwargs):
+                return DiskBackedRows(
+                    Path(kwargs["cache_dir"]) / f"{kwargs['split']}.arrow",
+                    [
+                        {
+                            "id": "hc3-pair",
+                            "question": "Question?",
+                            "human_answers": ["A human answer."],
+                            "chatgpt_answers": ["An AI answer."],
+                        }
+                    ],
+                )
+
+            manager = TextResourceManager(
+                project_root=Path(tmp) / "paired",
+                profile="multidomain",
+                dataset_loader=paired_hc3_loader,
+            )
+            spec = manager.resource_spec("hc3_en")
+            target = manager.ensure_dataset(spec)
+            marker_path = target / ".source.complete.json"
+            marker = json.loads(marker_path.read_text(encoding="utf-8"))
+            self.assertEqual(marker["expected_labels"], ["human", "ai"])
+            self.assertEqual(
+                marker["split_evidence"][spec.splits[0]]["label_counts"],
+                {"human": 1, "ai": 1},
+            )
+            self.assertTrue(manager.is_source_ready(spec))
+
+            marker["split_evidence"][spec.splits[0]]["label_counts"]["ai"] = 0
+            marker_path.write_text(json.dumps(marker), encoding="utf-8")
+            self.assertFalse(manager.is_source_ready(spec))
 
     def test_conformal_threshold_uses_finite_sample_order_statistic(self) -> None:
         scores = [index / 100 for index in range(100)]
