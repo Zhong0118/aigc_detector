@@ -8,10 +8,11 @@ import unittest
 import zipfile
 from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import requests
 
+import scripts.bootstrap_text_resources as bootstrap_text_resources
 from detection.text_resource_adapters import (
     TextSample,
     adapt_hc3_rows,
@@ -27,7 +28,12 @@ from detection.text_resources import (
     TextResourceManager,
     conformal_high_threshold,
 )
-from scripts.bootstrap_text_resources import _balanced_human_samples, build_threshold_artifact
+from scripts.bootstrap_text_resources import (
+    _balanced_human_samples,
+    _partition_assignment,
+    build_resource_stats,
+    build_threshold_artifact,
+)
 
 
 class DiskBackedRows:
@@ -2520,9 +2526,13 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertEqual(saved["groups"]["zh:literature:short"]["threshold_floor"], 0.9)
         literature = saved["groups"]["zh:literature:long"]
         self.assertIn("calibration_quantiles", literature)
-        self.assertEqual(literature["validation_samples"], 1)
-        self.assertEqual(literature["validation_false_positives"], 0)
-        self.assertEqual(literature["validation_fpr"], 0.0)
+        self.assertLessEqual(literature["validation_samples"], 1)
+        self.assertGreaterEqual(literature["validation_false_positives"], 0)
+        if literature["validation_samples"] == 0:
+            self.assertIsNone(literature["validation_fpr"])
+            self.assertIn("insufficient_human_validation", literature["warnings"])
+        else:
+            self.assertEqual(literature["validation_fpr"], 0.0)
         self.assertIn("validation_fpr_interval_95", literature)
         self.assertIn("reliability_status", literature)
         self.assertEqual(saved["sampling"]["seed"], 20260722)
@@ -2568,8 +2578,11 @@ class TextResourceManagerTests(unittest.TestCase):
                 long_max_chars=60,
             )
 
-        self.assertEqual(payload["source_length_buckets"][spec.name]["long"], 96)
-        self.assertEqual(payload["validation_source_length_buckets"][spec.name]["long"], 24)
+        calibration_count = payload["source_length_buckets"][spec.name]["long"]
+        validation_count = payload["validation_source_length_buckets"][spec.name]["long"]
+        self.assertEqual(calibration_count + validation_count, 120)
+        self.assertGreater(calibration_count, 0)
+        self.assertGreater(validation_count, 0)
 
     def test_build_threshold_artifact_rejects_an_empty_required_source(self) -> None:
         class Detector:
@@ -2609,6 +2622,535 @@ class TextResourceManagerTests(unittest.TestCase):
                     short_text_chars=20,
                     long_target_chars=21,
                 )
+
+    def test_artifact_v2_uses_human_calibration_and_reports_held_out_ai_metrics(self) -> None:
+        class Detector:
+            def detect(self, text: str):
+                score = float(text.rsplit("=", 1)[1])
+                return type("Result", (), {"score": score})()
+
+        spec = DatasetSpec(
+            name="paired_fixture",
+            url="https://example.invalid/paired.zip",
+            license="CC0-1.0",
+            domain="general_qa",
+            source="https://example.invalid/paired",
+            language="en",
+        )
+        seed = 17
+        calibration_ids = [
+            f"cal-{index}"
+            for index in range(100)
+            if _partition_assignment(f"cal-{index}", seed, 0.5) == "calibration"
+        ][:4]
+        validation_ids = [
+            f"val-{index}"
+            for index in range(100)
+            if _partition_assignment(f"val-{index}", seed, 0.5) == "validation"
+        ][:3]
+        samples = [
+            TextSample(
+                text=f"Human calibration sample number {index} score={score}",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id=f"{partition}:human",
+                partition_id=partition,
+            )
+            for index, (partition, score) in enumerate(
+                zip(calibration_ids, (0.1, 0.2, 0.3, 0.4), strict=True)
+            )
+        ]
+        for index, (partition, human_score, ai_score) in enumerate(
+            zip(validation_ids, (0.1, 0.8, 0.2), (0.9, 0.7, 0.3), strict=True)
+        ):
+            samples.extend(
+                [
+                    TextSample(
+                        text=f"Human validation sample number {index} score={human_score}",
+                        label="human",
+                        language="en",
+                        domain="general_qa",
+                        source=spec.name,
+                        source_id=f"{partition}:human",
+                        partition_id=partition,
+                    ),
+                    TextSample(
+                        text=f"Artificial validation sample number {index} score={ai_score}",
+                        label="ai",
+                        language="en",
+                        domain="general_qa",
+                        source=spec.name,
+                        source_id=f"{partition}:ai",
+                        partition_id=partition,
+                        generator="fixture-model",
+                    ),
+                ]
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp), dataset_specs=(spec,))
+            with patch.object(manager, "iter_source_samples", return_value=iter(samples)):
+                payload = build_threshold_artifact(
+                    manager,
+                    Detector(),
+                    human_calibration_limit=10,
+                    human_validation_limit=10,
+                    ai_validation_limit=10,
+                    validation_fraction=0.5,
+                    minimum_group_samples=3,
+                    minimum_validation_samples=2,
+                    minimum_ai_validation_samples=2,
+                    alpha=0.25,
+                    sampling_seed=seed,
+                    min_effective_chars=10,
+                    short_text_chars=200,
+                    high_threshold_floors={"default": 0.0},
+                )
+
+        group = payload["groups"]["en:general_qa:short"]
+        self.assertEqual(payload["artifact_schema_version"], 2)
+        self.assertEqual(payload["decision_operator"], "score > high_threshold")
+        self.assertEqual(group["high_threshold"], 0.4)
+        self.assertEqual(group["human_calibration_samples"], 4)
+        self.assertEqual(group["human_validation_samples"], 3)
+        self.assertEqual(group["ai_validation_samples"], 3)
+        self.assertEqual(group["validation_false_positives"], 1)
+        self.assertEqual(group["ai_true_positives"], 2)
+        self.assertAlmostEqual(group["validation_fpr"], 1 / 3, places=6)
+        self.assertAlmostEqual(group["ai_recall"], 2 / 3, places=6)
+        self.assertAlmostEqual(group["ai_fnr"], 1 / 3, places=6)
+        self.assertIsNotNone(group["validation_auroc"])
+        self.assertIn("ai_recall_interval_95", group)
+        self.assertEqual(payload["sampling"]["partition_key"], "TextSample.partition_key")
+
+    def test_ai_score_changes_do_not_change_fitted_threshold(self) -> None:
+        class Detector:
+            def __init__(self, ai_score: float) -> None:
+                self.ai_score = ai_score
+
+            def detect(self, text: str):
+                score = self.ai_score if text.startswith("AI") else float(text.rsplit("=", 1)[1])
+                return type("Result", (), {"score": score})()
+
+        spec = DatasetSpec(
+            name="human_only_fit",
+            url="https://example.invalid/human-only.zip",
+            license="CC0-1.0",
+            domain="general_qa",
+            source="https://example.invalid/human-only",
+            language="en",
+        )
+        seed = 29
+        cal_ids = [
+            f"c-{index}"
+            for index in range(200)
+            if _partition_assignment(f"c-{index}", seed, 0.5) == "calibration"
+        ][:4]
+        val_ids = [
+            f"v-{index}"
+            for index in range(200)
+            if _partition_assignment(f"v-{index}", seed, 0.5) == "validation"
+        ][:2]
+        samples = [
+            TextSample(
+                text=f"Human fitted text score={score}",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id=partition,
+                partition_id=partition,
+            )
+            for partition, score in zip(cal_ids, (0.1, 0.2, 0.3, 0.4), strict=True)
+        ]
+        for partition in val_ids:
+            samples.extend(
+                [
+                    TextSample(
+                        text="Human held out text score=0.2",
+                        label="human",
+                        language="en",
+                        domain="general_qa",
+                        source=spec.name,
+                        source_id=f"{partition}:h",
+                        partition_id=partition,
+                    ),
+                    TextSample(
+                        text="AI held out text",
+                        label="ai",
+                        language="en",
+                        domain="general_qa",
+                        source=spec.name,
+                        source_id=f"{partition}:a",
+                        partition_id=partition,
+                        generator="fixture",
+                    ),
+                ]
+            )
+
+        thresholds = []
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp), dataset_specs=(spec,))
+            for ai_score in (0.01, 0.99):
+                with patch.object(manager, "iter_source_samples", return_value=iter(samples)):
+                    result = build_threshold_artifact(
+                        manager,
+                        Detector(ai_score),
+                        human_calibration_limit=10,
+                        human_validation_limit=10,
+                        ai_validation_limit=10,
+                        validation_fraction=0.5,
+                        minimum_group_samples=3,
+                        minimum_validation_samples=1,
+                        minimum_ai_validation_samples=1,
+                        alpha=0.25,
+                        sampling_seed=seed,
+                        min_effective_chars=5,
+                        high_threshold_floors={"default": 0.0},
+                    )
+                thresholds.append(result["groups"]["en:general_qa:short"]["high_threshold"])
+        self.assertEqual(thresholds, [0.4, 0.4])
+
+    def test_partition_assignment_keeps_paired_samples_together(self) -> None:
+        for partition in ("question-1", "question-2", "question-3"):
+            human = TextSample(
+                text="Human paired answer.",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source="pair_source",
+                source_id=f"{partition}:human",
+                partition_id=partition,
+            )
+            ai = replace(
+                human,
+                text="AI paired answer.",
+                label="ai",
+                source_id=f"{partition}:ai",
+                generator="fixture",
+            )
+            self.assertEqual(human.partition_key, ai.partition_key)
+            self.assertEqual(
+                _partition_assignment(human.partition_key, 123, 0.2),
+                _partition_assignment(ai.partition_key, 123, 0.2),
+            )
+
+    def test_detector_failures_are_grouped_and_old_artifact_survives_insufficient_evidence(self) -> None:
+        class BrokenDetector:
+            def detect(self, text: str):
+                if "broken" in text:
+                    raise TimeoutError("fixture timeout")
+                return type("Result", (), {"score": 0.2})()
+
+        spec = DatasetSpec(
+            name="failure_fixture",
+            url="https://example.invalid/failure.zip",
+            license="CC0-1.0",
+            domain="general_qa",
+            source="https://example.invalid/failure",
+            language="en",
+        )
+        seed = 41
+        calibration_ids = [
+            f"failure-{index}"
+            for index in range(100)
+            if _partition_assignment(f"failure-{index}", seed, 0.5) == "calibration"
+        ][:2]
+        samples = [
+            TextSample(
+                text=f"{'broken' if index == 0 else 'usable'} human calibration text",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id=partition,
+                partition_id=partition,
+            )
+            for index, partition in enumerate(calibration_ids)
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp), dataset_specs=(spec,))
+            manager.artifact_path.parent.mkdir(parents=True)
+            original = b'{"existing":"artifact"}\n'
+            manager.artifact_path.write_bytes(original)
+            with patch.object(manager, "iter_source_samples", return_value=iter(samples)):
+                with self.assertRaisesRegex(RuntimeError, "calibration"):
+                    build_threshold_artifact(
+                        manager,
+                        BrokenDetector(),
+                        human_calibration_limit=10,
+                        human_validation_limit=0,
+                        ai_validation_limit=0,
+                        validation_fraction=0.5,
+                        minimum_group_samples=2,
+                        minimum_validation_samples=0,
+                        minimum_ai_validation_samples=0,
+                        alpha=0.25,
+                        sampling_seed=seed,
+                        min_effective_chars=5,
+                        high_threshold_floors={"default": 0.0},
+                    )
+            self.assertEqual(manager.artifact_path.read_bytes(), original)
+
+    def test_selection_is_order_independent_and_excludes_too_short_samples(self) -> None:
+        class Detector:
+            def detect(self, text: str):
+                return type("Result", (), {"score": 0.2})()
+
+        spec = DatasetSpec(
+            name="ordered_fixture",
+            url="https://example.invalid/ordered.zip",
+            license="CC0-1.0",
+            domain="general_qa",
+            source="https://example.invalid/ordered",
+            language="en",
+        )
+        samples = [
+            TextSample(
+                text=f"Stable human calibration sample number {index}",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id=f"ordered-{index}",
+            )
+            for index in range(20)
+        ]
+        samples.append(
+            TextSample(
+                text="tiny",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id="too-short",
+            )
+        )
+        normalized_outputs = []
+        payloads = []
+        for ordered in (samples, list(reversed(samples))):
+            with tempfile.TemporaryDirectory() as tmp:
+                manager = TextResourceManager(project_root=Path(tmp), dataset_specs=(spec,))
+                with patch.object(manager, "iter_source_samples", return_value=iter(ordered)):
+                    payload = build_threshold_artifact(
+                        manager,
+                        Detector(),
+                        human_calibration_limit=5,
+                        human_validation_limit=0,
+                        ai_validation_limit=0,
+                        validation_fraction=0,
+                        minimum_group_samples=3,
+                        minimum_validation_samples=0,
+                        minimum_ai_validation_samples=0,
+                        alpha=0.25,
+                        sampling_seed=71,
+                        min_effective_chars=10,
+                        high_threshold_floors={"default": 0.0},
+                    )
+                normalized_outputs.append(
+                    manager.normalized_path(spec).read_text(encoding="utf-8")
+                )
+                payloads.append(payload)
+
+        self.assertEqual(normalized_outputs[0], normalized_outputs[1])
+        self.assertEqual(payloads[0]["groups"], payloads[1]["groups"])
+        self.assertEqual(
+            payloads[0]["sampling"]["selected_group_counts"],
+            payloads[1]["sampling"]["selected_group_counts"],
+        )
+        self.assertEqual(payloads[0]["sampling"]["excluded_short_total"], 1)
+
+    def test_successful_artifact_records_detector_exception_classes(self) -> None:
+        class Detector:
+            def detect(self, text: str):
+                if "timeout" in text:
+                    raise TimeoutError("fixture")
+                return type("Result", (), {"score": 0.2})()
+
+        spec = DatasetSpec(
+            name="recorded_failure",
+            url="https://example.invalid/recorded-failure.zip",
+            license="CC0-1.0",
+            domain="general_qa",
+            source="https://example.invalid/recorded-failure",
+            language="en",
+        )
+        samples = [
+            TextSample(
+                text=f"{'timeout' if index == 0 else 'usable'} calibration sample {index}",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id=f"recorded-{index}",
+            )
+            for index in range(6)
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp), dataset_specs=(spec,))
+            with patch.object(manager, "iter_source_samples", return_value=iter(samples)):
+                payload = build_threshold_artifact(
+                    manager,
+                    Detector(),
+                    human_calibration_limit=6,
+                    human_validation_limit=0,
+                    ai_validation_limit=0,
+                    validation_fraction=0,
+                    minimum_group_samples=4,
+                    minimum_validation_samples=0,
+                    minimum_ai_validation_samples=0,
+                    alpha=0.25,
+                    sampling_seed=73,
+                    min_effective_chars=5,
+                    high_threshold_floors={"default": 0.0},
+                )
+
+        self.assertEqual(payload["detector_failures"]["total"], 1)
+        self.assertEqual(
+            payload["detector_failures"]["by_exception_class"],
+            {"TimeoutError": 1},
+        )
+        self.assertEqual(
+            payload["detector_failures"]["by_role"]["human_calibration"],
+            {"TimeoutError": 1},
+        )
+
+    def test_artifact_replace_failure_preserves_existing_bytes(self) -> None:
+        class Detector:
+            def detect(self, text: str):
+                return type("Result", (), {"score": 0.2})()
+
+        spec = DatasetSpec(
+            name="atomic_fixture",
+            url="https://example.invalid/atomic.zip",
+            license="CC0-1.0",
+            domain="general_qa",
+            source="https://example.invalid/atomic",
+            language="en",
+        )
+        seed = 53
+        partitions = [
+            f"atomic-{index}"
+            for index in range(100)
+            if _partition_assignment(f"atomic-{index}", seed, 0.5) == "calibration"
+        ][:3]
+        samples = [
+            TextSample(
+                text=f"Atomic human calibration text {index}",
+                label="human",
+                language="en",
+                domain="general_qa",
+                source=spec.name,
+                source_id=partition,
+                partition_id=partition,
+            )
+            for index, partition in enumerate(partitions)
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp), dataset_specs=(spec,))
+            manager.artifact_path.parent.mkdir(parents=True)
+            original = b'{"stable":"old"}'
+            manager.artifact_path.write_bytes(original)
+            with (
+                patch.object(manager, "iter_source_samples", return_value=iter(samples)),
+                patch(
+                    "scripts.bootstrap_text_resources.os.replace",
+                    side_effect=OSError("replace failed"),
+                ),
+            ):
+                with self.assertRaisesRegex(OSError, "replace failed"):
+                    build_threshold_artifact(
+                        manager,
+                        Detector(),
+                        human_calibration_limit=10,
+                        human_validation_limit=0,
+                        ai_validation_limit=0,
+                        minimum_group_samples=2,
+                        minimum_validation_samples=0,
+                        minimum_ai_validation_samples=0,
+                        alpha=0.25,
+                        validation_fraction=0.5,
+                        sampling_seed=seed,
+                        min_effective_chars=5,
+                        high_threshold_floors={"default": 0.0},
+                    )
+            self.assertEqual(manager.artifact_path.read_bytes(), original)
+            self.assertFalse(manager.artifact_path.with_suffix(".json.tmp").exists())
+
+    def test_resource_stats_reads_normalized_samples_without_detector(self) -> None:
+        spec = DatasetSpec(
+            name="stats_fixture",
+            url="https://example.invalid/stats.zip",
+            license="CC0-1.0",
+            domain="official_news",
+            source="https://example.invalid/stats",
+            language="en",
+        )
+        sample = TextSample(
+            text="Prepared human news sample.",
+            label="human",
+            language="en",
+            domain="official_news",
+            source=spec.name,
+            source_id="news-1",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp), dataset_specs=(spec,))
+            manager.write_normalized_samples(spec, [sample])
+            stats = build_resource_stats(manager, short_text_chars=200)
+
+        self.assertEqual(stats["sources"][spec.name]["normalized_samples"], 1)
+        self.assertEqual(
+            stats["sources"][spec.name]["counts"]["human:en:official_news:short"],
+            1,
+        )
+        self.assertFalse(stats["sources"][spec.name]["source_ready"])
+
+    def test_stats_cli_wires_dataset_profile_without_building_detector(self) -> None:
+        manager = MagicMock()
+        manager.dataset_profile = "core"
+        with (
+            patch.object(
+                bootstrap_text_resources,
+                "TextResourceManager",
+                return_value=manager,
+            ) as manager_factory,
+            patch.object(
+                bootstrap_text_resources,
+                "build_resource_stats",
+                return_value={"sources": {}},
+            ) as stats_builder,
+            patch.object(
+                bootstrap_text_resources,
+                "_build_detector",
+                side_effect=AssertionError("stats must not build a detector"),
+            ),
+        ):
+            result = bootstrap_text_resources.main(
+                ["--profile", "stats", "--dataset-profile", "core"]
+            )
+
+        self.assertEqual(result, 0)
+        manager_factory.assert_called_once()
+        self.assertEqual(
+            manager_factory.call_args.kwargs["dataset_profile"],
+            "core",
+        )
+        stats_builder.assert_called_once()
+        manager.ensure_datasets.assert_not_called()
+        manager.ensure_models.assert_not_called()
+
+    def test_legacy_sample_limit_flags_remain_parseable(self) -> None:
+        args = bootstrap_text_resources.parse_args(
+            ["--sample-limit", "11", "--validation-limit", "7"]
+        )
+        self.assertEqual(args.sample_limit, 11)
+        self.assertEqual(args.validation_limit, 7)
+        self.assertIsNone(args.human_calibration_limit)
+        self.assertIsNone(args.human_validation_limit)
+        self.assertIsNone(args.ai_validation_limit)
 
 
 if __name__ == "__main__":
