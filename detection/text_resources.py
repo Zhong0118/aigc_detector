@@ -16,6 +16,7 @@ import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator, Mapping, Sequence
+from urllib.parse import unquote, urlsplit
 
 import requests
 
@@ -40,6 +41,35 @@ _CONTENT_RANGE_PATTERN = re.compile(r"^bytes (\d+)-(\d+)/(\d+|\*)$")
 _UNSATISFIED_CONTENT_RANGE_PATTERN = re.compile(r"^bytes \*/(\d+)$")
 
 
+def _safe_portable_component(value: Any, *, field_name: str) -> str:
+    if (
+        not isinstance(value, str)
+        or not _PORTABLE_NAME_PATTERN.fullmatch(value)
+        or value in {".", ".."}
+        or value.endswith((".", " "))
+        or "/" in value
+        or "\\" in value
+        or ":" in value
+        or value.split(".", 1)[0].upper() in _WINDOWS_RESERVED_NAMES
+    ):
+        raise ValueError(
+            f"{field_name} must be one safe portable path component"
+        )
+    return value
+
+
+def _url_derived_filename(url: Any) -> str:
+    if not isinstance(url, str):
+        raise ValueError(
+            "dataset filename must be one safe portable path component"
+        )
+    encoded_component = urlsplit(url).path.rsplit("/", 1)[-1]
+    return _safe_portable_component(
+        unquote(encoded_component),
+        field_name="dataset filename",
+    )
+
+
 @dataclass(frozen=True)
 class DatasetSpec:
     name: str
@@ -60,15 +90,7 @@ class DatasetSpec:
     attribution_url: str | None = None
 
     def __post_init__(self) -> None:
-        if (
-            not _PORTABLE_NAME_PATTERN.fullmatch(self.name)
-            or self.name in {".", ".."}
-            or self.name.endswith((".", " "))
-            or self.name.split(".", 1)[0].upper() in _WINDOWS_RESERVED_NAMES
-        ):
-            raise ValueError(
-                "dataset name must be one safe portable directory component"
-            )
+        _safe_portable_component(self.name, field_name="dataset name")
         source_kind = self.source_kind
         if source_kind is None:
             source_kind = {
@@ -80,6 +102,13 @@ class DatasetSpec:
             raise ValueError(f"Unsupported dataset source kind: {source_kind}")
         if source_kind == "hf_dataset" and not self.dataset_id:
             raise ValueError("Hugging Face resources require dataset_id")
+        if self.filename is not None:
+            _safe_portable_component(
+                self.filename,
+                field_name="dataset filename",
+            )
+        elif source_kind in {"legacy_file", "raid_csv"}:
+            _url_derived_filename(self.url)
         if self.language not in {None, "zh", "en"}:
             raise ValueError(f"Unsupported dataset language: {self.language}")
 
@@ -87,6 +116,15 @@ class DatasetSpec:
     def fingerprint(self) -> str:
         payload = _stable_json_dumps(asdict(self))
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _dataset_filename(spec: DatasetSpec) -> str:
+    if spec.filename is not None:
+        return _safe_portable_component(
+            spec.filename,
+            field_name="dataset filename",
+        )
+    return _url_derived_filename(spec.url)
 
 
 CORE_DATASETS = (
@@ -394,9 +432,7 @@ class TextResourceManager:
         if not root.exists():
             return
         if spec is not None and spec.source_kind == "legacy_file":
-            filename = spec.filename or Path(spec.url.split("?", 1)[0]).name
-            if not filename or Path(filename).name != filename:
-                return
+            filename = _dataset_filename(spec)
             paths = (root / filename,)
             strict = True
         elif spec is not None and spec.source_kind == "legacy_zip":
@@ -472,7 +508,7 @@ class TextResourceManager:
         if spec.source_kind == "raid_csv":
             path = self._contained_path(
                 self._resource_root(spec),
-                spec.filename or "train_none.csv",
+                _dataset_filename(spec),
             )
             with path.open(encoding="utf-8-sig", newline="") as handle:
                 yield from self._adapt_rows(spec, csv.DictReader(handle), spec.splits[0])
@@ -768,9 +804,7 @@ class TextResourceManager:
             self._remove_path(staging)
 
     def _download_file(self, spec: DatasetSpec, target: Path) -> None:
-        filename = spec.filename or Path(spec.url.split("?", 1)[0]).name
-        if not filename or Path(filename).name != filename:
-            raise ValueError(f"Unsafe dataset filename: {filename}")
+        filename = _dataset_filename(spec)
         destination = self._contained_path(target, filename)
         self._download_to_path(
             spec.url,
@@ -1335,7 +1369,7 @@ class TextResourceManager:
         spec: DatasetSpec,
         target: Path,
     ) -> dict[str, Any]:
-        filename = spec.filename or Path(spec.url.split("?", 1)[0]).name
+        filename = _dataset_filename(spec)
         path = self._contained_path(target, filename)
         usable_text_count = self._validate_legacy_file(spec, path)
         evidence = self._file_evidence(target, path)
@@ -1484,7 +1518,7 @@ class TextResourceManager:
         spec: DatasetSpec,
         target: Path,
     ) -> dict[str, Any]:
-        filename = spec.filename or "train_none.csv"
+        filename = _dataset_filename(spec)
         path = self._contained_path(target, filename)
         required_fields = {"generation", "model", "domain", "attack"}
         total_rows = 0

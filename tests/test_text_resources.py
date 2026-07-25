@@ -371,6 +371,8 @@ class TextResourceManagerTests(unittest.TestCase):
             "bad*name",
             "trailing.",
             "CON",
+            "CON.txt",
+            "payload.txt:stream",
         )
         for name in unsafe_names:
             with self.subTest(name=name), self.assertRaisesRegex(
@@ -393,6 +395,65 @@ class TextResourceManagerTests(unittest.TestCase):
             source="https://example.invalid/project",
         )
         self.assertEqual(safe.name, "safe_resource-1.0")
+
+    def test_dataset_spec_rejects_unsafe_explicit_filenames(self) -> None:
+        unsafe_filenames = (
+            "payload.txt:stream",
+            "CON",
+            "CON.jsonl",
+            "trailing.",
+            "trailing ",
+            "/absolute.jsonl",
+            "nested/payload.jsonl",
+            r"nested\payload.jsonl",
+        )
+        for filename in unsafe_filenames:
+            with self.subTest(filename=filename), self.assertRaisesRegex(
+                ValueError,
+                "dataset filename",
+            ):
+                DatasetSpec(
+                    name="safe_resource",
+                    url="https://example.invalid/source.jsonl",
+                    license="MIT",
+                    domain="literature",
+                    source="https://example.invalid/project",
+                    download_kind="file",
+                    filename=filename,
+                )
+
+        safe = DatasetSpec(
+            name="safe_resource",
+            url="https://example.invalid/source.jsonl",
+            license="MIT",
+            domain="literature",
+            source="https://example.invalid/project",
+            download_kind="file",
+            filename="payload-1.0.jsonl",
+        )
+        self.assertEqual(safe.filename, "payload-1.0.jsonl")
+
+    def test_dataset_spec_rejects_unsafe_url_derived_filenames(self) -> None:
+        unsafe_urls = (
+            "https://example.invalid/payload.txt:stream",
+            "https://example.invalid/CON",
+            "https://example.invalid/CON.jsonl",
+            "https://example.invalid/trailing.",
+            "https://example.invalid/nested%2Fpayload.jsonl",
+        )
+        for url in unsafe_urls:
+            with self.subTest(url=url), self.assertRaisesRegex(
+                ValueError,
+                "dataset filename",
+            ):
+                DatasetSpec(
+                    name="safe_resource",
+                    url=url,
+                    license="MIT",
+                    domain="literature",
+                    source="https://example.invalid/project",
+                    download_kind="file",
+                )
 
     def test_resource_profiles_register_official_multidomain_sources(self) -> None:
         core_names = {spec.name for spec in CORE_DATASETS}
