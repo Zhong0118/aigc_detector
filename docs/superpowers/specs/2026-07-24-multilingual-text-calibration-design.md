@@ -75,12 +75,22 @@ TextSample
   source_id: str
   generator: str | null
   split: str
+  partition_id: str | null
+  partition_key: partition_id or source_id
+  identity_key: SHA-256(source, split, source_id, label, generator, text)
 ```
 
 Adapters reject empty text, unsupported languages, unknown labels, and records
-without stable source identity. Deduplication uses normalized text hashes.
-Paired human/AI records retain a shared source ID so split assignment happens
-at pair level and cannot leak one side of a prompt into a different partition.
+with malformed required metadata. Source IDs include source and split; when a
+valid row ID is unavailable, adapters derive a deterministic canonical-content
+hash namespaced by source and split. Paired human/AI records set a shared
+optional `partition_id`, so `partition_key` keeps both sides in one partition
+while each record retains a unique `source_id`.
+
+Partition assignment hashes the seed with `sample.partition_key`.
+Deduplication and deterministic reservoir membership use
+`sample.identity_key`, the stable hash of the individual sample fields shown
+above.
 
 ## Length and Sampling
 
@@ -96,8 +106,8 @@ one window per document to prevent a few very large documents from dominating
 the score distribution.
 
 Reservoir sampling is deterministic and without replacement. Its seed, scan
-limit, selected sample IDs, and bucket counts are recorded in the artifact.
-The initial defaults per language/domain/length group are:
+limit, selected `identity_key` values, and bucket counts are recorded in the
+artifact. The initial defaults per language/domain/length group are:
 
 - 5,000 human calibration samples.
 - 1,000 held-out human validation samples.
@@ -237,7 +247,8 @@ external datasets.
 
 Acceptance requires:
 
-- HC3 pair-level splitting prevents cross-partition leakage.
+- HC3 records share a `partition_id`, and partitioning by `partition_key`
+  prevents cross-partition leakage while `identity_key` keeps records distinct.
 - Chinese and English groups are emitted with correct domain and length keys.
 - Text below runtime minimum length is excluded.
 - Sampling is deterministic for the same seed and changes for a different
