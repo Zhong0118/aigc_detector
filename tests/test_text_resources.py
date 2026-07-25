@@ -473,30 +473,30 @@ class TextResourceManagerTests(unittest.TestCase):
         )
         self.assertEqual(multidomain["hc3_en"].dataset_id, "Hello-SimpleAI/HC3")
         self.assertEqual(multidomain["hc3_zh"].dataset_id, "Hello-SimpleAI/HC3-Chinese")
-        self.assertEqual(multidomain["hc3_en"].dataset_builder, "json")
-        self.assertEqual(multidomain["hc3_zh"].dataset_builder, "json")
+        self.assertEqual(multidomain["hc3_en"].source_kind, "hf_jsonl")
+        self.assertEqual(multidomain["hc3_zh"].source_kind, "hf_jsonl")
+        self.assertEqual(multidomain["hc3_en"].filename, "all.jsonl")
+        self.assertEqual(multidomain["hc3_zh"].filename, "all.jsonl")
+        self.assertIsNone(multidomain["hc3_en"].dataset_builder)
+        self.assertIsNone(multidomain["hc3_zh"].dataset_builder)
         self.assertIsNone(multidomain["hc3_en"].dataset_config)
         self.assertIsNone(multidomain["hc3_zh"].dataset_config)
         self.assertEqual(
-            multidomain["hc3_en"].dataset_data_files,
+            multidomain["hc3_en"].url,
             (
-                (
-                    "train",
-                    "https://huggingface.co/datasets/Hello-SimpleAI/HC3/"
-                    "resolve/main/all.jsonl",
-                ),
+                "https://huggingface.co/datasets/Hello-SimpleAI/HC3/"
+                "resolve/main/all.jsonl"
             ),
         )
         self.assertEqual(
-            multidomain["hc3_zh"].dataset_data_files,
+            multidomain["hc3_zh"].url,
             (
-                (
-                    "train",
-                    "https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese/"
-                    "resolve/main/all.jsonl",
-                ),
+                "https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese/"
+                "resolve/main/all.jsonl"
             ),
         )
+        self.assertEqual(multidomain["hc3_en"].dataset_data_files, ())
+        self.assertEqual(multidomain["hc3_zh"].dataset_data_files, ())
         self.assertEqual(multidomain["tnews"].dataset_id, "clue")
         self.assertEqual(multidomain["tnews"].dataset_config, "tnews")
         self.assertEqual(multidomain["tnews"].license, "unknown")
@@ -569,22 +569,36 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertIn("source_ready", classical)
         self.assertIn("normalized_ready", classical)
 
-    def test_hugging_face_adapter_dispatch_uses_disk_backed_project_cache(self) -> None:
-        loader_calls = []
+    def test_hc3_uses_hardened_local_jsonl_and_offline_iteration(self) -> None:
+        payload = (
+            json.dumps(
+                {
+                    "id": "question-1",
+                    "question": "What happened?",
+                    "human_answers": ["A human response."],
+                    "chatgpt_answers": ["An AI response."],
+                }
+            ).encode("utf-8")
+            + b"\n"
+        )
 
-        def loader(dataset_id, dataset_config=None, **kwargs):
-            loader_calls.append((dataset_id, dataset_config, kwargs))
-            return DiskBackedRows(
-                Path(kwargs["cache_dir"]) / f"fixture-{kwargs['split']}.arrow",
-                [
-                    {
-                        "id": "question-1",
-                        "human_answers": ["A human response."],
-                        "chatgpt_answers": ["An AI response."],
-                    }
-                ]
-            )
+        class Response:
+            status_code = 200
+            headers = {"Content-Length": str(len(payload))}
 
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield payload
+
+        loader = MagicMock(side_effect=AssertionError("HC3 must not use load_dataset"))
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             manager = TextResourceManager(
@@ -592,89 +606,231 @@ class TextResourceManagerTests(unittest.TestCase):
                 profile="multidomain",
                 dataset_loader=loader,
             )
-            samples = list(manager.iter_source_samples("hc3_en"))
-            zh_samples = list(manager.iter_source_samples("hc3_zh"))
+            spec = manager.resource_spec("hc3_en")
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=Response(),
+            ) as get:
+                target = manager.ensure_dataset(spec)
 
-        self.assertEqual([sample.label for sample in samples], ["human", "ai"])
-        self.assertEqual([sample.language for sample in samples], ["en", "en"])
-        self.assertEqual([sample.language for sample in zh_samples], ["zh", "zh"])
-        self.assertEqual(
-            [call[0:2] for call in loader_calls],
-            [
-                ("json", None),
-                ("json", None),
-            ],
+            local_jsonl = target / "all.jsonl"
+            marker = json.loads(
+                (target / ".source.complete.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(local_jsonl.read_bytes(), payload)
+            self.assertFalse((target / "hf_cache").exists())
+            self.assertEqual(marker["preparation_kind"], "hf_jsonl_v1")
+            self.assertEqual(marker["raw_rows"], 1)
+            self.assertEqual(marker["adapted_samples"], 2)
+            self.assertEqual(marker["label_counts"], {"human": 1, "ai": 1})
+            self.assertTrue(manager.is_source_ready(spec))
+            self.assertTrue(manager.verify_source(spec))
+            get.assert_called_once()
+
+            with patch(
+                "detection.text_resources.requests.get",
+                side_effect=AssertionError("offline iteration must not use HTTP"),
+            ):
+                samples = list(manager.iter_source_samples(spec))
+                stats = build_resource_stats(manager)
+
+            self.assertEqual([sample.label for sample in samples], ["human", "ai"])
+            self.assertEqual([sample.language for sample in samples], ["en", "en"])
+            self.assertEqual(
+                stats["sources"]["hc3_en"]["prepared_or_normalized_samples"],
+                2,
+            )
+            loader.assert_not_called()
+
+    def test_hc3_malformed_or_one_label_update_rolls_back(self) -> None:
+        valid = (
+            b'{"id":"q1","question":"Q?",'
+            b'"human_answers":["Human."],"chatgpt_answers":["AI."]}\n'
         )
-        self.assertEqual(
-            loader_calls[0][2]["data_files"],
-            {
-                "train": (
-                    "https://huggingface.co/datasets/Hello-SimpleAI/HC3/"
-                    "resolve/main/all.jsonl"
-                )
-            },
+        invalid_payloads = (
+            ("malformed", b'{"id":"broken"'),
+            (
+                "one_label",
+                b'{"id":"q2","question":"Q?",'
+                b'"human_answers":["Human only."],"chatgpt_answers":[]}\n',
+            ),
         )
-        self.assertEqual(
-            loader_calls[1][2]["data_files"],
-            {
-                "train": (
-                    "https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese/"
-                    "resolve/main/all.jsonl"
-                )
-            },
-        )
-        self.assertNotEqual(loader_calls[0][0], "Hello-SimpleAI/HC3")
-        self.assertNotEqual(loader_calls[1][0], "Hello-SimpleAI/HC3-Chinese")
-        self.assertEqual(loader_calls[0][2]["split"], "train")
-        self.assertIs(loader_calls[0][2]["keep_in_memory"], False)
-        self.assertNotIn("streaming", loader_calls[0][2])
-        self.assertEqual(
-            Path(loader_calls[0][2]["cache_dir"]),
-            root / "data" / "text_false_positive" / "corpora" / "hc3_en" / "hf_cache",
-        )
+
+        class Response:
+            status_code = 200
+
+            def __init__(self, body: bytes):
+                self.body = body
+                self.headers = {"Content-Length": str(len(body))}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def iter_content(self, chunk_size: int):
+                yield self.body
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                profile="multidomain",
+                dataset_loader=MagicMock(
+                    side_effect=AssertionError("HC3 must not use load_dataset")
+                ),
+            )
+            spec = manager.resource_spec("hc3_en")
+            with patch(
+                "detection.text_resources.requests.get",
+                return_value=Response(valid),
+            ):
+                target = manager.ensure_dataset(spec)
+            original_file = (target / "all.jsonl").read_bytes()
+            original_marker = (target / ".source.complete.json").read_bytes()
+
+            for name, body in invalid_payloads:
+                with self.subTest(name=name):
+                    changed = replace(spec, url=f"{spec.url}?revision={name}")
+                    changed_manager = TextResourceManager(
+                        project_root=tmp,
+                        dataset_specs=(changed,),
+                        dataset_loader=MagicMock(
+                            side_effect=AssertionError(
+                                "HC3 must not use load_dataset"
+                            )
+                        ),
+                    )
+                    with patch(
+                        "detection.text_resources.requests.get",
+                        return_value=Response(body),
+                    ):
+                        with self.assertRaises(RuntimeError):
+                            changed_manager.ensure_dataset(changed)
+
+                    self.assertEqual((target / "all.jsonl").read_bytes(), original_file)
+                    self.assertEqual(
+                        (target / ".source.complete.json").read_bytes(),
+                        original_marker,
+                    )
+                    self.assertTrue(manager.is_source_ready(spec))
 
     def test_artifact_status_requires_matching_schema_v2_profile(self) -> None:
+        valid_group = {
+            "low_threshold": 0.4,
+            "high_threshold": 0.85,
+            "threshold_floor": 0.8,
+            "target_fpr": 0.02,
+            "human_calibration_samples": 50,
+            "human_validation_samples": 10,
+            "ai_validation_samples": 10,
+        }
         cases = (
-            (
-                "legacy",
-                {"groups": {}},
-                {
-                    "artifact_exists": True,
-                    "artifact_schema_version": 1,
-                    "artifact_dataset_profile": None,
-                    "artifact_profile_matches": False,
-                    "artifact_ready": False,
-                },
-            ),
+            ("legacy", {"groups": {}}, False),
             (
                 "matching",
                 {
                     "artifact_schema_version": 2,
                     "dataset_profile": "multidomain",
-                    "groups": {},
+                    "target_fpr": 0.02,
+                    "groups": {"en:general_qa:short": valid_group},
                 },
-                {
-                    "artifact_exists": True,
-                    "artifact_schema_version": 2,
-                    "artifact_dataset_profile": "multidomain",
-                    "artifact_profile_matches": True,
-                    "artifact_ready": True,
-                },
+                True,
             ),
             (
                 "mismatched",
                 {
                     "artifact_schema_version": 2,
                     "dataset_profile": "core",
+                    "target_fpr": 0.02,
+                    "groups": {"en:general_qa:short": valid_group},
+                },
+                False,
+            ),
+            (
+                "groups_list",
+                {
+                    "artifact_schema_version": 2,
+                    "dataset_profile": "multidomain",
+                    "target_fpr": 0.02,
+                    "groups": [],
+                },
+                False,
+            ),
+            (
+                "groups_empty",
+                {
+                    "artifact_schema_version": 2,
+                    "dataset_profile": "multidomain",
+                    "target_fpr": 0.02,
                     "groups": {},
                 },
+                False,
+            ),
+            (
+                "inverted",
                 {
-                    "artifact_exists": True,
                     "artifact_schema_version": 2,
-                    "artifact_dataset_profile": "core",
-                    "artifact_profile_matches": False,
-                    "artifact_ready": False,
+                    "dataset_profile": "multidomain",
+                    "target_fpr": 0.02,
+                    "groups": {
+                        "en:general_qa:short": {
+                            **valid_group,
+                            "low_threshold": 0.9,
+                            "high_threshold": 0.2,
+                        }
+                    },
                 },
+                False,
+            ),
+            (
+                "out_of_range",
+                {
+                    "artifact_schema_version": 2,
+                    "dataset_profile": "multidomain",
+                    "target_fpr": 0.02,
+                    "groups": {
+                        "en:general_qa:short": {
+                            **valid_group,
+                            "high_threshold": 1.1,
+                        }
+                    },
+                },
+                False,
+            ),
+            (
+                "nonfinite",
+                {
+                    "artifact_schema_version": 2,
+                    "dataset_profile": "multidomain",
+                    "target_fpr": 0.02,
+                    "groups": {
+                        "en:general_qa:short": {
+                            **valid_group,
+                            "high_threshold": float("nan"),
+                        }
+                    },
+                },
+                False,
+            ),
+            (
+                "missing_evidence",
+                {
+                    "artifact_schema_version": 2,
+                    "dataset_profile": "multidomain",
+                    "target_fpr": 0.02,
+                    "groups": {
+                        "en:general_qa:short": {
+                            key: value
+                            for key, value in valid_group.items()
+                            if key != "human_calibration_samples"
+                        }
+                    },
+                },
+                False,
             ),
         )
         with tempfile.TemporaryDirectory() as tmp:
@@ -682,40 +838,37 @@ class TextResourceManagerTests(unittest.TestCase):
                 project_root=tmp,
                 dataset_profile="multidomain",
             )
-            for name, payload, expected in cases:
+            for name, payload, expected_ready in cases:
                 with self.subTest(name=name):
                     manager.artifact_path.parent.mkdir(parents=True, exist_ok=True)
                     manager.artifact_path.write_text(
                         json.dumps(payload),
                         encoding="utf-8",
                     )
-                    self.assertEqual(manager.artifact_status(), expected)
+                    artifact_status = manager.artifact_status()
+                    self.assertEqual(
+                        artifact_status["artifact_ready"],
+                        expected_ready,
+                    )
+                    self.assertEqual(
+                        artifact_status["artifact_validation_errors"] == [],
+                        expected_ready,
+                    )
                     status = manager.status()
-                    for key, value in expected.items():
-                        self.assertEqual(status[key], value)
+                    self.assertEqual(status["artifact_ready"], expected_ready)
+                    self.assertEqual(
+                        status["artifact_validation_errors"],
+                        artifact_status["artifact_validation_errors"],
+                    )
 
             manager.artifact_path.write_text("{broken", encoding="utf-8")
-            self.assertEqual(
-                manager.artifact_status(),
-                {
-                    "artifact_exists": True,
-                    "artifact_schema_version": None,
-                    "artifact_dataset_profile": None,
-                    "artifact_profile_matches": False,
-                    "artifact_ready": False,
-                },
-            )
+            broken = manager.artifact_status()
+            self.assertFalse(broken["artifact_ready"])
+            self.assertTrue(broken["artifact_validation_errors"])
             manager.artifact_path.unlink()
-            self.assertEqual(
-                manager.artifact_status(),
-                {
-                    "artifact_exists": False,
-                    "artifact_schema_version": None,
-                    "artifact_dataset_profile": None,
-                    "artifact_profile_matches": False,
-                    "artifact_ready": False,
-                },
-            )
+            missing = manager.artifact_status()
+            self.assertFalse(missing["artifact_ready"])
+            self.assertTrue(missing["artifact_validation_errors"])
 
     def test_m4_dispatch_keeps_supported_languages_and_skips_others(self) -> None:
         def loader(*args, **kwargs):
@@ -2425,7 +2578,7 @@ class TextResourceManagerTests(unittest.TestCase):
                 )
                 self.assertTrue(manager.is_source_ready(spec))
 
-    def test_hf_requires_adapted_samples_and_expected_label_evidence(self) -> None:
+    def test_hf_requires_adapted_samples(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             def empty_loader(*args, **kwargs):
                 return DiskBackedRows(
@@ -2441,62 +2594,6 @@ class TextResourceManagerTests(unittest.TestCase):
             spec = manager.resource_spec("tnews")
             with self.assertRaisesRegex(RuntimeError, "adapted"):
                 manager.ensure_dataset(spec)
-            self.assertFalse(manager.is_source_ready(spec))
-
-            def human_only_hc3_loader(*args, **kwargs):
-                return DiskBackedRows(
-                    Path(kwargs["cache_dir"]) / f"{kwargs['split']}.arrow",
-                    [
-                        {
-                            "id": "hc3-human-only",
-                            "question": "Question?",
-                            "human_answers": ["A human answer."],
-                            "chatgpt_answers": [],
-                        }
-                    ],
-                )
-
-            manager = TextResourceManager(
-                project_root=Path(tmp) / "labels",
-                profile="multidomain",
-                dataset_loader=human_only_hc3_loader,
-            )
-            spec = manager.resource_spec("hc3_en")
-            with self.assertRaisesRegex(RuntimeError, "human and AI|labels"):
-                manager.ensure_dataset(spec)
-            self.assertFalse(manager.is_source_ready(spec))
-
-            def paired_hc3_loader(*args, **kwargs):
-                return DiskBackedRows(
-                    Path(kwargs["cache_dir"]) / f"{kwargs['split']}.arrow",
-                    [
-                        {
-                            "id": "hc3-pair",
-                            "question": "Question?",
-                            "human_answers": ["A human answer."],
-                            "chatgpt_answers": ["An AI answer."],
-                        }
-                    ],
-                )
-
-            manager = TextResourceManager(
-                project_root=Path(tmp) / "paired",
-                profile="multidomain",
-                dataset_loader=paired_hc3_loader,
-            )
-            spec = manager.resource_spec("hc3_en")
-            target = manager.ensure_dataset(spec)
-            marker_path = target / ".source.complete.json"
-            marker = json.loads(marker_path.read_text(encoding="utf-8"))
-            self.assertEqual(marker["expected_labels"], ["human", "ai"])
-            self.assertEqual(
-                marker["split_evidence"][spec.splits[0]]["label_counts"],
-                {"human": 1, "ai": 1},
-            )
-            self.assertTrue(manager.is_source_ready(spec))
-
-            marker["split_evidence"][spec.splits[0]]["label_counts"]["ai"] = 0
-            marker_path.write_text(json.dumps(marker), encoding="utf-8")
             self.assertFalse(manager.is_source_ready(spec))
 
     def test_conformal_threshold_uses_finite_sample_order_statistic(self) -> None:
@@ -2640,8 +2737,11 @@ class TextResourceManagerTests(unittest.TestCase):
             )
 
             saved = json.loads(manager.artifact_path.read_text(encoding="utf-8"))
+            artifact_status = manager.artifact_status()
 
         self.assertEqual(payload, saved)
+        self.assertTrue(artifact_status["artifact_ready"])
+        self.assertEqual(artifact_status["artifact_validation_errors"], [])
         self.assertEqual(saved["calibration_kind"], "human_only_split_conformal")
         self.assertIn("zh:literature:short", saved["groups"])
         self.assertIn("zh:literature:long", saved["groups"])

@@ -100,10 +100,23 @@ class DatasetSpec:
                 "file": "legacy_file",
             }.get(self.download_kind, self.download_kind)
             object.__setattr__(self, "source_kind", source_kind)
-        if source_kind not in {"legacy_zip", "legacy_file", "hf_dataset", "raid_csv"}:
+        if source_kind not in {
+            "legacy_zip",
+            "legacy_file",
+            "hf_dataset",
+            "hf_jsonl",
+            "raid_csv",
+        }:
             raise ValueError(f"Unsupported dataset source kind: {source_kind}")
-        if source_kind == "hf_dataset" and not self.dataset_id:
+        if source_kind in {"hf_dataset", "hf_jsonl"} and not self.dataset_id:
             raise ValueError("Hugging Face resources require dataset_id")
+        if source_kind == "hf_jsonl" and (
+            self.adapter != "hc3" or len(self.splits) != 1
+        ):
+            raise ValueError(
+                "Hugging Face JSONL resources require the HC3 adapter "
+                "and exactly one split"
+            )
         if self.dataset_builder is not None and source_kind != "hf_dataset":
             raise ValueError("Dataset builders are only supported for Hugging Face resources")
         if self.dataset_data_files and not self.dataset_builder:
@@ -127,7 +140,7 @@ class DatasetSpec:
                 self.filename,
                 field_name="dataset filename",
             )
-        elif source_kind in {"legacy_file", "raid_csv"}:
+        elif source_kind in {"legacy_file", "hf_jsonl", "raid_csv"}:
             _url_derived_filename(self.url)
         if self.language not in {None, "zh", "en"}:
             raise ValueError(f"Unsupported dataset language: {self.language}")
@@ -181,42 +194,34 @@ CORE_DATASETS = (
 MULTIDOMAIN_DATASETS = CORE_DATASETS + (
     DatasetSpec(
         name="hc3_en",
-        url="https://huggingface.co/datasets/Hello-SimpleAI/HC3",
+        url=(
+            "https://huggingface.co/datasets/Hello-SimpleAI/HC3/"
+            "resolve/main/all.jsonl"
+        ),
         license="CC-BY-SA-4.0",
         domain="general_qa",
         source="https://huggingface.co/datasets/Hello-SimpleAI/HC3",
-        download_kind="hf_dataset",
-        source_kind="hf_dataset",
+        download_kind="file",
+        source_kind="hf_jsonl",
+        filename="all.jsonl",
         adapter="hc3",
         dataset_id="Hello-SimpleAI/HC3",
-        dataset_builder="json",
-        dataset_data_files=(
-            (
-                "train",
-                "https://huggingface.co/datasets/Hello-SimpleAI/HC3/"
-                "resolve/main/all.jsonl",
-            ),
-        ),
         language="en",
     ),
     DatasetSpec(
         name="hc3_zh",
-        url="https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese",
+        url=(
+            "https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese/"
+            "resolve/main/all.jsonl"
+        ),
         license="CC-BY-SA-4.0",
         domain="general_qa",
         source="https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese",
-        download_kind="hf_dataset",
-        source_kind="hf_dataset",
+        download_kind="file",
+        source_kind="hf_jsonl",
+        filename="all.jsonl",
         adapter="hc3",
         dataset_id="Hello-SimpleAI/HC3-Chinese",
-        dataset_builder="json",
-        dataset_data_files=(
-            (
-                "train",
-                "https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese/"
-                "resolve/main/all.jsonl",
-            ),
-        ),
         language="zh",
     ),
     DatasetSpec(
@@ -294,6 +299,106 @@ def conformal_high_threshold(scores: Sequence[float], alpha: float = 0.02) -> fl
     if k > len(ordered):
         return float("inf")
     return ordered[k - 1]
+
+
+def _finite_number(value: Any) -> bool:
+    return bool(
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
+
+
+def _artifact_v2_validation_errors(
+    payload: Mapping[str, Any] | None,
+    *,
+    expected_profile: str,
+) -> list[str]:
+    """Validate the artifact fields required for reliable threshold routing."""
+    if payload is None:
+        return ["artifact_json_invalid"]
+
+    errors: list[str] = []
+    if payload.get("artifact_schema_version") != 2:
+        return ["artifact_schema_version_must_be_2"]
+    if payload.get("dataset_profile") != expected_profile:
+        return ["artifact_dataset_profile_mismatch"]
+
+    root_target_fpr = payload.get("target_fpr")
+    if (
+        not _finite_number(root_target_fpr)
+        or not 0 < float(root_target_fpr) <= 1
+    ):
+        errors.append("artifact_target_fpr_invalid")
+
+    groups = payload.get("groups")
+    if not isinstance(groups, Mapping) or not groups:
+        errors.append("artifact_groups_must_be_non_empty_mapping")
+        return errors
+
+    for group_name, group in groups.items():
+        if not isinstance(group_name, str) or not group_name:
+            errors.append("artifact_group_name_invalid")
+            continue
+        prefix = f"artifact_group_{group_name}"
+        if not isinstance(group, Mapping):
+            errors.append(f"{prefix}_must_be_mapping")
+            continue
+
+        low = group.get("low_threshold")
+        high = group.get("high_threshold")
+        floor = group.get("threshold_floor")
+        group_target_fpr = group.get("target_fpr")
+        calibration_count = group.get("human_calibration_samples")
+
+        if not _finite_number(low) or not 0 <= float(low) <= 1:
+            errors.append(f"{prefix}_low_threshold_invalid")
+        if not _finite_number(high) or not 0 <= float(high) <= 1:
+            errors.append(f"{prefix}_high_threshold_invalid")
+        if not _finite_number(floor) or not 0 <= float(floor) <= 1:
+            errors.append(f"{prefix}_threshold_floor_invalid")
+        if (
+            _finite_number(low)
+            and _finite_number(high)
+            and float(low) > float(high)
+        ):
+            errors.append(f"{prefix}_thresholds_inverted")
+        if (
+            _finite_number(floor)
+            and _finite_number(high)
+            and float(floor) > float(high)
+        ):
+            errors.append(f"{prefix}_high_threshold_below_floor")
+        if (
+            not _finite_number(group_target_fpr)
+            or not 0 < float(group_target_fpr) <= 1
+        ):
+            errors.append(f"{prefix}_target_fpr_invalid")
+        elif (
+            _finite_number(root_target_fpr)
+            and not math.isclose(
+                float(group_target_fpr),
+                float(root_target_fpr),
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+        ):
+            errors.append(f"{prefix}_target_fpr_mismatch")
+        if (
+            not isinstance(calibration_count, int)
+            or isinstance(calibration_count, bool)
+            or calibration_count <= 0
+        ):
+            errors.append(f"{prefix}_human_calibration_samples_invalid")
+        for field_name in ("human_validation_samples", "ai_validation_samples"):
+            count = group.get(field_name)
+            if (
+                not isinstance(count, int)
+                or isinstance(count, bool)
+                or count < 0
+            ):
+                errors.append(f"{prefix}_{field_name}_invalid")
+    return errors
 
 
 class TextResourceManager:
@@ -419,16 +524,21 @@ class TextResourceManager:
             if isinstance(raw_profile, str):
                 dataset_profile = raw_profile
         profile_matches = dataset_profile == self.dataset_profile
+        validation_errors = (
+            _artifact_v2_validation_errors(
+                payload,
+                expected_profile=self.dataset_profile,
+            )
+            if exists
+            else ["artifact_missing"]
+        )
         return {
             "artifact_exists": exists,
             "artifact_schema_version": schema_version,
             "artifact_dataset_profile": dataset_profile,
             "artifact_profile_matches": profile_matches,
-            "artifact_ready": (
-                isinstance(payload, Mapping)
-                and schema_version == 2
-                and profile_matches
-            ),
+            "artifact_validation_errors": validation_errors,
+            "artifact_ready": not validation_errors,
         }
 
     def _dataset_status(self, spec: DatasetSpec) -> dict[str, Any]:
@@ -455,7 +565,7 @@ class TextResourceManager:
         if spec.source_kind == "legacy_zip":
             self._download_and_extract(spec, target)
             return target
-        if spec.source_kind in {"legacy_file", "raid_csv"}:
+        if spec.source_kind in {"legacy_file", "hf_jsonl", "raid_csv"}:
             self._download_and_publish_file(spec, target)
             return target
         if spec.source_kind != "hf_dataset":
@@ -559,6 +669,14 @@ class TextResourceManager:
     def iter_source_samples(self, resource: str | DatasetSpec) -> Iterator[TextSample]:
         """Yield canonical source samples sequentially without a Python list copy."""
         spec = self.resource_spec(resource)
+        if spec.source_kind == "hf_jsonl":
+            path = self._contained_path(
+                self._resource_root(spec),
+                _dataset_filename(spec),
+            )
+            rows = self._iter_jsonl_rows(path, spec.name)
+            yield from self._adapt_rows(spec, rows, spec.splits[0])
+            return
         if spec.source_kind == "hf_dataset":
             for split in spec.splits:
                 rows = self._load_hf_split(spec, split)
@@ -671,6 +789,8 @@ class TextResourceManager:
         payload = self._read_json(marker)
         if payload is None:
             return False
+        if spec.source_kind == "hf_jsonl":
+            return self._hf_jsonl_manifest_matches(spec, payload, deep=deep)
         if spec.source_kind == "hf_dataset":
             return self._hf_manifest_matches(spec, payload, deep=deep)
         elif spec.source_kind == "raid_csv":
@@ -817,6 +937,15 @@ class TextResourceManager:
                 marker_payload = self._legacy_file_manifest(spec, staging)
                 marker_name = ".complete.json"
                 matches = self._legacy_file_manifest_matches(
+                    spec,
+                    marker_payload,
+                    deep=False,
+                    root=staging,
+                )
+            elif spec.source_kind == "hf_jsonl":
+                marker_payload = self._hf_jsonl_manifest(spec, staging)
+                marker_name = ".source.complete.json"
+                matches = self._hf_jsonl_manifest_matches(
                     spec,
                     marker_payload,
                     deep=False,
@@ -1162,6 +1291,33 @@ class TextResourceManager:
         if value < 0:
             raise RuntimeError("Invalid HTTP Content-Length")
         return value
+
+    def _iter_jsonl_rows(
+        self,
+        path: Path,
+        source_name: str,
+    ) -> Iterator[Mapping[str, Any]]:
+        try:
+            with path.open(encoding="utf-8") as handle:
+                for line_number, line in enumerate(handle, start=1):
+                    if not line.strip():
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError as exc:
+                        raise RuntimeError(
+                            f"Malformed {source_name} JSONL row {line_number}: {exc}"
+                        ) from exc
+                    if not isinstance(row, Mapping):
+                        raise RuntimeError(
+                            f"Malformed {source_name} JSONL row {line_number}: "
+                            "expected an object"
+                        )
+                    yield row
+        except (OSError, UnicodeError) as exc:
+            raise RuntimeError(
+                f"Could not read authenticated {source_name} JSONL: {exc}"
+            ) from exc
 
     def _load_hf_split(self, spec: DatasetSpec, split: str) -> Any:
         """Load one Arrow-backed split from the project cache.
@@ -1681,6 +1837,108 @@ class TextResourceManager:
             payload.get("filename") == evidence.get("path")
             and payload.get("byte_size") == evidence.get("byte_size")
             and payload.get("content_sha256") == evidence.get("content_sha256")
+            and self._file_evidence_matches(
+                root or self._resource_root(spec),
+                evidence,
+                deep=deep,
+            )
+        )
+
+    def _hf_jsonl_manifest(
+        self,
+        spec: DatasetSpec,
+        target: Path,
+    ) -> dict[str, Any]:
+        filename = _dataset_filename(spec)
+        path = self._contained_path(target, filename)
+        raw_rows = 0
+        adapted_samples = 0
+        label_counts = {"human": 0, "ai": 0}
+        scan_hasher = hashlib.sha256()
+
+        for row in self._iter_jsonl_rows(path, spec.name):
+            raw_rows += 1
+            encoded = _evidence_json_dumps(row).encode("utf-8")
+            scan_hasher.update(len(encoded).to_bytes(8, "big"))
+            scan_hasher.update(encoded)
+            try:
+                for sample in self._adapt_rows(spec, (row,), spec.splits[0]):
+                    adapted_samples += 1
+                    label_counts[sample.label] += 1
+            except (TypeError, ValueError) as exc:
+                raise RuntimeError(
+                    f"HC3 JSONL contains an invalid row: {exc}"
+                ) from exc
+
+        if raw_rows <= 0:
+            raise RuntimeError("HC3 JSONL contains no data rows")
+        if adapted_samples <= 0:
+            raise RuntimeError("HC3 JSONL produced no adapted samples")
+        if label_counts["human"] <= 0 or label_counts["ai"] <= 0:
+            raise RuntimeError("HC3 JSONL must contain both human and AI labels")
+
+        file_evidence = self._file_evidence(target, path)
+        return {
+            "manifest_version": 1,
+            "preparation_kind": "hf_jsonl_v1",
+            "source_spec_fingerprint": spec.fingerprint,
+            "dataset_id": spec.dataset_id,
+            "split": spec.splits[0],
+            "file": file_evidence,
+            "filename": file_evidence["path"],
+            "raw_rows": raw_rows,
+            "adapted_samples": adapted_samples,
+            "label_counts": label_counts,
+            "scan_sha256": scan_hasher.hexdigest(),
+        }
+
+    def _hf_jsonl_manifest_matches(
+        self,
+        spec: DatasetSpec,
+        payload: Mapping[str, Any],
+        *,
+        deep: bool,
+        root: Path | None = None,
+    ) -> bool:
+        if (
+            payload.get("manifest_version") != 1
+            or payload.get("preparation_kind") != "hf_jsonl_v1"
+            or payload.get("source_spec_fingerprint") != spec.fingerprint
+            or payload.get("dataset_id") != spec.dataset_id
+            or payload.get("split") != spec.splits[0]
+            or not _is_sha256(payload.get("scan_sha256"))
+        ):
+            return False
+        raw_rows = payload.get("raw_rows")
+        adapted_samples = payload.get("adapted_samples")
+        label_counts = payload.get("label_counts")
+        human_count = (
+            label_counts.get("human") if isinstance(label_counts, dict) else None
+        )
+        ai_count = label_counts.get("ai") if isinstance(label_counts, dict) else None
+        if (
+            not isinstance(raw_rows, int)
+            or isinstance(raw_rows, bool)
+            or raw_rows <= 0
+            or not isinstance(adapted_samples, int)
+            or isinstance(adapted_samples, bool)
+            or adapted_samples <= 0
+            or not isinstance(label_counts, dict)
+            or set(label_counts) != {"human", "ai"}
+            or not isinstance(human_count, int)
+            or isinstance(human_count, bool)
+            or not isinstance(ai_count, int)
+            or isinstance(ai_count, bool)
+            or human_count <= 0
+            or ai_count <= 0
+            or human_count + ai_count != adapted_samples
+        ):
+            return False
+        evidence = payload.get("file")
+        if not isinstance(evidence, dict):
+            return False
+        return bool(
+            payload.get("filename") == evidence.get("path")
             and self._file_evidence_matches(
                 root or self._resource_root(spec),
                 evidence,
