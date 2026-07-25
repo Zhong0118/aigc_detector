@@ -1218,6 +1218,33 @@ class TextResourceManagerTests(unittest.TestCase):
 
         self.assertEqual(academic, ["本文提出一种面向专业文本的稳健检测方法。"])
 
+    def test_iter_human_texts_ignores_untracked_files_for_legacy_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(project_root=Path(tmp))
+            spec = manager.resource_spec("chinese_classical_corpus")
+            source = manager.dataset_dir / spec.name
+            source.mkdir(parents=True)
+            (source / spec.filename).write_text(
+                json.dumps(
+                    {"content": "这是清单认证的古籍正文内容。"},
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (source / "stale.jsonl").write_text(
+                json.dumps(
+                    {"content": "这是未被清单认证的旧文件内容。"},
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            texts = list(manager.iter_human_texts(spec.name))
+
+        self.assertEqual(texts, ["这是清单认证的古籍正文内容。"])
+
     def test_conformal_threshold_uses_finite_sample_order_statistic(self) -> None:
         scores = [index / 100 for index in range(100)]
 

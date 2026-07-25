@@ -308,9 +308,17 @@ class TextResourceManager:
         root = self.dataset_dir / dataset_name
         if not root.exists():
             return
+        spec = next((item for item in self.dataset_specs if item.name == dataset_name), None)
+        if spec is not None and spec.source_kind == "legacy_file":
+            filename = spec.filename or Path(spec.url.split("?", 1)[0]).name
+            if not filename or Path(filename).name != filename:
+                return
+            paths = (root / filename,)
+        else:
+            paths = sorted(root.rglob("*"))
         yielded = 0
         seen: set[str] = set()
-        for path in sorted(root.rglob("*")):
+        for path in paths:
             if not path.is_file() or path.name.startswith("."):
                 continue
             for text in self._texts_from_file(path, dataset_name):
