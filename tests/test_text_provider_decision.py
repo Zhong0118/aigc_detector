@@ -134,6 +134,55 @@ class TextProviderDecisionTests(unittest.TestCase):
         self.assertEqual(package.decision_details["threshold_validation_auroc"], 0.9)
         self.assertEqual(package.decision_details["threshold_reliability_status"], "ok")
 
+    def test_malformed_artifact_falls_back_without_breaking_provider_detection(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        artifact = root / "thresholds.json"
+        artifact.write_text(
+            json.dumps({"artifact_schema_version": 2, "groups": []}),
+            encoding="utf-8",
+        )
+        engine, engine_root, engine_tmp = self._engine(
+            {
+                "threshold": 0.8,
+                "demo_provider_enabled": True,
+                "local_models": {"enabled": False},
+                "text_false_positive_control": {
+                    "enabled": True,
+                    "artifact_path": str(artifact),
+                    "min_effective_chars": 8,
+                    "default_low_threshold": 0.4,
+                    "default_high_threshold": 0.8,
+                },
+            }
+        )
+        self.addCleanup(engine_tmp.cleanup)
+        text_path = engine_root / "input.txt"
+        text = "This is a sufficiently long general test passage."
+        text_path.write_text(text, encoding="utf-8")
+        demo_result = ProviderResult("demo", "test", "ok", 0.85, "ai")
+
+        with patch.object(engine, "_run_demo_provider", return_value=demo_result):
+            package = engine.detect(text_path, "text", text)
+
+        controller_status = next(
+            item
+            for item in engine.provider_status()
+            if item["name"] == "text_false_positive_controller"
+        )
+        self.assertEqual(package.label, "high_risk_ai")
+        self.assertEqual(package.threshold, 0.8)
+        self.assertIn(
+            "artifact_invalid_groups",
+            package.decision_details["threshold_warnings"],
+        )
+        self.assertFalse(controller_status["configured"])
+        self.assertIn(
+            "artifact_invalid_groups",
+            controller_status["details"]["artifact_warnings"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

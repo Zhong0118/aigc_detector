@@ -212,7 +212,7 @@ class FalsePositiveControllerTests(unittest.TestCase):
             ["calibrated_threshold_near_score_ceiling"],
         )
 
-    def test_uncalibrated_domain_uses_its_configured_fallback_not_global_artifact(self) -> None:
+    def test_language_artifact_precedes_configured_domain_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             artifact = Path(tmp) / "thresholds.json"
             artifact.write_text(
@@ -242,9 +242,43 @@ class FalsePositiveControllerTests(unittest.TestCase):
                 [FakeProviderResult(score=0.9)],
             )
 
-        self.assertEqual(decision.threshold_group, "built-in:general_qa:short")
-        self.assertEqual(decision.high_threshold, 0.8)
-        self.assertEqual(decision.decision, "high_risk_ai")
+        self.assertEqual(decision.threshold_group, "zh")
+        self.assertEqual(decision.high_threshold, 0.97)
+        self.assertEqual(decision.decision, "uncertain")
+
+    def test_legacy_global_artifact_precedes_built_in_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "thresholds.json"
+            artifact.write_text(
+                json.dumps(
+                    {
+                        "version": "legacy-global-v1",
+                        "groups": {
+                            "global": {
+                                "low_threshold": 0.4,
+                                "high_threshold": 0.95,
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            controller = FalsePositiveController(
+                {
+                    "artifact_path": str(artifact),
+                    "min_effective_chars": 8,
+                    "default_high_threshold": 0.8,
+                }
+            )
+
+            decision = controller.evaluate(
+                "这是一段普通写作内容，用于检查旧版全局阈值是否仍然生效。",
+                [FakeProviderResult(score=0.85)],
+            )
+
+        self.assertEqual(decision.threshold_group, "global")
+        self.assertEqual(decision.high_threshold, 0.95)
+        self.assertEqual(decision.decision, "uncertain")
 
     def test_english_exact_group_propagates_artifact_v2_diagnostics(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -366,6 +400,99 @@ class FalsePositiveControllerTests(unittest.TestCase):
         self.assertEqual(decision.high_threshold, 0.93)
         self.assertEqual(decision.decision, "uncertain")
         self.assertIn("mixed_language_threshold_fallback", decision.threshold_warnings)
+
+    def test_mixed_language_equal_high_threshold_uses_smaller_low_threshold(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "thresholds.json"
+            artifact.write_text(
+                json.dumps(
+                    {
+                        "artifact_schema_version": 2,
+                        "version": "mixed-tie-v2",
+                        "groups": {
+                            "zh:academic_technical:short": {
+                                "low_threshold": 0.3,
+                                "high_threshold": 0.9,
+                            },
+                            "en:academic_technical:short": {
+                                "low_threshold": 0.5,
+                                "high_threshold": 0.9,
+                            },
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            controller = FalsePositiveController(
+                {
+                    "artifact_path": str(artifact),
+                    "min_effective_chars": 8,
+                }
+            )
+
+            decision = controller.evaluate(
+                "本研究 proposes a neural method 并报告实验结果。",
+                [FakeProviderResult(score=0.4)],
+            )
+
+        self.assertEqual(decision.threshold_group, "zh:academic_technical:short")
+        self.assertEqual(decision.low_threshold, 0.3)
+        self.assertEqual(decision.high_threshold, 0.9)
+        self.assertEqual(decision.decision, "uncertain")
+
+    def test_malformed_artifacts_fall_back_with_diagnostic(self) -> None:
+        malformed_cases = (
+            (
+                {"artifact_schema_version": 99, "groups": {}},
+                "artifact_unsupported_schema_version",
+            ),
+            (
+                {"artifact_schema_version": 2, "groups": []},
+                "artifact_invalid_groups",
+            ),
+            (
+                {"artifact_schema_version": 2, "groups": {"global": []}},
+                "artifact_invalid_group_entry",
+            ),
+            (
+                {
+                    "artifact_schema_version": 2,
+                    "groups": {
+                        "global": {
+                            "low_threshold": 0.9,
+                            "high_threshold": 0.8,
+                        }
+                    },
+                },
+                "artifact_invalid_thresholds",
+            ),
+        )
+
+        for payload, warning in malformed_cases:
+            with self.subTest(warning=warning), tempfile.TemporaryDirectory() as tmp:
+                artifact = Path(tmp) / "thresholds.json"
+                artifact.write_text(json.dumps(payload), encoding="utf-8")
+                controller = FalsePositiveController(
+                    {
+                        "artifact_path": str(artifact),
+                        "min_effective_chars": 8,
+                        "default_low_threshold": 0.4,
+                        "default_high_threshold": 0.8,
+                    }
+                )
+
+                decision = controller.evaluate(
+                    "This is a sufficiently long general test passage.",
+                    [FakeProviderResult(score=0.85)],
+                )
+                status = controller.status()
+
+                self.assertEqual(decision.threshold_group, "built-in:general_qa:short")
+                self.assertEqual(decision.high_threshold, 0.8)
+                self.assertEqual(decision.decision, "high_risk_ai")
+                self.assertIn(warning, decision.threshold_warnings)
+                self.assertFalse(status["artifact_loaded"])
+                self.assertIn(warning, status["artifact_warnings"])
 
     def test_long_document_requires_distributed_segment_evidence(self) -> None:
         controller = FalsePositiveController(
