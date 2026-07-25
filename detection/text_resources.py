@@ -107,6 +107,7 @@ MULTIDOMAIN_DATASETS = CORE_DATASETS + (
         source_kind="hf_dataset",
         adapter="hc3",
         dataset_id="Hello-SimpleAI/HC3",
+        dataset_config="all",
         language="en",
     ),
     DatasetSpec(
@@ -119,6 +120,7 @@ MULTIDOMAIN_DATASETS = CORE_DATASETS + (
         source_kind="hf_dataset",
         adapter="hc3",
         dataset_id="Hello-SimpleAI/HC3-Chinese",
+        dataset_config="all",
         language="zh",
     ),
     DatasetSpec(
@@ -261,19 +263,23 @@ class TextResourceManager:
         spec = self.resource_spec(spec)
         target = self.dataset_dir / spec.name
         if self.is_source_ready(spec):
-            self._migrate_legacy_marker(spec)
-            return target
+            marker_payload = self._read_json(self._source_marker_path(spec))
+            if marker_payload and self._is_legacy_migration_marker(spec, marker_payload):
+                if self._migrate_legacy_marker(spec):
+                    return target
+            else:
+                return target
         target.mkdir(parents=True, exist_ok=True)
         marker_payload: dict[str, Any]
         if spec.source_kind == "legacy_zip":
             self._download_and_extract(spec, target)
-            marker_payload = self._standard_source_manifest(spec)
-        elif spec.source_kind in {"legacy_file", "raid_csv"}:
+            marker_payload = self._legacy_zip_manifest(spec, target)
+        elif spec.source_kind == "legacy_file":
             self._download_file(spec, target)
-            if spec.source_kind == "raid_csv":
-                marker_payload = self._direct_file_manifest(spec, target)
-            else:
-                marker_payload = self._standard_source_manifest(spec)
+            marker_payload = self._legacy_file_manifest(spec, target)
+        elif spec.source_kind == "raid_csv":
+            self._download_file(spec, target)
+            marker_payload = self._raid_source_manifest(spec, target)
         elif spec.source_kind == "hf_dataset":
             marker_payload = self._prepare_hf_source(spec)
         else:
@@ -427,11 +433,14 @@ class TextResourceManager:
         if spec.source_kind == "hf_dataset":
             return self._hf_manifest_matches(spec, payload)
         elif spec.source_kind == "raid_csv":
-            return self._direct_file_manifest_matches(spec, payload)
-        fingerprint = payload.get("source_spec_fingerprint")
-        if fingerprint is None and spec.source_kind in {"legacy_zip", "legacy_file"}:
-            return self._legacy_marker_matches(spec, payload)
-        return fingerprint == spec.fingerprint
+            return self._raid_manifest_matches(spec, payload)
+        if self._is_legacy_migration_marker(spec, payload):
+            return self._can_build_legacy_manifest(spec)
+        if spec.source_kind == "legacy_zip":
+            return self._legacy_zip_manifest_matches(spec, payload)
+        if spec.source_kind == "legacy_file":
+            return self._legacy_file_manifest_matches(spec, payload)
+        return False
 
     def is_normalized_ready(self, resource: str | DatasetSpec) -> bool:
         spec = self.resource_spec(resource)
@@ -570,6 +579,15 @@ class TextResourceManager:
         scan_sha256 = hashlib.sha256(
             _stable_json_dumps(split_evidence).encode("utf-8")
         ).hexdigest()
+        cache_dir = self.dataset_dir / spec.name / "hf_cache"
+        cache_files = self._file_inventory(cache_dir)
+        if not cache_files or not any(item["byte_size"] > 0 for item in cache_files):
+            raise RuntimeError(
+                f"Dataset {spec.name!r} scan completed without stable project-local cache evidence"
+            )
+        inventory_sha256 = hashlib.sha256(
+            _stable_json_dumps(cache_files).encode("utf-8")
+        ).hexdigest()
         return {
             "manifest_version": 1,
             "preparation_kind": "hf_stream_scan_v1",
@@ -580,9 +598,11 @@ class TextResourceManager:
             "split_evidence": split_evidence,
             "scan_sha256": scan_sha256,
             "cache_evidence": {
-                "kind": "streaming_content_digest",
+                "kind": "file_inventory_v1",
                 "cache_dir": "hf_cache",
                 "scan_sha256": scan_sha256,
+                "files": cache_files,
+                "inventory_sha256": inventory_sha256,
             },
         }
 
@@ -699,73 +719,226 @@ class TextResourceManager:
             return False
         return _stable_json_dumps(asdict(reconstructed)) == _stable_json_dumps(asdict(spec))
 
-    def _migrate_legacy_marker(self, spec: DatasetSpec) -> None:
+    def _migrate_legacy_marker(self, spec: DatasetSpec) -> bool:
         if spec.source_kind not in {"legacy_zip", "legacy_file"}:
-            return
+            return False
         marker = self._source_marker_path(spec)
         payload = self._read_json(marker)
-        if not payload or payload.get("source_spec_fingerprint") is not None:
-            return
-        if not self._legacy_marker_matches(spec, payload):
-            return
-        self._write_json_atomic(
-            marker,
-            self._standard_source_manifest(spec),
+        if not payload or not self._is_legacy_migration_marker(spec, payload):
+            return False
+        try:
+            manifest = self._legacy_source_manifest(spec)
+        except (OSError, RuntimeError):
+            return False
+        self._write_json_atomic(marker, manifest)
+        return True
+
+    def _is_legacy_migration_marker(
+        self,
+        spec: DatasetSpec,
+        payload: Mapping[str, Any],
+    ) -> bool:
+        if payload.get("source_spec_fingerprint") is None:
+            return self._legacy_marker_matches(spec, payload)
+        return bool(
+            payload.get("manifest_version") == 1
+            and payload.get("preparation_kind") == "standard_download_v1"
+            and payload.get("source_spec_fingerprint") == spec.fingerprint
+            and isinstance(payload.get("source"), dict)
+            and _stable_json_dumps(payload["source"])
+            == _stable_json_dumps(asdict(spec))
         )
 
-    def _standard_source_manifest(self, spec: DatasetSpec) -> dict[str, Any]:
-        return {
-            "manifest_version": 1,
-            "preparation_kind": "standard_download_v1",
-            "source_spec_fingerprint": spec.fingerprint,
-            "source": asdict(spec),
-        }
+    def _can_build_legacy_manifest(self, spec: DatasetSpec) -> bool:
+        try:
+            self._legacy_source_manifest(spec)
+        except (OSError, RuntimeError):
+            return False
+        return True
 
-    def _direct_file_manifest(
+    def _legacy_source_manifest(self, spec: DatasetSpec) -> dict[str, Any]:
+        target = self.dataset_dir / spec.name
+        if spec.source_kind == "legacy_zip":
+            return self._legacy_zip_manifest(spec, target)
+        if spec.source_kind == "legacy_file":
+            return self._legacy_file_manifest(spec, target)
+        raise RuntimeError(f"Unsupported legacy source kind: {spec.source_kind}")
+
+    def _legacy_file_manifest(
         self,
         spec: DatasetSpec,
         target: Path,
     ) -> dict[str, Any]:
         filename = spec.filename or Path(spec.url.split("?", 1)[0]).name
         path = target / filename
-        content_sha256 = self._file_sha256(path)
-        if content_sha256 is None:
-            raise RuntimeError(f"Downloaded source file is unavailable: {path}")
+        evidence = self._file_evidence(target, path)
         return {
             "manifest_version": 1,
-            "preparation_kind": "direct_file_v1",
+            "preparation_kind": "legacy_file_v1",
             "source_spec_fingerprint": spec.fingerprint,
-            "filename": filename,
-            "byte_size": path.stat().st_size,
-            "content_sha256": content_sha256,
+            "file": evidence,
         }
 
-    def _direct_file_manifest_matches(
+    def _legacy_file_manifest_matches(
         self,
         spec: DatasetSpec,
         payload: Mapping[str, Any],
     ) -> bool:
-        filename = spec.filename or Path(spec.url.split("?", 1)[0]).name
-        path = self.dataset_dir / spec.name / filename
         if (
             payload.get("manifest_version") != 1
-            or payload.get("preparation_kind") != "direct_file_v1"
+            or payload.get("preparation_kind") != "legacy_file_v1"
             or payload.get("source_spec_fingerprint") != spec.fingerprint
-            or payload.get("filename") != filename
-            or not path.is_file()
         ):
             return False
-        byte_size = payload.get("byte_size")
-        content_sha256 = payload.get("content_sha256")
+        target = self.dataset_dir / spec.name
+        evidence = payload.get("file")
+        if not isinstance(evidence, dict):
+            return False
+        return self._file_evidence_matches(target, evidence)
+
+    def _legacy_zip_manifest(
+        self,
+        spec: DatasetSpec,
+        target: Path,
+    ) -> dict[str, Any]:
+        files, tree_sha256 = self._tree_evidence(
+            target,
+            excluded_paths={".complete.json"},
+        )
+        if not files:
+            raise RuntimeError(f"Extracted source tree is empty: {target}")
+        return {
+            "manifest_version": 1,
+            "preparation_kind": "legacy_zip_tree_v1",
+            "source_spec_fingerprint": spec.fingerprint,
+            "files": files,
+            "tree_sha256": tree_sha256,
+        }
+
+    def _legacy_zip_manifest_matches(
+        self,
+        spec: DatasetSpec,
+        payload: Mapping[str, Any],
+    ) -> bool:
         if (
-            not isinstance(byte_size, int)
-            or isinstance(byte_size, bool)
-            or byte_size <= 0
-            or path.stat().st_size != byte_size
-            or not _is_sha256(content_sha256)
+            payload.get("manifest_version") != 1
+            or payload.get("preparation_kind") != "legacy_zip_tree_v1"
+            or payload.get("source_spec_fingerprint") != spec.fingerprint
+            or not isinstance(payload.get("files"), list)
+            or not _is_sha256(payload.get("tree_sha256"))
         ):
             return False
-        return self._file_sha256(path) == content_sha256
+        try:
+            files, tree_sha256 = self._tree_evidence(
+                self.dataset_dir / spec.name,
+                excluded_paths={".complete.json"},
+            )
+        except OSError:
+            return False
+        return files == payload["files"] and tree_sha256 == payload["tree_sha256"]
+
+    def _raid_source_manifest(
+        self,
+        spec: DatasetSpec,
+        target: Path,
+    ) -> dict[str, Any]:
+        filename = spec.filename or "train_none.csv"
+        path = target / filename
+        required_fields = {"generation", "model", "domain", "attack"}
+        total_rows = 0
+        row_count = 0
+        label_counts = {"human": 0, "ai": 0}
+        try:
+            with path.open(encoding="utf-8-sig", newline="") as handle:
+                reader = csv.DictReader(handle)
+                fieldnames = {
+                    field.strip() for field in (reader.fieldnames or []) if field
+                }
+                missing = sorted(required_fields - fieldnames)
+                if missing:
+                    raise RuntimeError(
+                        f"RAID CSV is missing required fields: {', '.join(missing)}"
+                    )
+                for row in reader:
+                    total_rows += 1
+                    try:
+                        samples = adapt_raid_rows(
+                            (row,),
+                            source_name=spec.name,
+                            language=spec.language or "en",
+                            split=spec.splits[0],
+                        )
+                        for sample in samples:
+                            row_count += 1
+                            label_counts[sample.label] += 1
+                    except (TypeError, ValueError) as exc:
+                        raise RuntimeError(f"RAID CSV contains an invalid row: {exc}") from exc
+        except (OSError, UnicodeError, csv.Error) as exc:
+            raise RuntimeError(f"RAID CSV could not be validated: {exc}") from exc
+        if row_count == 0:
+            raise RuntimeError("RAID CSV contains no usable data rows")
+        if label_counts["human"] == 0 or label_counts["ai"] == 0:
+            raise RuntimeError("RAID CSV must contain both human and AI samples")
+        file_evidence = self._file_evidence(target, path)
+        return {
+            "manifest_version": 1,
+            "preparation_kind": "raid_csv_v1",
+            "source_spec_fingerprint": spec.fingerprint,
+            "file": file_evidence,
+            "filename": file_evidence["path"],
+            "byte_size": file_evidence["byte_size"],
+            "content_sha256": file_evidence["content_sha256"],
+            "required_fields": sorted(required_fields),
+            "total_rows": total_rows,
+            "row_count": row_count,
+            "label_counts": label_counts,
+        }
+
+    def _raid_manifest_matches(
+        self,
+        spec: DatasetSpec,
+        payload: Mapping[str, Any],
+    ) -> bool:
+        if (
+            payload.get("manifest_version") != 1
+            or payload.get("preparation_kind") != "raid_csv_v1"
+            or payload.get("source_spec_fingerprint") != spec.fingerprint
+            or payload.get("required_fields")
+            != ["attack", "domain", "generation", "model"]
+        ):
+            return False
+        total_rows = payload.get("total_rows")
+        row_count = payload.get("row_count")
+        label_counts = payload.get("label_counts")
+        human_count = label_counts.get("human") if isinstance(label_counts, dict) else None
+        ai_count = label_counts.get("ai") if isinstance(label_counts, dict) else None
+        if (
+            not isinstance(total_rows, int)
+            or isinstance(total_rows, bool)
+            or not isinstance(row_count, int)
+            or isinstance(row_count, bool)
+            or not isinstance(label_counts, dict)
+            or set(label_counts) != {"human", "ai"}
+            or not isinstance(human_count, int)
+            or isinstance(human_count, bool)
+            or not isinstance(ai_count, int)
+            or isinstance(ai_count, bool)
+            or total_rows < row_count
+            or row_count <= 0
+            or human_count <= 0
+            or ai_count <= 0
+            or human_count + ai_count != row_count
+        ):
+            return False
+        evidence = payload.get("file")
+        if not isinstance(evidence, dict):
+            return False
+        return bool(
+            payload.get("filename") == evidence.get("path")
+            and payload.get("byte_size") == evidence.get("byte_size")
+            and payload.get("content_sha256") == evidence.get("content_sha256")
+            and self._file_evidence_matches(self.dataset_dir / spec.name, evidence)
+        )
 
     def _hf_manifest_matches(
         self,
@@ -807,10 +980,170 @@ class TextResourceManager:
         return bool(
             payload.get("scan_sha256") == expected_scan
             and isinstance(cache_evidence, dict)
-            and cache_evidence.get("kind") == "streaming_content_digest"
+            and cache_evidence.get("kind") == "file_inventory_v1"
             and cache_evidence.get("cache_dir") == "hf_cache"
             and cache_evidence.get("scan_sha256") == expected_scan
+            and self._cache_evidence_matches(spec, cache_evidence)
         )
+
+    def _cache_evidence_matches(
+        self,
+        spec: DatasetSpec,
+        evidence: Mapping[str, Any],
+    ) -> bool:
+        files = evidence.get("files")
+        if not isinstance(files, list) or not files:
+            return False
+        expected_inventory = hashlib.sha256(
+            _stable_json_dumps(files).encode("utf-8")
+        ).hexdigest()
+        if evidence.get("inventory_sha256") != expected_inventory:
+            return False
+        root = self.dataset_dir / spec.name / "hf_cache"
+        if not root.is_dir():
+            return False
+        has_nonempty_file = False
+        for item in files:
+            if not isinstance(item, dict) or set(item) != {"path", "byte_size"}:
+                return False
+            relative = item.get("path")
+            byte_size = item.get("byte_size")
+            if (
+                not isinstance(relative, str)
+                or not isinstance(byte_size, int)
+                or isinstance(byte_size, bool)
+                or byte_size < 0
+                or _is_transient_evidence_path(Path(relative))
+            ):
+                return False
+            path = self._safe_evidence_path(root, relative)
+            if path is None or not path.is_file():
+                return False
+            try:
+                if path.stat().st_size != byte_size:
+                    return False
+            except OSError:
+                return False
+            has_nonempty_file = has_nonempty_file or byte_size > 0
+        return has_nonempty_file
+
+    def _file_inventory(self, root: Path) -> list[dict[str, Any]] | None:
+        if not root.is_dir():
+            return None
+        inventory: list[dict[str, Any]] = []
+        try:
+            for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
+                if not path.is_file():
+                    continue
+                relative = path.relative_to(root)
+                if _is_transient_evidence_path(relative):
+                    continue
+                safe_path = self._safe_evidence_path(root, relative.as_posix())
+                if safe_path is None:
+                    continue
+                inventory.append(
+                    {
+                        "path": relative.as_posix(),
+                        "byte_size": safe_path.stat().st_size,
+                    }
+                )
+        except OSError:
+            return None
+        return inventory
+
+    def _file_evidence(self, root: Path, path: Path) -> dict[str, Any]:
+        if not path.is_file():
+            raise RuntimeError(f"Source file is unavailable: {path}")
+        try:
+            relative = path.resolve().relative_to(root.resolve())
+            byte_size = path.stat().st_size
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(f"Source file is outside its resource root: {path}") from exc
+        content_sha256 = self._file_sha256(path)
+        if byte_size <= 0 or content_sha256 is None:
+            raise RuntimeError(f"Source file is empty or unreadable: {path}")
+        return {
+            "path": relative.as_posix(),
+            "byte_size": byte_size,
+            "content_sha256": content_sha256,
+        }
+
+    def _file_evidence_matches(
+        self,
+        root: Path,
+        evidence: Mapping[str, Any],
+    ) -> bool:
+        if set(evidence) != {"path", "byte_size", "content_sha256"}:
+            return False
+        relative = evidence.get("path")
+        byte_size = evidence.get("byte_size")
+        content_sha256 = evidence.get("content_sha256")
+        if (
+            not isinstance(relative, str)
+            or not isinstance(byte_size, int)
+            or isinstance(byte_size, bool)
+            or byte_size <= 0
+            or not _is_sha256(content_sha256)
+            or _is_transient_evidence_path(Path(relative))
+        ):
+            return False
+        path = self._safe_evidence_path(root, relative)
+        if path is None or not path.is_file():
+            return False
+        try:
+            if path.stat().st_size != byte_size:
+                return False
+        except OSError:
+            return False
+        return self._file_sha256(path) == content_sha256
+
+    def _tree_evidence(
+        self,
+        root: Path,
+        *,
+        excluded_paths: set[str],
+    ) -> tuple[list[dict[str, Any]], str]:
+        if not root.is_dir():
+            raise OSError(f"Source tree is unavailable: {root}")
+        files: list[dict[str, Any]] = []
+        tree_hasher = hashlib.sha256()
+        for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
+            if not path.is_file():
+                continue
+            relative = path.relative_to(root)
+            relative_text = relative.as_posix()
+            if (
+                relative_text in excluded_paths
+                or _is_transient_evidence_path(relative)
+            ):
+                continue
+            safe_path = self._safe_evidence_path(root, relative_text)
+            if safe_path is None:
+                raise OSError(f"Source tree file escapes its root: {path}")
+            byte_size = safe_path.stat().st_size
+            content_sha256 = self._file_sha256(safe_path)
+            if content_sha256 is None:
+                raise OSError(f"Source tree file is unreadable: {path}")
+            files.append({"path": relative_text, "byte_size": byte_size})
+            encoded_path = relative_text.encode("utf-8")
+            tree_hasher.update(len(encoded_path).to_bytes(8, "big"))
+            tree_hasher.update(encoded_path)
+            tree_hasher.update(byte_size.to_bytes(8, "big"))
+            tree_hasher.update(bytes.fromhex(content_sha256))
+        return files, tree_hasher.hexdigest()
+
+    def _safe_evidence_path(self, root: Path, relative: str) -> Path | None:
+        candidate = Path(relative)
+        if candidate.is_absolute():
+            return None
+        try:
+            resolved_root = root.resolve()
+            resolved = (root / candidate).resolve()
+        except OSError:
+            return None
+        if resolved != resolved_root and resolved_root not in resolved.parents:
+            return None
+        return resolved
 
     def _file_sha256(self, path: Path) -> str | None:
         digest = hashlib.sha256()
@@ -956,3 +1289,15 @@ def _is_sha256(value: Any) -> bool:
     except ValueError:
         return False
     return True
+
+
+def _is_transient_evidence_path(path: Path) -> bool:
+    transient_directories = {"tmp", "temp", ".tmp", ".temp", ".locks", "locks"}
+    transient_suffixes = (".part", ".tmp", ".temp", ".lock", ".incomplete")
+    for part in path.parts:
+        normalized = part.casefold()
+        if normalized in transient_directories:
+            return True
+        if normalized.endswith(transient_suffixes) or normalized.startswith(".tmp-"):
+            return True
+    return False

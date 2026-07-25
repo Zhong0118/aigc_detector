@@ -343,6 +343,8 @@ class TextResourceManagerTests(unittest.TestCase):
         )
         self.assertEqual(multidomain["hc3_en"].dataset_id, "Hello-SimpleAI/HC3")
         self.assertEqual(multidomain["hc3_zh"].dataset_id, "Hello-SimpleAI/HC3-Chinese")
+        self.assertEqual(multidomain["hc3_en"].dataset_config, "all")
+        self.assertEqual(multidomain["hc3_zh"].dataset_config, "all")
         self.assertEqual(multidomain["tnews"].dataset_id, "clue")
         self.assertEqual(multidomain["tnews"].dataset_config, "tnews")
         self.assertEqual(multidomain["tnews"].license, "unknown")
@@ -438,10 +440,18 @@ class TextResourceManagerTests(unittest.TestCase):
                 dataset_loader=loader,
             )
             samples = list(manager.iter_samples("hc3_en"))
+            zh_samples = list(manager.iter_samples("hc3_zh"))
 
         self.assertEqual([sample.label for sample in samples], ["human", "ai"])
         self.assertEqual([sample.language for sample in samples], ["en", "en"])
-        self.assertEqual(loader_calls[0][0:2], ("Hello-SimpleAI/HC3", None))
+        self.assertEqual([sample.language for sample in zh_samples], ["zh", "zh"])
+        self.assertEqual(
+            [call[0:2] for call in loader_calls],
+            [
+                ("Hello-SimpleAI/HC3", "all"),
+                ("Hello-SimpleAI/HC3-Chinese", "all"),
+            ],
+        )
         self.assertIs(loader_calls[0][2]["streaming"], True)
         self.assertEqual(
             Path(loader_calls[0][2]["cache_dir"]),
@@ -489,6 +499,12 @@ class TextResourceManagerTests(unittest.TestCase):
 
         def loader(*args, **kwargs):
             loader_calls.append(kwargs)
+            cache = Path(kwargs["cache_dir"])
+            (cache / "downloads").mkdir(parents=True, exist_ok=True)
+            (cache / "downloads" / "train.arrow").write_bytes(b"train-cache")
+            (cache / "downloads" / "validation.arrow").write_bytes(b"validation-cache")
+            (cache / "downloads" / "ignored.part").write_bytes(b"partial")
+            (cache / "downloads" / "ignored.lock").write_bytes(b"lock")
             return {
                 "train": [{"id": "train-1", "sentence": "训练新闻样本。"}],
                 "validation": [{"id": "validation-1", "sentence": "验证新闻样本。"}],
@@ -517,14 +533,44 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertEqual(marker["split_evidence"]["train"]["raw_rows"], 1)
         self.assertEqual(marker["split_evidence"]["validation"]["adapted_samples"], 1)
         self.assertEqual(len(marker["scan_sha256"]), 64)
+        self.assertEqual(marker["cache_evidence"]["kind"], "file_inventory_v1")
         self.assertEqual(
-            marker["cache_evidence"],
-            {
-                "kind": "streaming_content_digest",
-                "cache_dir": "hf_cache",
-                "scan_sha256": marker["scan_sha256"],
-            },
+            marker["cache_evidence"]["files"],
+            [
+                {"path": "downloads/train.arrow", "byte_size": 11},
+                {"path": "downloads/validation.arrow", "byte_size": 16},
+            ],
         )
+        self.assertEqual(len(marker["cache_evidence"]["inventory_sha256"]), 64)
+
+    def test_hf_readiness_detects_missing_or_resized_cache_evidence(self) -> None:
+        def loader(*args, **kwargs):
+            cache = Path(kwargs["cache_dir"])
+            cache.mkdir(parents=True, exist_ok=True)
+            (cache / "prepared.arrow").write_bytes(b"stable-cache")
+            return {
+                "train": [{"id": "train-1", "sentence": "训练新闻样本。"}],
+                "validation": [{"id": "validation-1", "sentence": "验证新闻样本。"}],
+            }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+                dataset_loader=loader,
+            )
+            spec = manager.resource_spec("tnews")
+            manager.ensure_dataset(spec)
+            cache_file = manager.dataset_dir / spec.name / "hf_cache" / "prepared.arrow"
+
+            self.assertTrue(manager.is_source_ready(spec))
+            original = cache_file.read_bytes()
+            cache_file.unlink()
+            self.assertFalse(manager.is_source_ready(spec))
+            cache_file.write_bytes(original)
+            self.assertTrue(manager.is_source_ready(spec))
+            cache_file.write_bytes(original + b"x")
+            self.assertFalse(manager.is_source_ready(spec))
 
     def test_hf_incomplete_or_corrupt_split_manifest_is_not_ready(self) -> None:
         def incomplete_loader(*args, **kwargs):
@@ -745,6 +791,10 @@ class TextResourceManagerTests(unittest.TestCase):
             spec = manager.resource_spec("chinese_poetry")
             target = manager.dataset_dir / spec.name
             target.mkdir(parents=True)
+            (target / "poems.json").write_text(
+                json.dumps([{"title": "诗", "paragraphs": ["床前明月光"]}], ensure_ascii=False),
+                encoding="utf-8",
+            )
             legacy_marker = {
                 "name": spec.name,
                 "url": spec.url,
@@ -797,6 +847,8 @@ class TextResourceManagerTests(unittest.TestCase):
                 migrated["source_spec_fingerprint"],
                 spec.fingerprint,
             )
+            self.assertEqual(migrated["preparation_kind"], "legacy_zip_tree_v1")
+            self.assertTrue(manager.is_source_ready(spec))
 
     def test_zip_refresh_replaces_old_tree_without_stale_files(self) -> None:
         spec = DatasetSpec(
@@ -827,11 +879,27 @@ class TextResourceManagerTests(unittest.TestCase):
             obsolete_exists = (prepared / "obsolete.txt").exists()
             staging_exists = (prepared.parent / ".zip_fixture.staging").exists()
             backup_exists = (prepared.parent / ".zip_fixture.backup").exists()
+            marker = json.loads(
+                (prepared / ".complete.json").read_text(encoding="utf-8")
+            )
+            source_ready = manager.is_source_ready(spec)
+            (prepared / "prepared" / "new.txt").write_text("bad", encoding="utf-8")
+            changed_ready = manager.is_source_ready(spec)
+            (prepared / "prepared" / "new.txt").unlink()
+            deleted_ready = manager.is_source_ready(spec)
 
         self.assertEqual(new_text, "new")
         self.assertFalse(obsolete_exists)
         self.assertFalse(staging_exists)
         self.assertFalse(backup_exists)
+        self.assertEqual(marker["preparation_kind"], "legacy_zip_tree_v1")
+        self.assertEqual(
+            marker["files"],
+            [{"path": "prepared/new.txt", "byte_size": 3}],
+        )
+        self.assertTrue(source_ready)
+        self.assertFalse(changed_ready)
+        self.assertFalse(deleted_ready)
 
 
     def test_dataset_download_is_idempotent_after_complete_marker(self) -> None:
@@ -839,7 +907,17 @@ class TextResourceManagerTests(unittest.TestCase):
             manager = TextResourceManager(project_root=Path(tmp))
             spec = manager.dataset_specs[0]
 
-            with patch.object(manager, "_download_and_extract") as download:
+            def prepare_fixture(_spec, target):
+                (target / "poems.json").write_text(
+                    json.dumps([{"title": "诗", "paragraphs": ["内容"]}], ensure_ascii=False),
+                    encoding="utf-8",
+                )
+
+            with patch.object(
+                manager,
+                "_download_and_extract",
+                side_effect=prepare_fixture,
+            ) as download:
                 first = manager.ensure_dataset(spec)
                 second = manager.ensure_dataset(spec)
 
@@ -873,10 +951,15 @@ class TextResourceManagerTests(unittest.TestCase):
 
             downloaded = first / "corpus.jsonl"
             downloaded_bytes = downloaded.read_bytes()
+            source_ready = manager.is_source_ready(spec)
+            downloaded.write_bytes(b"x" * len(downloaded_bytes))
+            changed_ready = manager.is_source_ready(spec)
 
         self.assertEqual(first, second)
         self.assertEqual(request.call_count, 1)
         self.assertEqual(downloaded_bytes, b'{"content":"classical text"}\n')
+        self.assertTrue(source_ready)
+        self.assertFalse(changed_ready)
 
     def test_direct_download_retries_and_leaves_no_partial_file(self) -> None:
         class Response:
@@ -891,6 +974,8 @@ class TextResourceManagerTests(unittest.TestCase):
 
             def iter_content(self, chunk_size: int):
                 yield b"id,generation,model,domain,attack\n"
+                yield b"human-1,A human report.,human,news,none\n"
+                yield b"ai-1,A generated review.,gpt2,reviews,none\n"
 
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(
@@ -919,10 +1004,8 @@ class TextResourceManagerTests(unittest.TestCase):
             source_ready = manager.is_source_ready(spec)
 
         self.assertEqual(request.call_count, 3)
-        self.assertEqual(
-            downloaded_text,
-            "id,generation,model,domain,attack\n",
-        )
+        self.assertIn("human-1,A human report.", downloaded_text)
+        self.assertIn("ai-1,A generated review.", downloaded_text)
         self.assertFalse(partial_exists)
         self.assertTrue(source_ready)
         self.assertEqual(marker["byte_size"], len(downloaded_text.encode("utf-8")))
@@ -930,6 +1013,8 @@ class TextResourceManagerTests(unittest.TestCase):
             marker["content_sha256"],
             hashlib.sha256(downloaded_text.encode("utf-8")).hexdigest(),
         )
+        self.assertEqual(marker["row_count"], 2)
+        self.assertEqual(marker["label_counts"], {"human": 1, "ai": 1})
 
     def test_raid_readiness_detects_file_corruption_and_ignores_part_debris(self) -> None:
         class Response:
@@ -945,6 +1030,7 @@ class TextResourceManagerTests(unittest.TestCase):
             def iter_content(self, chunk_size: int):
                 yield b"id,generation,model,domain,attack\n"
                 yield b"1,A human sample.,human,news,none\n"
+                yield b"2,A generated sample.,gpt2,reviews,none\n"
 
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(
@@ -960,9 +1046,57 @@ class TextResourceManagerTests(unittest.TestCase):
 
             data_path = target / "train_none.csv"
             self.assertTrue(manager.is_source_ready(spec))
+            marker_path = target / ".source.complete.json"
+            marker = json.loads(marker_path.read_text(encoding="utf-8"))
+            corrupt_counts = dict(marker)
+            corrupt_counts["row_count"] = marker["row_count"] + 1
+            marker_path.write_text(json.dumps(corrupt_counts), encoding="utf-8")
+            self.assertFalse(manager.is_source_ready(spec))
+            marker_path.write_text(json.dumps(marker), encoding="utf-8")
+            self.assertTrue(manager.is_source_ready(spec))
             data_path.write_bytes(data_path.read_bytes() + b"corruption")
             (target / "train_none.csv.part").write_bytes(b"temporary")
             self.assertFalse(manager.is_source_ready(spec))
+
+    def test_raid_header_only_or_missing_fields_never_publishes_marker(self) -> None:
+        payloads = {
+            "header_only": b"id,generation,model,domain,attack\n",
+            "missing_model": (
+                b"id,generation,domain,attack\n"
+                b"1,A human sample.,news,none\n"
+            ),
+        }
+
+        for name, payload in payloads.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as tmp:
+                class Response:
+                    def __enter__(self):
+                        return self
+
+                    def __exit__(self, *args):
+                        return False
+
+                    def raise_for_status(self) -> None:
+                        return None
+
+                    def iter_content(self, chunk_size: int):
+                        yield payload
+
+                manager = TextResourceManager(
+                    project_root=tmp,
+                    dataset_profile="multidomain",
+                )
+                spec = manager.resource_spec("raid_no_adversarial")
+                marker = manager.dataset_dir / spec.name / ".source.complete.json"
+                with patch(
+                    "detection.text_resources.requests.get",
+                    return_value=Response(),
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "RAID"):
+                        manager.ensure_dataset(spec)
+
+                self.assertFalse(marker.exists())
+                self.assertFalse(manager.is_source_ready(spec))
 
     def test_iter_human_texts_reads_poetry_and_csl_formats(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
