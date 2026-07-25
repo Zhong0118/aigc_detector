@@ -3,11 +3,177 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from dataclasses import FrozenInstanceError
 from pathlib import Path
 from unittest.mock import patch
 
+from detection.text_resource_adapters import (
+    TextSample,
+    adapt_hc3_rows,
+    adapt_m4_rows,
+    adapt_raid_rows,
+    adapt_tnews_rows,
+    normalize_source_domain,
+)
 from detection.text_resources import DatasetSpec, TextResourceManager, conformal_high_threshold
 from scripts.bootstrap_text_resources import _balanced_human_samples, build_threshold_artifact
+
+
+class TextResourceAdapterTests(unittest.TestCase):
+    def test_text_sample_is_immutable_and_builds_group_key(self) -> None:
+        sample = TextSample(
+            text="A human answer.",
+            label="human",
+            language="en",
+            domain="general_qa",
+            source="hc3_en",
+            source_id="question-1:human:0",
+        )
+
+        self.assertEqual(sample.group_key("short"), "en:general_qa:short")
+        with self.assertRaises(FrozenInstanceError):
+            sample.text = "changed"  # type: ignore[misc]
+
+    def test_source_domains_normalize_to_the_four_canonical_domains(self) -> None:
+        expected = {
+            "books": "literature",
+            "Poetry": "literature",
+            "peer_read": "academic_technical",
+            "PeerRead": "academic_technical",
+            "arXiv": "academic_technical",
+            "abstracts": "academic_technical",
+            "code": "academic_technical",
+            "medicine": "academic_technical",
+            "news": "official_news",
+            "wikipedia": "general_qa",
+            "wiki-how": "general_qa",
+            "reddit_eli5": "general_qa",
+            "reviews": "general_qa",
+            "recipes": "general_qa",
+            "unmapped-source": "general_qa",
+        }
+
+        self.assertEqual(
+            {source: normalize_source_domain(source) for source in expected},
+            expected,
+        )
+
+    def test_hc3_flattens_human_and_ai_answers_with_shared_question_prefix(self) -> None:
+        samples = list(
+            adapt_hc3_rows(
+                [
+                    {
+                        "id": "question-7",
+                        "human_answers": ["Human one.", "Human two."],
+                        "chatgpt_answers": ["AI one.", "AI two."],
+                    }
+                ],
+                source_name="reddit_eli5",
+                language="en",
+                split="validation",
+            )
+        )
+
+        self.assertEqual([sample.label for sample in samples], ["human", "human", "ai", "ai"])
+        self.assertEqual([sample.generator for sample in samples], [None, None, "chatgpt", "chatgpt"])
+        self.assertEqual({sample.language for sample in samples}, {"en"})
+        self.assertEqual({sample.domain for sample in samples}, {"general_qa"})
+        self.assertEqual({sample.split for sample in samples}, {"validation"})
+        self.assertEqual(len({sample.source_id for sample in samples}), 4)
+        self.assertEqual(
+            {sample.source_id.rsplit(":", 2)[0] for sample in samples},
+            {"reddit_eli5:question-7"},
+        )
+
+    def test_tnews_reads_sentence_and_text_as_chinese_official_news(self) -> None:
+        samples = list(
+            adapt_tnews_rows(
+                [
+                    {"id": "a", "sentence": "政府发布年度工作公告。"},
+                    {"id": "b", "text": "有关部门公布最新通知。"},
+                ],
+                source_name="tnews",
+                split="validation",
+            )
+        )
+
+        self.assertEqual([sample.text for sample in samples], ["政府发布年度工作公告。", "有关部门公布最新通知。"])
+        self.assertEqual({sample.label for sample in samples}, {"human"})
+        self.assertEqual({sample.language for sample in samples}, {"zh"})
+        self.assertEqual({sample.domain for sample in samples}, {"official_news"})
+        self.assertEqual({sample.split for sample in samples}, {"validation"})
+
+    def test_m4_maps_labels_sources_and_generators(self) -> None:
+        samples = list(
+            adapt_m4_rows(
+                [
+                    {"id": "human-1", "text": "A reviewed manuscript.", "label": 0, "source": "peerread"},
+                    {
+                        "id": "ai-1",
+                        "text": "A generated encyclopedia entry.",
+                        "label": 1,
+                        "source": "wikipedia",
+                        "model": "gpt-4",
+                    },
+                ],
+                source_name="m4_multilingual",
+                language="en",
+            )
+        )
+
+        self.assertEqual([sample.label for sample in samples], ["human", "ai"])
+        self.assertEqual([sample.domain for sample in samples], ["academic_technical", "general_qa"])
+        self.assertEqual([sample.generator for sample in samples], [None, "gpt-4"])
+        self.assertEqual({sample.source for sample in samples}, {"m4_multilingual"})
+
+    def test_raid_maps_human_and_ai_and_excludes_adversarial_rows(self) -> None:
+        samples = list(
+            adapt_raid_rows(
+                [
+                    {
+                        "id": "human-1",
+                        "generation": "A newspaper report.",
+                        "model": "human",
+                        "domain": "news",
+                        "attack": None,
+                    },
+                    {
+                        "id": "ai-1",
+                        "generation": "A generated poem.",
+                        "model": "gpt2",
+                        "domain": "poetry",
+                        "attack": "none",
+                    },
+                    {
+                        "id": "attacked-1",
+                        "generation": "An attacked sample.",
+                        "model": "gpt2",
+                        "domain": "reddit",
+                        "attack": "homoglyph",
+                    },
+                ],
+                source_name="raid_no_adversarial",
+                language="en",
+            )
+        )
+
+        self.assertEqual([sample.label for sample in samples], ["human", "ai"])
+        self.assertEqual([sample.domain for sample in samples], ["official_news", "literature"])
+        self.assertEqual([sample.generator for sample in samples], [None, "gpt2"])
+
+    def test_adapters_reject_blank_text_unsupported_languages_and_unknown_labels(self) -> None:
+        self.assertEqual(
+            list(adapt_hc3_rows([{"human_answers": [" ", ""]}], "hc3_en", "en")),
+            [],
+        )
+        self.assertEqual(
+            list(adapt_tnews_rows([{"sentence": "  "}], source_name="tnews")),
+            [],
+        )
+        with self.assertRaisesRegex(ValueError, "Unsupported language"):
+            list(adapt_hc3_rows([], "hc3_fr", "fr"))
+        with self.assertRaisesRegex(ValueError, "Unsupported M4 label"):
+            list(adapt_m4_rows([{"text": "Valid text.", "label": 2}], "m4", "en"))
 
 
 class TextResourceManagerTests(unittest.TestCase):

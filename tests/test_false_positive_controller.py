@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from detection.false_positive_controller import FalsePositiveController
+from detection.text_domain import TextDomainRouter
 from detection.text_segmentation import SentenceAwareSegmenter
 
 
@@ -50,6 +51,53 @@ class SentenceAwareSegmenterTests(unittest.TestCase):
 
         self.assertEqual(covered, set(range(len(text))))
         self.assertEqual(segments[-1].end, len(text))
+
+
+class TextDomainRouterTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.router = TextDomainRouter()
+
+    def test_routes_english_academic_study(self) -> None:
+        decision = self.router.classify(
+            "The study evaluates a neural algorithm on a public dataset and reports the results."
+        )
+
+        self.assertEqual(decision.domain, "academic_technical")
+        self.assertGreater(decision.confidence, 0.5)
+        self.assertIn("study", decision.evidence)
+
+    def test_routes_english_government_announcement(self) -> None:
+        decision = self.router.classify(
+            "The government announced the new public policy in an official statement."
+        )
+
+        self.assertEqual(decision.domain, "official_news")
+        self.assertIn("government", decision.evidence)
+
+    def test_preserves_existing_chinese_domain_examples(self) -> None:
+        examples = {
+            "宝玉听了，忙问缘故，黛玉只低头拭泪。": "literature",
+            "本文研究一种神经网络算法，实验结果表明该方法有效。": "academic_technical",
+            "根据有关规定，政府现将年度工作安排公告如下。": "official_news",
+        }
+
+        self.assertEqual(
+            {text: self.router.classify(text).domain for text in examples},
+            examples,
+        )
+
+    def test_precedence_is_deterministic_when_markers_overlap(self) -> None:
+        decision = self.router.classify("政府公告：研究部门将发布新的数据集管理办法。")
+
+        self.assertEqual(decision.domain, "academic_technical")
+        self.assertIn("研究", decision.evidence)
+
+    def test_defaults_to_general_qa_with_rule_based_fallback_evidence(self) -> None:
+        decision = self.router.classify("How can I make a quick dinner tonight?")
+
+        self.assertEqual(decision.domain, "general_qa")
+        self.assertLess(decision.confidence, 0.5)
+        self.assertEqual(decision.evidence, ())
 
 
 class FalsePositiveControllerTests(unittest.TestCase):
