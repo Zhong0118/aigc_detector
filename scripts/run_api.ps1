@@ -11,9 +11,8 @@ if (-not (Test-Path -LiteralPath $Python)) {
     throw "Python executable not found: $Python"
 }
 
-$ThresholdArtifact = Join-Path $PWD "artifacts\text_fp_controller\thresholds.json"
-if (-not (Test-Path -LiteralPath $ThresholdArtifact) -and $env:AIGC_SKIP_TEXT_BOOTSTRAP -ne "1") {
-    Write-Host "Preparing project-local text models, mature human corpora, and calibrated thresholds..."
+if ($env:AIGC_SKIP_TEXT_BOOTSTRAP -ne "1") {
+    Write-Host "Checking multilingual text resources and calibration artifact v2..."
     & $Python -m scripts.bootstrap_text_resources --profile all --allow-fallback
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE

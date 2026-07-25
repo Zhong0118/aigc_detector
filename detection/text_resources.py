@@ -85,6 +85,8 @@ class DatasetSpec:
     adapter: str = "legacy"
     dataset_id: str | None = None
     dataset_config: str | None = None
+    dataset_builder: str | None = None
+    dataset_data_files: tuple[tuple[str, str], ...] = ()
     splits: tuple[str, ...] = ("train",)
     language: str | None = "zh"
     attribution_url: str | None = None
@@ -102,6 +104,24 @@ class DatasetSpec:
             raise ValueError(f"Unsupported dataset source kind: {source_kind}")
         if source_kind == "hf_dataset" and not self.dataset_id:
             raise ValueError("Hugging Face resources require dataset_id")
+        if self.dataset_builder is not None and source_kind != "hf_dataset":
+            raise ValueError("Dataset builders are only supported for Hugging Face resources")
+        if self.dataset_data_files and not self.dataset_builder:
+            raise ValueError("Dataset data_files require a generic dataset builder")
+        data_file_splits: set[str] = set()
+        for item in self.dataset_data_files:
+            if (
+                not isinstance(item, tuple)
+                or len(item) != 2
+                or not all(isinstance(value, str) and value for value in item)
+            ):
+                raise ValueError("Dataset data_files must contain (split, URL) pairs")
+            split, _ = item
+            if split in data_file_splits:
+                raise ValueError(f"Duplicate dataset data_files split: {split}")
+            data_file_splits.add(split)
+        if data_file_splits and data_file_splits != set(self.splits):
+            raise ValueError("Dataset data_files splits must match required splits")
         if self.filename is not None:
             _safe_portable_component(
                 self.filename,
@@ -169,7 +189,14 @@ MULTIDOMAIN_DATASETS = CORE_DATASETS + (
         source_kind="hf_dataset",
         adapter="hc3",
         dataset_id="Hello-SimpleAI/HC3",
-        dataset_config="all",
+        dataset_builder="json",
+        dataset_data_files=(
+            (
+                "train",
+                "https://huggingface.co/datasets/Hello-SimpleAI/HC3/"
+                "resolve/main/all.jsonl",
+            ),
+        ),
         language="en",
     ),
     DatasetSpec(
@@ -182,7 +209,14 @@ MULTIDOMAIN_DATASETS = CORE_DATASETS + (
         source_kind="hf_dataset",
         adapter="hc3",
         dataset_id="Hello-SimpleAI/HC3-Chinese",
-        dataset_config="all",
+        dataset_builder="json",
+        dataset_data_files=(
+            (
+                "train",
+                "https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese/"
+                "resolve/main/all.jsonl",
+            ),
+        ),
         language="zh",
     ),
     DatasetSpec(
@@ -368,8 +402,33 @@ class TextResourceManager:
             "data_dir": str(self.dataset_dir),
             "normalized_dir": str(self.normalized_dir),
             "artifact_path": str(self.artifact_path),
-            "artifact_ready": self.artifact_path.exists(),
+            **self.artifact_status(),
             "datasets": [self._dataset_status(spec) for spec in self.dataset_specs],
+        }
+
+    def artifact_status(self) -> dict[str, Any]:
+        exists = self.artifact_path.is_file()
+        payload = self._read_json(self.artifact_path) if exists else None
+        schema_version: int | None = None
+        dataset_profile: str | None = None
+        if isinstance(payload, Mapping):
+            raw_schema = payload.get("artifact_schema_version", 1)
+            if isinstance(raw_schema, int) and not isinstance(raw_schema, bool):
+                schema_version = raw_schema
+            raw_profile = payload.get("dataset_profile")
+            if isinstance(raw_profile, str):
+                dataset_profile = raw_profile
+        profile_matches = dataset_profile == self.dataset_profile
+        return {
+            "artifact_exists": exists,
+            "artifact_schema_version": schema_version,
+            "artifact_dataset_profile": dataset_profile,
+            "artifact_profile_matches": profile_matches,
+            "artifact_ready": (
+                isinstance(payload, Mapping)
+                and schema_version == 2
+                and profile_matches
+            ),
         }
 
     def _dataset_status(self, spec: DatasetSpec) -> dict[str, Any]:
@@ -1117,8 +1176,11 @@ class TextResourceManager:
             loader = load_dataset
         cache_dir = self._contained_path(self._resource_root(spec), "hf_cache")
         cache_dir.mkdir(parents=True, exist_ok=True)
-        args = [spec.dataset_id]
-        if spec.dataset_config is not None:
+        args = [spec.dataset_builder or spec.dataset_id]
+        loader_kwargs: dict[str, Any] = {}
+        if spec.dataset_builder is not None:
+            loader_kwargs["data_files"] = dict(spec.dataset_data_files)
+        elif spec.dataset_config is not None:
             args.append(spec.dataset_config)
         try:
             return loader(
@@ -1126,6 +1188,7 @@ class TextResourceManager:
                 split=split,
                 cache_dir=str(cache_dir),
                 keep_in_memory=False,
+                **loader_kwargs,
             )
         except Exception as exc:
             raise RuntimeError(
@@ -1202,6 +1265,8 @@ class TextResourceManager:
             "source_spec_fingerprint": spec.fingerprint,
             "dataset_id": spec.dataset_id,
             "dataset_config": spec.dataset_config,
+            "dataset_builder": spec.dataset_builder,
+            "dataset_data_files": dict(spec.dataset_data_files),
             "validated_splits": list(spec.splits),
             "expected_labels": list(expected_labels),
             "split_evidence": split_evidence,

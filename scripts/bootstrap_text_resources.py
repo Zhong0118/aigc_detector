@@ -1209,10 +1209,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"for profile {manager.dataset_profile}..."
             )
             manager.ensure_datasets()
-        if (
-            args.profile == "all"
-            and (args.force_calibration or not manager.artifact_path.exists())
-        ):
+        artifact_ready = manager.artifact_status()["artifact_ready"]
+        if args.profile == "all" and (args.force_calibration or not artifact_ready):
             detector = _build_detector(config)
             domain_thresholds = fp.get("domain_thresholds", {})
             old_validation = args.validation_limit

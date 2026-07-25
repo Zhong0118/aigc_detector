@@ -473,8 +473,30 @@ class TextResourceManagerTests(unittest.TestCase):
         )
         self.assertEqual(multidomain["hc3_en"].dataset_id, "Hello-SimpleAI/HC3")
         self.assertEqual(multidomain["hc3_zh"].dataset_id, "Hello-SimpleAI/HC3-Chinese")
-        self.assertEqual(multidomain["hc3_en"].dataset_config, "all")
-        self.assertEqual(multidomain["hc3_zh"].dataset_config, "all")
+        self.assertEqual(multidomain["hc3_en"].dataset_builder, "json")
+        self.assertEqual(multidomain["hc3_zh"].dataset_builder, "json")
+        self.assertIsNone(multidomain["hc3_en"].dataset_config)
+        self.assertIsNone(multidomain["hc3_zh"].dataset_config)
+        self.assertEqual(
+            multidomain["hc3_en"].dataset_data_files,
+            (
+                (
+                    "train",
+                    "https://huggingface.co/datasets/Hello-SimpleAI/HC3/"
+                    "resolve/main/all.jsonl",
+                ),
+            ),
+        )
+        self.assertEqual(
+            multidomain["hc3_zh"].dataset_data_files,
+            (
+                (
+                    "train",
+                    "https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese/"
+                    "resolve/main/all.jsonl",
+                ),
+            ),
+        )
         self.assertEqual(multidomain["tnews"].dataset_id, "clue")
         self.assertEqual(multidomain["tnews"].dataset_config, "tnews")
         self.assertEqual(multidomain["tnews"].license, "unknown")
@@ -579,10 +601,30 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertEqual(
             [call[0:2] for call in loader_calls],
             [
-                ("Hello-SimpleAI/HC3", "all"),
-                ("Hello-SimpleAI/HC3-Chinese", "all"),
+                ("json", None),
+                ("json", None),
             ],
         )
+        self.assertEqual(
+            loader_calls[0][2]["data_files"],
+            {
+                "train": (
+                    "https://huggingface.co/datasets/Hello-SimpleAI/HC3/"
+                    "resolve/main/all.jsonl"
+                )
+            },
+        )
+        self.assertEqual(
+            loader_calls[1][2]["data_files"],
+            {
+                "train": (
+                    "https://huggingface.co/datasets/Hello-SimpleAI/HC3-Chinese/"
+                    "resolve/main/all.jsonl"
+                )
+            },
+        )
+        self.assertNotEqual(loader_calls[0][0], "Hello-SimpleAI/HC3")
+        self.assertNotEqual(loader_calls[1][0], "Hello-SimpleAI/HC3-Chinese")
         self.assertEqual(loader_calls[0][2]["split"], "train")
         self.assertIs(loader_calls[0][2]["keep_in_memory"], False)
         self.assertNotIn("streaming", loader_calls[0][2])
@@ -590,6 +632,90 @@ class TextResourceManagerTests(unittest.TestCase):
             Path(loader_calls[0][2]["cache_dir"]),
             root / "data" / "text_false_positive" / "corpora" / "hc3_en" / "hf_cache",
         )
+
+    def test_artifact_status_requires_matching_schema_v2_profile(self) -> None:
+        cases = (
+            (
+                "legacy",
+                {"groups": {}},
+                {
+                    "artifact_exists": True,
+                    "artifact_schema_version": 1,
+                    "artifact_dataset_profile": None,
+                    "artifact_profile_matches": False,
+                    "artifact_ready": False,
+                },
+            ),
+            (
+                "matching",
+                {
+                    "artifact_schema_version": 2,
+                    "dataset_profile": "multidomain",
+                    "groups": {},
+                },
+                {
+                    "artifact_exists": True,
+                    "artifact_schema_version": 2,
+                    "artifact_dataset_profile": "multidomain",
+                    "artifact_profile_matches": True,
+                    "artifact_ready": True,
+                },
+            ),
+            (
+                "mismatched",
+                {
+                    "artifact_schema_version": 2,
+                    "dataset_profile": "core",
+                    "groups": {},
+                },
+                {
+                    "artifact_exists": True,
+                    "artifact_schema_version": 2,
+                    "artifact_dataset_profile": "core",
+                    "artifact_profile_matches": False,
+                    "artifact_ready": False,
+                },
+            ),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+            )
+            for name, payload, expected in cases:
+                with self.subTest(name=name):
+                    manager.artifact_path.parent.mkdir(parents=True, exist_ok=True)
+                    manager.artifact_path.write_text(
+                        json.dumps(payload),
+                        encoding="utf-8",
+                    )
+                    self.assertEqual(manager.artifact_status(), expected)
+                    status = manager.status()
+                    for key, value in expected.items():
+                        self.assertEqual(status[key], value)
+
+            manager.artifact_path.write_text("{broken", encoding="utf-8")
+            self.assertEqual(
+                manager.artifact_status(),
+                {
+                    "artifact_exists": True,
+                    "artifact_schema_version": None,
+                    "artifact_dataset_profile": None,
+                    "artifact_profile_matches": False,
+                    "artifact_ready": False,
+                },
+            )
+            manager.artifact_path.unlink()
+            self.assertEqual(
+                manager.artifact_status(),
+                {
+                    "artifact_exists": False,
+                    "artifact_schema_version": None,
+                    "artifact_dataset_profile": None,
+                    "artifact_profile_matches": False,
+                    "artifact_ready": False,
+                },
+            )
 
     def test_m4_dispatch_keeps_supported_languages_and_skips_others(self) -> None:
         def loader(*args, **kwargs):
@@ -3342,7 +3468,7 @@ class TextResourceManagerTests(unittest.TestCase):
         manager = MagicMock()
         manager.dataset_profile = "core"
         manager.dataset_specs = ()
-        manager.artifact_path.exists.return_value = False
+        manager.artifact_status.return_value = {"artifact_ready": False}
         manager.status.return_value = {}
         config = {
             "detection": {
@@ -3384,6 +3510,138 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertEqual(builder.call_args.kwargs["human_calibration_limit"], 321)
         self.assertEqual(builder.call_args.kwargs["human_validation_limit"], 87)
         self.assertEqual(builder.call_args.kwargs["ai_validation_limit"], 65)
+
+    def test_all_profile_recalibrates_when_artifact_is_not_current_v2(self) -> None:
+        readiness_cases = (
+            {
+                "artifact_exists": True,
+                "artifact_schema_version": 1,
+                "artifact_dataset_profile": None,
+                "artifact_profile_matches": False,
+                "artifact_ready": False,
+            },
+            {
+                "artifact_exists": True,
+                "artifact_schema_version": None,
+                "artifact_dataset_profile": None,
+                "artifact_profile_matches": False,
+                "artifact_ready": False,
+            },
+            {
+                "artifact_exists": True,
+                "artifact_schema_version": 2,
+                "artifact_dataset_profile": "core",
+                "artifact_profile_matches": False,
+                "artifact_ready": False,
+            },
+        )
+        config = {
+            "detection": {
+                "local_models": {"text_yuchuan": {"models": {}}},
+                "text_false_positive_control": {
+                    "dataset_profile": "multidomain",
+                    "min_group_calibration_humans": 0,
+                    "min_group_validation_humans": 0,
+                    "min_group_validation_ai": 0,
+                },
+            }
+        }
+        for artifact_status in readiness_cases:
+            with self.subTest(artifact_status=artifact_status):
+                manager = MagicMock()
+                manager.dataset_profile = "multidomain"
+                manager.dataset_specs = ()
+                manager.artifact_status.return_value = artifact_status
+                manager.status.return_value = artifact_status
+                with (
+                    patch.object(
+                        bootstrap_text_resources,
+                        "_load_config",
+                        return_value=config,
+                    ),
+                    patch.object(
+                        bootstrap_text_resources,
+                        "TextResourceManager",
+                        return_value=manager,
+                    ),
+                    patch.object(
+                        bootstrap_text_resources,
+                        "_build_detector",
+                        return_value=object(),
+                    ) as detector_builder,
+                    patch.object(
+                        bootstrap_text_resources,
+                        "build_threshold_artifact",
+                        return_value={"artifact_schema_version": 2},
+                    ) as artifact_builder,
+                ):
+                    result = bootstrap_text_resources.main(["--profile", "all"])
+
+                self.assertEqual(result, 0)
+                detector_builder.assert_called_once()
+                artifact_builder.assert_called_once()
+
+    def test_all_profile_skips_calibration_for_matching_v2_artifact(self) -> None:
+        manager = MagicMock()
+        manager.dataset_profile = "multidomain"
+        manager.dataset_specs = ()
+        manager.artifact_status.return_value = {
+            "artifact_exists": True,
+            "artifact_schema_version": 2,
+            "artifact_dataset_profile": "multidomain",
+            "artifact_profile_matches": True,
+            "artifact_ready": True,
+        }
+        manager.status.return_value = manager.artifact_status.return_value
+        config = {
+            "detection": {
+                "local_models": {"text_yuchuan": {"models": {}}},
+                "text_false_positive_control": {
+                    "dataset_profile": "multidomain",
+                },
+            }
+        }
+        with (
+            patch.object(
+                bootstrap_text_resources,
+                "_load_config",
+                return_value=config,
+            ),
+            patch.object(
+                bootstrap_text_resources,
+                "TextResourceManager",
+                return_value=manager,
+            ),
+            patch.object(
+                bootstrap_text_resources,
+                "_build_detector",
+                side_effect=AssertionError("matching v2 must skip calibration"),
+            ),
+            patch.object(
+                bootstrap_text_resources,
+                "build_threshold_artifact",
+                side_effect=AssertionError("matching v2 must skip calibration"),
+            ),
+        ):
+            result = bootstrap_text_resources.main(["--profile", "all"])
+
+        self.assertEqual(result, 0)
+        manager.ensure_models.assert_called_once_with([])
+        manager.ensure_datasets.assert_called_once()
+
+    def test_windows_api_startup_runs_idempotent_multilingual_bootstrap(self) -> None:
+        script_path = (
+            Path(__file__).resolve().parents[1] / "scripts" / "run_api.ps1"
+        )
+        script = script_path.read_text(encoding="utf-8")
+
+        self.assertIn('$env:AIGC_SKIP_TEXT_BOOTSTRAP -ne "1"', script)
+        self.assertIn(
+            "-m scripts.bootstrap_text_resources --profile all --allow-fallback",
+            script,
+        )
+        self.assertIn("multilingual", script.lower())
+        self.assertNotIn("Test-Path $artifactPath", script)
 
     def test_legacy_sample_limit_flags_remain_parseable(self) -> None:
         args = bootstrap_text_resources.parse_args(

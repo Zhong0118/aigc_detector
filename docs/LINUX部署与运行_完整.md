@@ -96,7 +96,7 @@ python -m scripts.bootstrap_text_resources --profile all --force-calibration
 
 这个过程不会重新训练 YuchuanTian 模型权重。四个检测模型保持不变，脚本只下载模型、准备语料并校准判定阈值。AI 样本只用于评估召回率，不参与阈值拟合。
 
-建议为多领域语料和 Hugging Face 数据缓存额外预留约 `1-2 GB` 磁盘空间。该数值是部署规划估算，实际占用会随 Hugging Face 缓存格式、数据集修订版本和服务器已有缓存而变化。
+建议为多领域语料和 Hugging Face 数据缓存至少预留 `4-6 GB` 磁盘空间，检测模型所需空间需要另外计算。实际占用会随数据集修订版本、Hugging Face/PyArrow 缓存格式及服务器已有缓存而变化。
 
 部署包内已有：
 

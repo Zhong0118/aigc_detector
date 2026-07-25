@@ -244,7 +244,7 @@ data/text_false_positive/normalized/
 artifacts/text_fp_controller/thresholds.json
 ```
 
-建议为新增多领域语料和 Hugging Face 数据缓存额外预留约 `1-2 GB` 磁盘空间。这个数值是部署规划估算，实际占用会随 Hugging Face 缓存格式、数据集修订版本和已存在缓存而变化。
+建议为新增多领域语料和 Hugging Face 数据缓存至少预留 `4-6 GB` 磁盘空间，检测模型所需空间需要另外计算。实际占用会随数据集修订版本、Hugging Face/PyArrow 缓存格式及服务器已有缓存而变化。
 
 下载脚本和 Hugging Face 组件会继承当前 shell 中的 `HTTP_PROXY`、`HTTPS_PROXY`（以及对应的小写变量）。服务器需要代理时，应在首次联网准备前导出这些变量；无需代理时不要设置。代理配置不会改变“先联网下载并校准、成功后再启用离线变量”的顺序。
 
