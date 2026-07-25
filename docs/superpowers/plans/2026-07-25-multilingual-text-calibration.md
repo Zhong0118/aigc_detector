@@ -44,11 +44,14 @@ sample = TextSample(
     language="en",
     domain="general_qa",
     source="hc3_en",
-    source_id="question-1",
+    source_id="hc3_en:train:question-1:human:0",
     generator=None,
     split="train",
+    partition_id="hc3_en:train:question-1",
 )
 self.assertEqual(sample.group_key("short"), "en:general_qa:short")
+self.assertEqual(sample.partition_key, "hc3_en:train:question-1")
+self.assertTrue(sample.identity_key)
 
 router = TextDomainRouter()
 self.assertEqual(router.classify("The study evaluates a neural algorithm.").domain, "academic_technical")
@@ -56,7 +59,9 @@ self.assertEqual(router.classify("The government announced the new policy.").dom
 ```
 
 Add HC3, TNEWS, M4 and RAID row fixtures that assert human/AI labels, language,
-domain, generator and shared pair IDs.
+domain, and generator. Paired HC3 answers share `partition_id` and
+`partition_key`, while `source_id` and `identity_key` identify each individual
+sample.
 
 - [ ] **Step 2: Run tests and confirm missing symbols**
 
@@ -83,15 +88,36 @@ class TextSample:
     source_id: str
     generator: str | None = None
     split: str = "train"
+    partition_id: str | None = None
 
     def group_key(self, length_bucket: str) -> str:
         return f"{self.language}:{self.domain}:{length_bucket}"
+
+    @property
+    def partition_key(self) -> str:
+        return self.partition_id or self.source_id
+
+    @property
+    def identity_key(self) -> str:
+        return _stable_json_hash(
+            {
+                "source": self.source,
+                "split": self.split,
+                "source_id": self.source_id,
+                "label": self.label,
+                "generator": self.generator,
+                "text": self.text,
+            }
+        )
 ```
 
-Adapters must expose `iter_*_rows(rows, source_name)` generators, normalize
-source domains through `normalize_source_domain`, flatten HC3 answer lists, map
-M4 labels `0/1`, map RAID `model == "human"`, and reject blank or unsupported
-records.
+Adapters must expose `adapt_hc3_rows`, `adapt_tnews_rows`, `adapt_m4_rows`, and
+`adapt_raid_rows` generators, normalize source domains through
+`normalize_source_domain`, flatten HC3 answer lists, map M4 labels `0/1`, map
+RAID `model == "human"`, and reject blank or unsupported records. HC3 uses one
+stable question-level `partition_id` for all answers and distinct per-answer
+`source_id` values; `partition_key` controls partitioning, while `identity_key`
+is the stable individual deduplication key.
 
 - [ ] **Step 4: Implement bilingual domain router**
 
@@ -205,9 +231,10 @@ self.assertIn("ai_recall_interval_95", group)
 self.assertIn("validation_auroc", group)
 ```
 
-Add tests proving samples below `min_effective_chars` are excluded, pair IDs
-stay in one partition, same seed yields identical IDs, and detector failures
-report their exception class.
+Add tests proving samples below `min_effective_chars` are excluded, paired
+records share a `partition_key` while retaining distinct `identity_key` values,
+the same seed yields identical partition assignments and reservoir selections,
+and detector failures report their exception class.
 
 - [ ] **Step 2: Run focused calibration tests**
 
