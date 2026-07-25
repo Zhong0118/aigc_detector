@@ -42,6 +42,7 @@ aigc_detector/
 ```text
 models/huggingface/
 data/text_false_positive/corpora/
+data/text_false_positive/normalized/
 artifacts/text_fp_controller/thresholds.json
 ```
 
@@ -65,6 +66,7 @@ PowerShell 脚本只用于 Windows，Linux 不运行它们。
 ```text
 models/huggingface/
 data/text_false_positive/corpora/
+data/text_false_positive/normalized/
 artifacts/text_fp_controller/thresholds.json
 ```
 
@@ -83,16 +85,16 @@ python -m scripts.bootstrap_text_resources --profile all --force-calibration
 会自动完成：
 
 1. 下载四个 YuchuanTian 文本 AIGC 检测模型；
-2. 下载 `chinese_poetry` 中文诗词语料；
-3. 下载 `chinese_classical_corpus` 连续古文语料；
-4. 下载 `CSL` 中文论文和技术文本语料；
-5. 将语料写入 `data/text_false_positive/corpora/`；
-6. 用本地文本模型对真人语料打分；
-7. 分离校准集与独立验证集；
-8. 计算分领域、分长度的误判控制阈值；
-9. 生成 `artifacts/text_fp_controller/thresholds.json`。
+2. 下载中文诗词、古文和 CSL 真人语料；
+3. 下载 HC3 中英文、TNEWS、M4/SemEval 中英文本和 RAID 非对抗数据；
+4. 将原始资源写入 `data/text_false_positive/corpora/`；
+5. 将确定性选中的规范化样本写入 `data/text_false_positive/normalized/`；
+6. 按文档级哈希分离真人校准集、真人验证集和 AI 验证集；
+7. 只用真人校准分数计算分语言、领域和长度的高风险阈值；
+8. 用独立留出集计算真人误报率、AI 召回率/FNR、AUROC 和置信区间；
+9. 生成 `artifacts/text_fp_controller/thresholds.json`（artifact v2）。
 
-这个过程不会重新训练 YuchuanTian 模型权重。四个检测模型是预训练模型，脚本负责下载它们并利用真人语料计算本项目使用的阈值。
+这个过程不会重新训练 YuchuanTian 模型权重。四个检测模型保持不变，脚本只下载模型、准备语料并校准判定阈值。AI 样本只用于评估召回率，不参与阈值拟合。
 
 部署包内已有：
 
@@ -176,7 +178,6 @@ python -m pip install \
 
 ```bash
 python -m pip install -r requirements.txt
-python -m pip install datasets tqdm joblib
 ```
 
 两个现有来源归因 `joblib` 已在 `scikit-learn 1.5.2` 下验证可加载，因此服务器建议固定相同版本。
@@ -295,6 +296,26 @@ python -m pip install audioseal
 
 VideoSeal 需要额外准备源码、模型卡、配置和权重，不属于文本资源引导脚本的下载范围。
 
+### 5.4 文本误判控制
+
+推荐保留以下多领域配置：
+
+```yaml
+detection:
+  text_false_positive_control:
+    dataset_profile: "multidomain"
+    target_fpr: 0.02
+    bootstrap_human_calibration_limit: 5000
+    bootstrap_human_validation_limit: 1000
+    bootstrap_ai_validation_limit: 1000
+    bootstrap_max_source_items: 500000
+    min_reliable_human_validation: 200
+    min_reliable_ai_validation: 200
+    min_acceptable_ai_recall: 0.7
+```
+
+其中 `target_fpr` 控制真人误报目标，`min_acceptable_ai_recall` 只产生可靠性警告，不会用 AI 数据降低已由真人校准得到的阈值。
+
 ---
 
 ## 6. 设置在线下载环境
@@ -332,6 +353,7 @@ export TRANSFORMERS_OFFLINE=1
 ```bash
 python -m scripts.bootstrap_text_resources \
   --profile all \
+  --dataset-profile multidomain \
   --force-calibration
 ```
 
@@ -347,6 +369,12 @@ models/huggingface/
 data/text_false_positive/corpora/
 ```
 
+确定性抽样后的规范化样本写入：
+
+```text
+data/text_false_positive/normalized/
+```
+
 阈值产物默认写入：
 
 ```text
@@ -357,12 +385,20 @@ artifacts/text_fp_controller/thresholds.json
 
 `--force-calibration` 会重新计算阈值，但不会重新下载已经完整存在的模型。
 
-校准需要对一万多条真人文本执行模型推理。GPU 服务器会更快，CPU 服务器可能耗时较长。
+默认每个精确语言/领域/长度组最多使用 5000 条真人校准样本、1000 条真人验证样本和 1000 条 AI 验证样本。实际数量取决于数据源可用量。GPU 服务器会更快，CPU 服务器可能耗时较长。
 
 检查结果：
 
 ```bash
 python -m scripts.bootstrap_text_resources --profile status
+```
+
+不加载检测模型、只统计已经准备好的数据：
+
+```bash
+python -m scripts.bootstrap_text_resources \
+  --profile stats \
+  --dataset-profile multidomain
 ```
 
 确认阈值文件存在：
@@ -384,14 +420,23 @@ path = Path("artifacts/text_fp_controller/thresholds.json")
 payload = json.loads(path.read_text(encoding="utf-8"))
 
 print("version:", payload.get("version"))
+print("artifact_schema_version:", payload.get("artifact_schema_version"))
 print("calibration_kind:", payload.get("calibration_kind"))
 print("target_fpr:", payload.get("target_fpr"))
-print("sources:", payload.get("sources"))
-print("validation_sources:", payload.get("validation_sources"))
+for name, group in sorted(payload.get("groups", {}).items()):
+    if name.count(":") == 2:
+        print(
+            name,
+            "threshold=", group.get("high_threshold"),
+            "human_fpr=", group.get("validation_fpr"),
+            "ai_recall=", group.get("ai_recall"),
+            "auroc=", group.get("validation_auroc"),
+            "warnings=", group.get("warnings"),
+        )
 PY
 ```
 
-`calibration_kind` 应为：
+`artifact_schema_version` 应为 `2`，`calibration_kind` 应为：
 
 ```text
 human_only_split_conformal
@@ -638,10 +683,17 @@ aigc_detector/
 ├── data/
 │   ├── aigc_detection.db
 │   └── text_false_positive/
-│       └── corpora/
-│           ├── chinese_poetry/
-│           ├── chinese_classical_corpus/
-│           └── csl/
+│       ├── corpora/
+│       │   ├── chinese_poetry/
+│       │   ├── chinese_classical_corpus/
+│       │   ├── csl/
+│       │   ├── hc3_en/
+│       │   ├── hc3_zh/
+│       │   ├── tnews/
+│       │   ├── m4_multilingual/
+│       │   └── raid_no_adversarial/
+│       └── normalized/
+│           └── *.jsonl
 ├── models/
 │   ├── attribution/
 │   │   ├── text_source_classifier.joblib
@@ -672,7 +724,6 @@ python -m pip install -U pip setuptools wheel
 python -m pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 \
   --index-url https://download.pytorch.org/whl/cu124
 python -m pip install -r requirements.txt
-python -m pip install datasets tqdm joblib
 
 chmod +x tools/c2patool/c2patool
 
@@ -685,6 +736,7 @@ unset TRANSFORMERS_OFFLINE
 
 python -m scripts.bootstrap_text_resources \
   --profile all \
+  --dataset-profile multidomain \
   --force-calibration
 
 python -m uvicorn api.main:app \

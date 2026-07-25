@@ -209,15 +209,52 @@ def render_analysis(data: dict):
             )
             validation_samples = int(decision.get("threshold_validation_samples") or 0)
             validation_fpr = decision.get("threshold_validation_fpr")
-            if validation_samples and validation_fpr is not None:
-                st.caption(
-                    f"独立验证样本：{validation_samples} | "
-                    f"留出集误报率：{float(validation_fpr):.2%}"
+            ai_validation_samples = int(
+                decision.get("threshold_ai_validation_samples") or 0
+            )
+            ai_recall = decision.get("threshold_ai_recall")
+            validation_auroc = decision.get("threshold_validation_auroc")
+            if (
+                validation_samples
+                or ai_validation_samples
+                or validation_auroc is not None
+            ):
+                evidence_cols = st.columns(3)
+                evidence_cols[0].metric(
+                    "真人误报率",
+                    "n/a"
+                    if validation_fpr is None
+                    else f"{float(validation_fpr):.2%}",
+                    help=f"独立真人验证样本数：{validation_samples}",
                 )
-            if decision.get("threshold_reliability_status") == "warning":
+                evidence_cols[1].metric(
+                    "AI 召回率",
+                    "n/a" if ai_recall is None else f"{float(ai_recall):.2%}",
+                    help=f"独立 AI 验证样本数：{ai_validation_samples}",
+                )
+                evidence_cols[2].metric(
+                    "验证 AUROC",
+                    "n/a"
+                    if validation_auroc is None
+                    else f"{float(validation_auroc):.3f}",
+                )
+                st.caption(
+                    f"真人验证样本：{validation_samples} | "
+                    f"AI 验证样本：{ai_validation_samples}"
+                )
+            elif str(decision.get("threshold_group") or "").startswith("built-in:"):
+                st.caption("当前使用内置保守阈值，没有对应的独立验证集指标。")
+            if decision.get("threshold_warnings"):
                 warning_names = {
                     "calibrated_threshold_near_score_ceiling": "校准阈值接近模型分数上限",
-                    "holdout_fpr_above_target": "留出集误报率显著高于目标",
+                    "holdout_fpr_above_target": "真人验证集误报率显著高于目标",
+                    "insufficient_human_validation": "真人验证样本不足",
+                    "insufficient_ai_validation": "AI 验证样本不足",
+                    "ai_recall_below_minimum": "AI 验证召回率低于最低要求",
+                    "auroc_unavailable": "当前无法计算验证集 AUROC",
+                    "mixed_language_threshold_fallback": (
+                        "混合语种未独立校准，已采用更严格的单语阈值"
+                    ),
                 }
                 warnings = [
                     warning_names.get(str(item), str(item))

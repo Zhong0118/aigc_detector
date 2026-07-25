@@ -60,6 +60,51 @@ class FalsePositiveReportTests(unittest.TestCase):
         self.assertIn("没有可用的检测模型分数", joined)
         self.assertNotIn("未明显检出 AIGC", report["summary"])
 
+    def test_report_explains_human_fpr_ai_recall_and_reliability_warnings(self) -> None:
+        analysis = analysis_for("uncertain", 0.72, ["score_in_uncertain_interval"])
+        analysis["detection"]["decision"].update(
+            {
+                "threshold_validation_fpr": 0.012,
+                "threshold_validation_samples": 1000,
+                "threshold_ai_recall": 0.84,
+                "threshold_ai_validation_samples": 900,
+                "threshold_validation_auroc": 0.91,
+                "threshold_reliability_status": "warning",
+                "threshold_warnings": [
+                    "ai_recall_below_minimum",
+                    "mixed_language_threshold_fallback",
+                ],
+            }
+        )
+
+        report = ReportGenerator(config={"report": {"provider": "template"}}).generate(
+            analysis
+        )
+        joined = json.dumps(report, ensure_ascii=False)
+
+        self.assertIn("真人验证集误报率为 1.20%", joined)
+        self.assertIn("1000", joined)
+        self.assertIn("AI 验证集召回率为 84.00%", joined)
+        self.assertIn("900", joined)
+        self.assertIn("AUROC 为 0.910", joined)
+        self.assertIn("AI 验证召回率低于最低要求", joined)
+        self.assertIn("混合语种未独立校准", joined)
+
+    def test_report_keeps_builtin_fallback_readable_without_validation_metrics(self) -> None:
+        analysis = analysis_for("uncertain", 0.72, ["score_in_uncertain_interval"])
+        analysis["detection"]["decision"]["threshold_group"] = (
+            "built-in:general_qa:short"
+        )
+
+        report = ReportGenerator(config={"report": {"provider": "template"}}).generate(
+            analysis
+        )
+        joined = json.dumps(report, ensure_ascii=False)
+
+        self.assertIn("内置保守阈值", joined)
+        self.assertNotIn("真人验证集误报率为 None", joined)
+        self.assertNotIn("AI 验证集召回率为 None", joined)
+
 
 if __name__ == "__main__":
     unittest.main()

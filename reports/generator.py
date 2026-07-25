@@ -76,6 +76,44 @@ class ReportGenerator:
                 f"文本路由为“{domain}”，实际检测覆盖率为 {coverage:.2%}，"
                 f"阈值组为“{decision.get('threshold_group', 'unknown')}”。"
             )
+            threshold_group = str(decision.get("threshold_group") or "")
+            if threshold_group.startswith("built-in:"):
+                evidence.append(
+                    "当前没有匹配的独立校准组，系统使用内置保守阈值；"
+                    "该阈值没有对应的真人与 AI 留出集性能指标。"
+                )
+            validation_fpr = decision.get("threshold_validation_fpr")
+            validation_samples = int(
+                decision.get("threshold_validation_samples") or 0
+            )
+            if validation_fpr is not None and validation_samples > 0:
+                evidence.append(
+                    f"真人验证集误报率为 {float(validation_fpr):.2%}，"
+                    f"基于 {validation_samples} 条独立真人样本。"
+                )
+            ai_recall = decision.get("threshold_ai_recall")
+            ai_validation_samples = int(
+                decision.get("threshold_ai_validation_samples") or 0
+            )
+            if ai_recall is not None and ai_validation_samples > 0:
+                evidence.append(
+                    f"AI 验证集召回率为 {float(ai_recall):.2%}，"
+                    f"基于 {ai_validation_samples} 条独立 AI 样本。"
+                )
+            validation_auroc = decision.get("threshold_validation_auroc")
+            if validation_auroc is not None:
+                evidence.append(
+                    f"真人与 AI 留出集的 AUROC 为 "
+                    f"{float(validation_auroc):.3f}。"
+                )
+            threshold_warnings = [
+                self._threshold_warning(str(item))
+                for item in decision.get("threshold_warnings", [])
+            ]
+            if threshold_warnings:
+                evidence.append(
+                    "阈值可靠性提示：" + "；".join(threshold_warnings) + "。"
+                )
             reason_names = [
                 self._uncertainty_reason(str(reason))
                 for reason in decision.get("uncertainty_reasons", [])
@@ -540,6 +578,19 @@ class ReportGenerator:
             "insufficient_high_risk_coverage": "高风险片段覆盖不足",
             "insufficient_analyzed_coverage": "实际检测覆盖不足",
         }.get(reason, reason)
+
+    def _threshold_warning(self, warning: str) -> str:
+        return {
+            "calibrated_threshold_near_score_ceiling": "校准阈值接近模型分数上限",
+            "holdout_fpr_above_target": "真人验证集误报率显著高于目标",
+            "insufficient_human_validation": "真人验证样本不足",
+            "insufficient_ai_validation": "AI 验证样本不足",
+            "ai_recall_below_minimum": "AI 验证召回率低于最低要求",
+            "auroc_unavailable": "当前无法计算留出集 AUROC",
+            "mixed_language_threshold_fallback": (
+                "混合语种未独立校准，已采用更严格的单语阈值"
+            ),
+        }.get(warning, warning)
 
     def _load_config(self, config_path: str) -> dict[str, Any]:
         """读取 YAML 配置文件。"""

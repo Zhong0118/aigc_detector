@@ -227,6 +227,35 @@ PY
 
 这些权重会进入 `models/huggingface/hub`。
 
+模型下载完成后，还需要生成多语言、多领域误判控制阈值。这个步骤不会训练或修改模型权重：
+
+```bash
+python -m scripts.bootstrap_text_resources \
+  --profile all \
+  --dataset-profile multidomain \
+  --force-calibration
+```
+
+它会准备中文诗词、古文、CSL、HC3 中英文、TNEWS、M4/SemEval 和 RAID 非对抗数据，并把模型、语料、规范化样本和阈值分别保存在：
+
+```text
+models/huggingface/
+data/text_false_positive/corpora/
+data/text_false_positive/normalized/
+artifacts/text_fp_controller/thresholds.json
+```
+
+阈值只由真人校准集分数决定；AI 留出集只用于计算召回率、FNR 和 AUROC。检查状态和数据统计：
+
+```bash
+python -m scripts.bootstrap_text_resources --profile status
+python -m scripts.bootstrap_text_resources \
+  --profile stats \
+  --dataset-profile multidomain
+```
+
+当 `thresholds.json` 的 `artifact_schema_version` 为 `2` 时，Dashboard 和报告会展示真人误报率、AI 召回率、验证样本数、AUROC 与可靠性警告。
+
 ## 8. 准备文本来源归因分类器
 
 这个模块不是判断“是不是 AI”，而是当内容疑似 AIGC 时，给出“更像哪个候选模型来源”的 Top-K。

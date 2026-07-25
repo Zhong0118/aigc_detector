@@ -3214,6 +3214,53 @@ class TextResourceManagerTests(unittest.TestCase):
         manager.ensure_datasets.assert_not_called()
         manager.ensure_models.assert_not_called()
 
+    def test_cli_uses_configured_dataset_profile_and_v2_sample_limits(self) -> None:
+        manager = MagicMock()
+        manager.dataset_profile = "core"
+        manager.dataset_specs = ()
+        manager.artifact_path.exists.return_value = False
+        manager.status.return_value = {}
+        config = {
+            "detection": {
+                "local_models": {"text_yuchuan": {"models": {}}},
+                "text_false_positive_control": {
+                    "dataset_profile": "core",
+                    "bootstrap_human_calibration_limit": 321,
+                    "bootstrap_human_validation_limit": 87,
+                    "bootstrap_ai_validation_limit": 65,
+                    "min_group_calibration_humans": 3,
+                    "min_group_validation_humans": 2,
+                    "min_group_validation_ai": 2,
+                },
+            }
+        }
+        with (
+            patch.object(bootstrap_text_resources, "_load_config", return_value=config),
+            patch.object(
+                bootstrap_text_resources,
+                "TextResourceManager",
+                return_value=manager,
+            ) as manager_factory,
+            patch.object(bootstrap_text_resources, "_build_detector", return_value=object()),
+            patch.object(
+                bootstrap_text_resources,
+                "build_threshold_artifact",
+                return_value={"artifact_schema_version": 2},
+            ) as builder,
+        ):
+            result = bootstrap_text_resources.main(
+                ["--profile", "all", "--force-calibration"]
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(
+            manager_factory.call_args.kwargs["dataset_profile"],
+            "core",
+        )
+        self.assertEqual(builder.call_args.kwargs["human_calibration_limit"], 321)
+        self.assertEqual(builder.call_args.kwargs["human_validation_limit"], 87)
+        self.assertEqual(builder.call_args.kwargs["ai_validation_limit"], 65)
+
     def test_legacy_sample_limit_flags_remain_parseable(self) -> None:
         args = bootstrap_text_resources.parse_args(
             ["--sample-limit", "11", "--validation-limit", "7"]

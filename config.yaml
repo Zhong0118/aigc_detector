@@ -8,6 +8,7 @@ detection:
   demo_provider_enabled: false
   text_false_positive_control:
     enabled: true
+    dataset_profile: "multidomain"
     artifact_path: "artifacts/text_fp_controller/thresholds.json"
     target_fpr: 0.02
     default_low_threshold: 0.4
@@ -19,12 +20,23 @@ detection:
     min_adjacent_high_segments: 2
     min_group_calibration_humans: 50
     min_group_validation_humans: 50
+    min_group_validation_ai: 50
+    min_reliable_human_validation: 200
+    min_reliable_ai_validation: 200
+    min_acceptable_ai_recall: 0.7
+    bootstrap_human_calibration_limit: 5000
+    bootstrap_human_validation_limit: 1000
+    bootstrap_ai_validation_limit: 1000
+    # Compatibility aliases retained for existing deployment scripts.
     bootstrap_sample_limit: 5000
     bootstrap_validation_limit: 1000
     bootstrap_validation_fraction: 0.2
     bootstrap_sampling_seed: 20260722
-    bootstrap_max_source_items: 120000
+    bootstrap_max_source_items: 500000
     bootstrap_max_windows_per_document: 1
+    resource_sources:
+      raid_adversarial:
+        enabled: false
     domain_thresholds:
       literature:
         low_threshold: 0.35

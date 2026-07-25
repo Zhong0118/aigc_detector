@@ -1076,7 +1076,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--dataset-profile",
         choices=("core", "multidomain", "all"),
-        default="multidomain",
+        default=None,
     )
     parser.add_argument("--human-calibration-limit", type=int, default=None)
     parser.add_argument("--human-validation-limit", type=int, default=None)
@@ -1102,17 +1102,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     project_root = Path(__file__).resolve().parent.parent
     config = _load_config(project_root / args.config)
+    detection = config.get("detection", {})
+    local = detection.get("local_models", {}).get("text_yuchuan", {})
+    fp = detection.get("text_false_positive_control", {})
+    dataset_profile = str(
+        args.dataset_profile or fp.get("dataset_profile", "multidomain")
+    )
     manager = TextResourceManager(
         project_root=project_root,
-        dataset_profile=args.dataset_profile,
+        dataset_profile=dataset_profile,
     )
     if args.profile == "status":
         print(json.dumps(manager.status(), ensure_ascii=False, indent=2))
         return 0
 
-    detection = config.get("detection", {})
-    local = detection.get("local_models", {}).get("text_yuchuan", {})
-    fp = detection.get("text_false_positive_control", {})
     if args.profile == "stats":
         print(
             json.dumps(
@@ -1150,7 +1153,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 default=int(
                     fp.get(
                         "human_calibration_limit",
-                        fp.get("bootstrap_sample_limit", 300),
+                        fp.get(
+                            "bootstrap_human_calibration_limit",
+                            fp.get("bootstrap_sample_limit", 300),
+                        ),
                     )
                 ),
             )
@@ -1160,7 +1166,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 default=int(
                     fp.get(
                         "human_validation_limit",
-                        fp.get("bootstrap_validation_limit", 100),
+                        fp.get(
+                            "bootstrap_human_validation_limit",
+                            fp.get("bootstrap_validation_limit", 100),
+                        ),
                     )
                 ),
             )
@@ -1168,7 +1177,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.ai_validation_limit,
                 old_validation,
                 default=int(
-                    fp.get("ai_validation_limit", human_validation_limit)
+                    fp.get(
+                        "ai_validation_limit",
+                        fp.get(
+                            "bootstrap_ai_validation_limit",
+                            human_validation_limit,
+                        ),
+                    )
                 ),
             )
             max_source_items_value = fp.get("bootstrap_max_source_items")
@@ -1185,12 +1200,23 @@ def main(argv: Sequence[str] | None = None) -> int:
                     fp.get("min_group_calibration_humans", 50)
                 ),
                 minimum_validation_samples=int(
-                    fp.get("min_group_validation_humans", 20)
+                    fp.get(
+                        "min_reliable_human_validation",
+                        fp.get("min_group_validation_humans", 20),
+                    )
                 ),
                 minimum_ai_validation_samples=int(
-                    fp.get("min_group_validation_ai", 20)
+                    fp.get(
+                        "min_reliable_ai_validation",
+                        fp.get("min_group_validation_ai", 20),
+                    )
                 ),
-                minimum_ai_recall=float(fp.get("minimum_ai_recall", 0.5)),
+                minimum_ai_recall=float(
+                    fp.get(
+                        "min_acceptable_ai_recall",
+                        fp.get("minimum_ai_recall", 0.5),
+                    )
+                ),
                 alpha=float(fp.get("target_fpr", 0.02)),
                 short_text_chars=int(local.get("short_text_chars", 200)),
                 long_target_chars=int(
