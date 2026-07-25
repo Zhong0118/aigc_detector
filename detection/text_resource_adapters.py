@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 import re
 from dataclasses import dataclass
+from numbers import Real
 from typing import Any, Iterable, Iterator, Literal, Mapping
 
 
@@ -67,6 +70,22 @@ _SOURCE_DOMAIN_ALIASES = {
     "wikipedia": "general_qa",
 }
 
+_NONFINITE_STRINGS = frozenset(
+    {"nan", "+nan", "-nan", "inf", "+inf", "-inf", "infinity", "+infinity", "-infinity"}
+)
+_ROW_ID_FIELDS = frozenset({"source_id", "question_id", "id"})
+
+
+def _require_nonblank_string(value: Any, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string")
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"{field_name} must not be blank")
+    if normalized.casefold() in _NONFINITE_STRINGS:
+        raise ValueError(f"{field_name} must not be NaN or infinite")
+    return normalized
+
 
 def normalize_source_domain(source_domain: Any) -> str:
     """Map dataset source/domain metadata to one canonical domain."""
@@ -84,21 +103,50 @@ class TextSample:
     source_id: str
     generator: str | None = None
     split: str = "train"
+    partition_id: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.text.strip():
-            raise ValueError("TextSample text must not be blank")
+        _require_nonblank_string(self.text, "text")
+        _require_nonblank_string(self.source, "source")
+        _require_nonblank_string(self.source_id, "source_id")
+        _require_nonblank_string(self.split, "split")
+        if self.generator is not None:
+            _require_nonblank_string(self.generator, "generator")
+        if self.partition_id is not None:
+            _require_nonblank_string(self.partition_id, "partition_id")
+        if not isinstance(self.label, str):
+            raise TypeError("label must be a string")
         if self.label not in {"human", "ai"}:
             raise ValueError(f"Unsupported label: {self.label}")
         _validate_language(self.language)
+        if not isinstance(self.domain, str):
+            raise TypeError("domain must be a string")
         if self.domain not in CANONICAL_DOMAINS:
             raise ValueError(f"Unsupported domain: {self.domain}")
-        for name in ("source", "source_id", "split"):
-            if not str(getattr(self, name)).strip():
-                raise ValueError(f"TextSample {name} must not be blank")
 
     def group_key(self, length_bucket: str) -> str:
+        if not isinstance(length_bucket, str):
+            raise TypeError("length_bucket must be a string")
+        if length_bucket not in {"short", "long"}:
+            raise ValueError("length_bucket must be 'short' or 'long'")
         return f"{self.language}:{self.domain}:{length_bucket}"
+
+    @property
+    def partition_key(self) -> str:
+        return self.partition_id or self.source_id
+
+    @property
+    def identity_key(self) -> str:
+        return _stable_json_hash(
+            {
+                "source": self.source,
+                "split": self.split,
+                "source_id": self.source_id,
+                "label": self.label,
+                "generator": self.generator,
+                "text": self.text,
+            }
+        )
 
 
 def adapt_hc3_rows(
@@ -108,10 +156,17 @@ def adapt_hc3_rows(
     split: str = "train",
 ) -> Iterator[TextSample]:
     """Flatten HC3 answer lists while retaining question-level identity."""
+    source_name = _require_nonblank_string(source_name, "source_name")
+    split = _require_nonblank_string(split, "split")
     valid_language = _validate_language(language)
-    for row_index, row in enumerate(rows):
-        question_id = _row_id(row, row_index, ("question_id", "id"))
-        prefix = f"{source_name}:{question_id}"
+    for row in rows:
+        question_id = _row_id(
+            row,
+            source_name,
+            split,
+            ("question_id", "id", "source_id"),
+        )
+        prefix = _source_row_key(source_name, split, question_id)
         for label, field, generator in (
             ("human", "human_answers", None),
             ("ai", "chatgpt_answers", "chatgpt"),
@@ -126,6 +181,7 @@ def adapt_hc3_rows(
                     source_id=f"{prefix}:{label}:{answer_index}",
                     generator=generator,
                     split=split,
+                    partition_id=prefix,
                 )
 
 
@@ -136,20 +192,23 @@ def adapt_tnews_rows(
     split: str = "train",
 ) -> Iterator[TextSample]:
     """Adapt TNEWS rows as Chinese human official-news samples."""
+    source_name = _require_nonblank_string(source_name, "source_name")
+    split = _require_nonblank_string(split, "split")
     valid_language = _validate_language(language)
     if valid_language != "zh":
         raise ValueError("TNEWS rows must use language 'zh'")
-    for row_index, row in enumerate(rows):
+    for row in rows:
         text = _first_text(row, ("sentence", "text"))
         if text is None:
             continue
+        row_id = _row_id(row, source_name, split)
         yield TextSample(
             text=text,
             label="human",
             language="zh",
             domain="official_news",
             source=source_name,
-            source_id=f"{source_name}:{_row_id(row, row_index)}",
+            source_id=_source_row_key(source_name, split, row_id),
             split=split,
         )
 
@@ -161,8 +220,10 @@ def adapt_m4_rows(
     split: str = "train",
 ) -> Iterator[TextSample]:
     """Adapt M4/SemEval rows, preserving their source and generator metadata."""
+    source_name = _require_nonblank_string(source_name, "source_name")
+    split = _require_nonblank_string(split, "split")
     default_language = _validate_language(language) if language is not None else None
-    for row_index, row in enumerate(rows):
+    for row in rows:
         text = _first_text(row, ("text", "generation"))
         if text is None:
             continue
@@ -170,13 +231,14 @@ def adapt_m4_rows(
         label = _m4_label(row.get("label"))
         generator = _first_string(row, ("model", "generator")) if label == "ai" else None
         domain_metadata = row.get("domain") or row.get("source") or source_name
+        row_id = _row_id(row, source_name, split)
         yield TextSample(
             text=text,
             label=label,
             language=row_language,
             domain=normalize_source_domain(domain_metadata),
             source=source_name,
-            source_id=f"{source_name}:{_row_id(row, row_index)}",
+            source_id=_source_row_key(source_name, split, row_id),
             generator=generator,
             split=split,
         )
@@ -189,14 +251,18 @@ def adapt_raid_rows(
     split: str = "train",
 ) -> Iterator[TextSample]:
     """Adapt non-adversarial RAID rows and discard attacked variants."""
+    source_name = _require_nonblank_string(source_name, "source_name")
+    split = _require_nonblank_string(split, "split")
     valid_language = _validate_language(language)
-    for row_index, row in enumerate(rows):
+    for row in rows:
         if not _is_unattacked(row.get("attack")):
             continue
         text = _first_text(row, ("generation", "text"))
         if text is None:
             continue
-        model = str(row.get("model") or "").strip()
+        row_id = _row_id(row, source_name, split)
+        source_id = _source_row_key(source_name, split, row_id)
+        model = _raid_model(row.get("model"), source_id)
         is_human = model.casefold() == "human"
         yield TextSample(
             text=text,
@@ -204,13 +270,15 @@ def adapt_raid_rows(
             language=valid_language,
             domain=normalize_source_domain(row.get("domain") or row.get("source")),
             source=source_name,
-            source_id=f"{source_name}:{_row_id(row, row_index)}",
-            generator=None if is_human else model or None,
+            source_id=source_id,
+            generator=None if is_human else model,
             split=split,
         )
 
 
 def _validate_language(language: Any) -> TextLanguage:
+    if not isinstance(language, str):
+        raise TypeError("language must be a string")
     if language not in {"zh", "en"}:
         raise ValueError(f"Unsupported language: {language}")
     return language
@@ -235,8 +303,12 @@ def _first_text(row: Mapping[str, Any], keys: tuple[str, ...]) -> str | None:
 def _first_string(row: Mapping[str, Any], keys: tuple[str, ...]) -> str | None:
     for key in keys:
         value = row.get(key)
-        if value is not None and str(value).strip():
-            return str(value).strip()
+        if not isinstance(value, str):
+            continue
+        try:
+            return _require_nonblank_string(value, key)
+        except ValueError:
+            continue
     return None
 
 
@@ -249,14 +321,79 @@ def _text_values(value: Any) -> Iterator[str]:
 
 def _row_id(
     row: Mapping[str, Any],
-    row_index: int,
-    keys: tuple[str, ...] = ("source_id", "id"),
+    source_name: str,
+    split: str,
+    keys: tuple[str, ...] = ("source_id", "question_id", "id"),
 ) -> str:
     for key in keys:
-        value = row.get(key)
-        if value is not None and str(value).strip():
-            return str(value).strip()
-    return str(row_index)
+        identifier = _valid_row_id(row.get(key))
+        if identifier is not None:
+            return identifier
+    content = {key: value for key, value in row.items() if key not in _ROW_ID_FIELDS}
+    return f"sha256-{_stable_json_hash({'source': source_name, 'split': split, 'row': content})}"
+
+
+def _valid_row_id(value: Any) -> str | None:
+    if isinstance(value, str):
+        try:
+            return _require_nonblank_string(value, "row id")
+        except ValueError:
+            return None
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return str(value)
+    if not isinstance(value, Real):
+        return None
+    numeric = float(value)
+    if not math.isfinite(numeric):
+        return None
+    return str(value)
+
+
+def _source_row_key(source_name: str, split: str, row_id: str) -> str:
+    return f"{source_name}:{split}:{row_id}"
+
+
+def _stable_json_hash(value: Any) -> str:
+    payload = json.dumps(
+        _canonical_json_value(value),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _canonical_json_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _canonical_json_value(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
+    if isinstance(value, (list, tuple)):
+        return [_canonical_json_value(item) for item in value]
+    if isinstance(value, (set, frozenset)):
+        items = [_canonical_json_value(item) for item in value]
+        return sorted(items, key=lambda item: json.dumps(item, sort_keys=True, default=str))
+    if value is None or isinstance(value, (str, bool)):
+        return value
+    if isinstance(value, int):
+        return value
+    if isinstance(value, Real):
+        numeric = float(value)
+        if not math.isfinite(numeric):
+            return None
+        return int(value) if numeric.is_integer() else numeric
+    return {"type": type(value).__qualname__, "value": str(value)}
+
+
+def _raid_model(value: Any, row_context: str) -> str:
+    try:
+        return _require_nonblank_string(value, "RAID model")
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid RAID model for {row_context}: {exc}") from None
 
 
 def _is_unattacked(attack: Any) -> bool:

@@ -21,6 +21,7 @@ class TextDomainRouter:
         "official_news": 2,
         "academic_technical": 3,
     }
+    _ACADEMIC_NOVEL_CONTEXT = ("method", "model", "approach", "algorithm", "framework")
     _DOMAIN_MARKERS = (
         (
             "literature",
@@ -38,7 +39,6 @@ class TextDomainRouter:
                 "公子",
                 "姑娘",
                 "once upon a time",
-                "novel",
                 "poem",
                 "poetry",
                 "stanza",
@@ -101,22 +101,32 @@ class TextDomainRouter:
     )
 
     def classify(self, text: str) -> DomainDecision:
-        candidates: list[tuple[int, float, int, str, tuple[str, ...]]] = []
+        candidates: list[tuple[int, int, float, str, tuple[str, ...]]] = []
         for domain, markers, base_confidence in self._DOMAIN_MARKERS:
             evidence = tuple(marker for marker in markers if self._contains(text, marker))
+            if domain == "literature" and evidence and self._contains(text, "novel"):
+                evidence += ("novel",)
+            elif domain == "academic_technical":
+                evidence += tuple(
+                    f"novel {context}"
+                    for context in self._ACADEMIC_NOVEL_CONTEXT
+                    if self._contains(text, f"novel {context}")
+                )
             if evidence:
                 candidates.append(
                     (
                         len(evidence),
-                        base_confidence,
                         self._TIE_BREAK_PRIORITY[domain],
+                        base_confidence,
                         domain,
                         evidence,
                     )
                 )
         if candidates:
-            evidence_count, base_confidence, _, domain, evidence = max(candidates)
-            confidence = min(0.98, base_confidence + 0.03 * (evidence_count - 1))
+            evidence_count, _, base_confidence, domain, evidence = max(candidates)
+            confidence = base_confidence
+            if len(candidates) == 1:
+                confidence = min(0.98, base_confidence + 0.03 * (evidence_count - 1))
             return DomainDecision(domain, confidence, evidence)
         return DomainDecision("general_qa", 0.25, ())
 

@@ -70,6 +70,12 @@ class TextDomainRouterTests(unittest.TestCase):
         self.assertIn("method", decision.evidence)
         self.assertIn("neural", decision.evidence)
 
+    def test_novel_method_is_academic_without_literary_context(self) -> None:
+        decision = self.router.classify("A novel method.")
+
+        self.assertEqual(decision.domain, "academic_technical")
+        self.assertIn("novel method", decision.evidence)
+
     def test_novel_with_literary_evidence_remains_literature(self) -> None:
         decision = self.router.classify(
             "The novel follows its protagonist through the narrator's recollections."
@@ -77,6 +83,12 @@ class TextDomainRouterTests(unittest.TestCase):
 
         self.assertEqual(decision.domain, "literature")
         self.assertIn("novel", decision.evidence)
+
+    def test_equal_cross_domain_evidence_uses_explicit_priority_before_confidence(self) -> None:
+        decision = self.router.classify("The protagonist describes a method.")
+
+        self.assertEqual(decision.domain, "academic_technical")
+        self.assertEqual(decision.confidence, 0.8)
 
     def test_routes_english_academic_study(self) -> None:
         decision = self.router.classify(
@@ -112,6 +124,7 @@ class TextDomainRouterTests(unittest.TestCase):
 
         self.assertEqual(decision.domain, "academic_technical")
         self.assertIn("研究", decision.evidence)
+        self.assertEqual(decision.confidence, 0.8)
 
     def test_defaults_to_general_qa_with_rule_based_fallback_evidence(self) -> None:
         decision = self.router.classify("How can I make a quick dinner tonight?")

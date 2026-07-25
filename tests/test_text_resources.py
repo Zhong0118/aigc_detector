@@ -46,6 +46,43 @@ class TextResourceAdapterTests(unittest.TestCase):
 
         self.assertEqual(sample.split, "train")
         self.assertIsNone(sample.generator)
+        self.assertIsNone(sample.partition_id)
+        self.assertEqual(sample.partition_key, sample.source_id)
+
+    def test_text_sample_validates_runtime_strings_and_length_bucket(self) -> None:
+        values = {
+            "text": "Valid text.",
+            "label": "human",
+            "language": "en",
+            "domain": "general_qa",
+            "source": "fixture",
+            "source_id": "fixture-1",
+            "split": "train",
+        }
+        for field_name in ("text", "source", "source_id", "split"):
+            with self.subTest(field=field_name, kind="type"):
+                invalid = {**values, field_name: None}
+                with self.assertRaisesRegex(TypeError, field_name):
+                    TextSample(**invalid)
+            with self.subTest(field=field_name, kind="blank"):
+                invalid = {**values, field_name: " "}
+                with self.assertRaisesRegex(ValueError, field_name):
+                    TextSample(**invalid)
+
+        for generator in ("", "NaN"):
+            with self.subTest(generator=generator):
+                with self.assertRaisesRegex(ValueError, "generator"):
+                    TextSample(**values, generator=generator)
+        for generator in (float("nan"), True, [], {"model": "gpt"}):
+            with self.subTest(generator=repr(generator)):
+                with self.assertRaisesRegex(TypeError, "generator"):
+                    TextSample(**values, generator=generator)
+
+        sample = TextSample(**values)
+        with self.assertRaisesRegex(ValueError, "length_bucket"):
+            sample.group_key("medium")
+        with self.assertRaisesRegex(TypeError, "length_bucket"):
+            sample.group_key(None)
 
     def test_reddit_normalizes_to_general_qa(self) -> None:
         self.assertEqual(normalize_source_domain("reddit"), "general_qa")
@@ -98,8 +135,60 @@ class TextResourceAdapterTests(unittest.TestCase):
         self.assertEqual(len({sample.source_id for sample in samples}), 4)
         self.assertEqual(
             {sample.source_id.rsplit(":", 2)[0] for sample in samples},
-            {"reddit_eli5:question-7"},
+            {"reddit_eli5:validation:question-7"},
         )
+        self.assertEqual(
+            {sample.partition_id for sample in samples},
+            {"reddit_eli5:validation:question-7"},
+        )
+        self.assertEqual(len({sample.partition_key for sample in samples}), 1)
+        self.assertEqual(len({sample.identity_key for sample in samples}), 4)
+
+    def test_invalid_row_ids_use_stable_content_identity(self) -> None:
+        invalid_ids = (None, " ", float("nan"), True, [], {"nested": "id"})
+        source_ids = []
+        for invalid_id in invalid_ids:
+            with self.subTest(identifier=repr(invalid_id)):
+                sample = list(
+                    adapt_tnews_rows(
+                        [{"id": invalid_id, "sentence": "同一条无有效编号的新闻。"}],
+                        source_name="tnews",
+                    )
+                )[0]
+                self.assertNotIn("nan", sample.source_id.casefold())
+                source_ids.append(sample.source_id)
+
+        self.assertEqual(len(set(source_ids)), 1)
+
+    def test_idless_row_identity_is_stable_under_reordering(self) -> None:
+        rows = [
+            {"sentence": "第一条无编号新闻。"},
+            {"sentence": "第二条无编号新闻。"},
+        ]
+
+        original = {
+            sample.text: sample.source_id
+            for sample in adapt_tnews_rows(rows, source_name="tnews", split="train")
+        }
+        reordered = {
+            sample.text: sample.source_id
+            for sample in adapt_tnews_rows(reversed(rows), source_name="tnews", split="train")
+        }
+
+        self.assertEqual(original, reordered)
+
+    def test_source_identity_includes_split_to_avoid_collisions(self) -> None:
+        row = {"id": "shared-id", "sentence": "同一条新闻。"}
+
+        train = list(adapt_tnews_rows([row], source_name="tnews", split="train"))[0]
+        validation = list(
+            adapt_tnews_rows([row], source_name="tnews", split="validation")
+        )[0]
+
+        self.assertNotEqual(train.source_id, validation.source_id)
+        self.assertNotEqual(train.identity_key, validation.identity_key)
+        self.assertIn(":train:", train.source_id)
+        self.assertIn(":validation:", validation.source_id)
 
     def test_tnews_reads_sentence_and_text_as_chinese_official_news(self) -> None:
         samples = list(
@@ -142,6 +231,18 @@ class TextResourceAdapterTests(unittest.TestCase):
         self.assertEqual([sample.generator for sample in samples], [None, "gpt-4"])
         self.assertEqual({sample.source for sample in samples}, {"m4_multilingual"})
 
+    def test_m4_does_not_stringify_invalid_generator_metadata(self) -> None:
+        for model in (float("nan"), True, [], {"name": "gpt"}):
+            with self.subTest(model=repr(model)):
+                sample = list(
+                    adapt_m4_rows(
+                        [{"text": "Generated text.", "label": 1, "model": model}],
+                        source_name="m4_multilingual",
+                        language="en",
+                    )
+                )[0]
+                self.assertIsNone(sample.generator)
+
     def test_raid_maps_human_and_ai_and_excludes_adversarial_rows(self) -> None:
         samples = list(
             adapt_raid_rows(
@@ -176,6 +277,33 @@ class TextResourceAdapterTests(unittest.TestCase):
         self.assertEqual([sample.label for sample in samples], ["human", "ai"])
         self.assertEqual([sample.domain for sample in samples], ["official_news", "literature"])
         self.assertEqual([sample.generator for sample in samples], [None, "gpt2"])
+
+    def test_raid_rejects_malformed_model_metadata(self) -> None:
+        malformed_models = (
+            ("missing", {}),
+            ("blank", {"model": " "}),
+            ("nan", {"model": float("nan")}),
+            ("bool", {"model": False}),
+            ("list", {"model": []}),
+            ("mapping", {"model": {"name": "gpt2"}}),
+        )
+        for name, metadata in malformed_models:
+            with self.subTest(model=name):
+                row = {
+                    "id": f"bad-{name}",
+                    "generation": "This row must not be emitted.",
+                    "domain": "reddit",
+                    "attack": None,
+                    **metadata,
+                }
+                with self.assertRaisesRegex(ValueError, "RAID model.*bad-"):
+                    list(
+                        adapt_raid_rows(
+                            [row],
+                            source_name="raid_no_adversarial",
+                            language="en",
+                        )
+                    )
 
     def test_adapters_reject_blank_text_unsupported_languages_and_unknown_labels(self) -> None:
         self.assertEqual(
