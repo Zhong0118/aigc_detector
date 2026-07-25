@@ -69,8 +69,12 @@ class ReportGenerator:
             domain = self._domain_name(str(decision.get("domain") or "unknown"))
             coverage = float(decision.get("analyzed_coverage") or 0.0)
             evidence[0] = (
-                f"校准 AI 风险分数为 {score:.2%}，低风险阈值为 {low:.2%}，"
+                f"AI 特征风险分数为 {score:.2%}，低风险阈值为 {low:.2%}，"
                 f"高风险阈值为 {high:.2%}，当前结论为“{self._label_name(label)}”。"
+            )
+            evidence.append(
+                "系统校准的是判定阈值；该分数是检测模型的风险输出，"
+                "不是文本由 AI 生成的概率。"
             )
             evidence.append(
                 f"文本路由为“{domain}”，实际检测覆盖率为 {coverage:.2%}，"
@@ -171,7 +175,8 @@ class ReportGenerator:
             "summary": self._summary(label, score, modality),
             "evidence": evidence,
             "limitations": [
-                "检测分数属于概率证据，不能单独作为最终结论，需要结合来源凭证、水印、指纹库和人工复核。",
+                "检测分数是模型风险输出，不是内容由 AI 生成的概率，不能单独作为最终结论；"
+                "需要结合来源凭证、水印、指纹库和人工复核。",
                 "未发现 C2PA 或水印并不等于内容一定由人类创作，只表示当前文件没有携带这些可验证信号。",
                 "模型归因、重建误差、PPL 等被动法证特征只能提供候选来源或风险线索，不能替代签名凭证。",
             ],
@@ -221,7 +226,8 @@ class ReportGenerator:
                         "不要出现任何第三方厂商、API、接口版本、供应商名称或内部字段名。"
                         "统一把检测来源称为“检测分支A/B/C”或“多路检测模块”。"
                         "不要声称模型是自训练或自研，只能说“系统集成的检测模块”。"
-                        "低风险时也要强调概率结论不是身份证明，避免绝对化。"
+                        "不得把检测分数描述为内容由 AI 生成的概率；"
+                        "低风险时也要强调分数结论不是身份证明，避免绝对化。"
                         "必须输出严格 JSON，字段为 summary、evidence、limitations、recommendation。"
                         "evidence 和 limitations 必须是字符串数组。"
                     ),
@@ -521,14 +527,14 @@ class ReportGenerator:
     def _summary(self, label: str, score: float, modality: str) -> str:
         modality_name = self._modality_name(modality)
         if label == "uncertain":
-            return f"该{modality_name}的校准风险处于不确定区间，当前不能可靠判为人类或 AI。"
+            return f"该{modality_name}的模型检测分数处于不确定区间，当前不能可靠判为人类或 AI。"
         if label == "insufficient_evidence":
             return f"该{modality_name}证据不足，本次没有形成有效的人类或 AI 判定。"
         if label in {"ai", "high_risk_ai"}:
             if score >= 0.8:
-                return f"当前多路检测结果认为该{modality_name}高度疑似 AIGC 内容，综合风险分数为 {score:.2%}。"
-            return f"当前多路检测结果认为该{modality_name}存在 AIGC 风险，综合风险分数为 {score:.2%}。"
-        return f"当前证据未显示该{modality_name}具有明显 AIGC 特征，综合风险分数为 {score:.2%}。"
+                return f"当前多路检测结果认为该{modality_name}高度疑似 AIGC 内容，综合检测分数为 {score:.2%}。"
+            return f"当前多路检测结果认为该{modality_name}存在 AIGC 风险，综合检测分数为 {score:.2%}。"
+        return f"当前证据未显示该{modality_name}具有明显 AIGC 特征，综合检测分数为 {score:.2%}。"
 
     def _recommendation(self, label: str, score: float) -> str:
         if label == "uncertain":

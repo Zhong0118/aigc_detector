@@ -96,6 +96,8 @@ python -m scripts.bootstrap_text_resources --profile all --force-calibration
 
 这个过程不会重新训练 YuchuanTian 模型权重。四个检测模型保持不变，脚本只下载模型、准备语料并校准判定阈值。AI 样本只用于评估召回率，不参与阈值拟合。
 
+建议为多领域语料和 Hugging Face 数据缓存额外预留约 `1-2 GB` 磁盘空间。该数值是部署规划估算，实际占用会随 Hugging Face 缓存格式、数据集修订版本和服务器已有缓存而变化。
+
 部署包内已有：
 
 ```text
@@ -179,6 +181,8 @@ python -m pip install \
 ```bash
 python -m pip install -r requirements.txt
 ```
+
+`requirements.txt` 已包含多领域文本数据准备所需的 `datasets`、`PyArrow` 和 `tqdm`，会随上面的命令一起安装，不需要再单独执行安装命令。
 
 两个现有来源归因 `joblib` 已在 `scikit-learn 1.5.2` 下验证可加载，因此服务器建议固定相同版本。
 
@@ -343,6 +347,17 @@ export TRANSFORMERS_OFFLINE=1
 ```
 
 这两个变量会禁止 Hugging Face 下载。
+
+下载脚本、`datasets` 和 Hugging Face Hub 会继承当前 shell 的 `HTTP_PROXY`、`HTTPS_PROXY`（以及对应的小写变量）。服务器必须通过代理联网时，可在运行第 7 节命令前设置：
+
+```bash
+export HTTP_PROXY="http://代理地址:端口"
+export HTTPS_PROXY="$HTTP_PROXY"
+export http_proxy="$HTTP_PROXY"
+export https_proxy="$HTTPS_PROXY"
+```
+
+不需要代理时不要设置这些变量。无论是否使用代理，都必须先保持在线模式完成下载和校准，确认资源可用后再按第 9 节开启离线模式。
 
 ---
 

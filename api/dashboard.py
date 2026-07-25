@@ -123,7 +123,7 @@ def request_with_progress(method: str, url: str, **kwargs):
 
 
 def render_score_gauge(score: float, low_threshold: float = 0.4, high_threshold: float = 0.8):
-    """渲染 AI 概率仪表盘。
+    """渲染 AI 特征风险分数仪表盘。
 
     score 范围是 0 到 1。颜色区间用于帮助用户快速判断风险：
     低分灰色，中段黄色，高分红色。
@@ -182,10 +182,14 @@ def render_analysis(data: dict):
         "general_qa": "普通写作/问答",
     }
     top = st.columns([1.15, 1.15, 1, 0.8])
-    top[0].metric("校准 AI 风险", f"{detection['score']:.2%}")
+    top[0].metric("AI 特征风险分数", f"{detection['score']:.2%}")
     top[1].metric("检测结论", label_names.get(detection["label"], detection["label"]))
     top[2].metric("文本类型", domain_names.get(decision.get("domain"), data["modality"].upper()))
     top[3].metric("记录 ID", data["content_id"])
+    st.caption(
+        "该数值是检测模块输出并用于阈值判定的风险分数，"
+        "不是内容由 AI 生成的概率。"
+    )
 
     if detection["label"] == "uncertain":
         st.warning("当前分数位于不确定区间，不能直接判为 AI。")

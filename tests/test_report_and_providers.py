@@ -14,6 +14,29 @@ from reports.generator import ReportGenerator
 
 
 class ReportGeneratorLlmTests(unittest.TestCase):
+    def test_user_facing_detection_scores_are_not_described_as_probabilities(self) -> None:
+        project_root = Path(__file__).resolve().parents[1]
+        dashboard_source = (project_root / "api" / "dashboard.py").read_text(
+            encoding="utf-8"
+        )
+        report_source = (project_root / "reports" / "generator.py").read_text(
+            encoding="utf-8"
+        )
+        combined = dashboard_source + report_source
+
+        for forbidden in (
+            "AI 概率仪表盘",
+            "校准 AI 风险",
+            "校准 AI 风险分数",
+            "检测分数属于概率证据",
+            "校准风险处于不确定区间",
+        ):
+            self.assertNotIn(forbidden, combined)
+
+        self.assertIn("AI 特征风险分数", dashboard_source)
+        self.assertIn("不是内容由 AI 生成的概率", dashboard_source)
+        self.assertIn("不是文本由 AI 生成的概率", report_source)
+
     def test_template_report_is_chinese_and_explains_evidence_layers(self) -> None:
         analysis = {
             "filename": "demo.png",
@@ -606,5 +629,4 @@ class ApiProviderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
 

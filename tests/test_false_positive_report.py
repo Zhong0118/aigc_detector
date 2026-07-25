@@ -48,6 +48,10 @@ class FalsePositiveReportTests(unittest.TestCase):
         self.assertIn("40.00%", joined)
         self.assertIn("90.00%", joined)
         self.assertIn("经典文学", joined)
+        self.assertIn("AI 特征风险分数", joined)
+        self.assertIn("不是文本由 AI 生成的概率", joined)
+        self.assertNotIn("校准 AI 风险分数", joined)
+        self.assertNotIn("检测分数属于概率证据", joined)
         self.assertIn("人工复核", report["recommendation"])
 
     def test_insufficient_report_does_not_call_zero_a_human_score(self) -> None:
@@ -89,6 +93,8 @@ class FalsePositiveReportTests(unittest.TestCase):
         self.assertIn("AUROC 为 0.910", joined)
         self.assertIn("AI 验证召回率低于最低要求", joined)
         self.assertIn("混合语种未独立校准", joined)
+        self.assertNotIn("校准 AI 风险分数", joined)
+        self.assertNotIn("检测分数属于概率证据", joined)
 
     def test_report_keeps_builtin_fallback_readable_without_validation_metrics(self) -> None:
         analysis = analysis_for("uncertain", 0.72, ["score_in_uncertain_interval"])

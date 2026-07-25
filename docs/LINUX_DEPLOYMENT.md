@@ -70,7 +70,7 @@ python3.10 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
 python -m pip install -r requirements.txt
-python -m pip install datasets tqdm joblib
+python -m pip install joblib
 ```
 
 命令作用：
@@ -78,8 +78,7 @@ python -m pip install datasets tqdm joblib
 - `python3.10 -m venv .venv`：在项目内创建独立 Python 环境。
 - `source .venv/bin/activate`：进入这个环境。
 - `pip install -r requirements.txt`：安装项目运行必需依赖。
-- `datasets`：训练 OpenTuringBench/Tiny-GenImage 时需要。
-- `tqdm`：训练时显示进度条。
+- `datasets`、`PyArrow` 和 `tqdm`：多领域文本语料下载、磁盘缓存和进度显示所需，均已写入 `requirements.txt`，不需要另行安装。
 - `joblib`：保存/加载来源归因分类器，通常会随 scikit-learn 安装，但显式安装更稳。
 
 如果服务器有 NVIDIA GPU，请按服务器 CUDA 版本到 PyTorch 官网选择对应安装命令。不要盲目复制 Windows 或其他 CUDA 版本的命令。CPU 也能跑，只是 CLIP 图片训练和本地模型推理会慢。
@@ -244,6 +243,10 @@ data/text_false_positive/corpora/
 data/text_false_positive/normalized/
 artifacts/text_fp_controller/thresholds.json
 ```
+
+建议为新增多领域语料和 Hugging Face 数据缓存额外预留约 `1-2 GB` 磁盘空间。这个数值是部署规划估算，实际占用会随 Hugging Face 缓存格式、数据集修订版本和已存在缓存而变化。
+
+下载脚本和 Hugging Face 组件会继承当前 shell 中的 `HTTP_PROXY`、`HTTPS_PROXY`（以及对应的小写变量）。服务器需要代理时，应在首次联网准备前导出这些变量；无需代理时不要设置。代理配置不会改变“先联网下载并校准、成功后再启用离线变量”的顺序。
 
 阈值只由真人校准集分数决定；AI 留出集只用于计算召回率、FNR 和 AUROC。检查状态和数据统计：
 
