@@ -332,13 +332,15 @@ class TextResourceManager:
         raise KeyError(f"Unknown text resource: {resource}")
 
     def iter_samples(self, resource: str | DatasetSpec) -> Iterator[TextSample]:
-        """Yield canonical samples without materializing the complete source in RAM."""
+        """Backward-compatible alias for iter_source_samples()."""
+        yield from self.iter_source_samples(resource)
+
+    def iter_source_samples(self, resource: str | DatasetSpec) -> Iterator[TextSample]:
+        """Yield canonical source samples sequentially without a Python list copy."""
         spec = self.resource_spec(resource)
         if spec.source_kind == "hf_dataset":
-            dataset = self._load_hf_dataset(spec, streaming=True)
-            self._validate_hf_splits(spec, dataset)
             for split in spec.splits:
-                rows = dataset[split]
+                rows = self._load_hf_split(spec, split)
                 yield from self._adapt_rows(spec, rows, split)
             return
         if spec.source_kind == "raid_csv":
@@ -527,7 +529,12 @@ class TextResourceManager:
         finally:
             partial.unlink(missing_ok=True)
 
-    def _load_hf_dataset(self, spec: DatasetSpec, *, streaming: bool) -> Any:
+    def _load_hf_split(self, spec: DatasetSpec, split: str) -> Any:
+        """Load one Arrow-backed split from the project cache.
+
+        With keep_in_memory=False, Hugging Face Dataset stays disk-backed and
+        memory-mapped; row iteration is sequential rather than a Python list load.
+        """
         loader = self._dataset_loader
         if loader is None:
             from datasets import load_dataset
@@ -538,21 +545,30 @@ class TextResourceManager:
         args = [spec.dataset_id]
         if spec.dataset_config is not None:
             args.append(spec.dataset_config)
-        return loader(*args, cache_dir=str(cache_dir), streaming=streaming)
+        try:
+            return loader(
+                *args,
+                split=split,
+                cache_dir=str(cache_dir),
+                keep_in_memory=False,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Dataset {spec.name!r} does not provide required split {split!r}: {exc}"
+            ) from exc
 
     def _prepare_hf_source(self, spec: DatasetSpec) -> dict[str, Any]:
-        dataset = self._load_hf_dataset(spec, streaming=True)
-        self._validate_hf_splits(spec, dataset)
         split_evidence: dict[str, dict[str, Any]] = {}
 
         for split in spec.splits:
+            rows = self._load_hf_split(spec, split)
             raw_rows = 0
             adapted_samples = 0
             content_hasher = hashlib.sha256()
 
             def observed_rows() -> Iterator[Mapping[str, Any]]:
                 nonlocal raw_rows
-                for row in dataset[split]:
+                for row in rows:
                     if not isinstance(row, Mapping):
                         raise TypeError(
                             f"Dataset {spec.name!r} split {split!r} yielded a non-mapping row"
@@ -590,7 +606,7 @@ class TextResourceManager:
         ).hexdigest()
         return {
             "manifest_version": 1,
-            "preparation_kind": "hf_stream_scan_v1",
+            "preparation_kind": "hf_disk_cache_v1",
             "source_spec_fingerprint": spec.fingerprint,
             "dataset_id": spec.dataset_id,
             "dataset_config": spec.dataset_config,
@@ -598,7 +614,7 @@ class TextResourceManager:
             "split_evidence": split_evidence,
             "scan_sha256": scan_sha256,
             "cache_evidence": {
-                "kind": "file_inventory_v1",
+                "kind": "file_inventory_sha256_v1",
                 "cache_dir": "hf_cache",
                 "scan_sha256": scan_sha256,
                 "files": cache_files,
@@ -645,15 +661,6 @@ class TextResourceManager:
             )
             return
         raise ValueError(f"Unsupported text resource adapter: {spec.adapter}")
-
-    def _validate_hf_splits(self, spec: DatasetSpec, dataset: Any) -> None:
-        for split in spec.splits:
-            try:
-                dataset[split]
-            except (KeyError, TypeError) as exc:
-                raise RuntimeError(
-                    f"Dataset {spec.name!r} does not provide required split {split!r}"
-                ) from exc
 
     def _supported_m4_rows(
         self,
@@ -947,7 +954,7 @@ class TextResourceManager:
     ) -> bool:
         if (
             payload.get("manifest_version") != 1
-            or payload.get("preparation_kind") != "hf_stream_scan_v1"
+            or payload.get("preparation_kind") != "hf_disk_cache_v1"
             or payload.get("source_spec_fingerprint") != spec.fingerprint
             or payload.get("dataset_id") != spec.dataset_id
             or payload.get("dataset_config") != spec.dataset_config
@@ -980,7 +987,7 @@ class TextResourceManager:
         return bool(
             payload.get("scan_sha256") == expected_scan
             and isinstance(cache_evidence, dict)
-            and cache_evidence.get("kind") == "file_inventory_v1"
+            and cache_evidence.get("kind") == "file_inventory_sha256_v1"
             and cache_evidence.get("cache_dir") == "hf_cache"
             and cache_evidence.get("scan_sha256") == expected_scan
             and self._cache_evidence_matches(spec, cache_evidence)
@@ -1004,15 +1011,20 @@ class TextResourceManager:
             return False
         has_nonempty_file = False
         for item in files:
-            if not isinstance(item, dict) or set(item) != {"path", "byte_size"}:
+            if (
+                not isinstance(item, dict)
+                or set(item) != {"path", "byte_size", "content_sha256"}
+            ):
                 return False
             relative = item.get("path")
             byte_size = item.get("byte_size")
+            content_sha256 = item.get("content_sha256")
             if (
                 not isinstance(relative, str)
                 or not isinstance(byte_size, int)
                 or isinstance(byte_size, bool)
                 or byte_size < 0
+                or not _is_sha256(content_sha256)
                 or _is_transient_evidence_path(Path(relative))
             ):
                 return False
@@ -1023,6 +1035,8 @@ class TextResourceManager:
                 if path.stat().st_size != byte_size:
                     return False
             except OSError:
+                return False
+            if self._file_sha256(path) != content_sha256:
                 return False
             has_nonempty_file = has_nonempty_file or byte_size > 0
         return has_nonempty_file
@@ -1041,10 +1055,14 @@ class TextResourceManager:
                 safe_path = self._safe_evidence_path(root, relative.as_posix())
                 if safe_path is None:
                     continue
+                content_sha256 = self._file_sha256(safe_path)
+                if content_sha256 is None:
+                    return None
                 inventory.append(
                     {
                         "path": relative.as_posix(),
                         "byte_size": safe_path.stat().st_size,
+                        "content_sha256": content_sha256,
                     }
                 )
         except OSError:

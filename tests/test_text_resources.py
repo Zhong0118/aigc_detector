@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import tempfile
 import unittest
 import zipfile
@@ -27,6 +28,30 @@ from detection.text_resources import (
     conformal_high_threshold,
 )
 from scripts.bootstrap_text_resources import _balanced_human_samples, build_threshold_artifact
+
+
+class DiskBackedRows:
+    """Test double that permits sequential iteration but rejects size probing."""
+
+    def __init__(self, path: Path, rows=None):
+        self._path = path
+        if rows is not None:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                "".join(
+                    json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n"
+                    for row in rows
+                ),
+                encoding="utf-8",
+            )
+
+    def __iter__(self):
+        with self._path.open(encoding="utf-8") as handle:
+            for line in handle:
+                yield json.loads(line)
+
+    def __len__(self):
+        raise AssertionError("rows must not be materialized as a Python list")
 
 
 class TextResourceAdapterTests(unittest.TestCase):
@@ -417,20 +442,21 @@ class TextResourceManagerTests(unittest.TestCase):
         self.assertIn("source_ready", classical)
         self.assertIn("normalized_ready", classical)
 
-    def test_hugging_face_adapter_dispatch_is_streamed_from_project_cache(self) -> None:
+    def test_hugging_face_adapter_dispatch_uses_disk_backed_project_cache(self) -> None:
         loader_calls = []
 
         def loader(dataset_id, dataset_config=None, **kwargs):
             loader_calls.append((dataset_id, dataset_config, kwargs))
-            return {
-                "train": [
+            return DiskBackedRows(
+                Path(kwargs["cache_dir"]) / f"fixture-{kwargs['split']}.arrow",
+                [
                     {
                         "id": "question-1",
                         "human_answers": ["A human response."],
                         "chatgpt_answers": ["An AI response."],
                     }
                 ]
-            }
+            )
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -439,8 +465,8 @@ class TextResourceManagerTests(unittest.TestCase):
                 profile="multidomain",
                 dataset_loader=loader,
             )
-            samples = list(manager.iter_samples("hc3_en"))
-            zh_samples = list(manager.iter_samples("hc3_zh"))
+            samples = list(manager.iter_source_samples("hc3_en"))
+            zh_samples = list(manager.iter_source_samples("hc3_zh"))
 
         self.assertEqual([sample.label for sample in samples], ["human", "ai"])
         self.assertEqual([sample.language for sample in samples], ["en", "en"])
@@ -452,7 +478,9 @@ class TextResourceManagerTests(unittest.TestCase):
                 ("Hello-SimpleAI/HC3-Chinese", "all"),
             ],
         )
-        self.assertIs(loader_calls[0][2]["streaming"], True)
+        self.assertEqual(loader_calls[0][2]["split"], "train")
+        self.assertIs(loader_calls[0][2]["keep_in_memory"], False)
+        self.assertNotIn("streaming", loader_calls[0][2])
         self.assertEqual(
             Path(loader_calls[0][2]["cache_dir"]),
             root / "data" / "text_false_positive" / "corpora" / "hc3_en" / "hf_cache",
@@ -481,7 +509,10 @@ class TextResourceManagerTests(unittest.TestCase):
                     "source": "Arabic",
                 },
             ]
-            return {"train": rows, "dev": []}
+            return DiskBackedRows(
+                Path(kwargs["cache_dir"]) / f"fixture-{kwargs['split']}.arrow",
+                rows if kwargs["split"] == "train" else [],
+            )
 
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(
@@ -501,14 +532,14 @@ class TextResourceManagerTests(unittest.TestCase):
             loader_calls.append(kwargs)
             cache = Path(kwargs["cache_dir"])
             (cache / "downloads").mkdir(parents=True, exist_ok=True)
-            (cache / "downloads" / "train.arrow").write_bytes(b"train-cache")
-            (cache / "downloads" / "validation.arrow").write_bytes(b"validation-cache")
+            split = kwargs["split"]
             (cache / "downloads" / "ignored.part").write_bytes(b"partial")
             (cache / "downloads" / "ignored.lock").write_bytes(b"lock")
-            return {
+            rows = {
                 "train": [{"id": "train-1", "sentence": "训练新闻样本。"}],
                 "validation": [{"id": "validation-1", "sentence": "验证新闻样本。"}],
             }
+            return DiskBackedRows(cache / "downloads" / f"{split}.arrow", rows[split])
 
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(
@@ -527,31 +558,40 @@ class TextResourceManagerTests(unittest.TestCase):
 
             self.assertTrue(manager.is_source_ready(spec))
 
-        self.assertIs(loader_calls[0]["streaming"], True)
+        self.assertEqual(
+            [call["split"] for call in loader_calls],
+            ["train", "validation"],
+        )
+        self.assertTrue(all(call["keep_in_memory"] is False for call in loader_calls))
+        self.assertTrue(all("streaming" not in call for call in loader_calls))
         self.assertEqual(marker["validated_splits"], ["train", "validation"])
         self.assertEqual(set(marker["split_evidence"]), {"train", "validation"})
         self.assertEqual(marker["split_evidence"]["train"]["raw_rows"], 1)
         self.assertEqual(marker["split_evidence"]["validation"]["adapted_samples"], 1)
         self.assertEqual(len(marker["scan_sha256"]), 64)
-        self.assertEqual(marker["cache_evidence"]["kind"], "file_inventory_v1")
+        self.assertEqual(marker["preparation_kind"], "hf_disk_cache_v1")
+        self.assertEqual(marker["cache_evidence"]["kind"], "file_inventory_sha256_v1")
+        cache_files = marker["cache_evidence"]["files"]
         self.assertEqual(
-            marker["cache_evidence"]["files"],
-            [
-                {"path": "downloads/train.arrow", "byte_size": 11},
-                {"path": "downloads/validation.arrow", "byte_size": 16},
-            ],
+            [item["path"] for item in cache_files],
+            ["downloads/train.arrow", "downloads/validation.arrow"],
         )
+        self.assertTrue(all(item["byte_size"] > 0 for item in cache_files))
+        self.assertTrue(all(len(item["content_sha256"]) == 64 for item in cache_files))
         self.assertEqual(len(marker["cache_evidence"]["inventory_sha256"]), 64)
 
-    def test_hf_readiness_detects_missing_or_resized_cache_evidence(self) -> None:
+    def test_hf_readiness_detects_deleted_or_same_size_corrupted_cache_evidence(self) -> None:
         def loader(*args, **kwargs):
             cache = Path(kwargs["cache_dir"])
             cache.mkdir(parents=True, exist_ok=True)
-            (cache / "prepared.arrow").write_bytes(b"stable-cache")
-            return {
+            rows = {
                 "train": [{"id": "train-1", "sentence": "训练新闻样本。"}],
                 "validation": [{"id": "validation-1", "sentence": "验证新闻样本。"}],
             }
+            return DiskBackedRows(
+                cache / f"{kwargs['split']}.arrow",
+                rows[kwargs["split"]],
+            )
 
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(
@@ -561,7 +601,7 @@ class TextResourceManagerTests(unittest.TestCase):
             )
             spec = manager.resource_spec("tnews")
             manager.ensure_dataset(spec)
-            cache_file = manager.dataset_dir / spec.name / "hf_cache" / "prepared.arrow"
+            cache_file = manager.dataset_dir / spec.name / "hf_cache" / "train.arrow"
 
             self.assertTrue(manager.is_source_ready(spec))
             original = cache_file.read_bytes()
@@ -569,12 +609,17 @@ class TextResourceManagerTests(unittest.TestCase):
             self.assertFalse(manager.is_source_ready(spec))
             cache_file.write_bytes(original)
             self.assertTrue(manager.is_source_ready(spec))
-            cache_file.write_bytes(original + b"x")
+            cache_file.write_bytes(b"x" * len(original))
             self.assertFalse(manager.is_source_ready(spec))
 
     def test_hf_incomplete_or_corrupt_split_manifest_is_not_ready(self) -> None:
         def incomplete_loader(*args, **kwargs):
-            return {"train": [{"id": "train-1", "sentence": "只有训练集。"}]}
+            if kwargs["split"] == "validation":
+                raise KeyError("validation")
+            return DiskBackedRows(
+                Path(kwargs["cache_dir"]) / "train.arrow",
+                [{"id": "train-1", "sentence": "只有训练集。"}],
+            )
 
         with tempfile.TemporaryDirectory() as tmp:
             manager = TextResourceManager(
@@ -591,7 +636,7 @@ class TextResourceManagerTests(unittest.TestCase):
             self.assertFalse(manager.is_source_ready(spec))
 
             corrupt = {
-                "preparation_kind": "hf_stream_scan_v1",
+                "preparation_kind": "hf_disk_cache_v1",
                 "source_spec_fingerprint": spec.fingerprint,
                 "validated_splits": ["train"],
                 "split_evidence": {
@@ -606,6 +651,45 @@ class TextResourceManagerTests(unittest.TestCase):
             marker_path.parent.mkdir(parents=True, exist_ok=True)
             marker_path.write_text(json.dumps(corrupt), encoding="utf-8")
             self.assertFalse(manager.is_source_ready(spec))
+
+    def test_hf_prepared_splits_are_reused_sequentially_in_offline_mode(self) -> None:
+        loader_calls = []
+        rows_by_split = {
+            "train": [{"id": "train-1", "sentence": "训练新闻样本。"}],
+            "validation": [{"id": "validation-1", "sentence": "验证新闻样本。"}],
+        }
+
+        def loader(*args, **kwargs):
+            loader_calls.append(kwargs.copy())
+            cache = Path(kwargs["cache_dir"])
+            cache.mkdir(parents=True, exist_ok=True)
+            cache_file = cache / f"{kwargs['split']}.arrow"
+            if os.environ.get("HF_HUB_OFFLINE") == "1":
+                if not cache_file.is_file():
+                    raise RuntimeError("offline cache is missing")
+            else:
+                return DiskBackedRows(cache_file, rows_by_split[kwargs["split"]])
+            return DiskBackedRows(cache_file)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+                dataset_loader=loader,
+            )
+            spec = manager.resource_spec("tnews")
+            manager.ensure_dataset(spec)
+
+            with patch.dict(os.environ, {"HF_HUB_OFFLINE": "1"}):
+                samples = list(manager.iter_source_samples(spec))
+
+        self.assertEqual([sample.text for sample in samples], ["训练新闻样本。", "验证新闻样本。"])
+        self.assertEqual(
+            [call["split"] for call in loader_calls],
+            ["train", "validation", "train", "validation"],
+        )
+        self.assertTrue(all(call["keep_in_memory"] is False for call in loader_calls))
+        self.assertTrue(all("streaming" not in call for call in loader_calls))
 
     def test_raid_csv_is_processed_sequentially_without_bulk_materialization(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
