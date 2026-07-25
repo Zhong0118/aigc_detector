@@ -34,6 +34,22 @@ class TextResourceAdapterTests(unittest.TestCase):
         with self.assertRaises(FrozenInstanceError):
             sample.text = "changed"  # type: ignore[misc]
 
+    def test_text_sample_defaults_to_train_with_no_generator(self) -> None:
+        sample = TextSample(
+            text="A default sample.",
+            label="human",
+            language="en",
+            domain="general_qa",
+            source="fixture",
+            source_id="fixture-1",
+        )
+
+        self.assertEqual(sample.split, "train")
+        self.assertIsNone(sample.generator)
+
+    def test_reddit_normalizes_to_general_qa(self) -> None:
+        self.assertEqual(normalize_source_domain("reddit"), "general_qa")
+
     def test_source_domains_normalize_to_the_four_canonical_domains(self) -> None:
         expected = {
             "books": "literature",

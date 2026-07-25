@@ -16,6 +16,11 @@ class DomainDecision:
 class TextDomainRouter:
     """Classify text using deterministic marker rules, not semantic inference."""
 
+    _TIE_BREAK_PRIORITY = {
+        "literature": 1,
+        "official_news": 2,
+        "academic_technical": 3,
+    }
     _DOMAIN_MARKERS = (
         (
             "literature",
@@ -96,11 +101,23 @@ class TextDomainRouter:
     )
 
     def classify(self, text: str) -> DomainDecision:
+        candidates: list[tuple[int, float, int, str, tuple[str, ...]]] = []
         for domain, markers, base_confidence in self._DOMAIN_MARKERS:
             evidence = tuple(marker for marker in markers if self._contains(text, marker))
             if evidence:
-                confidence = min(0.98, base_confidence + 0.03 * (len(evidence) - 1))
-                return DomainDecision(domain, confidence, evidence)
+                candidates.append(
+                    (
+                        len(evidence),
+                        base_confidence,
+                        self._TIE_BREAK_PRIORITY[domain],
+                        domain,
+                        evidence,
+                    )
+                )
+        if candidates:
+            evidence_count, base_confidence, _, domain, evidence = max(candidates)
+            confidence = min(0.98, base_confidence + 0.03 * (evidence_count - 1))
+            return DomainDecision(domain, confidence, evidence)
         return DomainDecision("general_qa", 0.25, ())
 
     @staticmethod

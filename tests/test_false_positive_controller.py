@@ -3,11 +3,11 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from dataclasses import dataclass, field
+from dataclasses import FrozenInstanceError, dataclass, field
 from pathlib import Path
 
 from detection.false_positive_controller import FalsePositiveController
-from detection.text_domain import TextDomainRouter
+from detection.text_domain import DomainDecision, TextDomainRouter
 from detection.text_segmentation import SentenceAwareSegmenter
 
 
@@ -56,6 +56,27 @@ class SentenceAwareSegmenterTests(unittest.TestCase):
 class TextDomainRouterTests(unittest.TestCase):
     def setUp(self) -> None:
         self.router = TextDomainRouter()
+
+    def test_domain_decision_is_immutable(self) -> None:
+        decision = DomainDecision("general_qa", 0.25, ())
+
+        with self.assertRaises(FrozenInstanceError):
+            decision.domain = "literature"  # type: ignore[misc]
+
+    def test_multiple_academic_markers_outweigh_novel_overlap(self) -> None:
+        decision = self.router.classify("We propose a novel method for neural text analysis.")
+
+        self.assertEqual(decision.domain, "academic_technical")
+        self.assertIn("method", decision.evidence)
+        self.assertIn("neural", decision.evidence)
+
+    def test_novel_with_literary_evidence_remains_literature(self) -> None:
+        decision = self.router.classify(
+            "The novel follows its protagonist through the narrator's recollections."
+        )
+
+        self.assertEqual(decision.domain, "literature")
+        self.assertIn("novel", decision.evidence)
 
     def test_routes_english_academic_study(self) -> None:
         decision = self.router.classify(
