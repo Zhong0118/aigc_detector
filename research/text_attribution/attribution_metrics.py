@@ -12,6 +12,8 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from research.text_attribution.attribution_types import FamilyPrediction
 from research.text_attribution.training_data import AttributionSample
 
+NLL_EPSILON = 1e-12
+
 
 def _validated_labels(family_labels: Sequence[str]) -> tuple[str, ...]:
     labels = tuple(family_labels)
@@ -37,8 +39,8 @@ def build_prediction_records(
         raise ValueError("probabilities must have shape (samples, family_labels)")
     if not np.isfinite(values).all():
         raise ValueError("probabilities must be finite")
-    if (values < 0).any():
-        raise ValueError("probabilities must be nonnegative")
+    if (values < 0).any() or (values > 1).any():
+        raise ValueError("probabilities must be within [0, 1]")
     if not np.allclose(values.sum(axis=1), 1.0, rtol=0.0, atol=1e-6):
         raise ValueError("probability rows must sum to one")
 
@@ -82,12 +84,18 @@ def _validate_records(
         probabilities = np.asarray(
             [record.family_probabilities[label] for label in labels], dtype=float
         )
-        if not np.isfinite(probabilities).all() or (probabilities < 0).any():
-            raise ValueError("record probabilities must be finite and nonnegative")
+        if (
+            not np.isfinite(probabilities).all()
+            or (probabilities < 0).any()
+            or (probabilities > 1).any()
+        ):
+            raise ValueError("record probabilities must be finite and within [0, 1]")
         if not np.isclose(probabilities.sum(), 1.0, rtol=0.0, atol=1e-6):
             raise ValueError("record probability rows must sum to one")
         if record.true_family not in expected_keys or record.predicted_family not in expected_keys:
             raise ValueError("record families must be in family_labels")
+        if record.predicted_family != labels[int(np.argmax(probabilities))]:
+            raise ValueError("record predicted_family must equal the probability argmax")
         _validate_prediction_confidence(record)
     return validated_records, labels
 
@@ -102,13 +110,17 @@ def _validate_prediction_confidence(record: FamilyPrediction) -> float:
     if not np.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
         raise ValueError("record confidence must be a finite value in [0, 1]")
     try:
-        predicted_probability = float(record.family_probabilities[record.predicted_family])
-    except (KeyError, TypeError, ValueError) as error:
-        raise ValueError("record confidence must match the predicted family probability") from error
-    if not np.isfinite(predicted_probability) or not np.isclose(
-        confidence, predicted_probability, rtol=0.0, atol=1e-6
+        probabilities = tuple(float(value) for value in record.family_probabilities.values())
+    except (AttributeError, TypeError, ValueError) as error:
+        raise ValueError("record confidence must match the maximum family probability") from error
+    if (
+        not probabilities
+        or not np.isfinite(probabilities).all()
+        or any(probability < 0.0 or probability > 1.0 for probability in probabilities)
     ):
-        raise ValueError("record confidence must match the predicted family probability")
+        raise ValueError("record confidence must match the maximum family probability")
+    if not np.isclose(confidence, max(probabilities), rtol=0.0, atol=1e-6):
+        raise ValueError("record confidence must match the maximum family probability")
     return confidence
 
 
@@ -177,7 +189,7 @@ def evaluate_family_predictions(
     true_indexes = np.asarray([labels.index(value) for value in truth])
     one_hot = np.eye(len(labels))[true_indexes]
     brier = float(np.mean(np.sum((probability_matrix - one_hot) ** 2, axis=1)))
-    nll = float(-np.mean([log(max(row[index], np.finfo(float).tiny)) for row, index in zip(probability_matrix, true_indexes, strict=True)]))
+    nll = float(-np.mean([log(max(row[index], NLL_EPSILON)) for row, index in zip(probability_matrix, true_indexes, strict=True)]))
     overall = {
         "accuracy": float(accuracy_score(truth, predicted)),
         "macro_f1": float(f1_score(truth, predicted, labels=labels, average="macro", zero_division=0)),

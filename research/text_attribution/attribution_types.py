@@ -3,8 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Real
 from types import MappingProxyType
 from typing import Any, Mapping
+
+
+def _normalize_real(value: Any, field: str) -> float:
+    """Return a built-in float while rejecting non-numeric JSON ambiguities."""
+
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{field} must be a real number")
+    return float(value)
 
 
 @dataclass(frozen=True)
@@ -31,9 +40,14 @@ class FamilyPrediction:
             self,
             "family_probabilities",
             MappingProxyType(
-                {str(label): float(probability) for label, probability in self.family_probabilities.items()}
+                {
+                    str(label): _normalize_real(probability, "family probability")
+                    for label, probability in self.family_probabilities.items()
+                }
             ),
         )
+        object.__setattr__(self, "confidence", _normalize_real(self.confidence, "confidence"))
+        object.__setattr__(self, "temperature", _normalize_real(self.temperature, "temperature"))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable representation of this record."""
