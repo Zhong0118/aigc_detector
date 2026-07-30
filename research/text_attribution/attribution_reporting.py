@@ -567,17 +567,29 @@ def _markdown_report(
 ) -> str:
     experiments = run_config.get("experiments", [])
     experiment_text = ", ".join(str(value) for value in experiments)
+    training_seed = run_config.get(
+        "training_seed",
+        run_config.get("seed", "unspecified"),
+    )
     lines = [
         "# Family Attribution Baseline Report",
         "",
         "## Run",
         "",
         f"- Run ID: `{run_config.get('run_id', 'unspecified')}`",
-        f"- Seed: `{run_config.get('seed', 'unspecified')}`",
+        f"- Training seed: `{training_seed}`",
         f"- Experiments: `{experiment_text}`",
         f"- Clean samples: `{dataset_audit.get('kept_records', 0)}`",
-        "",
     ]
+    if "split_seed" in run_config:
+        lines.append(f"- Split seed: `{run_config['split_seed']}`")
+    split_ratios = run_config.get("split_ratios")
+    if isinstance(split_ratios, Mapping):
+        ratio_text = ", ".join(
+            f"{split_name}={ratio}" for split_name, ratio in split_ratios.items()
+        )
+        lines.append(f"- Split ratios: `{ratio_text}`")
+    lines.append("")
     selection = metrics.get("selection")
     if isinstance(selection, Mapping):
         lines.extend(

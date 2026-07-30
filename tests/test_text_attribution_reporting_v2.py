@@ -192,6 +192,7 @@ class AttributionReportingTests(unittest.TestCase):
             report = (root / "report.md").read_text("utf-8")
             self.assertIn("# Family Attribution Baseline Report", report)
             self.assertIn("family-v1", report)
+            self.assertIn("- Training seed: `42`", report)
             self.assertIn("Frozen split", report)
             self.assertIn("Accuracy", report)
             self.assertIn("Macro-F1", report)
@@ -373,6 +374,38 @@ class AttributionReportingTests(unittest.TestCase):
             ],
             brier,
         )
+
+    def test_report_prefers_training_seed_and_displays_split_seed(self) -> None:
+        records = _records("B0", "validation", repeats=1)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "seed-report"
+            write_attribution_report(
+                output_dir=root,
+                run_config={
+                    "seed": 7,
+                    "training_seed": 99,
+                    "split_seed": 42,
+                    "split_ratios": {
+                        "train": 0.7,
+                        "validation": 0.15,
+                        "test": 0.15,
+                    },
+                    "experiments": ["B0"],
+                },
+                dataset_audit={"kept_records": 10},
+                split_summary={"validation": 10},
+                metrics={"B0": {"validation": _metrics(records)}},
+                predictions=records,
+            )
+            report = (root / "report.md").read_text(encoding="utf-8")
+
+        self.assertIn("- Training seed: `99`", report)
+        self.assertIn("- Split seed: `42`", report)
+        self.assertIn(
+            "- Split ratios: `train=0.7, validation=0.15, test=0.15`",
+            report,
+        )
+        self.assertNotIn("- Training seed: `7`", report)
 
     def test_failed_generation_leaves_existing_report_untouched(self) -> None:
         records = _records("B0", "validation", repeats=1)
