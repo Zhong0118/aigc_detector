@@ -61,6 +61,21 @@ def test_creates_deterministic_leakage_safe_balanced_manifest(tmp_path) -> None:
         assert {sample.model_id for sample in samples} == set(dataset.model_labels)
 
 
+def test_three_semantic_groups_can_form_complete_nonempty_splits(tmp_path) -> None:
+    data_path = tmp_path / "samples.jsonl"
+    catalog_path = tmp_path / "catalog.json"
+    write_dataset(data_path, groups=3)
+    write_model_catalog(catalog_path)
+    dataset = load_training_dataset(data_path, catalog_path)
+
+    splits = apply_split_manifest(dataset.samples, create_split_manifest(dataset.samples, seed=42))
+
+    assert all(splits.values())
+    for samples in splits.values():
+        assert {sample.family_id for sample in samples} == set(dataset.family_labels)
+        assert {sample.model_id for sample in samples} == set(dataset.model_labels)
+
+
 def test_persisted_manifest_rejects_dataset_with_missing_sample(tmp_path) -> None:
     dataset = _load_fixture_dataset(tmp_path)
     manifest_path = tmp_path / "split-manifest.json"

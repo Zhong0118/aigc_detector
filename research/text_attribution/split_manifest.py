@@ -71,7 +71,7 @@ def create_split_manifest(
 
     Candidate allocations use ``seed + attempt`` for at most 1,024 deterministic
     shuffles. Each candidate must keep every label at least 80% of its expected
-    count for that split, rounded up to an integer sample count.
+    count under the realized group allocation, rounded up to an integer count.
     """
 
     ratios = {
@@ -136,7 +136,7 @@ def apply_split_manifest(
     if any(not split_samples[name] for name in SPLIT_NAMES):
         raise ValueError("Split manifest produces an empty split")
 
-    _validate_label_coverage(split_samples, manifest.ratios)
+    _validate_label_coverage(split_samples)
     return {name: tuple(split_samples[name]) for name in SPLIT_NAMES}
 
 
@@ -233,9 +233,13 @@ def _assign_groups(groups: Sequence[str], counts: Mapping[str, int]) -> dict[str
 
 def _validate_label_coverage(
     split_samples: Mapping[str, Sequence[AttributionSample]],
-    ratios: Mapping[str, float],
 ) -> None:
     all_samples = tuple(sample for samples in split_samples.values() for sample in samples)
+    all_groups = {sample.semantic_prompt_group for sample in all_samples}
+    group_counts = {
+        split_name: len({sample.semantic_prompt_group for sample in split_samples[split_name]})
+        for split_name in SPLIT_NAMES
+    }
     for label_name, label_values in (
         ("family", sorted({sample.family_id for sample in all_samples})),
         ("model", sorted({sample.model_id for sample in all_samples})),
@@ -243,7 +247,7 @@ def _validate_label_coverage(
         for label_value in label_values:
             total = sum(getattr(sample, f"{label_name}_id") == label_value for sample in all_samples)
             for split_name in SPLIT_NAMES:
-                expected = total * ratios[split_name]
+                expected = total * group_counts[split_name] / len(all_groups)
                 minimum = math.ceil(expected * _COVERAGE_TOLERANCE)
                 actual = sum(
                     getattr(sample, f"{label_name}_id") == label_value
