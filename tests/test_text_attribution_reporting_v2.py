@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
+import research.text_attribution.attribution_reporting as reporting
 from research.text_attribution.attribution_metrics import (
     build_prediction_records,
     evaluate_family_predictions,
@@ -97,10 +100,12 @@ class AttributionReportingTests(unittest.TestCase):
                 "selected_score": np.float64(0.82),
             },
         }
-        mapping_prediction = validation[0].to_dict()
+        predictions = (*validation, test[0].to_dict(), *test[1:])
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "report"
+            root.mkdir()
+            (root / "model.joblib").write_bytes(b"preserve unrelated model")
             artifacts = write_attribution_report(
                 output_dir=root,
                 run_config={
@@ -115,7 +120,7 @@ class AttributionReportingTests(unittest.TestCase):
                     "test": np.int64(10),
                 },
                 metrics=metrics,
-                predictions=(*validation, mapping_prediction),
+                predictions=predictions,
             )
 
             self.assertEqual(set(artifacts), set(EXPECTED_ARTIFACTS))
@@ -137,10 +142,20 @@ class AttributionReportingTests(unittest.TestCase):
                 written_metrics["selection"]["selected_experiment"],
                 "B0",
             )
-            self.assertEqual(len(prediction_rows), len(validation) + 1)
+            self.assertEqual(
+                tuple(
+                    written_metrics["B0"]["validation"]["per_family"]
+                ),
+                FAMILY_LABELS,
+            )
+            self.assertEqual(len(prediction_rows), len(predictions))
             self.assertEqual(
                 tuple(prediction_rows[0]["family_probabilities"]),
                 FAMILY_LABELS,
+            )
+            self.assertEqual(
+                (root / "model.joblib").read_bytes(),
+                b"preserve unrelated model",
             )
 
             report = (root / "report.md").read_text("utf-8")
@@ -188,6 +203,153 @@ class AttributionReportingTests(unittest.TestCase):
 
         self.assertIn("qwen-model-0", report)
         self.assertIn("0.7500", report)
+
+    def test_cross_validates_metric_rows_and_prediction_population(self) -> None:
+        records = _records("B0", "validation", repeats=1)
+        base_metrics = {"B0": {"validation": _metrics(records)}}
+
+        def write(metrics: dict, predictions: tuple, name: str) -> None:
+            write_attribution_report(
+                output_dir=Path(temporary) / name,
+                run_config={"seed": 42, "experiments": ["B0"]},
+                dataset_audit={"kept_records": 10},
+                split_summary={"validation": 10},
+                metrics=metrics,
+                predictions=predictions,
+            )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(ValueError, "duplicate"):
+                write(base_metrics, (*records, records[0]), "duplicate")
+
+            mismatched_records = _records("B1", "validation", repeats=1)
+            with self.assertRaisesRegex(ValueError, "experiment/split"):
+                write(base_metrics, mismatched_records, "wrong-row")
+
+            with self.assertRaisesRegex(ValueError, "support"):
+                write(base_metrics, records[:-1], "wrong-count")
+
+            second_metrics = _metrics(_records("B1", "test", repeats=1))
+            second_metrics["per_family"] = dict(
+                reversed(second_metrics["per_family"].items())
+            )
+            mixed_metrics = {
+                **base_metrics,
+                "B1": {"test": second_metrics},
+            }
+            mixed_records = (*records, *_records("B1", "test", repeats=1))
+            with self.assertRaisesRegex(ValueError, "family order"):
+                write(mixed_metrics, mixed_records, "wrong-family-order")
+
+            wrong_probability_order = records[0].to_dict()
+            wrong_probability_order["family_probabilities"] = dict(
+                reversed(wrong_probability_order["family_probabilities"].items())
+            )
+            with self.assertRaisesRegex(ValueError, "probability.*order"):
+                write(
+                    base_metrics,
+                    (wrong_probability_order, *records[1:]),
+                    "wrong-probability-order",
+                )
+
+    def test_rejects_out_of_range_and_incoherent_metric_values(self) -> None:
+        records = _records("B0", "validation", repeats=1)
+        result = _metrics(records)
+
+        cases = {
+            "bounded overall score": ("overall", "accuracy", 1.01),
+            "integer support": ("overall", "support", 1.5),
+            "bounded ECE": (
+                "calibration",
+                "expected_calibration_error",
+                -0.01,
+            ),
+            "bounded Brier": (
+                "calibration",
+                "multiclass_brier_score",
+                1.01,
+            ),
+            "nonnegative NLL": (
+                "calibration",
+                "negative_log_likelihood",
+                -0.01,
+            ),
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            for name, (section, key, bad_value) in cases.items():
+                with self.subTest(name=name):
+                    invalid = deepcopy(result)
+                    invalid[section][key] = bad_value
+                    with self.assertRaisesRegex(ValueError, "metric|support"):
+                        write_attribution_report(
+                            output_dir=Path(temporary) / name.replace(" ", "-"),
+                            run_config={"seed": 42, "experiments": ["B0"]},
+                            dataset_audit={"kept_records": 10},
+                            split_summary={"validation": 10},
+                            metrics={"B0": {"validation": invalid}},
+                            predictions=records,
+                        )
+
+            bad_entry = deepcopy(result)
+            bad_entry["confusion_matrix"][0][0] = -0.01
+            with self.assertRaisesRegex(ValueError, "confusion"):
+                write_attribution_report(
+                    output_dir=Path(temporary) / "bad-confusion-entry",
+                    run_config={"seed": 42},
+                    dataset_audit={"kept_records": 10},
+                    split_summary={"validation": 10},
+                    metrics={"B0": {"validation": bad_entry}},
+                    predictions=records,
+                )
+
+            bad_row_sum = deepcopy(result)
+            bad_row_sum["confusion_matrix"][0] = [0.0] * len(FAMILY_LABELS)
+            bad_row_sum["confusion_matrix"][0][0] = 0.5
+            with self.assertRaisesRegex(ValueError, "confusion.*sum"):
+                write_attribution_report(
+                    output_dir=Path(temporary) / "bad-confusion-sum",
+                    run_config={"seed": 42},
+                    dataset_audit={"kept_records": 10},
+                    split_summary={"validation": 10},
+                    metrics={"B0": {"validation": bad_row_sum}},
+                    predictions=records,
+                )
+
+    def test_failed_generation_leaves_existing_report_untouched(self) -> None:
+        records = _records("B0", "validation", repeats=1)
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary)
+            root = parent / "report"
+            root.mkdir()
+            original_run = '{"old": true}\n'
+            (root / "run_config.json").write_text(original_run, encoding="utf-8")
+            (root / "model.joblib").write_bytes(b"keep")
+
+            with patch.object(
+                reporting,
+                "_plot_calibration",
+                side_effect=RuntimeError("simulated plot failure"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "simulated"):
+                    write_attribution_report(
+                        output_dir=root,
+                        run_config={"seed": 42, "experiments": ["B0"]},
+                        dataset_audit={"kept_records": 10},
+                        split_summary={"validation": 10},
+                        metrics={"B0": {"validation": _metrics(records)}},
+                        predictions=records,
+                    )
+
+            self.assertEqual(
+                (root / "run_config.json").read_text("utf-8"),
+                original_run,
+            )
+            self.assertEqual((root / "model.joblib").read_bytes(), b"keep")
+            self.assertFalse((root / "metrics.json").exists())
+            self.assertFalse(
+                list(parent.glob(".report.staging-*")),
+                "staging directories must be cleaned after failure",
+            )
 
     def test_rejects_nonfinite_json_values_and_metricless_payloads(self) -> None:
         records = _records("B0", "validation", repeats=1)
