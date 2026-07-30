@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "run_id": "family-attribution-baselines-v1",
+  "experiments": [
+    "B0",
+    "B1",
+    "B2",
+    "B3"
+  ],
+  "seed": 42,
+  "split": {
+    "train_ratio": 0.7,
+    "validation_ratio": 0.15,
+    "test_ratio": 0.15
+  },
+  "model_catalog": "../zhizengzeng_model_catalog.v5.json"
+}
