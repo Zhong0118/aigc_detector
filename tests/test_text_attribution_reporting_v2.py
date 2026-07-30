@@ -86,6 +86,37 @@ def _metrics(records: tuple) -> dict:
     return evaluate_family_predictions(records, FAMILY_LABELS)
 
 
+def _high_brier_records() -> tuple:
+    samples: list[AttributionSample] = []
+    probabilities: list[list[float]] = []
+    for family_index, family in enumerate(FAMILY_LABELS):
+        samples.append(
+            AttributionSample(
+                request_key=f"high-brier-{family}",
+                text=f"adversarially misclassified text from {family}",
+                family_id=family,
+                model_id=f"{family}-model",
+                prompt_id="en-high-brier-000",
+                semantic_prompt_group="high-brier-000",
+                language="en",
+                task_type="explanation",
+                target_length="medium",
+                temperature=0.0,
+                repeat_index=0,
+            )
+        )
+        row = [0.001] * len(FAMILY_LABELS)
+        row[(family_index + 1) % len(FAMILY_LABELS)] = 0.991
+        probabilities.append(row)
+    return build_prediction_records(
+        tuple(samples),
+        np.asarray(probabilities),
+        FAMILY_LABELS,
+        "B0",
+        "validation",
+    )
+
+
 class AttributionReportingTests(unittest.TestCase):
     def test_writes_parseable_report_and_real_figures_for_selection_metadata(self) -> None:
         validation = _records("B0", "validation")
@@ -267,7 +298,7 @@ class AttributionReportingTests(unittest.TestCase):
             "bounded Brier": (
                 "calibration",
                 "multiclass_brier_score",
-                1.01,
+                2.01,
             ),
             "nonnegative NLL": (
                 "calibration",
@@ -314,6 +345,34 @@ class AttributionReportingTests(unittest.TestCase):
                     metrics={"B0": {"validation": bad_row_sum}},
                     predictions=records,
                 )
+
+    def test_accepts_task3_multiclass_brier_between_one_and_two(self) -> None:
+        records = _high_brier_records()
+        result = _metrics(records)
+        brier = result["calibration"]["multiclass_brier_score"]
+        self.assertGreater(brier, 1.98)
+        self.assertLessEqual(brier, 2.0)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "high-brier-report"
+            write_attribution_report(
+                output_dir=root,
+                run_config={"seed": 42, "experiments": ["B0"]},
+                dataset_audit={"kept_records": 10},
+                split_summary={"validation": 10},
+                metrics={"B0": {"validation": result}},
+                predictions=records,
+            )
+            persisted = json.loads(
+                (root / "metrics.json").read_text(encoding="utf-8")
+            )
+
+        self.assertAlmostEqual(
+            persisted["B0"]["validation"]["calibration"][
+                "multiclass_brier_score"
+            ],
+            brier,
+        )
 
     def test_failed_generation_leaves_existing_report_untouched(self) -> None:
         records = _records("B0", "validation", repeats=1)

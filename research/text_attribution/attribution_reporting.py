@@ -156,8 +156,21 @@ def _validate_metric_rows(
         calibration = _require_mapping(
             row.get("calibration"), f"{path}.calibration"
         )
-        for key in _CALIBRATION_KEYS[:2]:
-            _require_bounded_metric(calibration, key, f"{path}.calibration")
+        _require_bounded_metric(
+            calibration,
+            "expected_calibration_error",
+            f"{path}.calibration",
+        )
+        brier = _require_number(
+            calibration,
+            "multiclass_brier_score",
+            f"{path}.calibration",
+        )
+        if not 0.0 <= brier <= 2.0:
+            raise ValueError(
+                f"{path}.calibration.multiclass_brier_score metric must be "
+                "within [0, 2]"
+            )
         _require_nonnegative_metric(
             calibration,
             "negative_log_likelihood",
