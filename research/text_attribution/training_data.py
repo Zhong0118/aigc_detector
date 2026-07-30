@@ -62,11 +62,27 @@ def load_model_catalog(path: str | Path) -> tuple[CatalogModel, ...]:
     models: list[CatalogModel] = []
     seen_model_ids: set[str] = set()
     for row in payload["models"]:
-        if not isinstance(row, dict) or not row.get("enabled"):
+        if not isinstance(row, dict):
+            raise ValueError("Model catalog rows must be JSON objects")
+        enabled = row.get("enabled")
+        if enabled is False:
             continue
-        family_id = str(row.get("family_id", "")).strip()
-        model_id = str(row.get("model_id", "")).strip()
-        variant_role = str(row.get("variant_role", "")).strip()
+        if not isinstance(enabled, bool):
+            raise ValueError("Model catalog enabled must be a JSON boolean")
+
+        family_value = row.get("family_id")
+        model_value = row.get("model_id")
+        variant_value = row.get("variant_role")
+        if not isinstance(family_value, str):
+            raise ValueError("Enabled catalog model family_id must be a string")
+        if not isinstance(model_value, str):
+            raise ValueError("Enabled catalog model model_id must be a string")
+        if not isinstance(variant_value, str):
+            raise ValueError("Enabled catalog model variant_role must be a string")
+
+        family_id = family_value.strip()
+        model_id = model_value.strip()
+        variant_role = variant_value.strip()
         if not family_id or not model_id or not variant_role:
             raise ValueError(
                 "Enabled catalog models require nonempty family_id, model_id, "

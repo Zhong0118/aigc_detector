@@ -74,6 +74,80 @@ class TrainingDataTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "variant_role"):
                 load_model_catalog(catalog_path)
 
+    def test_rejects_malformed_catalog_rows(self) -> None:
+        malformed_rows = (
+            ("row", "not an object", "JSON object"),
+            ("enabled", {"enabled": "true"}, "enabled"),
+            ("enabled", {"enabled": 1}, "enabled"),
+            ("enabled", {"enabled": None}, "enabled"),
+            (
+                "family_id",
+                {
+                    "enabled": True,
+                    "family_id": ["openai"],
+                    "model_id": "gpt-fast-test",
+                    "variant_role": "fast",
+                },
+                "family_id",
+            ),
+            (
+                "model_id",
+                {
+                    "enabled": True,
+                    "family_id": "openai",
+                    "model_id": 123,
+                    "variant_role": "fast",
+                },
+                "model_id",
+            ),
+            (
+                "variant_role",
+                {
+                    "enabled": True,
+                    "family_id": "openai",
+                    "model_id": "gpt-fast-test",
+                    "variant_role": {"role": "fast"},
+                },
+                "variant_role",
+            ),
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            catalog_path = Path(temporary) / "catalog.json"
+            for name, row, message in malformed_rows:
+                with self.subTest(name=name):
+                    catalog_path.write_text(
+                        json.dumps({"models": [row]}), encoding="utf-8"
+                    )
+                    with self.assertRaisesRegex(ValueError, message):
+                        load_model_catalog(catalog_path)
+
+    def test_rejects_malformed_catalog_before_training_data_load(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            catalog_path = directory / "catalog.json"
+            data_path = directory / "data.jsonl"
+            catalog_path.write_text(
+                json.dumps(
+                    {
+                        "models": [
+                            {
+                                "enabled": "true",
+                                "family_id": "openai",
+                                "model_id": "gpt-fast-test",
+                                "variant_role": "fast",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            data_path.write_text(
+                json.dumps(raw_row("gpt-fast-test", 0)) + "\n", encoding="utf-8"
+            )
+
+            with self.assertRaisesRegex(ValueError, "enabled"):
+                load_training_dataset(data_path, catalog_path)
+
 
 if __name__ == "__main__":
     unittest.main()
