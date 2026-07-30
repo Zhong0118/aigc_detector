@@ -5,7 +5,10 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from research.text_attribution.training_data import load_training_dataset
+from research.text_attribution.training_data import (
+    load_model_catalog,
+    load_training_dataset,
+)
 from tests.text_attribution_test_utils import raw_row, write_dataset, write_model_catalog
 
 
@@ -48,6 +51,28 @@ class TrainingDataTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "catalog family mismatch"):
                 load_training_dataset(data_path, catalog_path)
+
+    def test_rejects_enabled_catalog_model_without_variant_role(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            catalog_path = Path(temporary) / "catalog.json"
+            catalog_path.write_text(
+                json.dumps(
+                    {
+                        "models": [
+                            {
+                                "family_id": "openai",
+                                "model_id": "gpt-fast-test",
+                                "enabled": True,
+                                "variant_role": " ",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "variant_role"):
+                load_model_catalog(catalog_path)
 
 
 if __name__ == "__main__":

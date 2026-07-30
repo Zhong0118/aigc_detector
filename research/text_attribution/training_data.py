@@ -66,8 +66,12 @@ def load_model_catalog(path: str | Path) -> tuple[CatalogModel, ...]:
             continue
         family_id = str(row.get("family_id", "")).strip()
         model_id = str(row.get("model_id", "")).strip()
-        if not family_id or not model_id:
-            raise ValueError("Enabled catalog models require nonempty family_id and model_id")
+        variant_role = str(row.get("variant_role", "")).strip()
+        if not family_id or not model_id or not variant_role:
+            raise ValueError(
+                "Enabled catalog models require nonempty family_id, model_id, "
+                "and variant_role"
+            )
         if model_id in seen_model_ids:
             raise ValueError(f"Duplicate catalog model_id: {model_id}")
         seen_model_ids.add(model_id)
@@ -75,7 +79,7 @@ def load_model_catalog(path: str | Path) -> tuple[CatalogModel, ...]:
             CatalogModel(
                 family_id=family_id,
                 model_id=model_id,
-                variant_role=str(row.get("variant_role", "")).strip(),
+                variant_role=variant_role,
             )
         )
 
