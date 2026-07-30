@@ -569,6 +569,144 @@ class FamilyAttributionBaselineCliTests(unittest.TestCase):
             self.assertEqual(list(root.glob(f".{split_path.name}.tmp-*")), [])
             self.assertFalse((root / f".{split_path.name}.claim").exists())
 
+    def test_claim_write_failure_cleans_claim_and_allows_later_creator(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            write_model_catalog(root / "catalog.json")
+            data_path = root / "data.jsonl"
+            write_dataset(data_path, groups=20)
+            dataset = load_training_dataset(data_path, root / "catalog.json")
+            split_path = root / "split.json"
+            ratios = {
+                "train_ratio": 0.7,
+                "validation_ratio": 0.15,
+                "test_ratio": 0.15,
+            }
+
+            from scripts import run_family_attribution_baselines as cli
+
+            with patch.object(
+                cli.os,
+                "write",
+                side_effect=OSError(errno.EIO, "injected claim write failure"),
+            ):
+                with self.assertRaisesRegex(OSError, "claim write failure"):
+                    _create_or_load_split_manifest(
+                        split_path,
+                        dataset.samples,
+                        seed=42,
+                        split_config=ratios,
+                        persist=True,
+                    )
+
+            self.assertFalse(split_path.exists())
+            self.assertFalse((root / f".{split_path.name}.claim").exists())
+            self.assertEqual(list(root.glob(f".{split_path.name}.tmp-*")), [])
+            recovered = _create_or_load_split_manifest(
+                split_path,
+                dataset.samples,
+                seed=42,
+                split_config=ratios,
+                persist=True,
+            )
+            self.assertEqual(
+                json.loads(split_path.read_text(encoding="utf-8"))[
+                    "dataset_fingerprint"
+                ],
+                recovered.dataset_fingerprint,
+            )
+
+    def test_claim_fsync_failure_cleans_claim_and_allows_later_creator(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            write_model_catalog(root / "catalog.json")
+            data_path = root / "data.jsonl"
+            write_dataset(data_path, groups=20)
+            dataset = load_training_dataset(data_path, root / "catalog.json")
+            split_path = root / "split.json"
+            ratios = {
+                "train_ratio": 0.7,
+                "validation_ratio": 0.15,
+                "test_ratio": 0.15,
+            }
+
+            from scripts import run_family_attribution_baselines as cli
+
+            real_fsync = os.fsync
+            calls = 0
+
+            def fail_claim_fsync(descriptor: int) -> None:
+                nonlocal calls
+                calls += 1
+                if calls == 2:
+                    raise OSError(errno.EIO, "injected claim fsync failure")
+                real_fsync(descriptor)
+
+            with patch.object(cli.os, "fsync", side_effect=fail_claim_fsync):
+                with self.assertRaisesRegex(OSError, "claim fsync failure"):
+                    _create_or_load_split_manifest(
+                        split_path,
+                        dataset.samples,
+                        seed=42,
+                        split_config=ratios,
+                        persist=True,
+                    )
+
+            self.assertFalse(split_path.exists())
+            self.assertFalse((root / f".{split_path.name}.claim").exists())
+            self.assertEqual(list(root.glob(f".{split_path.name}.tmp-*")), [])
+            recovered = _create_or_load_split_manifest(
+                split_path,
+                dataset.samples,
+                seed=42,
+                split_config=ratios,
+                persist=True,
+            )
+            self.assertEqual(
+                json.loads(split_path.read_text(encoding="utf-8"))[
+                    "dataset_fingerprint"
+                ],
+                recovered.dataset_fingerprint,
+            )
+
+    def test_claim_cleanup_failure_is_chained_without_masking_original(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            write_model_catalog(root / "catalog.json")
+            data_path = root / "data.jsonl"
+            write_dataset(data_path, groups=20)
+            dataset = load_training_dataset(data_path, root / "catalog.json")
+            split_path = root / "split.json"
+
+            from scripts import run_family_attribution_baselines as cli
+
+            initialization_error = OSError(
+                errno.EIO, "injected claim write failure"
+            )
+            cleanup_error = OSError(errno.EIO, "injected directory fsync failure")
+            with (
+                patch.object(cli.os, "write", side_effect=initialization_error),
+                patch.object(
+                    cli, "_fsync_directory", return_value=cleanup_error
+                ),
+            ):
+                with self.assertRaisesRegex(OSError, "claim write failure") as caught:
+                    _create_or_load_split_manifest(
+                        split_path,
+                        dataset.samples,
+                        seed=42,
+                        split_config={
+                            "train_ratio": 0.7,
+                            "validation_ratio": 0.15,
+                            "test_ratio": 0.15,
+                        },
+                        persist=True,
+                    )
+
+            self.assertIs(caught.exception.__cause__, cleanup_error)
+            self.assertFalse(split_path.exists())
+            self.assertFalse((root / f".{split_path.name}.claim").exists())
+
     def test_subset_rerun_removes_stale_model_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -216,17 +216,22 @@ def _split_manifest_payload(manifest: SplitManifest) -> dict[str, Any]:
     }
 
 
-def _fsync_directory(path: Path) -> None:
+def _fsync_directory(path: Path) -> OSError | None:
     try:
         descriptor = os.open(path, os.O_RDONLY)
-    except OSError:
-        return
+    except OSError as error:
+        return error
+    sync_error: OSError | None = None
     try:
         os.fsync(descriptor)
-    except OSError:
-        pass
-    finally:
+    except OSError as error:
+        sync_error = error
+    try:
         os.close(descriptor)
+    except OSError as error:
+        if sync_error is None:
+            sync_error = error
+    return sync_error
 
 
 def _publish_split_manifest_exclusive(
@@ -321,8 +326,26 @@ def _acquire_split_creation_claim(path: Path) -> Path | None:
             ).encode("utf-8")
             os.write(descriptor, claim_payload)
             os.fsync(descriptor)
-        finally:
             os.close(descriptor)
+            descriptor = -1
+        except BaseException as initialization_error:
+            cleanup_error: BaseException | None = None
+            if descriptor >= 0:
+                try:
+                    os.close(descriptor)
+                except BaseException as error:
+                    cleanup_error = error
+            try:
+                claim.unlink(missing_ok=True)
+            except BaseException as error:
+                if cleanup_error is None:
+                    cleanup_error = error
+            directory_sync_error = _fsync_directory(path.parent)
+            if cleanup_error is None and directory_sync_error is not None:
+                cleanup_error = directory_sync_error
+            if cleanup_error is not None:
+                raise initialization_error from cleanup_error
+            raise
         _fsync_directory(path.parent)
         return claim
 
