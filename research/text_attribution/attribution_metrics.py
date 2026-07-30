@@ -96,11 +96,13 @@ def _validate_records(
             raise ValueError("record families must be in family_labels")
         if record.predicted_family != labels[int(np.argmax(probabilities))]:
             raise ValueError("record predicted_family must equal the probability argmax")
-        _validate_prediction_confidence(record)
+        _validate_prediction_confidence(record, labels[int(np.argmax(probabilities))])
     return validated_records, labels
 
 
-def _validate_prediction_confidence(record: FamilyPrediction) -> float:
+def _validate_prediction_confidence(
+    record: FamilyPrediction, expected_predicted_family: str | None = None
+) -> float:
     """Validate a prediction's top-label confidence and return it as a float."""
 
     try:
@@ -110,15 +112,21 @@ def _validate_prediction_confidence(record: FamilyPrediction) -> float:
     if not np.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
         raise ValueError("record confidence must be a finite value in [0, 1]")
     try:
-        probabilities = tuple(float(value) for value in record.family_probabilities.values())
+        probability_items = tuple(
+            (label, float(value)) for label, value in record.family_probabilities.items()
+        )
     except (AttributeError, TypeError, ValueError) as error:
         raise ValueError("record confidence must match the maximum family probability") from error
+    probabilities = tuple(value for _, value in probability_items)
     if (
         not probabilities
         or not np.isfinite(probabilities).all()
         or any(probability < 0.0 or probability > 1.0 for probability in probabilities)
     ):
         raise ValueError("record confidence must match the maximum family probability")
+    argmax_family = probability_items[int(np.argmax(probabilities))][0]
+    if record.predicted_family != (expected_predicted_family or argmax_family):
+        raise ValueError("record predicted_family must equal the probability argmax")
     if not np.isclose(confidence, max(probabilities), rtol=0.0, atol=1e-6):
         raise ValueError("record confidence must match the maximum family probability")
     return confidence

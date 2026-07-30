@@ -151,7 +151,19 @@ class AttributionMetricsTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "argmax"):
             evaluate_family_predictions((record,), FAMILIES)
-        with self.assertRaisesRegex(ValueError, "confidence"):
+        with self.assertRaisesRegex(ValueError, "argmax"):
+            expected_calibration_error((record,))
+
+    def test_ece_rejects_non_argmax_prediction_with_maximum_confidence(self) -> None:
+        record = FamilyPrediction(
+            request_key="request-1", experiment_id="exp-1", split="test", true_family="alpha",
+            predicted_family="beta", family_probabilities={"alpha": 0.8, "beta": 0.2},
+            confidence=0.8, model_id="alpha-model", prompt_id="prompt-1",
+            semantic_prompt_group="general", language="en", task_type="summary",
+            target_length="short", temperature=0.7,
+        )
+
+        with self.assertRaisesRegex(ValueError, "argmax"):
             expected_calibration_error((record,))
 
     def test_tied_probabilities_select_the_first_family_label(self) -> None:
