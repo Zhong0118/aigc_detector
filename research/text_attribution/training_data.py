@@ -143,7 +143,8 @@ def load_training_dataset(
 
     present_models = sorted({sample.model_id for sample in samples})
     model_to_family = {
-        model_id: catalog_by_model[model_id].family_id for model_id in present_models
+        model_id: catalog_by_model[model_id].family_id
+        for model_id in sorted(catalog_by_model)
     }
     audit = dict(clean_audit)
     audit["counts_by_model"] = dict(

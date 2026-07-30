@@ -19,6 +19,26 @@ class TrainingDataTests(unittest.TestCase):
             catalog_path = directory / "catalog.json"
             data_path = directory / "data.jsonl"
             write_model_catalog(catalog_path)
+            catalog_payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+            catalog_payload["models"].extend(
+                [
+                    {
+                        "enabled": True,
+                        "family_id": "openai",
+                        "model_id": "gpt-enabled-absent-test",
+                        "variant_role": "experimental",
+                    },
+                    {
+                        "enabled": False,
+                        "model_id": "disabled-malformed-absent-test",
+                    },
+                    "legacy-malformed-absent-test",
+                ]
+            )
+            catalog_path.write_text(
+                json.dumps(catalog_payload),
+                encoding="utf-8",
+            )
             write_dataset(data_path, groups=3)
 
             dataset = load_training_dataset(data_path, catalog_path)
@@ -37,6 +57,22 @@ class TrainingDataTests(unittest.TestCase):
         self.assertEqual(dataset.samples[0].family_id, "claude")
         self.assertEqual(dataset.samples[0].model_id, "claude-haiku-test")
         self.assertEqual(dataset.audit["kept_records"], 12)
+        self.assertEqual(
+            dataset.model_to_family,
+            {
+                "claude-haiku-test": "claude",
+                "claude-sonnet-test": "claude",
+                "gpt-balanced-test": "openai",
+                "gpt-enabled-absent-test": "openai",
+                "gpt-fast-test": "openai",
+            },
+        )
+        self.assertEqual(
+            dataset.audit["catalog_models_absent_from_clean_data"],
+            ["gpt-enabled-absent-test"],
+        )
+        self.assertNotIn("disabled-malformed-absent-test", dataset.model_to_family)
+        self.assertNotIn("legacy-malformed-absent-test", dataset.model_to_family)
 
     def test_rejects_family_catalog_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
