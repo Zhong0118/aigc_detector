@@ -88,7 +88,28 @@ def _validate_records(
             raise ValueError("record probability rows must sum to one")
         if record.true_family not in expected_keys or record.predicted_family not in expected_keys:
             raise ValueError("record families must be in family_labels")
+        _validate_prediction_confidence(record)
     return validated_records, labels
+
+
+def _validate_prediction_confidence(record: FamilyPrediction) -> float:
+    """Validate a prediction's top-label confidence and return it as a float."""
+
+    try:
+        confidence = float(record.confidence)
+    except (TypeError, ValueError) as error:
+        raise ValueError("record confidence must be a finite value in [0, 1]") from error
+    if not np.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
+        raise ValueError("record confidence must be a finite value in [0, 1]")
+    try:
+        predicted_probability = float(record.family_probabilities[record.predicted_family])
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("record confidence must match the predicted family probability") from error
+    if not np.isfinite(predicted_probability) or not np.isclose(
+        confidence, predicted_probability, rtol=0.0, atol=1e-6
+    ):
+        raise ValueError("record confidence must match the predicted family probability")
+    return confidence
 
 
 def expected_calibration_error(records: Iterable[FamilyPrediction], bins: int = 10) -> float:
@@ -99,17 +120,18 @@ def expected_calibration_error(records: Iterable[FamilyPrediction], bins: int = 
     validated_records = tuple(records)
     if not validated_records:
         raise ValueError("records must be nonempty")
+    confidences = tuple(_validate_prediction_confidence(record) for record in validated_records)
     ece = 0.0
     total = len(validated_records)
     for bin_index in range(bins):
         in_bin = [
-            record
-            for record in validated_records
-            if min(int(record.confidence * bins), bins - 1) == bin_index
+            (record, confidence)
+            for record, confidence in zip(validated_records, confidences, strict=True)
+            if min(int(confidence * bins), bins - 1) == bin_index
         ]
         if in_bin:
-            mean_confidence = sum(record.confidence for record in in_bin) / len(in_bin)
-            accuracy = sum(record.predicted_family == record.true_family for record in in_bin) / len(in_bin)
+            mean_confidence = sum(confidence for _, confidence in in_bin) / len(in_bin)
+            accuracy = sum(record.predicted_family == record.true_family for record, _ in in_bin) / len(in_bin)
             ece += len(in_bin) / total * abs(accuracy - mean_confidence)
     return float(ece)
 
@@ -148,7 +170,7 @@ def evaluate_family_predictions(
         group = [record for record in validated_records if record.model_id == model_id]
         per_model[model_id] = {
             "support": len(group),
-            "family_accuracy": float(accuracy_score([r.true_family for r in group], [r.predicted_family for r in group])),
+            "accuracy": float(accuracy_score([r.true_family for r in group], [r.predicted_family for r in group])),
             "mean_confidence": float(np.mean([r.confidence for r in group])),
             "mean_true_family_probability": float(np.mean([r.family_probabilities[r.true_family] for r in group])),
         }

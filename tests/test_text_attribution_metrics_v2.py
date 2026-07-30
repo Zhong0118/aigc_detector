@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 
 import numpy as np
 
@@ -11,6 +12,7 @@ from research.text_attribution.attribution_metrics import (
     evaluate_family_predictions,
     expected_calibration_error,
 )
+from research.text_attribution.attribution_types import FamilyPrediction
 from research.text_attribution.training_data import AttributionSample
 
 
@@ -56,6 +58,8 @@ class AttributionMetricsTests(unittest.TestCase):
         self.assertEqual(metrics["overall"]["weighted_f1"], 1.0)
         self.assertEqual(metrics["confusion_matrix"], [[1.0, 0.0], [0.0, 1.0]])
         self.assertEqual(metrics["per_model"]["alpha-model"]["support"], 2)
+        self.assertEqual(metrics["per_model"]["alpha-model"]["accuracy"], 1.0)
+        self.assertNotIn("family_accuracy", metrics["per_model"]["alpha-model"])
         self.assertLess(metrics["calibration"]["negative_log_likelihood"], 0.3)
         self.assertEqual(metrics["subgroups"]["language"]["en"]["support"], 4)
 
@@ -97,6 +101,38 @@ class AttributionMetricsTests(unittest.TestCase):
         )
 
         self.assertEqual(expected_calibration_error(records, bins=10), 0.0)
+
+    def test_metrics_reject_invalid_external_prediction_confidence(self) -> None:
+        record = FamilyPrediction(
+            request_key="request-1",
+            experiment_id="exp-1",
+            split="test",
+            true_family="alpha",
+            predicted_family="alpha",
+            family_probabilities={"alpha": 0.8, "beta": 0.2},
+            confidence=0.8,
+            model_id="alpha-model",
+            prompt_id="prompt-1",
+            semantic_prompt_group="general",
+            language="en",
+            task_type="summary",
+            target_length="short",
+            temperature=0.7,
+        )
+        invalid_records = {
+            "nan": replace(record, confidence=float("nan")),
+            "negative": replace(record, confidence=-0.1),
+            "above_one": replace(record, confidence=1.1),
+            "inconsistent": replace(record, confidence=0.7),
+        }
+
+        for name, invalid_record in invalid_records.items():
+            with self.subTest(method="evaluate", confidence=name):
+                with self.assertRaisesRegex(ValueError, "confidence"):
+                    evaluate_family_predictions((invalid_record,), FAMILIES)
+            with self.subTest(method="ece", confidence=name):
+                with self.assertRaisesRegex(ValueError, "confidence"):
+                    expected_calibration_error((invalid_record,))
 
 
 if __name__ == "__main__":
