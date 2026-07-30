@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import asdict, dataclass
 import hashlib
 import json
@@ -203,6 +204,17 @@ def _validate_split_manifest(manifest: SplitManifest) -> None:
             raise ValueError("Split manifest group assignment keys must be nonempty strings")
         if split_name not in SPLIT_NAMES:
             raise ValueError(f"Split manifest contains an invalid split name: {split_name!r}")
+    if len(manifest.group_assignments) < len(SPLIT_NAMES):
+        raise ValueError("Split manifest requires at least three assigned groups")
+    actual_counts = Counter(manifest.group_assignments.values())
+    if any(actual_counts[split_name] == 0 for split_name in SPLIT_NAMES):
+        raise ValueError("Split manifest group counts must keep every split nonempty")
+    expected_counts = _allocate_group_counts(len(manifest.group_assignments), manifest.ratios)
+    if actual_counts != expected_counts:
+        raise ValueError(
+            "Split manifest group counts do not match declared ratios/allocation: "
+            f"actual={dict(actual_counts)}, expected={expected_counts}"
+        )
 
 
 def _validate_ratios(ratios: Mapping[str, float]) -> None:

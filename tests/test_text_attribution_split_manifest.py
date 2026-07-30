@@ -4,12 +4,14 @@ from collections import Counter
 from dataclasses import replace
 import json
 from math import ceil
+import random
 import re
 
 import pytest
 
 from research.text_attribution.split_manifest import (
     SPLIT_NAMES,
+    SplitManifest,
     apply_split_manifest,
     create_split_manifest,
     dataset_fingerprint,
@@ -162,3 +164,79 @@ def test_concentrated_model_groups_meet_coverage_tolerance_or_report_details(tmp
         for split_name, samples in splits.items():
             actual = sum(sample.model_id == "gpt-balanced-test" for sample in samples)
             assert actual >= ceil(total * manifest.ratios[split_name] * 0.8)
+
+
+def test_rejects_persisted_manifest_with_group_counts_that_violate_ratios(tmp_path) -> None:
+    data_path = tmp_path / "hundred-groups.jsonl"
+    catalog_path = tmp_path / "hundred-groups-catalog.json"
+    write_dataset(data_path, groups=100)
+    write_model_catalog(catalog_path)
+    hundred_group_dataset = load_training_dataset(data_path, catalog_path)
+    groups = sorted({sample.semantic_prompt_group for sample in hundred_group_dataset.samples})
+    assignments = {
+        group: "train" if index < 98 else "validation" if index == 98 else "test"
+        for index, group in enumerate(groups)
+    }
+    manifest = SplitManifest(
+        schema_version=1,
+        seed=42,
+        ratios={"train": 0.70, "validation": 0.15, "test": 0.15},
+        dataset_fingerprint=dataset_fingerprint(hundred_group_dataset.samples),
+        group_assignments=assignments,
+    )
+    manifest_path = tmp_path / "invalid-counts-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema_version": manifest.schema_version,
+                "seed": manifest.seed,
+                "ratios": dict(manifest.ratios),
+                "dataset_fingerprint": manifest.dataset_fingerprint,
+                "group_assignments": dict(manifest.group_assignments),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="group counts"):
+        apply_split_manifest(hundred_group_dataset.samples, manifest)
+    with pytest.raises(ValueError, match=re.escape(str(manifest_path))):
+        load_split_manifest(manifest_path)
+
+
+def test_retries_unsafe_v5_shaped_candidate_deterministically(tmp_path) -> None:
+    data_path = tmp_path / "v5-shaped-samples.jsonl"
+    catalog_path = tmp_path / "v5-shaped-catalog.json"
+    write_dataset(data_path, groups=100)
+    write_model_catalog(catalog_path)
+    dataset = load_training_dataset(data_path, catalog_path)
+    repeated_samples = tuple(
+        replace(sample, request_key=f"{sample.request_key}-repeat-{repeat_index}", repeat_index=repeat_index)
+        for sample in dataset.samples
+        for repeat_index in range(3)
+    )
+    initial_groups = sorted({sample.semantic_prompt_group for sample in repeated_samples})
+    random.Random(42).shuffle(initial_groups)
+    missing_groups = set(initial_groups[70:75])
+    concentrated_samples = tuple(
+        sample
+        for sample in repeated_samples
+        if sample.model_id != "gpt-balanced-test" or sample.semantic_prompt_group not in missing_groups
+    )
+    unsafe_assignments = {
+        group: "train" if index < 70 else "validation" if index < 85 else "test"
+        for index, group in enumerate(initial_groups)
+    }
+
+    manifest = create_split_manifest(concentrated_samples, seed=42)
+    repeated_manifest = create_split_manifest(concentrated_samples, seed=42)
+    reversed_manifest = create_split_manifest(tuple(reversed(concentrated_samples)), seed=42)
+    splits = apply_split_manifest(concentrated_samples, manifest)
+
+    assert manifest.group_assignments != unsafe_assignments
+    assert manifest == repeated_manifest == reversed_manifest
+    total = sum(sample.model_id == "gpt-balanced-test" for sample in concentrated_samples)
+    for split_name, samples in splits.items():
+        actual = sum(sample.model_id == "gpt-balanced-test" for sample in samples)
+        expected = total * len({sample.semantic_prompt_group for sample in samples}) / 100
+        assert actual >= ceil(expected * 0.8)
