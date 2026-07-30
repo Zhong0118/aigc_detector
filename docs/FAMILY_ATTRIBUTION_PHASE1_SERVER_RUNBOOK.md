@@ -39,7 +39,25 @@ require an API key or `.env.local`.
 
 ## Install and verify
 
-Activate the intended Conda environment, then install the minimal runtime:
+The Phase 1 runtime requires Python 3.10 or newer. The supported and tested
+range for this package is Python 3.10 through 3.12; do not assume Python 3.13
+compatibility. Check the active interpreter before installing anything:
+
+```bash
+python --version
+python -c "import sys; assert (3, 10) <= sys.version_info[:2] <= (3, 12), f'Activate a supported Python 3.10-3.12 environment, found {sys.version.split()[0]}'"
+```
+
+If that check fails, activate an existing suitable environment or create one,
+for example:
+
+```bash
+conda create -n attribution-phase1 python=3.11 -y
+conda activate attribution-phase1
+python --version
+```
+
+With the supported environment active, install the minimal runtime:
 
 ```bash
 python -m pip install -r requirements-attribution-training.txt
