@@ -135,6 +135,7 @@ def _logistic_regression(seed: int) -> LogisticRegression:
         class_weight="balanced",
         max_iter=5000,
         random_state=seed,
+        solver="liblinear",
     )
 
 

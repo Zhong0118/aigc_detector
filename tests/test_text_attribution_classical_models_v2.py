@@ -76,6 +76,13 @@ class ClassicalModelTests(unittest.TestCase):
 
         self.assertIn("char", b0.named_steps)
         self.assertIn("style", b1.named_steps)
+        for pipeline in (b0, b1, b2):
+            with self.subTest(pipeline=pipeline):
+                classifier = pipeline.named_steps["classifier"]
+                self.assertEqual(classifier.solver, "liblinear")
+                self.assertEqual(classifier.class_weight, "balanced")
+                self.assertEqual(classifier.max_iter, 5000)
+                self.assertEqual(classifier.random_state, 42)
         self.assertIsInstance(b2.named_steps["features"], FeatureUnion)
         self.assertEqual(
             {name for name, _ in b2.named_steps["features"].transformer_list}, {"char", "style"}
