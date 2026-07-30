@@ -3,11 +3,24 @@ from __future__ import annotations
 import unittest
 
 import numpy as np
+from sklearn.base import clone
+from sklearn.pipeline import Pipeline
 
 from research.text_attribution.style_features import StylometricFeatureExtractor
 
 
 class StylometricFeatureExtractorTests(unittest.TestCase):
+    def test_supports_sklearn_cloning_string_tags_and_pipeline_fit_transform(self) -> None:
+        extractor = StylometricFeatureExtractor(include_length_features=False)
+        cloned = clone(extractor)
+        pipeline = Pipeline([("style", cloned)])
+
+        matrix = pipeline.fit_transform(["First text.", "第二段文本。"])
+
+        self.assertEqual(cloned._get_tags()["X_types"], ["string"])
+        self.assertEqual(matrix.shape, (2, 32))
+        self.assertEqual(matrix.dtype, np.float64)
+
     def test_exposes_the_exact_public_feature_name_contract(self) -> None:
         self.assertEqual(
             StylometricFeatureExtractor().get_feature_names_out().tolist(),
@@ -123,6 +136,60 @@ class StylometricFeatureExtractorTests(unittest.TestCase):
 
         self.assertEqual(matrix.shape, (3, len(extractor.get_feature_names_out())))
         self.assertTrue(np.isfinite(matrix).all())
+
+    def test_empty_sequence_has_float64_zero_row_matrix(self) -> None:
+        extractor = StylometricFeatureExtractor()
+
+        matrix = extractor.fit_transform([])
+
+        self.assertEqual(matrix.shape, (0, 39))
+        self.assertEqual(matrix.dtype, np.float64)
+
+    def test_bold_feature_counts_delimiter_markers_not_valid_spans(self) -> None:
+        extractor = StylometricFeatureExtractor(include_length_features=False)
+        names = extractor.get_feature_names_out().tolist()
+        marker_index = names.index("bold_marker_per_1000")
+
+        matrix = extractor.fit_transform(["**x**", "**x__"])
+
+        self.assertEqual(matrix[0, marker_index], 400.0)
+        self.assertEqual(matrix[1, marker_index], 400.0)
+
+    def test_transition_and_summary_features_require_phrase_boundaries(self) -> None:
+        extractor = StylometricFeatureExtractor(include_length_features=False)
+        names = extractor.get_feature_names_out().tolist()
+        transition_index = names.index("starts_with_transition")
+        summary_index = names.index("ends_with_summary")
+
+        matrix = extractor.fit_transform(
+            ["thereforex this is not a transition", "Therefore, this is one.", "coverall", "In conclusion!”"]
+        )
+
+        self.assertEqual(matrix[:, transition_index].tolist(), [0.0, 1.0, 0.0, 0.0])
+        self.assertEqual(matrix[:, summary_index].tolist(), [0.0, 0.0, 0.0, 1.0])
+
+    def test_canonical_normalization_preserves_feature_vectors(self) -> None:
+        extractor = StylometricFeatureExtractor()
+
+        matrix = extractor.fit_transform(["é", "e\u0301", "one\ntwo", "one\r\ntwo", "\U00020000", "\u1e00", "「『“”」』"])
+        names = extractor.get_feature_names_out().tolist()
+
+        np.testing.assert_array_equal(matrix[0], matrix[1])
+        np.testing.assert_array_equal(matrix[2], matrix[3])
+        self.assertGreater(matrix[4, names.index("cjk_ratio")], 0.0)
+        self.assertGreater(matrix[5, names.index("latin_ratio")], 0.0)
+        self.assertEqual(matrix[6, names.index("quote_per_1000")], 1000.0)
+
+    def test_normalized_sentinel_values_align_with_public_names(self) -> None:
+        extractor = StylometricFeatureExtractor()
+        vector = extractor.fit_transform(["\U00020000\u1e00「」\r\n**x**"])[0]
+        values = dict(zip(extractor.get_feature_names_out(), vector, strict=True))
+
+        self.assertEqual(values["newline_ratio"], 1.0 / 10.0)
+        self.assertEqual(values["bold_marker_per_1000"], 200.0)
+        self.assertEqual(values["quote_per_1000"], 200.0)
+        self.assertGreater(values["cjk_ratio"], 0.0)
+        self.assertGreater(values["latin_ratio"], 0.0)
 
     def test_is_deterministic_and_exposes_unique_ordered_names(self) -> None:
         extractor = StylometricFeatureExtractor()

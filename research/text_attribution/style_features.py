@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections import Counter
 from collections.abc import Sequence
 
@@ -10,12 +11,6 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
-_CJK_CHARACTER = r"\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff"
-_LATIN_CHARACTER = r"A-Za-z\u00c0-\u024f"
-_TOKEN_PATTERN = re.compile(
-    rf"[{_CJK_CHARACTER}]|[{_LATIN_CHARACTER}]+|\d+",
-    re.UNICODE,
-)
 _SENTENCE_PATTERN = re.compile(r"[^.!?\u3002\uff01\uff1f]+")
 _PARAGRAPH_PATTERN = re.compile(r"(?:\r?\n\s*){2,}")
 
@@ -76,6 +71,11 @@ class StylometricFeatureExtractor(BaseEstimator, TransformerMixin):
         self._validate_texts(texts)
         return self
 
+    def _more_tags(self) -> dict[str, object]:
+        """Declare the one-dimensional string input expected by this transformer."""
+
+        return {"X_types": ["string"]}
+
     def transform(self, texts: Sequence[str] | np.ndarray) -> np.ndarray:
         """Return a float64 feature matrix with one row for each input text."""
 
@@ -108,9 +108,10 @@ class StylometricFeatureExtractor(BaseEstimator, TransformerMixin):
         return values
 
     def _features_for_text(self, text: str) -> list[float]:
+        text = unicodedata.normalize("NFC", text).replace("\r\n", "\n").replace("\r", "\n")
         character_count = len(text)
         denominator = max(character_count, 1)
-        tokens = _TOKEN_PATTERN.findall(text)
+        tokens = self._tokenize(text)
         normalized_tokens = [token.casefold() for token in tokens]
         sentence_lengths = [len(match.group().strip()) for match in _SENTENCE_PATTERN.finditer(text)]
         sentence_lengths = [length for length in sentence_lengths if length]
@@ -120,8 +121,8 @@ class StylometricFeatureExtractor(BaseEstimator, TransformerMixin):
         line_denominator = max(len(nonempty_lines), 1)
 
         style = [
-            self._count_pattern(text, rf"[{_CJK_CHARACTER}]") / denominator,
-            self._count_pattern(text, rf"[{_LATIN_CHARACTER}]") / denominator,
+            sum(self._is_cjk(character) for character in text) / denominator,
+            sum(self._is_latin(character) for character in text) / denominator,
             sum(character.isdigit() for character in text) / denominator,
             sum(character.isspace() for character in text) / denominator,
             (text.count("\n") + text.count("\r")) / denominator,
@@ -131,14 +132,14 @@ class StylometricFeatureExtractor(BaseEstimator, TransformerMixin):
             self._per_1000(text.count(";") + text.count("；"), denominator),
             self._per_1000(text.count("?") + text.count("？"), denominator),
             self._per_1000(text.count("!") + text.count("！"), denominator),
-            self._per_1000(self._count_pattern(text, r"[\"'“”‘’]"), denominator),
+            self._per_1000(self._count_pattern(text, r"[\"'“”‘’「」『』«»‹›]"), denominator),
             self._per_1000(self._count_pattern(text, r"[()（）\[\]【】]"), denominator),
             self._per_1000(self._count_pattern(text, r"[-–—]"), denominator),
             self._line_ratio(nonempty_lines, r"\s{0,3}#{1,6}\s+"),
             self._line_ratio(nonempty_lines, r"\s*[-*+]\s+"),
             self._line_ratio(nonempty_lines, r"\s*\d+[.)]\s+"),
             self._line_ratio(nonempty_lines, r"(?: {2,}|\t+)"),
-            self._per_1000(len(re.findall(r"(?:\*\*|__).+?(?:\*\*|__)", text, re.DOTALL)), denominator),
+            self._per_1000(text.count("**") + text.count("__"), denominator),
             self._per_1000(text.count("```"), denominator),
             len(set(normalized_tokens)) / max(len(normalized_tokens), 1),
             self._repeated_bigram_ratio(normalized_tokens),
@@ -171,6 +172,52 @@ class StylometricFeatureExtractor(BaseEstimator, TransformerMixin):
         return len(re.findall(pattern, text))
 
     @staticmethod
+    def _is_cjk(character: str) -> bool:
+        codepoint = ord(character)
+        return (
+            0x3400 <= codepoint <= 0x4DBF
+            or 0x4E00 <= codepoint <= 0x9FFF
+            or 0xF900 <= codepoint <= 0xFAFF
+            or 0x20000 <= codepoint <= 0x2EBEF
+            or 0x30000 <= codepoint <= 0x323AF
+        )
+
+    @staticmethod
+    def _is_latin(character: str) -> bool:
+        return unicodedata.category(character).startswith("L") and "LATIN" in unicodedata.name(character, "")
+
+    @classmethod
+    def _tokenize(cls, text: str) -> list[str]:
+        tokens: list[str] = []
+        latin_word: list[str] = []
+        digit_word: list[str] = []
+
+        def flush_words() -> None:
+            if latin_word:
+                tokens.append("".join(latin_word))
+                latin_word.clear()
+            if digit_word:
+                tokens.append("".join(digit_word))
+                digit_word.clear()
+
+        for character in text:
+            if cls._is_cjk(character):
+                flush_words()
+                tokens.append(character)
+            elif cls._is_latin(character):
+                if digit_word:
+                    flush_words()
+                latin_word.append(character)
+            elif character.isdigit():
+                if latin_word:
+                    flush_words()
+                digit_word.append(character)
+            else:
+                flush_words()
+        flush_words()
+        return tokens
+
+    @staticmethod
     def _per_1000(count: int, denominator: int) -> float:
         return 1000.0 * count / denominator
 
@@ -184,7 +231,7 @@ class StylometricFeatureExtractor(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def _substring_ratio(text: str, token: str) -> float:
-        return text.count(token) / max(len(_TOKEN_PATTERN.findall(text)), 1)
+        return text.count(token) / max(len(StylometricFeatureExtractor._tokenize(text)), 1)
 
     @staticmethod
     def _repeated_bigram_ratio(tokens: list[str]) -> float:
@@ -197,9 +244,19 @@ class StylometricFeatureExtractor(BaseEstimator, TransformerMixin):
     @staticmethod
     def _starts_with_transition(text: str) -> bool:
         start = text.strip().casefold()
-        return bool(re.match(r"(?:however|therefore|moreover|meanwhile|first|其次|首先|因此|但是|不过)", start))
+        return bool(
+            re.match(
+                r"(?:however|therefore|moreover|meanwhile|first)(?=\W|$)|(?:其次|首先|因此|但是|不过)",
+                start,
+            )
+        )
 
     @staticmethod
     def _ends_with_summary(text: str) -> bool:
-        end = text.strip().casefold().rstrip(".!?。！？")
-        return bool(re.search(r"(?:in summary|to summarize|in conclusion|overall|总结|综上|结论)$", end))
+        end = text.strip().casefold().rstrip(".!?。！？\"'“”‘’「」『』«»‹›()（）[]【】")
+        return bool(
+            re.search(
+                r"(?:^|\W)(?:in summary|to summarize|in conclusion|overall)$|(?:总结|综上|结论)$",
+                end,
+            )
+        )
