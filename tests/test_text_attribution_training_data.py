@@ -76,7 +76,6 @@ class TrainingDataTests(unittest.TestCase):
 
     def test_rejects_malformed_catalog_rows(self) -> None:
         malformed_rows = (
-            ("row", "not an object", "JSON object"),
             ("enabled", {"enabled": "true"}, "enabled"),
             ("enabled", {"enabled": 1}, "enabled"),
             ("enabled", {"enabled": None}, "enabled"),
@@ -120,6 +119,31 @@ class TrainingDataTests(unittest.TestCase):
                     )
                     with self.assertRaisesRegex(ValueError, message):
                         load_model_catalog(catalog_path)
+
+    def test_ignores_non_object_catalog_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            catalog_path = Path(temporary) / "catalog.json"
+            catalog_path.write_text(
+                json.dumps(
+                    {
+                        "models": [
+                            "legacy-note",
+                            {
+                                "enabled": True,
+                                "family_id": "openai",
+                                "model_id": "gpt-fast-test",
+                                "variant_role": "fast",
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            catalog = load_model_catalog(catalog_path)
+
+        self.assertEqual(len(catalog), 1)
+        self.assertEqual(catalog[0].model_id, "gpt-fast-test")
 
     def test_rejects_malformed_catalog_before_training_data_load(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

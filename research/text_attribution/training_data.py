@@ -63,7 +63,7 @@ def load_model_catalog(path: str | Path) -> tuple[CatalogModel, ...]:
     seen_model_ids: set[str] = set()
     for row in payload["models"]:
         if not isinstance(row, dict):
-            raise ValueError("Model catalog rows must be JSON objects")
+            continue
         enabled = row.get("enabled")
         if enabled is False:
             continue
