@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+import errno
 import json
 import math
 from numbers import Real
@@ -11,6 +12,7 @@ import os
 from pathlib import Path
 import shutil
 import tempfile
+import time
 from typing import Any, Mapping, Sequence
 from uuid import uuid4
 
@@ -51,6 +53,18 @@ _CONFIG_KEYS = {
 }
 _SPLIT_KEYS = {"train_ratio", "validation_ratio", "test_ratio"}
 _MAX_SKLEARN_SEED = 2**32 - 1
+_SPLIT_CLAIM_TIMEOUT_SECONDS = 10.0
+_SPLIT_CLAIM_POLL_SECONDS = 0.01
+_LINK_UNSUPPORTED_ERRNOS = frozenset(
+    value
+    for value in (
+        errno.EPERM,
+        getattr(errno, "ENOTSUP", None),
+        getattr(errno, "EOPNOTSUPP", None),
+        errno.EXDEV,
+    )
+    if value is not None
+)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -240,14 +254,77 @@ def _publish_split_manifest_exclusive(
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())
-        try:
-            os.link(temporary_path, path)
-        except FileExistsError:
+        claim = _acquire_split_creation_claim(path)
+        if claim is None:
             return False
-        _fsync_directory(path.parent)
-        return True
+        try:
+            if path.exists():
+                return False
+            try:
+                os.link(temporary_path, path)
+            except FileExistsError:
+                return False
+            except OSError as error:
+                if error.errno not in _LINK_UNSUPPORTED_ERRNOS:
+                    raise
+                # Some virtual/network filesystems report EXDEV even for
+                # same-directory links. The exclusive claim serializes all
+                # cooperating creators, so same-directory replace remains
+                # atomic without ever exposing the temporary JSON contents.
+                os.replace(temporary_path, path)
+            _fsync_directory(path.parent)
+            return True
+        finally:
+            claim.unlink(missing_ok=True)
+            _fsync_directory(path.parent)
     finally:
         temporary_path.unlink(missing_ok=True)
+
+
+def _acquire_split_creation_claim(path: Path) -> Path | None:
+    """Acquire the portable creator claim, or observe a completed winner.
+
+    A process crash can leave the claim behind. We never guess that such a
+    claim is stale and delete it, because doing so could violate exclusivity.
+    Instead, a bounded wait fails with a diagnostic path after ensuring no
+    partial target manifest is exposed.
+    """
+
+    claim = path.with_name(f".{path.name}.claim")
+    deadline = time.monotonic() + _SPLIT_CLAIM_TIMEOUT_SECONDS
+    while True:
+        if path.exists():
+            return None
+        try:
+            descriptor = os.open(
+                claim,
+                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+                0o600,
+            )
+        except FileExistsError:
+            if path.exists():
+                return None
+            if time.monotonic() >= deadline:
+                raise RuntimeError(
+                    "Timed out waiting for split-manifest creation claim; "
+                    "after confirming no creator is running, remove stale claim: "
+                    f"{claim}"
+                )
+            time.sleep(_SPLIT_CLAIM_POLL_SECONDS)
+            continue
+
+        try:
+            claim_payload = json.dumps(
+                {"pid": os.getpid(), "created_at": time.time()},
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+            os.write(descriptor, claim_payload)
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        _fsync_directory(path.parent)
+        return claim
 
 
 def _create_or_load_split_manifest(

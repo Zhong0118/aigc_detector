@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import redirect_stdout
+import errno
 import io
 import json
 import os
@@ -490,6 +491,83 @@ class FamilyAttributionBaselineCliTests(unittest.TestCase):
                 list(root.glob(f".{split_path.name}.tmp-*")),
                 [],
             )
+
+    def test_split_creation_falls_back_when_hard_links_are_unsupported(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            write_model_catalog(root / "catalog.json")
+            data_path = root / "data.jsonl"
+            write_dataset(data_path, groups=20)
+            dataset = load_training_dataset(data_path, root / "catalog.json")
+            split_path = root / "split.json"
+
+            from scripts import run_family_attribution_baselines as cli
+
+            with patch.object(
+                cli.os,
+                "link",
+                side_effect=OSError(errno.EPERM, "hard links unsupported"),
+            ):
+                manifest = _create_or_load_split_manifest(
+                    split_path,
+                    dataset.samples,
+                    seed=42,
+                    split_config={
+                        "train_ratio": 0.7,
+                        "validation_ratio": 0.15,
+                        "test_ratio": 0.15,
+                    },
+                    persist=True,
+                )
+
+            payload = json.loads(split_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["dataset_fingerprint"], manifest.dataset_fingerprint)
+            self.assertTrue(payload["group_assignments"])
+            self.assertEqual(list(root.glob(f".{split_path.name}.tmp-*")), [])
+            self.assertFalse((root / f".{split_path.name}.claim").exists())
+
+    def test_fallback_split_creation_is_exclusive_under_concurrency(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            write_model_catalog(root / "catalog.json")
+            data_path = root / "data.jsonl"
+            write_dataset(data_path, groups=20)
+            dataset = load_training_dataset(data_path, root / "catalog.json")
+            split_path = root / "split.json"
+            ratios = {
+                "train_ratio": 0.7,
+                "validation_ratio": 0.15,
+                "test_ratio": 0.15,
+            }
+
+            from scripts import run_family_attribution_baselines as cli
+
+            with patch.object(
+                cli.os,
+                "link",
+                side_effect=OSError(errno.ENOTSUP, "hard links unsupported"),
+            ):
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    manifests = list(
+                        executor.map(
+                            lambda _: _create_or_load_split_manifest(
+                                split_path,
+                                dataset.samples,
+                                seed=42,
+                                split_config=ratios,
+                                persist=True,
+                            ),
+                            range(4),
+                        )
+                    )
+
+            payload = json.loads(split_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                {manifest.dataset_fingerprint for manifest in manifests},
+                {payload["dataset_fingerprint"]},
+            )
+            self.assertEqual(list(root.glob(f".{split_path.name}.tmp-*")), [])
+            self.assertFalse((root / f".{split_path.name}.claim").exists())
 
     def test_subset_rerun_removes_stale_model_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
