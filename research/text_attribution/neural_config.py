@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import math
 from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping
@@ -61,6 +62,13 @@ class NeuralScreeningConfig:
     seed: int
     model_catalog: Path
     experiments: Mapping[str, NeuralExperimentConfig]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "experiments",
+            MappingProxyType(dict(self.experiments)),
+        )
 
 
 def load_neural_screening_config(
@@ -275,9 +283,15 @@ def _require_float(
     location: str,
 ) -> float:
     value = values.get(field)
-    if type(value) is not float:
-        raise ValueError(f"{location} {field} must be a float")
-    return value
+    if type(value) not in (int, float):
+        raise ValueError(f"{location} {field} must be an int or float")
+    try:
+        normalized = float(value)
+    except OverflowError as error:
+        raise ValueError(f"{location} {field} must be finite") from error
+    if not math.isfinite(normalized):
+        raise ValueError(f"{location} {field} must be finite")
+    return normalized
 
 
 def _require_bounded_ratio(

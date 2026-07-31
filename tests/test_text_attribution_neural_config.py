@@ -6,7 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from research.text_attribution.neural_config import load_neural_screening_config
+from research.text_attribution.neural_config import (
+    NeuralScreeningConfig,
+    load_neural_screening_config,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -240,3 +243,113 @@ def test_loaded_configuration_is_immutable(tmp_path: Path) -> None:
         config.experiments["N0"].epochs = 7  # type: ignore[misc]
     with pytest.raises(TypeError):
         config.experiments["N3"] = config.experiments["N0"]  # type: ignore[index]
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "learning_rate",
+        "weight_decay",
+        "warmup_ratio",
+        "label_smoothing_factor",
+    ],
+)
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+@pytest.mark.parametrize("location", ["common", "override"])
+def test_non_finite_float_hyperparameters_are_rejected(
+    tmp_path: Path,
+    field: str,
+    value: float,
+    location: str,
+) -> None:
+    payload = _valid_payload()
+    if location == "common":
+        target = payload["common"]
+    else:
+        experiments = payload["experiments"]
+        assert isinstance(experiments, dict)
+        target = experiments["N0"]
+    assert isinstance(target, dict)
+    target[field] = value
+
+    with pytest.raises(ValueError, match=rf"{field}.*finite"):
+        load_neural_screening_config(_write_config(tmp_path, payload))
+
+
+def test_integer_json_numbers_are_normalized_for_common_float_fields(
+    tmp_path: Path,
+) -> None:
+    payload = _valid_payload()
+    common = payload["common"]
+    assert isinstance(common, dict)
+    common.update(
+        learning_rate=1,
+        weight_decay=0,
+        warmup_ratio=0,
+        label_smoothing_factor=0,
+    )
+
+    config = load_neural_screening_config(_write_config(tmp_path, payload))
+
+    for experiment in config.experiments.values():
+        assert experiment.learning_rate == 1.0
+        assert experiment.weight_decay == 0.0
+        assert experiment.warmup_ratio == 0.0
+        assert experiment.label_smoothing_factor == 0.0
+        assert type(experiment.learning_rate) is float
+        assert type(experiment.weight_decay) is float
+        assert type(experiment.warmup_ratio) is float
+        assert type(experiment.label_smoothing_factor) is float
+
+
+def test_integer_json_numbers_are_normalized_for_overridden_float_fields(
+    tmp_path: Path,
+) -> None:
+    payload = _valid_payload()
+    experiments = payload["experiments"]
+    assert isinstance(experiments, dict)
+    n0 = experiments["N0"]
+    assert isinstance(n0, dict)
+    n0.update(
+        learning_rate=1,
+        weight_decay=0,
+        warmup_ratio=0,
+        label_smoothing_factor=0,
+    )
+
+    config = load_neural_screening_config(_write_config(tmp_path, payload))
+    experiment = config.experiments["N0"]
+
+    assert experiment.learning_rate == 1.0
+    assert experiment.weight_decay == 0.0
+    assert experiment.warmup_ratio == 0.0
+    assert experiment.label_smoothing_factor == 0.0
+    assert type(experiment.learning_rate) is float
+    assert type(experiment.weight_decay) is float
+    assert type(experiment.warmup_ratio) is float
+    assert type(experiment.label_smoothing_factor) is float
+
+
+def test_direct_construction_defensively_copies_experiments(
+    tmp_path: Path,
+) -> None:
+    loaded = load_neural_screening_config(
+        _write_config(tmp_path, _valid_payload())
+    )
+    external = dict(loaded.experiments)
+    original_n0 = external["N0"]
+    config = NeuralScreeningConfig(
+        source_path=loaded.source_path,
+        schema_version=loaded.schema_version,
+        run_id=loaded.run_id,
+        seed=loaded.seed,
+        model_catalog=loaded.model_catalog,
+        experiments=external,
+    )
+
+    external["N0"] = external["N1"]
+
+    assert config.experiments["N0"] is original_n0
+    assert config.experiments is not external
+    with pytest.raises(TypeError):
+        config.experiments["N0"] = external["N1"]  # type: ignore[index]
