@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import argparse
-import inspect
+from importlib import metadata
 import json
 import os
+import platform
 from pathlib import Path
-import shutil
+import sys
 import tempfile
 from typing import Any, Sequence
+from uuid import uuid4
 
 import numpy as np
 
@@ -62,30 +64,47 @@ def _build_training_request(
     family_labels: tuple[str, ...],
     output_dir: Path,
     seed: int,
-    device: str,
     hf_cache: Path | None,
     bf16: bool,
     smoke_test: bool,
     resume_from_checkpoint: Path | None,
 ) -> Any:
-    values: dict[str, Any] = {
-        "experiment": experiment,
-        "train_samples": train_samples,
-        "validation_samples": validation_samples,
-        "family_labels": family_labels,
-        "output_dir": output_dir,
-        "seed": seed,
-        "hf_cache": hf_cache,
-        "bf16": bf16,
-        "smoke_test": smoke_test,
-        "resume_from_checkpoint": resume_from_checkpoint,
-    }
-    parameters = inspect.signature(request_type).parameters.values()
-    if any(parameter.kind is inspect.Parameter.VAR_KEYWORD for parameter in parameters):
-        values["device"] = device
-    elif "device" in inspect.signature(request_type).parameters:
-        values["device"] = device
-    return request_type(**values)
+    return request_type(
+        experiment=experiment,
+        train_samples=train_samples,
+        validation_samples=validation_samples,
+        family_labels=family_labels,
+        output_dir=output_dir,
+        seed=seed,
+        hf_cache=hf_cache,
+        bf16=bf16,
+        smoke_test=smoke_test,
+        resume_from_checkpoint=resume_from_checkpoint,
+    )
+
+
+def _effective_runtime(
+    requested_device: str,
+    *,
+    smoke_test: bool,
+    configured_bf16: bool,
+) -> tuple[str, bool, int, bool]:
+    if smoke_test:
+        return "cpu", False, 2, True
+    if requested_device == "cpu":
+        return "cpu", False, -1, True
+    if requested_device in {"cuda", "cuda:0"}:
+        return "cuda:0", configured_bf16, -1, False
+    if requested_device.startswith("cuda:") and requested_device[5:].isdigit():
+        return "cuda:0", configured_bf16, -1, False
+    raise ValueError("device must be 'cpu', 'cuda', or 'cuda:<index>'")
+
+
+def _dependency_version(distribution: str) -> str:
+    try:
+        return metadata.version(distribution)
+    except metadata.PackageNotFoundError:
+        return "not-installed"
 
 
 def _configure_training_device_environment(
@@ -117,6 +136,37 @@ def _restore_cuda_visible_devices(changed: bool, previous: str | None) -> None:
         os.environ.pop("CUDA_VISIBLE_DEVICES", None)
     else:
         os.environ["CUDA_VISIBLE_DEVICES"] = previous
+
+
+def _preserve_failed_run(staging: Path, output_dir: Path, error: BaseException) -> Path:
+    failed = output_dir.with_name(f".{output_dir.name}.failed-{uuid4().hex}")
+    evidence_path = staging
+    try:
+        os.replace(staging, failed)
+        evidence_path = failed
+        try:
+            (failed / "FAILED.json").write_text(
+                json.dumps(
+                    {
+                        "status": "failed",
+                        "error_type": type(error).__name__,
+                        "error": str(error),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        except OSError:
+            pass
+    except OSError:
+        pass
+    message = f"Failed run artifacts preserved at: {evidence_path}"
+    if hasattr(error, "add_note"):
+        error.add_note(message)
+    print(message, file=sys.stderr)
+    return evidence_path
 
 
 def _predict_saved_model(
@@ -189,6 +239,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     manifest = load_split_manifest(split_path)
     splits = apply_split_manifest(dataset.samples, manifest)
+    configured_bf16 = experiment.bf16 and not args.no_bf16
+    effective_device, effective_bf16, max_steps, use_cpu = _effective_runtime(
+        args.device,
+        smoke_test=args.smoke_test,
+        configured_bf16=configured_bf16,
+    )
+    family_to_id = {family: index for index, family in enumerate(dataset.family_labels)}
+    id_to_family = {str(index): family for family, index in family_to_id.items()}
 
     summary: dict[str, Any] = {
         "schema_version": config.schema_version,
@@ -204,15 +262,40 @@ def main(argv: Sequence[str] | None = None) -> int:
         "training_seed": seed,
         "experiment": args.experiment,
         "model": experiment.model_id,
+        "model_name": experiment.model_id,
+        "revision": getattr(experiment, "revision", None),
         "max_length": experiment.max_length,
+        "family_to_id": family_to_id,
+        "id_to_family": id_to_family,
+        "training": {
+            "max_length": experiment.max_length,
+            "per_device_train_batch_size": (experiment.per_device_train_batch_size),
+            "learning_rate": experiment.learning_rate,
+            "epochs": experiment.epochs,
+            "weight_decay": experiment.weight_decay,
+            "warmup_ratio": experiment.warmup_ratio,
+            "label_smoothing_factor": experiment.label_smoothing_factor,
+            "gradient_accumulation_steps": (experiment.gradient_accumulation_steps),
+            "early_stopping_patience": experiment.early_stopping_patience,
+            "save_total_limit": experiment.save_total_limit,
+            "bf16": effective_bf16,
+            "max_steps": max_steps,
+            "use_cpu": use_cpu,
+        },
         "config": str(config.source_path),
         "catalog": str(catalog_path),
         "smoke_test": args.smoke_test,
         "evaluate_test": args.evaluate_test,
         "resume_from_checkpoint": args.resume_from_checkpoint,
-        "device": args.device,
+        "requested_device": args.device,
+        "device": effective_device,
         "hf_cache": args.hf_cache,
-        "bf16": experiment.bf16 and not args.no_bf16,
+        "bf16": effective_bf16,
+        "versions": {
+            "python": platform.python_version(),
+            "torch": _dependency_version("torch"),
+            "transformers": _dependency_version("transformers"),
+        },
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     if args.dry_run:
@@ -268,9 +351,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             family_labels=dataset.family_labels,
             output_dir=staging,
             seed=seed,
-            device=args.device,
             hf_cache=None if args.hf_cache is None else Path(args.hf_cache),
-            bf16=experiment.bf16 and not args.no_bf16,
+            bf16=effective_bf16,
             smoke_test=args.smoke_test,
             resume_from_checkpoint=(
                 None
@@ -332,13 +414,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             predictions=records,
         )
         os.replace(staging, output_dir)
+    except BaseException as error:
+        if staging.exists():
+            _preserve_failed_run(staging, output_dir, error)
+        raise
     finally:
         _restore_cuda_visible_devices(
             device_environment_changed,
             previous_cuda_visible_devices,
         )
-        if staging.exists():
-            shutil.rmtree(staging, ignore_errors=True)
     return 0
 
 

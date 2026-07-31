@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr
 from dataclasses import dataclass
 import io
 import json
+import os
 from pathlib import Path
+import subprocess
 from types import ModuleType
 import sys
 import tempfile
@@ -13,6 +15,7 @@ from unittest.mock import patch
 
 import numpy as np
 
+from research.text_attribution.neural_training import NeuralTrainingRequest
 from research.text_attribution.split_manifest import (
     create_split_manifest,
     save_split_manifest,
@@ -110,17 +113,17 @@ class FakeTrainingResult:
     best_checkpoint: str | None
 
 
-class FakeTrainingRequest:
-    def __init__(self, **kwargs: object) -> None:
-        self.__dict__.update(kwargs)
-
-
-def fake_training_module(captured: list[FakeTrainingRequest]) -> ModuleType:
+def fake_training_module(
+    captured: list[NeuralTrainingRequest],
+    captured_cuda_visible_devices: list[str | None] | None = None,
+) -> ModuleType:
     module = ModuleType("research.text_attribution.neural_training")
-    module.NeuralTrainingRequest = FakeTrainingRequest
+    module.NeuralTrainingRequest = NeuralTrainingRequest
 
-    def train(request: FakeTrainingRequest) -> FakeTrainingResult:
+    def train(request: NeuralTrainingRequest) -> FakeTrainingResult:
         captured.append(request)
+        if captured_cuda_visible_devices is not None:
+            captured_cuda_visible_devices.append(os.environ.get("CUDA_VISIBLE_DEVICES"))
         request.output_dir.mkdir(parents=True, exist_ok=True)
         model_dir = request.output_dir / "model"
         tokenizer_dir = request.output_dir / "tokenizer"
@@ -155,30 +158,41 @@ def fake_training_module(captured: list[FakeTrainingRequest]) -> ModuleType:
 
 class NeuralFamilyAttributionCliTests(unittest.TestCase):
     def test_dry_run_does_not_import_training_or_create_output(self) -> None:
-        from scripts.run_family_attribution_neural import main
-
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             config_path, data_path, split_path = prepare_inputs(root)
-            stdout = io.StringIO()
-            with (
-                patch.dict(
-                    sys.modules,
-                    {"research.text_attribution.neural_training": None},
-                ),
-                redirect_stdout(stdout),
-            ):
-                exit_code = main(
-                    [
-                        *common_args(root, config_path, data_path, split_path),
-                        "--dry-run",
-                    ]
-                )
+            argv = [
+                *common_args(root, config_path, data_path, split_path),
+                "--dry-run",
+            ]
+            program = f"""
+import builtins
+import json
+import sys
+real_import = builtins.__import__
+def guarded_import(name, *args, **kwargs):
+    if name == "transformers" or name.startswith("transformers."):
+        raise AssertionError("dry-run imported transformers")
+    if name == "research.text_attribution.neural_training":
+        raise AssertionError("dry-run imported neural_training")
+    return real_import(name, *args, **kwargs)
+builtins.__import__ = guarded_import
+from scripts.run_family_attribution_neural import main
+raise SystemExit(main({argv!r}))
+"""
+            completed = subprocess.run(
+                [sys.executable, "-c", program],
+                cwd=Path(__file__).resolve().parents[1],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
 
-            summary = json.loads(stdout.getvalue())
-            self.assertEqual(exit_code, 0)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            summary = json.loads(completed.stdout)
             self.assertEqual(summary["experiment"], "N0")
-            self.assertEqual(summary["model"], "test/n0")
+            self.assertEqual(summary["model_name"], "test/n0")
+            self.assertIsNone(summary["revision"])
             self.assertEqual(summary["max_length"], 128)
             self.assertEqual(
                 Path(summary["catalog"]),
@@ -224,7 +238,7 @@ class NeuralFamilyAttributionCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             config_path, data_path, split_path = prepare_inputs(root)
-            captured: list[FakeTrainingRequest] = []
+            captured: list[NeuralTrainingRequest] = []
             module = fake_training_module(captured)
             with patch.dict(
                 sys.modules,
@@ -259,10 +273,84 @@ class NeuralFamilyAttributionCliTests(unittest.TestCase):
             self.assertFalse(run_config["evaluate_test"])
             self.assertEqual(run_config["experiment"], "N0")
             self.assertEqual(
+                run_config["family_to_id"],
+                {"claude": 0, "openai": 1},
+            )
+            self.assertEqual(
+                run_config["id_to_family"],
+                {"0": "claude", "1": "openai"},
+            )
+            self.assertEqual(
+                run_config["training"],
+                {
+                    "max_length": 128,
+                    "per_device_train_batch_size": 8,
+                    "learning_rate": 2e-5,
+                    "epochs": 3,
+                    "weight_decay": 0.01,
+                    "warmup_ratio": 0.1,
+                    "label_smoothing_factor": 0.05,
+                    "gradient_accumulation_steps": 2,
+                    "early_stopping_patience": 2,
+                    "save_total_limit": 1,
+                    "bf16": True,
+                    "max_steps": -1,
+                    "use_cpu": False,
+                },
+            )
+            self.assertEqual(run_config["device"], "cuda:0")
+            self.assertTrue(run_config["bf16"])
+            self.assertEqual(
+                set(run_config["versions"]),
+                {"python", "torch", "transformers"},
+            )
+            self.assertTrue(all(run_config["versions"].values()))
+            self.assertEqual(
                 json.loads((output / "trainer_history.json").read_text()),
                 [{"epoch": 1.0, "eval_macro_f1": 1.0}],
             )
             self.assertTrue((output / "overall_metrics.png").is_file())
+
+    def test_smoke_run_records_effective_runtime_and_balanced_subsets(self) -> None:
+        from scripts.run_family_attribution_neural import main
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path, data_path, split_path = prepare_inputs(root)
+            captured: list[NeuralTrainingRequest] = []
+            module = fake_training_module(captured)
+            with patch.dict(
+                sys.modules,
+                {"research.text_attribution.neural_training": module},
+            ):
+                main(
+                    [
+                        *common_args(root, config_path, data_path, split_path),
+                        "--smoke-test",
+                    ]
+                )
+
+            request = captured[0]
+            self.assertFalse(request.bf16)
+            train_counts = {
+                model: sum(sample.model_id == model for sample in request.train_samples)
+                for model in {sample.model_id for sample in request.train_samples}
+            }
+            validation_counts = {
+                model: sum(
+                    sample.model_id == model for sample in request.validation_samples
+                )
+                for model in {sample.model_id for sample in request.validation_samples}
+            }
+            self.assertTrue(all(count <= 2 for count in train_counts.values()))
+            self.assertTrue(all(count <= 1 for count in validation_counts.values()))
+            run_config = json.loads((root / "output" / "run_config.json").read_text())
+            self.assertEqual(run_config["requested_device"], "cuda:0")
+            self.assertEqual(run_config["device"], "cpu")
+            self.assertFalse(run_config["bf16"])
+            self.assertFalse(run_config["training"]["bf16"])
+            self.assertEqual(run_config["training"]["max_steps"], 2)
+            self.assertTrue(run_config["training"]["use_cpu"])
 
     def test_existing_output_is_refused_without_mutation(self) -> None:
         from scripts.run_family_attribution_neural import main
@@ -285,21 +373,48 @@ class NeuralFamilyAttributionCliTests(unittest.TestCase):
             root = Path(temporary)
             config_path, data_path, split_path = prepare_inputs(root)
             module = ModuleType("research.text_attribution.neural_training")
-            module.NeuralTrainingRequest = FakeTrainingRequest
+            module.NeuralTrainingRequest = NeuralTrainingRequest
 
-            def fail_training(_request: FakeTrainingRequest) -> None:
+            def fail_training(request: NeuralTrainingRequest) -> None:
+                checkpoint = request.output_dir / "checkpoints" / "checkpoint-1"
+                checkpoint.mkdir(parents=True)
+                (checkpoint / "trainer_state.json").write_text(
+                    "{}",
+                    encoding="utf-8",
+                )
+                (request.output_dir / "training.log").write_text(
+                    "last useful log",
+                    encoding="utf-8",
+                )
                 raise RuntimeError("injected training failure")
 
             module.train_neural_experiment = fail_training
+            stderr = io.StringIO()
             with (
                 patch.dict(
                     sys.modules,
                     {"research.text_attribution.neural_training": module},
                 ),
-                self.assertRaisesRegex(RuntimeError, "training failure"),
+                redirect_stderr(stderr),
             ):
-                main(common_args(root, config_path, data_path, split_path))
+                with self.assertRaisesRegex(RuntimeError, "training failure"):
+                    main(common_args(root, config_path, data_path, split_path))
             self.assertFalse((root / "output").exists())
+            failed = list(root.glob(".output.failed-*"))
+            self.assertEqual(len(failed), 1)
+            self.assertTrue(
+                (
+                    failed[0] / "checkpoints" / "checkpoint-1" / "trainer_state.json"
+                ).is_file()
+            )
+            self.assertEqual(
+                (failed[0] / "training.log").read_text(),
+                "last useful log",
+            )
+            self.assertIn(
+                str(failed[0]),
+                stderr.getvalue(),
+            )
             self.assertEqual(list(root.glob(".output.run-*")), [])
 
     def test_cli_overrides_are_passed_to_training_request(self) -> None:
@@ -314,8 +429,12 @@ class NeuralFamilyAttributionCliTests(unittest.TestCase):
             resume.mkdir()
             (resume / "trainer_state.json").write_text("{}", encoding="utf-8")
             cache = root / "hf-cache"
-            captured: list[FakeTrainingRequest] = []
-            module = fake_training_module(captured)
+            captured: list[NeuralTrainingRequest] = []
+            captured_cuda_visible_devices: list[str | None] = []
+            module = fake_training_module(
+                captured,
+                captured_cuda_visible_devices,
+            )
             args = common_args(root, config_path, data_path, split_path)
             args[args.index("N0")] = "N1"
             args.extend(
@@ -325,7 +444,7 @@ class NeuralFamilyAttributionCliTests(unittest.TestCase):
                     "--seed",
                     "99",
                     "--device",
-                    "cpu",
+                    "cuda:7",
                     "--hf-cache",
                     str(cache),
                     "--no-bf16",
@@ -342,10 +461,69 @@ class NeuralFamilyAttributionCliTests(unittest.TestCase):
             request = captured[0]
             self.assertEqual(request.experiment.model_id, "test/n1")
             self.assertEqual(request.seed, 99)
-            self.assertEqual(request.device, "cpu")
+            self.assertFalse(hasattr(request, "device"))
+            self.assertEqual(captured_cuda_visible_devices, ["7"])
             self.assertEqual(request.hf_cache, cache)
             self.assertFalse(request.bf16)
             self.assertEqual(request.resume_from_checkpoint, resume)
+            run_config = json.loads((root / "output" / "run_config.json").read_text())
+            self.assertEqual(run_config["requested_device"], "cuda:7")
+            self.assertEqual(run_config["device"], "cuda:0")
+
+    def test_explicit_test_evaluation_adds_test_metrics_and_predictions(self) -> None:
+        from scripts import run_family_attribution_neural as cli
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path, data_path, split_path = prepare_inputs(root)
+            captured: list[NeuralTrainingRequest] = []
+            module = fake_training_module(captured)
+
+            def predict_test(**kwargs: object) -> np.ndarray:
+                samples = kwargs["samples"]
+                return np.asarray(
+                    [
+                        [1.0, 0.0] if sample.family_id == "claude" else [0.0, 1.0]
+                        for sample in samples
+                    ]
+                )
+
+            with (
+                patch.dict(
+                    sys.modules,
+                    {"research.text_attribution.neural_training": module},
+                ),
+                patch.object(
+                    cli,
+                    "_predict_saved_model",
+                    side_effect=predict_test,
+                ) as predictor,
+            ):
+                cli.main(
+                    [
+                        *common_args(root, config_path, data_path, split_path),
+                        "--evaluate-test",
+                    ]
+                )
+
+            output = root / "output"
+            metrics = json.loads((output / "metrics.json").read_text())
+            self.assertEqual(set(metrics["N0"]), {"validation", "test"})
+            predictions = [
+                json.loads(line)
+                for line in (output / "predictions.jsonl").read_text().splitlines()
+            ]
+            self.assertEqual(
+                {row["split"] for row in predictions},
+                {"validation", "test"},
+            )
+            predictor.assert_called_once()
+            call = predictor.call_args.kwargs
+            self.assertEqual(call["model_dir"], captured[0].output_dir / "model")
+            self.assertEqual(
+                call["tokenizer_dir"],
+                captured[0].output_dir / "tokenizer",
+            )
 
 
 if __name__ == "__main__":
