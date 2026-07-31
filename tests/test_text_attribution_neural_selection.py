@@ -484,6 +484,37 @@ class NeuralSelectionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "row.*sum"):
                 select_neural_experiments([candidate])
 
+    def test_allows_zero_confusion_row_for_zero_support_family(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(Path(temporary), "N0")
+            run_config_path = candidate / "run_config.json"
+            run_config = json.loads(run_config_path.read_text(encoding="utf-8"))
+            run_config["splits"]["validation"] = 5
+            run_config_path.write_text(json.dumps(run_config), encoding="utf-8")
+
+            metrics_path = candidate / "metrics.json"
+            payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            validation = payload["N0"]["validation"]
+            validation["overall"]["support"] = 5
+            validation["per_family"]["beta"]["support"] = 0
+            validation["confusion_matrix"] = [[1.0, 0.0], [0.0, 0.0]]
+            validation["per_model"] = {
+                "model-a": {
+                    **validation["per_model"]["model-a"],
+                    "support": 5,
+                }
+            }
+            validation["subgroups"]["language"]["en"]["support"] = 5
+            metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            summary = select_neural_experiments([candidate])
+
+            self.assertEqual(summary.top_two, ("N0",))
+
     def test_rejects_per_model_support_total_mismatch(self) -> None:
         from research.text_attribution.neural_selection import (
             select_neural_experiments,

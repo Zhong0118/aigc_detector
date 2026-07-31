@@ -460,6 +460,7 @@ def _selection_metrics(
             f"{prefix}.per_family labels must match the family label map"
         )
     family_f1_values: list[float] = []
+    family_supports: list[int] = []
     family_support = 0
     for family, _ in family_label_map:
         diagnostics = _required_mapping(
@@ -481,10 +482,12 @@ def _selection_metrics(
             )
             if metric == "f1-score":
                 family_f1_values.append(value)
-        family_support += _support(
+        support = _support(
             diagnostics,
             f"{prefix}.per_family.{family}",
         )
+        family_supports.append(support)
+        family_support += support
     if overall_support != family_support:
         raise ValueError(
             f"{prefix} support totals are inconsistent"
@@ -497,7 +500,7 @@ def _selection_metrics(
 
     _validate_confusion_matrix(
         row["confusion_matrix"],
-        len(family_label_map),
+        family_supports,
         prefix,
     )
     _validate_per_model(row["per_model"], overall_support, prefix)
@@ -507,9 +510,10 @@ def _selection_metrics(
 
 def _validate_confusion_matrix(
     value: Any,
-    family_count: int,
+    family_supports: Sequence[int],
     path: str,
 ) -> None:
+    family_count = len(family_supports)
     if (
         not isinstance(value, list)
         or len(value) != family_count
@@ -537,14 +541,15 @@ def _validate_confusion_matrix(
                     f"{path}.confusion_matrix values must be within [0, 1]"
                 )
             row_total += normalized
+        expected_total = 1.0 if family_supports[row_index] > 0 else 0.0
         if not math.isclose(
             row_total,
-            1.0,
+            expected_total,
             rel_tol=0.0,
             abs_tol=1e-6,
         ):
             raise ValueError(
-                f"{path}.confusion_matrix row sums must be approximately 1"
+                f"{path}.confusion_matrix row sums must match family support"
             )
 
 
