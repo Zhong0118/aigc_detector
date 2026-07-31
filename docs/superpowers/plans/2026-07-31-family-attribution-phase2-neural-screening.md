@@ -22,7 +22,9 @@
 | `scripts/run_family_attribution_neural.py` | Dry-run, smoke and full single-experiment entry point |
 | `scripts/select_family_attribution_neural.py` | N0/N1/N2 summary CLI |
 | `scripts/run_attribution_phase2_screening.sh` | Two-GPU server orchestration |
+| `scripts/package_attribution_phase2_server.py` | Secret-free project-root overlay ZIP builder |
 | `docs/ATTRIBUTION_PHASE2_NEURAL_RUNBOOK.md` | Upload, environment and server commands |
+| `requirements-attribution-phase2.txt` | Minimal Phase2 server dependencies |
 | `tests/test_text_attribution_neural_config.py` | Configuration contract |
 | `tests/test_text_attribution_neural_data.py` | Dataset and sampling contract |
 | `tests/test_text_attribution_neural_training.py` | Tiny local model training contract |
@@ -648,7 +650,9 @@ git commit -m "feat: select neural attribution backbones"
 
 **Files:**
 - Create: `scripts/run_attribution_phase2_screening.sh`
+- Create: `scripts/package_attribution_phase2_server.py`
 - Create: `docs/ATTRIBUTION_PHASE2_NEURAL_RUNBOOK.md`
+- Create: `requirements-attribution-phase2.txt`
 - Create: `tests/test_attribution_phase2_server_package.py`
 
 - [ ] **Step 1: Write failing package contract test**
@@ -708,7 +712,24 @@ The runbook includes:
 - validation result download list;
 - no-test warning.
 
-- [ ] **Step 5: Run package test**
+- [ ] **Step 5: Build the uploadable server package**
+
+The cross-platform Python packager creates a project-root overlay ZIP containing
+the necessary research modules, Phase2 scripts, configs, docs, requirements and
+tests. It writes a manifest with source commit, file sizes and SHA256 hashes.
+It rejects secret-like content and never includes `.git`, `.env*`, raw data,
+outputs, caches, models, checkpoints or weight files.
+
+Run:
+
+```bash
+python -m scripts.package_attribution_phase2_server \
+  --output dist/aigc-detector-attribution-phase2-server.zip
+```
+
+The generated ZIP is a delivery artifact and must not be committed.
+
+- [ ] **Step 6: Run package test**
 
 Run:
 
@@ -718,7 +739,7 @@ python -m pytest tests/test_attribution_phase2_server_package.py -q
 
 Expected: all tests pass.
 
-- [ ] **Step 6: Run full relevant suite**
+- [ ] **Step 7: Run full relevant suite**
 
 Run:
 
@@ -740,7 +761,7 @@ python -m pytest \
 
 Expected: all tests and subtests pass with zero failures.
 
-- [ ] **Step 7: Run static verification**
+- [ ] **Step 8: Run static verification**
 
 Run:
 
@@ -751,10 +772,10 @@ git diff --check
 
 Expected: compilation succeeds and `git diff --check` reports nothing.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add scripts/run_attribution_phase2_screening.sh docs/ATTRIBUTION_PHASE2_NEURAL_RUNBOOK.md tests/test_attribution_phase2_server_package.py
+git add scripts/run_attribution_phase2_screening.sh scripts/package_attribution_phase2_server.py requirements-attribution-phase2.txt docs/ATTRIBUTION_PHASE2_NEURAL_RUNBOOK.md tests/test_attribution_phase2_server_package.py
 git commit -m "docs: package phase2 neural screening for server"
 ```
 
