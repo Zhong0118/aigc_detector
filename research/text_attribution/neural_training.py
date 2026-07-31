@@ -2,25 +2,54 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass
 import importlib
 import inspect
+import json
 import math
+import os
 from pathlib import Path
+import tempfile
 from typing import Any
 
 import numpy as np
+from packaging.version import InvalidVersion, Version
 import torch
 from sklearn.metrics import accuracy_score, f1_score
 from torch.utils.data import WeightedRandomSampler
 
-# Transformers 4.39 eagerly imports an installed PEFT from Trainer. If that
-# optional package targets a newer Transformers release, plain Trainer would
-# otherwise become unusable even though this engine does not use PEFT.
+from transformers import __version__ as _transformers_version
 from transformers.utils import import_utils as _transformers_import_utils
 
-if _transformers_import_utils.is_peft_available():
+
+def _is_transformers_439(version: str) -> bool:
+    try:
+        release = Version(version).release
+    except InvalidVersion:
+        return False
+    return release[:2] == (4, 39)
+
+
+def _needs_legacy_accelerator_adapter(
+    transformers_version: str,
+    accelerator_parameters: Collection[str],
+) -> bool:
+    """Identify only the Transformers 4.39 / Accelerate 1.x API mismatch."""
+
+    return (
+        _is_transformers_439(transformers_version)
+        and "dispatch_batches" not in accelerator_parameters
+    )
+
+
+# Transformers 4.39 eagerly imports installed PEFT from Trainer. Only suppress
+# that optional integration when its real import is incompatible; newer
+# Transformers versions keep their normal import behavior untouched.
+if (
+    _is_transformers_439(_transformers_version)
+    and _transformers_import_utils.is_peft_available()
+):
     try:
         importlib.import_module("peft")
     except ImportError:
@@ -47,7 +76,10 @@ from research.text_attribution.neural_data import (
 from research.text_attribution.training_data import AttributionSample
 
 
-if "dispatch_batches" not in inspect.signature(Accelerator.__init__).parameters:
+if _needs_legacy_accelerator_adapter(
+    _transformers_version,
+    inspect.signature(Accelerator.__init__).parameters,
+):
 
     class _LegacyKwargCompatibleAccelerator(Accelerator):
         """Translate Transformers 4.39 dataloader kwargs for Accelerate 1.x."""
@@ -242,6 +274,10 @@ def train_neural_experiment(
     history = tuple(
         _json_safe_mapping(row) for row in trainer.state.log_history
     )
+    _write_json_atomically(
+        request.output_dir / "trainer_history.json",
+        list(history),
+    )
     return NeuralTrainingResult(
         model_dir=model_dir,
         tokenizer_dir=tokenizer_dir,
@@ -259,6 +295,7 @@ def _validate_request(
         raise TypeError("request must be a NeuralTrainingRequest")
     if not isinstance(request.experiment, NeuralExperimentConfig):
         raise TypeError("experiment must be a NeuralExperimentConfig")
+    _validate_experiment(request.experiment)
     if not isinstance(request.train_samples, tuple) or not request.train_samples:
         raise ValueError("train_samples must be a non-empty tuple")
     if (
@@ -300,9 +337,60 @@ def _validate_request(
     if request.resume_from_checkpoint is not None:
         if not isinstance(request.resume_from_checkpoint, Path):
             raise TypeError("resume_from_checkpoint must be a Path or None")
-        if not request.resume_from_checkpoint.exists():
-            raise ValueError("resume_from_checkpoint must exist")
+        if not request.resume_from_checkpoint.is_dir():
+            raise ValueError(
+                "resume_from_checkpoint must be an existing checkpoint directory"
+            )
+        trainer_state = request.resume_from_checkpoint / "trainer_state.json"
+        if not trainer_state.is_file():
+            raise ValueError(
+                "resume_from_checkpoint must contain trainer_state.json"
+            )
     return family_to_id, id_to_family
+
+
+def _validate_experiment(experiment: NeuralExperimentConfig) -> None:
+    if not isinstance(experiment.model_id, str) or not experiment.model_id.strip():
+        raise ValueError("experiment model_id must be a non-empty string")
+
+    positive_integer_fields = (
+        "max_length",
+        "per_device_train_batch_size",
+        "epochs",
+        "gradient_accumulation_steps",
+        "early_stopping_patience",
+        "save_total_limit",
+    )
+    for field in positive_integer_fields:
+        value = getattr(experiment, field)
+        if type(value) is not int or value <= 0:
+            raise ValueError(f"experiment {field} must be a positive integer")
+
+    learning_rate = _finite_number(experiment, "learning_rate")
+    if learning_rate <= 0:
+        raise ValueError("experiment learning_rate must be positive")
+    weight_decay = _finite_number(experiment, "weight_decay")
+    if weight_decay < 0:
+        raise ValueError("experiment weight_decay must be non-negative")
+    for field in ("warmup_ratio", "label_smoothing_factor"):
+        value = _finite_number(experiment, field)
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(f"experiment {field} must be between 0 and 1")
+    if type(experiment.bf16) is not bool:
+        raise ValueError("experiment bf16 must be a bool")
+
+
+def _finite_number(
+    experiment: NeuralExperimentConfig,
+    field: str,
+) -> float:
+    value = getattr(experiment, field)
+    if type(value) not in (int, float):
+        raise ValueError(f"experiment {field} must be a finite number")
+    normalized = float(value)
+    if not math.isfinite(normalized):
+        raise ValueError(f"experiment {field} must be a finite number")
+    return normalized
 
 
 def _validate_split_families(
@@ -353,6 +441,7 @@ def _build_training_arguments(
         ),
         label_smoothing_factor=request.experiment.label_smoothing_factor,
         bf16=False if smoke else request.bf16,
+        use_cpu=smoke,
         save_total_limit=request.experiment.save_total_limit,
         seed=request.seed,
         data_seed=request.seed,
@@ -412,3 +501,33 @@ def _json_safe_value(value: Any) -> Any:
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     return str(value)
+
+
+def _write_json_atomically(destination: Path, payload: Any) -> None:
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=destination.parent,
+        prefix=f".{destination.name}.",
+        suffix=".tmp",
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(
+            descriptor,
+            "w",
+            encoding="utf-8",
+            newline="\n",
+        ) as handle:
+            json.dump(
+                payload,
+                handle,
+                ensure_ascii=False,
+                allow_nan=False,
+                indent=2,
+            )
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, destination)
+    except BaseException:
+        temporary_path.unlink(missing_ok=True)
+        raise

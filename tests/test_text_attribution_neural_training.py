@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import importlib
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -286,6 +288,7 @@ def test_train_neural_experiment_passes_resume_checkpoint_explicitly(
     _write_tiny_bert(model_dir)
     checkpoint = tmp_path / "checkpoint"
     checkpoint.mkdir()
+    (checkpoint / "trainer_state.json").write_text("{}", encoding="utf-8")
     request = _request(
         module,
         tmp_path,
@@ -309,6 +312,122 @@ def test_train_neural_experiment_passes_resume_checkpoint_explicitly(
     train_mock.assert_called_once_with(resume_from_checkpoint=str(checkpoint))
 
 
+@pytest.mark.parametrize(
+    ("field", "invalid_value"),
+    [
+        ("model_id", " "),
+        ("max_length", 0),
+        ("per_device_train_batch_size", True),
+        ("epochs", -1),
+        ("gradient_accumulation_steps", 0),
+        ("early_stopping_patience", False),
+        ("save_total_limit", 0),
+        ("learning_rate", 0.0),
+        ("learning_rate", np.nan),
+        ("weight_decay", -0.1),
+        ("weight_decay", np.inf),
+        ("warmup_ratio", -0.1),
+        ("warmup_ratio", 1.1),
+        ("label_smoothing_factor", np.nan),
+        ("label_smoothing_factor", True),
+        ("bf16", 1),
+    ],
+)
+def test_validate_request_rechecks_direct_experiment_config(
+    tmp_path: Path,
+    field: str,
+    invalid_value,
+) -> None:
+    module = _training_module()
+    model_dir = tmp_path / "unused-model"
+    invalid_experiment = replace(
+        _experiment(model_dir),
+        **{field: invalid_value},
+    )
+    request = _request(
+        module,
+        tmp_path,
+        model_dir,
+        experiment=invalid_experiment,
+    )
+
+    with pytest.raises(ValueError, match=field):
+        module._validate_request(request)
+
+
+def test_validate_request_rejects_resume_file(tmp_path: Path) -> None:
+    module = _training_module()
+    resume_file = tmp_path / "checkpoint-file"
+    resume_file.write_text("not a checkpoint", encoding="utf-8")
+    request = _request(
+        module,
+        tmp_path,
+        tmp_path / "unused-model",
+        resume_from_checkpoint=resume_file,
+    )
+
+    with pytest.raises(ValueError, match="checkpoint.*directory"):
+        module._validate_request(request)
+
+
+def test_validate_request_requires_trainer_state_checkpoint_marker(
+    tmp_path: Path,
+) -> None:
+    module = _training_module()
+    resume_dir = tmp_path / "checkpoint"
+    resume_dir.mkdir()
+    request = _request(
+        module,
+        tmp_path,
+        tmp_path / "unused-model",
+        resume_from_checkpoint=resume_dir,
+    )
+
+    with pytest.raises(ValueError, match="trainer_state.json"):
+        module._validate_request(request)
+
+
+def test_smoke_arguments_force_cpu_and_disable_training_evaluation(
+    tmp_path: Path,
+) -> None:
+    module = _training_module()
+    request = _request(module, tmp_path, tmp_path / "unused-model")
+
+    arguments = module._build_training_arguments(
+        request,
+        request.output_dir / "checkpoints",
+    )
+
+    assert arguments.max_steps == 2
+    assert arguments.device.type == "cpu"
+    assert arguments.evaluation_strategy.value == "no"
+    assert arguments.save_strategy.value == "no"
+    assert arguments.load_best_model_at_end is False
+    assert arguments.bf16 is False
+
+
+def test_accelerator_adapter_gate_never_targets_transformers_450() -> None:
+    module = _training_module()
+    accelerate_1x_parameters = {
+        "self",
+        "dataloader_config",
+        "gradient_accumulation_plugin",
+    }
+
+    assert module._needs_legacy_accelerator_adapter(
+        "4.39.3",
+        accelerate_1x_parameters,
+    )
+    assert not module._needs_legacy_accelerator_adapter(
+        "4.50.3",
+        accelerate_1x_parameters,
+    )
+    assert not module._needs_legacy_accelerator_adapter(
+        "4.39.3",
+        accelerate_1x_parameters | {"dispatch_batches"},
+    )
+
+
 def test_smoke_training_runs_offline_and_saves_reloadable_artifacts(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -316,6 +435,7 @@ def test_smoke_training_runs_offline_and_saves_reloadable_artifacts(
     module = _training_module()
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
     monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "")
     model_dir = tmp_path / "tiny-model"
     _write_tiny_bert(model_dir)
     request = _request(module, tmp_path, model_dir)
@@ -334,6 +454,17 @@ def test_smoke_training_runs_offline_and_saves_reloadable_artifacts(
     assert result.trainer_history
     assert isinstance(result.trainer_history, tuple)
     assert all(isinstance(row, dict) for row in result.trainer_history)
+    history_path = request.output_dir / "trainer_history.json"
+    assert json.loads(history_path.read_text(encoding="utf-8")) == list(
+        result.trainer_history
+    )
+    assert any(row.get("step") == 2 for row in result.trainer_history)
+    assert all(
+        not any(str(key).startswith("eval_") for key in row)
+        for row in result.trainer_history
+    )
+    assert not tuple((request.output_dir / "checkpoints").glob("checkpoint-*"))
+    assert result.best_checkpoint is None
     reloaded_model = AutoModelForSequenceClassification.from_pretrained(
         result.model_dir,
         local_files_only=True,
