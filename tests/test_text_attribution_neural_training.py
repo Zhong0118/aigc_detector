@@ -27,6 +27,16 @@ from research.text_attribution.training_data import AttributionSample
 FAMILY_LABELS = tuple(f"family-{index}" for index in range(10))
 
 
+def _strategy_name(arguments, *attribute_names: str) -> str:
+    for attribute_name in attribute_names:
+        if hasattr(arguments, attribute_name):
+            strategy = getattr(arguments, attribute_name)
+            return str(getattr(strategy, "value", strategy)).lower()
+    raise AssertionError(
+        f"training arguments expose none of {attribute_names!r}"
+    )
+
+
 def _training_module():
     try:
         return importlib.import_module("research.text_attribution.neural_training")
@@ -128,6 +138,21 @@ def _request(
     }
     values.update(overrides)
     return module.NeuralTrainingRequest(**values)
+
+
+def test_strategy_name_accepts_new_string_and_legacy_enum_shapes() -> None:
+    legacy_strategy = SimpleNamespace(value="no")
+
+    assert _strategy_name(
+        SimpleNamespace(eval_strategy="no"),
+        "eval_strategy",
+        "evaluation_strategy",
+    ) == "no"
+    assert _strategy_name(
+        SimpleNamespace(evaluation_strategy=legacy_strategy),
+        "eval_strategy",
+        "evaluation_strategy",
+    ) == "no"
 
 
 def test_logits_to_probabilities_is_stable_and_row_normalized() -> None:
@@ -400,8 +425,12 @@ def test_smoke_arguments_force_cpu_and_disable_training_evaluation(
 
     assert arguments.max_steps == 2
     assert arguments.device.type == "cpu"
-    assert arguments.evaluation_strategy.value == "no"
-    assert arguments.save_strategy.value == "no"
+    assert _strategy_name(
+        arguments,
+        "eval_strategy",
+        "evaluation_strategy",
+    ) == "no"
+    assert _strategy_name(arguments, "save_strategy") == "no"
     assert arguments.load_best_model_at_end is False
     assert arguments.bf16 is False
 
