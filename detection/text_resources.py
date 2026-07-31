@@ -27,6 +27,7 @@ from detection.text_resource_adapters import (
     adapt_raid_rows,
     adapt_tnews_rows,
 )
+from detection.text_threshold_artifact import validate_text_threshold_artifact
 
 _PORTABLE_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _WINDOWS_RESERVED_NAMES = {
@@ -301,106 +302,6 @@ def conformal_high_threshold(scores: Sequence[float], alpha: float = 0.02) -> fl
     return ordered[k - 1]
 
 
-def _finite_number(value: Any) -> bool:
-    return bool(
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and math.isfinite(float(value))
-    )
-
-
-def _artifact_v2_validation_errors(
-    payload: Mapping[str, Any] | None,
-    *,
-    expected_profile: str,
-) -> list[str]:
-    """Validate the artifact fields required for reliable threshold routing."""
-    if payload is None:
-        return ["artifact_json_invalid"]
-
-    errors: list[str] = []
-    if payload.get("artifact_schema_version") != 2:
-        return ["artifact_schema_version_must_be_2"]
-    if payload.get("dataset_profile") != expected_profile:
-        return ["artifact_dataset_profile_mismatch"]
-
-    root_target_fpr = payload.get("target_fpr")
-    if (
-        not _finite_number(root_target_fpr)
-        or not 0 < float(root_target_fpr) <= 1
-    ):
-        errors.append("artifact_target_fpr_invalid")
-
-    groups = payload.get("groups")
-    if not isinstance(groups, Mapping) or not groups:
-        errors.append("artifact_groups_must_be_non_empty_mapping")
-        return errors
-
-    for group_name, group in groups.items():
-        if not isinstance(group_name, str) or not group_name:
-            errors.append("artifact_group_name_invalid")
-            continue
-        prefix = f"artifact_group_{group_name}"
-        if not isinstance(group, Mapping):
-            errors.append(f"{prefix}_must_be_mapping")
-            continue
-
-        low = group.get("low_threshold")
-        high = group.get("high_threshold")
-        floor = group.get("threshold_floor")
-        group_target_fpr = group.get("target_fpr")
-        calibration_count = group.get("human_calibration_samples")
-
-        if not _finite_number(low) or not 0 <= float(low) <= 1:
-            errors.append(f"{prefix}_low_threshold_invalid")
-        if not _finite_number(high) or not 0 <= float(high) <= 1:
-            errors.append(f"{prefix}_high_threshold_invalid")
-        if not _finite_number(floor) or not 0 <= float(floor) <= 1:
-            errors.append(f"{prefix}_threshold_floor_invalid")
-        if (
-            _finite_number(low)
-            and _finite_number(high)
-            and float(low) > float(high)
-        ):
-            errors.append(f"{prefix}_thresholds_inverted")
-        if (
-            _finite_number(floor)
-            and _finite_number(high)
-            and float(floor) > float(high)
-        ):
-            errors.append(f"{prefix}_high_threshold_below_floor")
-        if (
-            not _finite_number(group_target_fpr)
-            or not 0 < float(group_target_fpr) <= 1
-        ):
-            errors.append(f"{prefix}_target_fpr_invalid")
-        elif (
-            _finite_number(root_target_fpr)
-            and not math.isclose(
-                float(group_target_fpr),
-                float(root_target_fpr),
-                rel_tol=0.0,
-                abs_tol=1e-12,
-            )
-        ):
-            errors.append(f"{prefix}_target_fpr_mismatch")
-        if (
-            not isinstance(calibration_count, int)
-            or isinstance(calibration_count, bool)
-            or calibration_count <= 0
-        ):
-            errors.append(f"{prefix}_human_calibration_samples_invalid")
-        for field_name in ("human_validation_samples", "ai_validation_samples"):
-            count = group.get(field_name)
-            if (
-                not isinstance(count, int)
-                or isinstance(count, bool)
-                or count < 0
-            ):
-                errors.append(f"{prefix}_{field_name}_invalid")
-    return errors
-
-
 class TextResourceManager:
     """Download approved resources and keep every byte under the project root."""
 
@@ -525,9 +426,12 @@ class TextResourceManager:
                 dataset_profile = raw_profile
         profile_matches = dataset_profile == self.dataset_profile
         validation_errors = (
-            _artifact_v2_validation_errors(
-                payload,
-                expected_profile=self.dataset_profile,
+            list(
+                validate_text_threshold_artifact(
+                    payload,
+                    mode="readiness",
+                    expected_dataset_profile=self.dataset_profile,
+                ).errors
             )
             if exists
             else ["artifact_missing"]
@@ -1358,6 +1262,8 @@ class TextResourceManager:
             if spec.adapter in {"hc3", "m4"}
             else ("human",)
         )
+        aggregate_adapted_samples = 0
+        aggregate_label_counts = {"human": 0, "ai": 0}
 
         for split in spec.splits:
             rows = self._load_hf_split(spec, split)
@@ -1382,16 +1288,20 @@ class TextResourceManager:
             for sample in self._adapt_rows(spec, observed_rows(), split):
                 adapted_samples += 1
                 label_counts[sample.label] += 1
+                aggregate_adapted_samples += 1
+                aggregate_label_counts[sample.label] += 1
 
             if raw_rows == 0:
                 raise RuntimeError(
                     f"Dataset {spec.name!r} split {split!r} is empty or incomplete"
                 )
-            if adapted_samples <= 0:
+            if adapted_samples <= 0 and spec.adapter != "m4":
                 raise RuntimeError(
                     f"Dataset {spec.name!r} split {split!r} produced no adapted samples"
                 )
-            if any(label_counts[label] <= 0 for label in expected_labels):
+            if spec.adapter != "m4" and any(
+                label_counts[label] <= 0 for label in expected_labels
+            ):
                 raise RuntimeError(
                     f"Dataset {spec.name!r} split {split!r} must provide "
                     f"expected labels: {', '.join(expected_labels)}"
@@ -1402,6 +1312,19 @@ class TextResourceManager:
                 "label_counts": label_counts,
                 "content_sha256": content_hasher.hexdigest(),
             }
+
+        if aggregate_adapted_samples <= 0:
+            raise RuntimeError(
+                f"Dataset {spec.name!r} produced no adapted samples across "
+                "its configured splits"
+            )
+        if any(
+            aggregate_label_counts[label] <= 0 for label in expected_labels
+        ):
+            raise RuntimeError(
+                f"Dataset {spec.name!r} must provide expected labels across "
+                f"its configured splits: {', '.join(expected_labels)}"
+            )
 
         scan_sha256 = hashlib.sha256(
             _stable_json_dumps(split_evidence).encode("utf-8")
@@ -1489,19 +1412,95 @@ class TextResourceManager:
             "wikihow",
             "wiki_how",
         }
+        language_aliases = {
+            "en": "en",
+            "eng": "en",
+            "english": "en",
+            "zh": "zh",
+            "zh_cn": "zh",
+            "zh_hans": "zh",
+            "chinese": "zh",
+        }
+        unsupported_languages = {
+            "ar",
+            "arabic",
+            "bg",
+            "bulgarian",
+            "de",
+            "german",
+            "id",
+            "indonesian",
+            "it",
+            "italian",
+            "ru",
+            "russian",
+            "ur",
+            "urdu",
+        }
         for row in rows:
-            raw_language = row.get("language")
-            source = str(row.get("source") or "").strip().casefold().replace("-", "_")
-            language = str(raw_language or "").strip().casefold().replace("-", "_")
-            if language in {"en", "eng", "english"} or source in english_sources:
+            tokens = tuple(
+                self._normalized_metadata_token(row.get(field))
+                for field in ("language", "source", "domain")
+            )
+            normalized_language = next(
+                (
+                    language_aliases[token]
+                    for token in tokens
+                    if token in language_aliases
+                ),
+                None,
+            )
+            if normalized_language is None and any(
+                token in english_sources for token in tokens
+            ):
                 normalized_language = "en"
-            elif language in {"zh", "zh_cn", "chinese"} or source in {"zh", "chinese"}:
-                normalized_language = "zh"
-            else:
+            if normalized_language is None and any(
+                token in unsupported_languages for token in tokens
+            ):
+                continue
+            if normalized_language is None:
+                normalized_language = self._infer_supported_text_language(
+                    row.get("text") or row.get("generation")
+                )
+            if normalized_language is None:
                 continue
             enriched = dict(row)
             enriched["language"] = normalized_language
             yield enriched
+
+    @staticmethod
+    def _normalized_metadata_token(value: Any) -> str:
+        if not isinstance(value, str):
+            return ""
+        return value.strip().casefold().replace("-", "_").replace(" ", "_")
+
+    @staticmethod
+    def _infer_supported_text_language(value: Any) -> str | None:
+        """Conservatively recover zh/en when M4 omits language metadata."""
+        if not isinstance(value, str):
+            return None
+        chinese = sum(
+            1
+            for char in value
+            if "\u3400" <= char <= "\u4dbf" or "\u4e00" <= char <= "\u9fff"
+        )
+        latin = sum(
+            1
+            for char in value
+            if char.isascii() and char.isalpha()
+        )
+        other_letters = sum(
+            1
+            for char in value
+            if char.isalpha()
+            and not ("\u3400" <= char <= "\u4dbf" or "\u4e00" <= char <= "\u9fff")
+            and not (char.isascii() and char.isalpha())
+        )
+        if chinese >= max(2, latin, other_letters):
+            return "zh"
+        if latin >= 8 and chinese == 0 and other_letters <= max(1, latin // 20):
+            return "en"
+        return None
 
     def _rows_with_source_domain(
         self,
@@ -1972,6 +1971,8 @@ class TextResourceManager:
         split_evidence = payload.get("split_evidence")
         if not isinstance(split_evidence, dict) or set(split_evidence) != set(spec.splits):
             return False
+        aggregate_adapted_samples = 0
+        aggregate_label_counts = {"human": 0, "ai": 0}
         for split in spec.splits:
             evidence = split_evidence.get(split)
             if not isinstance(evidence, dict):
@@ -1995,7 +1996,8 @@ class TextResourceManager:
                 or raw_rows <= 0
                 or not isinstance(adapted_samples, int)
                 or isinstance(adapted_samples, bool)
-                or adapted_samples <= 0
+                or adapted_samples < 0
+                or (adapted_samples == 0 and spec.adapter != "m4")
                 or not isinstance(label_counts, dict)
                 or set(label_counts) != {"human", "ai"}
                 or not isinstance(human_count, int)
@@ -2005,10 +2007,26 @@ class TextResourceManager:
                 or human_count < 0
                 or ai_count < 0
                 or human_count + ai_count != adapted_samples
-                or any(label_counts[label] <= 0 for label in expected_labels)
+                or (
+                    spec.adapter != "m4"
+                    and any(
+                        label_counts[label] <= 0 for label in expected_labels
+                    )
+                )
                 or not _is_sha256(evidence.get("content_sha256"))
             ):
                 return False
+            aggregate_adapted_samples += adapted_samples
+            aggregate_label_counts["human"] += human_count
+            aggregate_label_counts["ai"] += ai_count
+        if (
+            aggregate_adapted_samples <= 0
+            or any(
+                aggregate_label_counts[label] <= 0
+                for label in expected_labels
+            )
+        ):
+            return False
         expected_scan = hashlib.sha256(
             _stable_json_dumps(split_evidence).encode("utf-8")
         ).hexdigest()

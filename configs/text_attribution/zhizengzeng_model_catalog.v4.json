@@ -1,0 +1,131 @@
+{
+  "schema_version": 4,
+  "catalog_id": "zhizengzeng-user-selected-twenty-models-v4",
+  "gateway": "zhizengzeng",
+  "models": [
+    {
+      "family_id": "openai", "provider": "OpenAI",
+      "model_id": "gpt-5", "variant_role": "fast",
+      "enabled": true, "fixed_route": false, "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "openai", "provider": "OpenAI",
+      "model_id": "gpt-5.4", "variant_role": "balanced",
+      "enabled": true, "fixed_route": false, "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "claude", "provider": "Anthropic",
+      "model_id": "claude-haiku-4-5-20251001", "variant_role": "fast",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "claude", "provider": "Anthropic",
+      "model_id": "claude-sonnet-4-6-20260217", "variant_role": "balanced",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "gemini", "provider": "Google",
+      "model_id": "gemini-3-flash-preview", "variant_role": "fast",
+      "enabled": true, "fixed_route": false, "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "gemini", "provider": "Google",
+      "model_id": "gemini-3.5-flash", "variant_role": "balanced",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "deepseek", "provider": "DeepSeek",
+      "model_id": "deepseek-v4-flash", "variant_role": "fast",
+      "enabled": true, "fixed_route": true,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "deepseek", "provider": "DeepSeek",
+      "model_id": "deepseek-v4-pro", "variant_role": "balanced",
+      "enabled": true, "fixed_route": true,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "qwen", "provider": "Alibaba",
+      "model_id": "qwen3.5-flash", "variant_role": "fast",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "qwen", "provider": "Alibaba",
+      "model_id": "qwen3.6-plus", "variant_role": "balanced",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "glm", "provider": "Zhipu",
+      "model_id": "glm-4", "variant_role": "fast",
+      "enabled": true, "fixed_route": true,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "glm", "provider": "Zhipu",
+      "model_id": "glm-5.1", "variant_role": "balanced",
+      "enabled": true, "fixed_route": true,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "minimax", "provider": "MiniMax",
+      "model_id": "minimax-m2.5", "variant_role": "fast",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "minimax", "provider": "MiniMax",
+      "model_id": "minimax-m2.7", "variant_role": "balanced",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "kimi", "provider": "Moonshot",
+      "model_id": "kimi-k2", "variant_role": "fast",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "kimi", "provider": "Moonshot",
+      "model_id": "kimi-k2.6", "variant_role": "balanced",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "doubao", "provider": "ByteDance",
+      "model_id": "doubao-seed-2-0-lite-260215", "variant_role": "fast",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "doubao", "provider": "ByteDance",
+      "model_id": "doubao-seed-2-1-pro-260628", "variant_role": "balanced",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "mimo", "provider": "Xiaomi",
+      "model_id": "mimo-v2-flash", "variant_role": "fast",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    },
+    {
+      "family_id": "mimo", "provider": "Xiaomi",
+      "model_id": "mimo-v2.5", "variant_role": "balanced",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions", "roles": ["v4", "smoke_v4"]
+    }
+  ]
+}

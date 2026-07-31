@@ -1,0 +1,66 @@
+{"kind":"deck","id":"pr/slhtjx","name":"Deck"}
+{"kind":"layout","layoutId":"8adaad7b-45fe-41bd-ab43-69e2e2ae3c13","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"75615f92-d143-40c5-9317-a8dcffda2754","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/3q70i7","slide":1,"title":"AIGC 文本检测 · 阶段成果","textShapes":4}
+{"kind":"textbox","id":"sh/zul83m5w","slide":1,"text":"AIGC 文本检测 · 阶段成果","textPreview":"AIGC 文本检测 · 阶段成果","textChars":16,"textLines":1,"bbox":[42,42,580,56]}
+{"kind":"textbox","id":"sh/kvu9cr6h","slide":1,"text":"文本误报控制\n多领域校准结果","textPreview":"文本误报控制 | 多领域校准结果","textChars":14,"textLines":2,"bbox":[42,178,1000,250]}
+{"kind":"shape","id":"sh/lw3q5wn2","slide":1,"bbox":[42,470,180,10]}
+{"kind":"textbox","id":"sh/mxcre1on","slide":1,"text":"8 类公开语料｜49,905 条真人校准｜目标误报率 2%","textPreview":"8 类公开语料｜49,905 条真人校准｜目标误报率 2%","textChars":29,"textLines":1,"bbox":[42,514,860,74]}
+{"kind":"textbox","id":"sh/7y587658","slide":1,"text":"服务器最终 bootstrap 结果整理","textPreview":"服务器最终 bootstrap 结果整理","textChars":20,"textLines":1,"bbox":[42,626,580,32]}
+{"kind":"notes","id":"nt/3q70i7","slide":1,"text":"[Sources]\n- 用户提供的服务器 bootstrap 输出 JSON 片段，2026-07-26。"}
+{"kind":"slide","id":"sl/0os9wl","slide":2,"title":"误报控制从单阈值升级为分层校准","textShapes":11}
+{"kind":"textbox","id":"sh/w32twj25","slide":2,"text":"误报控制从单阈值升级为分层校准","textPreview":"误报控制从单阈值升级为分层校准","textChars":15,"textLines":1,"bbox":[42,32,1130,72]}
+{"kind":"textbox","id":"sh/v2ts3e1k","slide":2,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[1180,658,55,24]}
+{"kind":"textbox","id":"sh/u1kbu9kz","slide":2,"text":"原检测模型保持不变；新增语言 × 领域 × 长度分组，用真人校准阈值，再用独立真人与 AI 样本评估。","textPreview":"原检测模型保持不变；新增语言 × 领域 × 长度分组，用真人校准阈值，再用独立真人与 AI 样本评估。","textChars":51,"textLines":1,"bbox":[42,112,1170,76]}
+{"kind":"shape","id":"sh/90ba14je","slide":2,"bbox":[42,224,575,170]}
+{"kind":"shape","id":"sh/8z2tsz29","slide":2,"bbox":[42,224,10,170]}
+{"kind":"textbox","id":"sh/netszu1o","slide":2,"text":"49,905","textPreview":"49,905","textChars":6,"textLines":1,"bbox":[76,252,250,76]}
+{"kind":"textbox","id":"sh/mdkrqpk3","slide":2,"text":"真人校准样本","textPreview":"真人校准样本","textChars":6,"textLines":1,"bbox":[342,262,235,92]}
+{"kind":"shape","id":"sh/twfad8jy","slide":2,"bbox":[663,224,575,170]}
+{"kind":"shape","id":"sh/sv6t432d","slide":2,"bbox":[663,224,10,170]}
+{"kind":"textbox","id":"sh/2d036hg3","slide":2,"text":"10,411","textPreview":"10,411","textChars":6,"textLines":1,"bbox":[697,252,250,76]}
+{"kind":"textbox","id":"sh/3e9kfmho","slide":2,"text":"独立真人验证样本","textPreview":"独立真人验证样本","textChars":8,"textLines":1,"bbox":[963,262,235,92]}
+{"kind":"shape","id":"sh/4fil8ry9","slide":2,"bbox":[42,430,575,170]}
+{"kind":"shape","id":"sh/pgb2hwzu","slide":2,"bbox":[42,430,10,170]}
+{"kind":"textbox","id":"sh/up032hg7","slide":2,"text":"7,585","textPreview":"7,585","textChars":5,"textLines":1,"bbox":[76,458,250,76]}
+{"kind":"textbox","id":"sh/fq9kbmhs","slide":2,"text":"独立 AI 验证样本","textPreview":"独立 AI 验证样本","textChars":10,"textLines":1,"bbox":[342,468,235,92]}
+{"kind":"shape","id":"sh/gbil4ryd","slide":2,"bbox":[663,430,575,170]}
+{"kind":"shape","id":"sh/hcr2dwzi","slide":2,"bbox":[663,430,10,170]}
+{"kind":"textbox","id":"sh/elk3e1gb","slide":2,"text":"24","textPreview":"24","textChars":2,"textLines":1,"bbox":[697,458,250,76]}
+{"kind":"textbox","id":"sh/zmtkn6hw","slide":2,"text":"已发布阈值组\n推理失败 0 条","textPreview":"已发布阈值组 | 推理失败 0 条","textChars":15,"textLines":2,"bbox":[963,468,235,92]}
+{"kind":"notes","id":"nt/0os9wl","slide":2,"text":"[Sources]\n- 用户提供的服务器 bootstrap 输出：global 组样本数、detector_failures.total、groups 数量。"}
+{"kind":"slide","id":"sl/nas80g","slide":3,"title":"8 类语料覆盖文学、学术、问答和新闻","textShapes":3}
+{"kind":"textbox","id":"sh/3qd0vulg","slide":3,"text":"8 类语料覆盖文学、学术、问答和新闻","textPreview":"8 类语料覆盖文学、学术、问答和新闻","textChars":18,"textLines":1,"bbox":[42,32,1130,72]}
+{"kind":"textbox","id":"sh/orm14zm1","slide":3,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[1180,658,55,24]}
+{"kind":"textbox","id":"sh/psfix436","slide":3,"text":"完整扫描；过滤小于 20 个有效字符的样本 38,488 条；长文每篇最多取 1 个 480–640 字窗口。","textPreview":"完整扫描；过滤小于 20 个有效字符的样本 38,488 条；长文每篇最多取 1 个 480–640 字窗口。","textChars":55,"textLines":1,"bbox":[42,108,1180,72]}
+{"kind":"table","id":"tb/na98nals","slide":3,"name":"","rows":9,"cols":6,"preview":"数据源 | 主要覆盖 | 校准 | 真人验证 | 短 / 长 | <20 剔除","bbox":[42,202,1196,430]}
+{"kind":"notes","id":"nt/nas80g","slide":3,"text":"[Sources]\n- 用户提供的服务器 bootstrap 输出：sources、validation_sources、source_length_buckets、excluded_short_by_source。"}
+{"kind":"slide","id":"sl/6fji5k","slide":4,"title":"中文误报控制稳定，英文灵敏度仍然不足","textShapes":9}
+{"kind":"textbox","id":"sh/d8rulc32","slide":4,"text":"中文误报控制稳定，英文灵敏度仍然不足","textPreview":"中文误报控制稳定，英文灵敏度仍然不足","textChars":18,"textLines":1,"bbox":[42,32,1130,72]}
+{"kind":"textbox","id":"sh/q50bahkb","slide":4,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[1180,658,55,24]}
+{"kind":"shape","id":"sh/b69cj2lw","slide":4,"bbox":[42,122,620,530]}
+{"kind":"textbox","id":"sh/lcrupw3y","slide":4,"text":"观察结果","textPreview":"观察结果","textChars":4,"textLines":1,"bbox":[710,154,460,44]}
+{"kind":"textbox","id":"sh/y90vehkn","slide":4,"text":"两种语言的真人误报率都接近 2% 目标，但检测灵敏度差异明显。中文总体 AI 召回 74.7%，英文仅 7.3%。","textPreview":"两种语言的真人误报率都接近 2% 目标，但检测灵敏度差异明显。中文总体 AI 召回 74.7%，英文仅 7.3%。","textChars":57,"textLines":1,"bbox":[710,210,470,160]}
+{"kind":"textbox","id":"sh/za9cnml8","slide":4,"text":"94.84%","textPreview":"94.84%","textChars":6,"textLines":1,"bbox":[710,425,180,70]}
+{"kind":"textbox","id":"sh/gfyt4n29","slide":4,"text":"中文高阈值","textPreview":"中文高阈值","textChars":5,"textLines":1,"bbox":[710,500,190,42]}
+{"kind":"textbox","id":"sh/1g7uds3u","slide":4,"text":"99.96%","textPreview":"99.96%","textChars":6,"textLines":1,"bbox":[980,425,200,70]}
+{"kind":"textbox","id":"sh/h4ni94vi","slide":4,"text":"英文高阈值","textPreview":"英文高阈值","textChars":5,"textLines":1,"bbox":[980,500,200,42]}
+{"kind":"textbox","id":"sh/w3ehgzux","slide":4,"text":"含义：当前方法降低了误报，但英文模型几乎只有极高分才判为高风险。","textPreview":"含义：当前方法降低了误报，但英文模型几乎只有极高分才判为高风险。","textChars":32,"textLines":1,"bbox":[710,570,485,62]}
+{"kind":"chart","id":"ch/47alwvmd","slide":4,"name":"","chartType":"bar","bbox":[68,150,570,455]}
+{"kind":"notes","id":"nt/6fji5k","slide":4,"text":"[Sources]\n- 用户提供的服务器 bootstrap 输出：groups.zh、groups.en。\n- 图中 FPR、AI Recall、AUROC 均换算为百分数。"}
+{"kind":"slide","id":"sl/3jsjxa","slide":5,"title":"精确分组证明效果并不均衡","textShapes":3}
+{"kind":"textbox","id":"sh/b2l8b210","slide":5,"text":"精确分组证明效果并不均衡","textPreview":"精确分组证明效果并不均衡","textChars":12,"textLines":1,"bbox":[42,32,1130,72]}
+{"kind":"textbox","id":"sh/c3up472l","slide":5,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[1180,658,55,24]}
+{"kind":"textbox","id":"sh/x4nqdcj6","slide":5,"text":"高阈值用于压低真人误报；AI 召回反映代价。n/a 表示该组缺少独立 AI 验证，不能评价识别能力。","textPreview":"高阈值用于压低真人误报；AI 召回反映代价。n/a 表示该组缺少独立 AI 验证，不能评价识别能力。","textChars":50,"textLines":1,"bbox":[42,108,1180,72]}
+{"kind":"table","id":"tb/zaxc7mlk","slide":5,"name":"","rows":9,"cols":6,"preview":"精确分组 | 高阈值 | 真人验证 | 观察 FPR | AI 召回 | AUROC","bbox":[42,202,1196,430]}
+{"kind":"notes","id":"nt/3jsjxa","slide":5,"text":"[Sources]\n- 用户提供的服务器 bootstrap 输出：13 个 language:domain:length 精确分组。\n- 本页选取 8 个代表性分组；完整 13 组见配套 Markdown 报告。"}
+{"kind":"slide","id":"sl/zjfw0i","slide":6,"title":"阶段成果可交付，英文检测需要专项改进","textShapes":7}
+{"kind":"textbox","id":"sh/ihove1k3","slide":6,"text":"阶段成果可交付，英文检测需要专项改进","textPreview":"阶段成果可交付，英文检测需要专项改进","textChars":18,"textLines":1,"bbox":[42,32,1130,72]}
+{"kind":"textbox","id":"sh/54fe9g3u","slide":6,"text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[1180,658,55,24]}
+{"kind":"textbox","id":"sh/4j6dgb29","slide":6,"text":"已完成","textPreview":"已完成","textChars":3,"textLines":1,"bbox":[42,156,250,48]}
+{"kind":"textbox","id":"sh/r6xwb6l0","slide":6,"text":"• 8 类语料自动下载、清洗和确定性抽样\n• 语言 × 领域 × 长度分层阈值\n• 稀疏精确组自动回退到可靠上级组\n• 阈值、FPR、召回、AUROC 和警告完整留痕","textPreview":"• 8 类语料自动下载、清洗和确定性抽样 | • 语言 × 领域 × 长度分层阈值 | • 稀疏精确组自动回退到可靠上级组 | • 阈值、FPR、召回、AUROC 和警告完整留痕","textChars":83,"textLines":4,"bbox":[42,222,560,300]}
+{"kind":"shape","id":"sh/65ofi1kf","slide":6,"bbox":[650,140,2,480]}
+{"kind":"textbox","id":"sh/t8zedg3q","slide":6,"text":"下一阶段","textPreview":"下一阶段","textChars":4,"textLines":1,"bbox":[710,156,250,48]}
+{"kind":"textbox","id":"sh/s76xkb25","slide":6,"text":"1  扩充英文文学、新闻和专业真人困难集\n\n2  对英文长文本模型重训或更换基线\n\n3  以 FPR ≤ 2% 为约束，优化 AI 召回\n\n4  补齐中文文学/新闻 AI 验证集","textPreview":"1  扩充英文文学、新闻和专业真人困难集 |  | 2  对英文长文本模型重训或更换基线 |  | 3  以 FPR ≤ 2% 为约束，优化 AI 召回 |  | 4  补齐中文文学/新闻 AI 验证集","textChars":89,"textLines":7,"bbox":[710,222,500,330]}
+{"kind":"textbox","id":"sh/fahwfqlw","slide":6,"text":"结论：误报控制层已形成可运行、可解释、可复现的阶段成果；当前主要瓶颈已从“误报过高”转为“英文召回不足”。","textPreview":"结论：误报控制层已形成可运行、可解释、可复现的阶段成果；当前主要瓶颈已从“误报过高”转为“英文召回不足”。","textChars":53,"textLines":1,"bbox":[42,590,1160,72]}
+{"kind":"notes","id":"nt/zjfw0i","slide":6,"text":"[Sources]\n- 阶段结论依据用户提供的 bootstrap 指标及当前项目实现。\n- 下一阶段建议为基于本次结果的工程推论，不表示已完成。"}

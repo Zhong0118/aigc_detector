@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import math
 import re
 import statistics
 from dataclasses import asdict, dataclass, field
@@ -11,6 +10,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from detection.text_domain import TextDomainRouter
+from detection.text_threshold_artifact import validate_text_threshold_artifact
 
 
 @dataclass
@@ -372,66 +372,19 @@ class FalsePositiveController:
             return self._reject_artifact("artifact_read_error")
         except json.JSONDecodeError:
             return self._reject_artifact("artifact_invalid_json")
-        if not isinstance(data, dict):
-            return self._reject_artifact("artifact_invalid_root")
-
-        schema_version = data.get("artifact_schema_version", 1)
-        if (
-            isinstance(schema_version, bool)
-            or not isinstance(schema_version, int)
-            or schema_version not in {1, 2}
-        ):
-            return self._reject_artifact("artifact_unsupported_schema_version")
-
-        groups = data.get("groups")
-        if not isinstance(groups, dict):
-            return self._reject_artifact("artifact_invalid_groups")
-        for group, entry in groups.items():
-            if not isinstance(group, str) or not isinstance(entry, dict):
-                return self._reject_artifact("artifact_invalid_group_entry")
-            if not self._valid_group_thresholds(entry):
-                return self._reject_artifact("artifact_invalid_thresholds")
-            if not self._valid_group_diagnostics(entry):
-                return self._reject_artifact("artifact_invalid_group_diagnostics")
+        validation = validate_text_threshold_artifact(
+            data,
+            mode="runtime",
+            default_low_threshold=self.default_low,
+            default_high_threshold=self.default_high,
+        )
+        if not validation.valid:
+            return self._reject_artifact(validation.errors)
         return data
 
-    def _reject_artifact(self, warning: str) -> dict[str, Any]:
-        self.artifact_warnings.append(warning)
+    def _reject_artifact(self, warnings: str | Iterable[str]) -> dict[str, Any]:
+        items = [warnings] if isinstance(warnings, str) else warnings
+        for warning in items:
+            if warning not in self.artifact_warnings:
+                self.artifact_warnings.append(warning)
         return {}
-
-    def _valid_group_thresholds(self, entry: dict[str, Any]) -> bool:
-        low = entry.get("low_threshold", self.default_low)
-        high = entry.get("high_threshold", self.default_high)
-        if not self._is_unit_interval_number(low) or not self._is_unit_interval_number(high):
-            return False
-        return float(low) <= float(high)
-
-    def _valid_group_diagnostics(self, entry: dict[str, Any]) -> bool:
-        for key in ("validation_fpr", "ai_recall", "validation_auroc"):
-            value = entry.get(key)
-            if value is not None and not self._is_unit_interval_number(value):
-                return False
-        for key in (
-            "human_validation_samples",
-            "validation_samples",
-            "ai_validation_samples",
-        ):
-            value = entry.get(key)
-            if value is not None and (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or value < 0
-            ):
-                return False
-        warnings = entry.get("warnings", [])
-        if not isinstance(warnings, list) or not all(isinstance(item, str) for item in warnings):
-            return False
-        reliability = entry.get("reliability_status", "not_evaluated")
-        return isinstance(reliability, str)
-
-    @staticmethod
-    def _is_unit_interval_number(value: Any) -> bool:
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            return False
-        number = float(value)
-        return math.isfinite(number) and 0.0 <= number <= 1.0

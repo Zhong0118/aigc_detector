@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "run_id": "zhizengzeng-local-pilot-v1",
+  "gateway": "zhizengzeng",
+  "model_catalog": "../zhizengzeng_model_catalog.json",
+  "model_roles": ["pilot"],
+  "prompt_manifest": "../prompt_manifest.pilot-v1.json",
+  "prompt_ids": ["*"],
+  "minimum_prompt_count": 24,
+  "sampling": [
+    {"temperature": 0.0, "top_p": null, "max_tokens": 1536},
+    {"temperature": 0.8, "top_p": null, "max_tokens": 1536}
+  ],
+  "repetitions": 2,
+  "max_requests": 960,
+  "enabled": true
+}

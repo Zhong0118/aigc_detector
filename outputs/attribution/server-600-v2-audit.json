@@ -1,0 +1,413 @@
+{
+  "run_id": "zhizengzeng-attribution-server-600-v2",
+  "expected_requests": 600,
+  "records": 558,
+  "unique_successes": 558,
+  "error_records": 5,
+  "missing_requests": 42,
+  "coverage_rate": 0.93,
+  "empty_text_count": 0,
+  "truncated_count": 9,
+  "route_mismatch_count": 0,
+  "duplicate_text_count": 2,
+  "counts_by_model": {
+    "MiniMax-Text-01": 30,
+    "abab6.5s-chat": 30,
+    "claude-haiku-4-5-20251001": 30,
+    "claude-sonnet-4-6-20260217": 30,
+    "deepseek-v4-flash": 30,
+    "doubao-seed-1-6-251015": 30,
+    "doubao-seed-1-6-flash-250828": 30,
+    "gemini-2.5-flash-lite": 30,
+    "gemini-3.1-flash-lite-preview": 30,
+    "glm-4.5-air": 29,
+    "glm-4.6": 30,
+    "gpt-4.1-mini-2025-04-14": 30,
+    "gpt-4.1-nano-2025-04-14": 19,
+    "kimi-k2.5": 30,
+    "mimo-v2.5": 30,
+    "mimo-v2.5-pro": 30,
+    "moonshot-v1-8k": 30,
+    "qwen-plus-2025-07-28": 30,
+    "qwen3-30b-a3b-instruct-2507": 30
+  },
+  "counts_by_family": {
+    "claude": 60,
+    "deepseek": 30,
+    "doubao": 60,
+    "gemini": 60,
+    "glm": 59,
+    "kimi": 60,
+    "mimo": 60,
+    "minimax": 60,
+    "openai": 49,
+    "qwen": 60
+  },
+  "counts_by_language": {
+    "en": 278,
+    "zh": 280
+  },
+  "counts_by_task": {
+    "comparison": 165,
+    "constraint_rewrite": 53,
+    "design_review": 57,
+    "explanation": 57,
+    "lesson_design": 57,
+    "procedure": 57,
+    "proposal_review": 57,
+    "rewrite": 55
+  },
+  "counts_by_repeat": {
+    "0": 372,
+    "1": 186
+  },
+  "counts_by_sampling": {
+    "temperature=0.0|top_p=None|max_tokens=1536": 92,
+    "temperature=0.0|top_p=None|max_tokens=3072": 56,
+    "temperature=0.0|top_p=None|max_tokens=512": 38,
+    "temperature=0.8|top_p=None|max_tokens=1536": 186,
+    "temperature=0.8|top_p=None|max_tokens=3072": 112,
+    "temperature=0.8|top_p=None|max_tokens=512": 74
+  },
+  "errors_by_status": {
+    "none": 5
+  },
+  "missing_cells": [
+    {
+      "request_key": "540e12fa77da7c52e1edac3f513f281dbaf7a22fdbb687abfe9ca0fd55cedf0c",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "zh-office-p01",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "3665cae05484b6c5bbb24424917841f1106c4e10a1f8cea41e45015e43c8a22b",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "zh-office-p01",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "41bcc728edbbb4d464ece7de5df943195b0ef35ec7c0bf5d48581f4918e5ebcd",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "en-public-p03",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "96a3d9d42b1ab959b743d37eaad8f8aaa701ff9ccd01643288b92e8129477775",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "en-public-p03",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "06961aed9d763f8348a79bf2c1d6eec316d459968a5d01ec0f6749141f77c6c7",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "en-public-p03",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "aa833f7fd47fcd7e6a419f8f103ba8a2cc73598f59fd297a897f74044b789457",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "zh-culture-p02",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "99252bc5c9eef087169229df8e57c5e07694234b1f7d0035bc1f0abe0d3b5736",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "zh-culture-p02",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "865faa3a2cd7f4a91ac6829655e55683b80f8754792aa1bb53b8131f147e4de3",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "zh-culture-p02",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "c4aee7208889dfafa81f44428d5f2f5cd1198ff048da298597cbe95fdd55708c",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "en-creative-p04",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "259a45028c50d41a9db10999e8c49a994a17196b45ccb447a23b21b2ef9f1318",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "en-creative-p04",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "bae959be5d8c3188a54332ba0c098bd1ebd370b7d8b2d296e756911054f6ff65",
+      "model": "gpt-4.1-nano-2025-04-14",
+      "prompt_id": "en-creative-p04",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "2c8c25566eb019a0e33a446de5bf085b1fd023276156c35c80b56899eaa7d16a",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-science-p01",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "afedfcebd9e8ed1d6d25daf61c637549b8f211e19e8f8bd897fd2cd6cca30afa",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-science-p01",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "b7c8173c48780a248a27e82e42124ac57cf79a6aa926fa1f352aed813b1f9d08",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-science-p01",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "979eaba3369aae6da77d7ff7115811b4731200eba4588b914a20041ad731d0c6",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-health-p02",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "7272a8a287d868c4e96b81f0fcc05fdcec186443f9fee953dd4354c69ba65b1e",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-health-p02",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "0455b1f023304fbd1d60748a919c10d9427106c27a8d8c3c4bef8d540afac786",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-health-p02",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "9efd9b9e71d7cef030682cad1841b13bcbca2e3cdc41cf9316a5ca1718e7e63b",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-technology-p04",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "6aa4e19b95e63a1280249c346a2589f65b45bee3301a22c6f33ea301eb17cd8d",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-technology-p04",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "8015c1e44110d740c40c0599d8d3d4d098c840e032a8a7067a464de29193c1b0",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-technology-p04",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "bef394d202fa295412c67f2e2e6522a2f62e5e1a11caf0e9dbfa6d068ab981fd",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-data-p03",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "bd42ced6be2c2d727e9223e2d8dab3d1c5c97ca75a8596b2af2e218cfc7c87f9",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-data-p03",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "0b2a9e1617be628a0c831b74d3b3f8de7ac28b37dc1400a4e7a6a2a5e69adaae",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-data-p03",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "b19dc7118d2beef8e6a0e412c77de56ba7c6fbd46e8503538ae5514dac7d5889",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-education-p02",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "e6f6cbf74b55d248d3a85ba7e05a392322212e78c6a8ec740b109e321b517230",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-education-p02",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "3cf772f1bafe38e80804f808da864680cd66ee88cd893f9a0cf9dc93b88a8ef7",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-education-p02",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "e59b5d880ed6f66b1cdb38c7a70ed0ce9c7150d40ab59c6c609a7b025163a33f",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-business-p04",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "13362bb0c3ce81a39b5814cc899b36a94e436adaf98a587b4813dae0876941f8",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-business-p04",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "c26527cf05d95105d050a060c83fae9950eed12f6fae6362f99c93501cc0cb24",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-business-p04",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "be1e7c7b38b4f0a17c7850bccace514f80a7ced313e1f6176493a6e39e0fbfa0",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-office-p01",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "4c5b7bc50ea06c7848521037c11dd8e9a46dfe33abf31e3fa85146d4728a08ea",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-office-p01",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "b1cf22a4e7a9d2bbc8b1f8e80926b384019bfa36cc4f9043ee4e7f5043e01921",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-office-p01",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "a55ad65a72d41dd237a609606f501c4c4226064b3876bdccd5c277a6e98aad91",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-public-p03",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "4719d22e8dabae7ed0770df5a04bcae1432cadf165a72f31ff6d88401c04f3a2",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-public-p03",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "31670d844738d04373340527da19f333ca84f86b9e5284dfa35f8f2d359921c9",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-public-p03",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "e58a3723a8f0951afcb31943f93e935ad7793050cdeb2d93d648e8fce61733c4",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-culture-p02",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "0fd61d32aadf21751a86be00724508b598bfda68e3c96ed2d9c3cff23ff7256b",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-culture-p02",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "6a1ab3c3c320ad3513c9501ccceab7701bd96cc4f531fe1ee335205af0a47764",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "zh-culture-p02",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "b3cb34461aafacc4434a65267b15575ec8949a4a73e88865fb32db289fd6f76e",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-creative-p04",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "62e1aeb84932f46f76ef7a1256f7e4470ec49576acd75e125ca69c215acb6fd9",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-creative-p04",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 0
+    },
+    {
+      "request_key": "6df952e8f1510d1b04a20636758139691357a1b34c72e38499e91e8290ba9dc9",
+      "model": "deepseek-v4-pro",
+      "prompt_id": "en-creative-p04",
+      "temperature": 0.8,
+      "top_p": null,
+      "repeat_index": 1
+    },
+    {
+      "request_key": "6336a739a26d527aef857c421676e19c7613e07eceb460642bb40daa65e5c7fe",
+      "model": "glm-4.5-air",
+      "prompt_id": "en-creative-p04",
+      "temperature": 0.0,
+      "top_p": null,
+      "repeat_index": 0
+    }
+  ]
+}

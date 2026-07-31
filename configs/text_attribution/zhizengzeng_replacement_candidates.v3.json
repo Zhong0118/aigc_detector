@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "catalog_id": "zhizengzeng-replacement-candidates-v3",
+  "gateway": "zhizengzeng",
+  "models": [
+    {
+      "family_id": "deepseek",
+      "provider": "DeepSeek",
+      "model_id": "deepseek-chat",
+      "variant_role": "candidate_chat",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["replacement_probe_v3"]
+    },
+    {
+      "family_id": "deepseek",
+      "provider": "DeepSeek",
+      "model_id": "deepseek-v3.2",
+      "variant_role": "candidate_v3_2",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["replacement_probe_v3"]
+    },
+    {
+      "family_id": "deepseek",
+      "provider": "DeepSeek",
+      "model_id": "deepseek-v3.1-terminus",
+      "variant_role": "candidate_v3_1_terminus",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["replacement_probe_v3"]
+    },
+    {
+      "family_id": "glm",
+      "provider": "Zhipu",
+      "model_id": "glm-4.5-flash",
+      "variant_role": "candidate_4_5_flash",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["replacement_probe_v3"]
+    },
+    {
+      "family_id": "glm",
+      "provider": "Zhipu",
+      "model_id": "glm-4-air-250414",
+      "variant_role": "candidate_4_air_250414",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["replacement_probe_v3"]
+    },
+    {
+      "family_id": "glm",
+      "provider": "Zhipu",
+      "model_id": "glm-4-flashx-250414",
+      "variant_role": "candidate_4_flashx_250414",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["replacement_probe_v3"]
+    }
+  ]
+}

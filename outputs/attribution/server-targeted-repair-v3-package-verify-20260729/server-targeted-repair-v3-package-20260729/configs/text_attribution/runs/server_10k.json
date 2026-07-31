@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "run_id": "zhizengzeng-server-10k-v1",
+  "gateway": "zhizengzeng",
+  "model_catalog": "../zhizengzeng_model_catalog.json",
+  "model_roles": ["pilot"],
+  "prompt_manifest": "../prompt_manifest.pilot-v1.json",
+  "prompt_ids": ["*"],
+  "minimum_prompt_count": 100,
+  "sampling": [
+    {"temperature": 0.0, "top_p": null, "max_tokens": 1536},
+    {"temperature": 0.8, "top_p": null, "max_tokens": 1536}
+  ],
+  "repetitions": 5,
+  "max_requests": 10000,
+  "enabled": false
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "run_id": "zhizengzeng-attribution-replacement-candidates-v3",
+  "gateway": "zhizengzeng",
+  "model_catalog": "../zhizengzeng_replacement_candidates.v3.json",
+  "model_roles": ["replacement_probe_v3"],
+  "prompt_manifest": "../prompt_manifest.smoke-v2.json",
+  "prompt_ids": ["*"],
+  "minimum_prompt_count": 2,
+  "sampling": [
+    {
+      "sampling_id": "deterministic",
+      "temperature": 0.0,
+      "top_p": null,
+      "repetitions": 1,
+      "prompt_ids": ["zh-smoke-office-001"]
+    },
+    {
+      "sampling_id": "diverse",
+      "temperature": 0.8,
+      "top_p": null,
+      "repetitions": 1,
+      "prompt_ids": ["en-smoke-analysis-001"]
+    }
+  ],
+  "max_requests": 12,
+  "enabled": true
+}

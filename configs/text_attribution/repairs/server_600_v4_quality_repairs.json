@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "run_id": "zhizengzeng-attribution-quality-repairs-v4",
+  "gateway": "zhizengzeng",
+  "sampling_id": "repair-v4",
+  "model_catalog": "../zhizengzeng_model_catalog.v4.json",
+  "prompt_manifest": "../prompt_manifest.v2.json",
+  "cells": [
+    {
+      "repair_id": "repair-v4-claude-truncated-001",
+      "model_id": "claude-sonnet-4-6-20260217",
+      "prompt_id": "zh-science-p01",
+      "temperature": 0.0,
+      "top_p": null,
+      "max_tokens": 1024,
+      "repeat_index": 0,
+      "supersedes_request_key": "dffc229da12a8f06663cad34a64ea67013a48a03b8c31c6d965f3a2ca30dc7c8",
+      "reason": "truncated"
+    },
+    {
+      "repair_id": "repair-v4-mimo-truncated-001",
+      "model_id": "mimo-v2.5",
+      "prompt_id": "zh-office-p01",
+      "temperature": 0.8,
+      "top_p": null,
+      "max_tokens": 1024,
+      "repeat_index": 1,
+      "supersedes_request_key": "66c2494c633f61e61c10bdc203a2cd5b7b22297b55e3d157512a7a7762fe7cd2",
+      "reason": "truncated"
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "catalog_id": "zhizengzeng-ten-families-v1",
+  "gateway": "zhizengzeng",
+  "verified_at": "2026-07-26",
+  "models": [
+    {
+      "family_id": "openai",
+      "provider": "OpenAI",
+      "model_id": "gpt-4o-mini-2024-07-18",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Fixed low-cost GPT snapshot with broad ChatCompletion compatibility."
+    },
+    {
+      "family_id": "claude",
+      "provider": "Anthropic",
+      "model_id": "claude-haiku-4-5-20251001",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Fixed Haiku route selected for batch latency and cost."
+    },
+    {
+      "family_id": "gemini",
+      "provider": "Google",
+      "model_id": "gemini-2.5-flash-lite",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Stable low-cost Gemini text route."
+    },
+    {
+      "family_id": "deepseek",
+      "provider": "DeepSeek",
+      "model_id": "deepseek-v3.2",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Versioned general chat model; explicit reasoner route excluded."
+    },
+    {
+      "family_id": "qwen",
+      "provider": "Alibaba",
+      "model_id": "qwen3-30b-a3b-instruct-2507",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Fixed Instruct route; Thinking route excluded."
+    },
+    {
+      "family_id": "glm",
+      "provider": "Zhipu",
+      "model_id": "glm-4.6",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Stable GLM route; glm-4.5-flash was rejected after repeated 429/timeouts."
+    },
+    {
+      "family_id": "minimax",
+      "provider": "MiniMax",
+      "model_id": "MiniMax-M2.5",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Explicit MiniMax model version."
+    },
+    {
+      "family_id": "kimi",
+      "provider": "Moonshot",
+      "model_id": "kimi-k2.5",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Stable Kimi K2.5 route; the listed kimi-k2-0905-preview route returned 404."
+    },
+    {
+      "family_id": "doubao",
+      "provider": "ByteDance",
+      "model_id": "doubao-seed-1-6-flash-250828",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Date-pinned Doubao Seed Flash route."
+    },
+    {
+      "family_id": "mimo",
+      "provider": "Xiaomi",
+      "model_id": "mimo-v2.5",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["smoke", "pilot"],
+      "verified_available": true,
+      "note": "Current low-cost Xiaomi MiMo text route."
+    }
+  ]
+}

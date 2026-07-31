@@ -1,0 +1,16 @@
+{
+  "schema_version": 5,
+  "run_id": "zhizengzeng-attribution-replacement-probe-v5",
+  "gateway": "zhizengzeng",
+  "model_catalog": "../zhizengzeng_model_catalog.v5.json",
+  "model_roles": ["probe_v5"],
+  "prompt_manifest": "../prompt_manifest.smoke-v2.json",
+  "prompt_ids": ["zh-smoke-office-001"],
+  "minimum_prompt_count": 1,
+  "max_tokens_by_target_length": {"medium": 4096},
+  "sampling": [
+    {"sampling_id": "probe", "temperature": 0.0, "top_p": null, "repetitions": 1}
+  ],
+  "max_requests": 2,
+  "enabled": true
+}

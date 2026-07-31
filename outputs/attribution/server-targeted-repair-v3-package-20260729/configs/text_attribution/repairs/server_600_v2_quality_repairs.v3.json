@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "run_id": "zhizengzeng-attribution-quality-repairs-v3",
+  "gateway": "zhizengzeng",
+  "model_catalog": "../zhizengzeng_model_catalog.v2.json",
+  "prompt_manifest": "../prompt_manifest.v2.json",
+  "cells": [
+    {
+      "repair_id": "repair-claude-truncated-001",
+      "model_id": "claude-sonnet-4-6-20260217",
+      "prompt_id": "zh-science-p01",
+      "temperature": 0.0,
+      "top_p": null,
+      "max_tokens": 1024,
+      "repeat_index": 0,
+      "supersedes_request_key": "dffc229da12a8f06663cad34a64ea67013a48a03b8c31c6d965f3a2ca30dc7c8",
+      "reason": "truncated"
+    },
+    {
+      "repair_id": "repair-mimo-truncated-001",
+      "model_id": "mimo-v2.5",
+      "prompt_id": "zh-office-p01",
+      "temperature": 0.8,
+      "top_p": null,
+      "max_tokens": 1024,
+      "repeat_index": 1,
+      "supersedes_request_key": "66c2494c633f61e61c10bdc203a2cd5b7b22297b55e3d157512a7a7762fe7cd2",
+      "reason": "truncated"
+    },
+    {
+      "repair_id": "repair-qwen-duplicate-001",
+      "model_id": "qwen-plus-2025-07-28",
+      "prompt_id": "zh-culture-p02",
+      "temperature": 0.8,
+      "top_p": null,
+      "max_tokens": 1536,
+      "repeat_index": 1,
+      "supersedes_request_key": "875b51035c5b89f6c44b1faa509ef631af05d2acc02c4044cd8a60985701f874",
+      "reason": "exact_duplicate"
+    },
+    {
+      "repair_id": "repair-qwen-duplicate-002",
+      "model_id": "qwen-plus-2025-07-28",
+      "prompt_id": "en-creative-p04",
+      "temperature": 0.8,
+      "top_p": null,
+      "max_tokens": 1536,
+      "repeat_index": 1,
+      "supersedes_request_key": "f8b39a7d74ec9e4c80ca926e04efd5d89ee6fbddc549a0c8005fe92952998dbe",
+      "reason": "exact_duplicate"
+    }
+  ]
+}

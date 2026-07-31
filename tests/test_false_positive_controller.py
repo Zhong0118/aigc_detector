@@ -494,6 +494,56 @@ class FalsePositiveControllerTests(unittest.TestCase):
                 self.assertFalse(status["artifact_loaded"])
                 self.assertIn(warning, status["artifact_warnings"])
 
+    def test_runtime_rejects_invalid_v2_diagnostics_with_machine_readable_errors(
+        self,
+    ) -> None:
+        def artifact(**group_overrides):
+            group = {
+                "low_threshold": 0.4,
+                "high_threshold": 0.85,
+                "human_validation_samples": 10,
+                "ai_validation_samples": 10,
+                "validation_fpr": 0.0,
+                "validation_fpr_interval_95": [0.0, 0.277533],
+                "ai_recall": 0.9,
+                "ai_recall_interval_95": [0.59585, 0.982124],
+                "validation_auroc": 0.95,
+                "reliability_status": "ok",
+                "warnings": [],
+            }
+            group.update(group_overrides)
+            return {
+                "artifact_schema_version": 2,
+                "groups": {"en:general_qa:short": group},
+            }
+
+        cases = {
+            "nonfinite_fpr": artifact(validation_fpr=float("nan")),
+            "negative_recall": artifact(ai_recall=-0.1),
+            "invalid_auroc": artifact(validation_auroc=1.1),
+            "bad_interval_shape": artifact(validation_fpr_interval_95=[0.1]),
+            "bad_interval_order": artifact(ai_recall_interval_95=[0.8, 0.7]),
+            "bad_warnings": artifact(warnings=[1]),
+            "negative_count": artifact(ai_validation_samples=-1),
+            "bad_reliability": artifact(reliability_status=""),
+        }
+
+        for name, payload in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / "thresholds.json"
+                path.write_text(json.dumps(payload), encoding="utf-8")
+
+                controller = FalsePositiveController({"artifact_path": str(path)})
+
+                self.assertFalse(controller.status()["artifact_loaded"])
+                self.assertTrue(controller.artifact_warnings)
+                self.assertTrue(
+                    all(
+                        warning.startswith("artifact_")
+                        for warning in controller.artifact_warnings
+                    )
+                )
+
     def test_long_document_requires_distributed_segment_evidence(self) -> None:
         controller = FalsePositiveController(
             {

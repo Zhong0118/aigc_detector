@@ -1,0 +1,16 @@
+{
+  "schema_version": 4,
+  "run_id": "zhizengzeng-attribution-user-selected-smoke-v4",
+  "gateway": "zhizengzeng",
+  "model_catalog": "../zhizengzeng_model_catalog.v4.json",
+  "model_roles": ["smoke_v4"],
+  "prompt_manifest": "../prompt_manifest.smoke-v2.json",
+  "prompt_ids": ["*"],
+  "minimum_prompt_count": 2,
+  "sampling": [
+    {"sampling_id": "deterministic", "temperature": 0.0, "top_p": null, "repetitions": 1, "prompt_ids": ["zh-smoke-office-001"]},
+    {"sampling_id": "diverse", "temperature": 0.8, "top_p": null, "repetitions": 1, "prompt_ids": ["en-smoke-analysis-001"]}
+  ],
+  "max_requests": 40,
+  "enabled": true
+}

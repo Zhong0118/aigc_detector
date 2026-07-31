@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "selection_id": "user-selected-20-models-v4",
+  "gateway": "zhizengzeng",
+  "target_records": 600,
+  "records_per_model": 30,
+  "reuse": {
+    "source_run_id": "zhizengzeng-attribution-server-600-v2",
+    "safe_records": 118,
+    "models": [
+      "claude-haiku-4-5-20251001",
+      "claude-sonnet-4-6-20260217",
+      "deepseek-v4-flash",
+      "mimo-v2.5"
+    ],
+    "quality_repairs": 2
+  },
+  "new_collection": {
+    "models": 16,
+    "records_per_model": 30,
+    "records": 480
+  },
+  "formula": "118 reused + 480 newly collected + 2 repaired = 600",
+  "full_model_ids": [
+    "minimax-m2.5",
+    "minimax-m2.7",
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-4-6-20260217",
+    "deepseek-v4-flash",
+    "deepseek-v4-pro",
+    "doubao-seed-2-0-lite-260215",
+    "doubao-seed-2-1-pro-260628",
+    "gemini-3-flash-preview",
+    "gemini-3.5-flash",
+    "glm-4",
+    "glm-5.1",
+    "gpt-5",
+    "gpt-5.4",
+    "kimi-k2",
+    "kimi-k2.6",
+    "mimo-v2-flash",
+    "mimo-v2.5",
+    "qwen3.5-flash",
+    "qwen3.6-plus"
+  ]
+}
+

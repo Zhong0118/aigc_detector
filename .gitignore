@@ -71,3 +71,6 @@ tools/c2patool/
 # Uploads / outputs
 output/
 uploads/
+
+.codex_artifacts
+tmp/

@@ -229,21 +229,6 @@ def build_threshold_artifact(
             )
         )
 
-    missing_calibration = [
-        group_name
-        for group_name in exact_groups
-        if len(scores[group_name][ROLE_HUMAN_CALIBRATION])
-        < minimum_group_samples
-    ]
-    if missing_calibration:
-        failure_summary = dict(sorted(detector_failures.items()))
-        raise RuntimeError(
-            "Required human calibration evidence is insufficient for "
-            f"{', '.join(missing_calibration)}; need at least "
-            f"{minimum_group_samples} successful scores per exact group. "
-            f"Detector failures: {failure_summary}"
-        )
-
     high_threshold_floors = high_threshold_floors or {}
     low_thresholds = low_thresholds or {}
     groups: dict[str, dict[str, Any]] = {}
@@ -282,9 +267,44 @@ def build_threshold_artifact(
     if not groups:
         raise RuntimeError("No threshold group has sufficient human calibration evidence")
 
+    sparse_exact_groups: dict[str, dict[str, Any]] = {}
+    uncovered_exact_groups: list[str] = []
+    for exact_group in exact_groups:
+        calibration_count = len(
+            scores[exact_group][ROLE_HUMAN_CALIBRATION]
+        )
+        if calibration_count >= minimum_group_samples:
+            continue
+        fallback_group = next(
+            (
+                candidate
+                for candidate in _group_name_fallbacks(exact_group)[1:]
+                if candidate in groups
+            ),
+            None,
+        )
+        if fallback_group is None:
+            uncovered_exact_groups.append(exact_group)
+            continue
+        sparse_exact_groups[exact_group] = {
+            "human_calibration_samples": calibration_count,
+            "minimum_group_samples": minimum_group_samples,
+            "fallback_group": fallback_group,
+            "reason": "insufficient_exact_group_calibration",
+        }
+    if uncovered_exact_groups:
+        failure_summary = dict(sorted(detector_failures.items()))
+        raise RuntimeError(
+            "Required human calibration evidence has no reliable fallback for "
+            f"{', '.join(uncovered_exact_groups)}; need at least "
+            f"{minimum_group_samples} successful scores in an exact or "
+            f"hierarchical fallback group. Detector failures: {failure_summary}"
+        )
+
     payload = _artifact_payload(
         manager=manager,
         groups=groups,
+        sparse_exact_groups=sparse_exact_groups,
         selection=selection,
         evidence=evidence,
         scored_by_source=scored_by_source,
@@ -584,6 +604,19 @@ def _group_fallbacks(sample: TextSample, length_bucket: str) -> tuple[str, ...]:
     )
 
 
+def _group_name_fallbacks(exact_group: str) -> tuple[str, ...]:
+    parts = exact_group.split(":")
+    if len(parts) != 3 or not all(parts):
+        raise ValueError(f"Invalid exact threshold group: {exact_group!r}")
+    language, domain, _length_bucket = parts
+    return (
+        exact_group,
+        f"{language}:{domain}",
+        language,
+        "global",
+    )
+
+
 def _group_domain(group_name: str) -> str:
     parts = group_name.split(":")
     return parts[1] if len(parts) >= 2 else "default"
@@ -672,6 +705,7 @@ def _artifact_payload(
     *,
     manager: TextResourceManager,
     groups: dict[str, dict[str, Any]],
+    sparse_exact_groups: dict[str, dict[str, Any]],
     selection: dict[tuple[str, str], list[_Candidate]],
     evidence: dict[str, dict[str, Any]],
     scored_by_source: dict[str, Counter[str]],
@@ -734,6 +768,7 @@ def _artifact_payload(
         "minimum_group_samples": minimum_group_samples,
         "minimum_validation_samples": minimum_validation_samples,
         "minimum_ai_validation_samples": minimum_ai_validation_samples,
+        "sparse_exact_groups": sparse_exact_groups,
         "source_evidence": source_evidence,
         "licenses": {spec.name: spec.license for spec in manager.dataset_specs},
         "sampling": {

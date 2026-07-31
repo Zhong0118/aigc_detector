@@ -1,0 +1,9 @@
+{
+  "schema_version": 5, "run_id": "zhizengzeng-attribution-server-6k-v5", "gateway": "zhizengzeng",
+  "model_catalog": "../../zhizengzeng_model_catalog.v5.json", "model_roles": ["v5"],
+  "prompt_manifest": "../../prompt_manifest.v2.json",
+  "prompt_ids": ["zh-science-p01", "en-health-p01", "zh-technology-p02", "en-data-p02", "zh-education-p03", "en-business-p03", "zh-office-p04", "en-public-p04", "zh-culture-n01", "en-creative-n01"],
+  "minimum_prompt_count": 10, "max_tokens_by_target_length": {"short": 4096, "medium": 4096, "long": 8192},
+  "sampling": [{"sampling_id": "deterministic", "temperature": 0.0, "top_p": null, "repetitions": 1}, {"sampling_id": "diverse", "temperature": 0.8, "top_p": null, "repetitions": 2}],
+  "max_requests": 600, "enabled": true
+}

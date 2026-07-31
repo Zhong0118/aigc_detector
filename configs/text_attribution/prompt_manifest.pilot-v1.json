@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "manifest_id": "pilot-v1",
+  "prompts": [
+    {
+      "prompt_id": "zh-science-explain-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "science",
+      "task_type": "explanation",
+      "target_length": "medium",
+      "user_prompt": "请用约300字向高中生解释为什么天空通常呈蓝色。要求结构清楚，但不要使用项目符号。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-tech-howto-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "technology",
+      "task_type": "procedure",
+      "target_length": "long",
+      "user_prompt": "请写一份面向初学者的本地数据备份方案，说明准备、执行、验证和恢复四个阶段，约600字。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-business-compare-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "business",
+      "task_type": "comparison",
+      "target_length": "medium",
+      "user_prompt": "一家十人团队需要选择自建服务器或云服务。请比较成本、维护、安全和扩展性，并给出有条件的建议。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-education-argue-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "education",
+      "task_type": "argument",
+      "target_length": "medium",
+      "user_prompt": "请论证课堂中应如何合理使用生成式人工智能。需要同时陈述支持理由、风险和折中方案。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-health-summary-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "health",
+      "task_type": "summary",
+      "target_length": "short",
+      "user_prompt": "将下面内容压缩成120字以内的摘要：规律睡眠有助于注意力、情绪稳定和记忆巩固。长期睡眠不足会影响判断，并增加学习和工作的错误率。改善睡眠需要固定作息、减少睡前强光和避免过晚摄入咖啡因。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-office-rewrite-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "office",
+      "task_type": "rewrite",
+      "target_length": "short",
+      "user_prompt": "把下面的话改写成正式而不过度客套的工作邮件：我们这边数据还没收齐，周五可能交不了，想改到下周二，你看行不行。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-literature-story-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "literature",
+      "task_type": "creative",
+      "target_length": "medium",
+      "user_prompt": "写一个约400字的短故事：一名图书管理员在闭馆后发现一本每天都会多出一页的书。结尾保持克制，不要解释全部谜团。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-history-analysis-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "history",
+      "task_type": "analysis",
+      "target_length": "medium",
+      "user_prompt": "不引用具体国家，分析印刷技术普及通常会怎样影响知识传播、教育和社会组织。区分短期与长期影响。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-data-interpret-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "data_analysis",
+      "task_type": "data_interpretation",
+      "target_length": "medium",
+      "user_prompt": "某服务四周的故障数依次为12、9、15、6，平均修复时间依次为40、35、50、28分钟。请解释趋势、指出不能直接得出的结论，并提出两个后续分析方向。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-reason-debug-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "technology",
+      "task_type": "diagnosis",
+      "target_length": "medium",
+      "user_prompt": "一个网页在公司网络中加载缓慢，但手机热点下正常。请列出可能原因，并按排查优先级给出步骤，不要假设已经知道根因。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-policy-notice-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "office",
+      "task_type": "document_writing",
+      "target_length": "long",
+      "user_prompt": "为一个研究小组起草约500字的数据文件命名与版本管理规范，包含目的、命名规则、版本号、归档和例外处理。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-general-short-001",
+      "version": "pilot-v1",
+      "language": "zh",
+      "domain": "general",
+      "task_type": "question_answering",
+      "target_length": "short",
+      "user_prompt": "为什么同一个人在不同环境下做决定时可能表现得不一致？请用三段简短文字回答。",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-science-explain-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "science",
+      "task_type": "explanation",
+      "target_length": "medium",
+      "user_prompt": "Explain in about 250 words why the sky usually appears blue to a high-school student. Use clear paragraphs and no bullet list.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-tech-howto-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "technology",
+      "task_type": "procedure",
+      "target_length": "long",
+      "user_prompt": "Write a beginner-friendly local data backup plan covering preparation, execution, verification, and recovery in about 500 words.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-business-compare-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "business",
+      "task_type": "comparison",
+      "target_length": "medium",
+      "user_prompt": "A ten-person team must choose between an on-premise server and cloud services. Compare cost, maintenance, security, and scalability, then give a conditional recommendation.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-education-argue-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "education",
+      "task_type": "argument",
+      "target_length": "medium",
+      "user_prompt": "Argue how generative AI should be used responsibly in classrooms. Present supporting reasons, risks, and a practical compromise.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-health-summary-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "health",
+      "task_type": "summary",
+      "target_length": "short",
+      "user_prompt": "Summarize the following in at most 80 words: Regular sleep supports attention, emotional stability, and memory consolidation. Chronic sleep loss impairs judgment and increases mistakes. Helpful practices include a fixed schedule, less bright light before bed, and avoiding caffeine late in the day.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-office-rewrite-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "office",
+      "task_type": "rewrite",
+      "target_length": "short",
+      "user_prompt": "Rewrite this as a professional but direct email: We still do not have all the data, so Friday probably will not work. Could we move the delivery to next Tuesday?",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-literature-story-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "literature",
+      "task_type": "creative",
+      "target_length": "medium",
+      "user_prompt": "Write a 350-word short story about a librarian who discovers that a book gains one new page every night after closing. Keep the ending restrained and leave part of the mystery unexplained.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-history-analysis-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "history",
+      "task_type": "analysis",
+      "target_length": "medium",
+      "user_prompt": "Without naming a specific country, analyze how the spread of printing technology can affect knowledge, education, and social organization. Separate short-term from long-term effects.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-data-interpret-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "data_analysis",
+      "task_type": "data_interpretation",
+      "target_length": "medium",
+      "user_prompt": "A service recorded 12, 9, 15, and 6 incidents over four weeks, with mean repair times of 40, 35, 50, and 28 minutes. Explain the trend, identify conclusions the data cannot support, and propose two follow-up analyses.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-reason-debug-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "technology",
+      "task_type": "diagnosis",
+      "target_length": "medium",
+      "user_prompt": "A website is slow on a company network but normal over a phone hotspot. List plausible causes and give a prioritized diagnostic procedure without assuming the root cause.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-policy-notice-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "office",
+      "task_type": "document_writing",
+      "target_length": "long",
+      "user_prompt": "Draft a 450-word file naming and version-control policy for a research group. Include purpose, naming rules, version numbers, archiving, and exception handling.",
+      "system_prompt": null
+    },
+    {
+      "prompt_id": "en-general-short-001",
+      "version": "pilot-v1",
+      "language": "en",
+      "domain": "general",
+      "task_type": "question_answering",
+      "target_length": "short",
+      "user_prompt": "Why might the same person make inconsistent decisions in different settings? Answer in three short paragraphs.",
+      "system_prompt": null
+    }
+  ]
+}

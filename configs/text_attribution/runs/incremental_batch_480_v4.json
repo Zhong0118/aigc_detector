@@ -1,0 +1,27 @@
+{
+  "schema_version": 4,
+  "run_id": "zhizengzeng-attribution-incremental-batch-480-v4",
+  "gateway": "zhizengzeng",
+  "model_catalog": "../zhizengzeng_incremental_batch.v4.json",
+  "model_roles": ["incremental_v4"],
+  "prompt_manifest": "../prompt_manifest.v2.json",
+  "prompt_ids": [
+    "zh-science-p01",
+    "en-health-p02",
+    "zh-technology-p04",
+    "en-data-p03",
+    "zh-education-p02",
+    "en-business-p04",
+    "zh-office-p01",
+    "en-public-p03",
+    "zh-culture-p02",
+    "en-creative-p04"
+  ],
+  "minimum_prompt_count": 10,
+  "sampling": [
+    {"sampling_id": "deterministic", "temperature": 0.0, "top_p": null, "repetitions": 1},
+    {"sampling_id": "diverse", "temperature": 0.8, "top_p": null, "repetitions": 2}
+  ],
+  "max_requests": 480,
+  "enabled": true
+}

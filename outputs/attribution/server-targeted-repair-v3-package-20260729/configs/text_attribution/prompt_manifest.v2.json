@@ -1,0 +1,416 @@
+{
+  "schema_version": 2,
+  "manifest_id": "attribution-general-v2",
+  "prompts": [
+    {
+      "prompt_id": "zh-science-p01", "semantic_group_id": "science-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "science", "task_type": "explanation", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "请用150至220字向高中生解释：为什么冬天从室外进入温暖房间后，眼镜表面容易起雾？说明水汽来自哪里、为何凝结以及怎样减少起雾，不使用公式。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-science-p01", "semantic_group_id": "science-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "science", "task_type": "explanation", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "In 90-130 words, explain to a high-school student why glasses often fog after someone enters a warm room from cold weather. Identify where the moisture comes from, why it condenses, and one way to reduce fogging. Do not use equations.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-science-p02", "semantic_group_id": "science-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "science", "task_type": "comparison", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "比较太阳能光伏发电与风力发电在能量来源、时间波动、选址、维护和电网配合方面的差异。写400至550字，使用五个简短小标题，最后给出“二者互补而非简单替代”的结论。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-science-p02", "semantic_group_id": "science-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "science", "task_type": "comparison", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Compare solar photovoltaic and wind power in energy source, temporal variability, siting, maintenance, and grid integration. Write 280-380 words under five short headings and conclude that they are complementary rather than simple substitutes.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-science-p03", "semantic_group_id": "science-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "science", "task_type": "summary", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "根据以下材料写一篇400至500字的连贯科普摘要：城市树木通过遮阴减少地表受热，并通过蒸腾消耗能量；降温效果受树种、冠幅、土壤含水量和街道形态影响；树木也可能增加维护成本、花粉暴露和用水需求；规划时应结合热风险、人群活动和长期养护。不要添加材料外的具体数据。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-science-p03", "semantic_group_id": "science-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "science", "task_type": "summary", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a coherent 280-360 word public-science summary from this material: urban trees reduce surface heating through shade and expend energy through transpiration; effects depend on species, canopy size, soil moisture, and street form; trees may also add maintenance cost, pollen exposure, and water demand; planning should combine heat risk, human activity, and long-term care. Do not invent numerical evidence.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-science-p04", "semantic_group_id": "science-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "science", "task_type": "analysis", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "某温室进行了四周观察：平均日照时长依次为6.1、6.4、5.8、6.2小时，植株平均高度增长依次为3.2、3.5、2.6、3.4厘米。写900至1100字分析，严格分为“观察”“可能解释”“不能推出的结论”“后续实验”四节；提出恰好三个替代解释和四项后续测量，不得声称日照已经造成生长差异。", "system_prompt": "你是一名严谨的实验方法编辑，必须区分观测、推断与因果结论。"
+    },
+    {
+      "prompt_id": "en-science-p04", "semantic_group_id": "science-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "science", "task_type": "analysis", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "A greenhouse recorded four weeks of observations. Mean daily sunlight was 6.1, 6.4, 5.8, and 6.2 hours; mean plant-height gains were 3.2, 3.5, 2.6, and 3.4 cm. Write 650-800 words in exactly four sections titled Observations, Possible Explanations, Unsupported Conclusions, and Follow-up Experiment. Give exactly three alternative explanations and four additional measurements. Do not claim that sunlight caused the growth pattern.", "system_prompt": "You are a rigorous experimental-methods editor. Keep observation, inference, and causal claims separate."
+    },
+    {
+      "prompt_id": "zh-science-n01", "semantic_group_id": "science-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "science", "task_type": "document_writing", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "为中学科技节写一则180至230字的实验展台说明，主题是“自制简易雨量器”。按“目的、材料、步骤、安全提醒”四项组织，每项一句或两句，不夸大测量精度。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-science-n01", "semantic_group_id": "science-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "science", "task_type": "argument", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 300-400 word editorial arguing that community science projects should publish their measurement limitations alongside their findings. Address one objection and use an example involving local air or water observations. Do not cite named studies.", "system_prompt": "Write in a restrained magazine-editorial voice: concrete, skeptical of hype, and free of rhetorical questions."
+    },
+
+    {
+      "prompt_id": "zh-health-p01", "semantic_group_id": "health-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "health", "task_type": "summary", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "将以下内容压缩为160至220字的健康教育摘要：久坐会减少日常活动量，并可能伴随颈肩不适和注意力下降；一次高强度运动不能完全抵消全天久坐；可以通过定时起身、步行沟通、调整屏幕和座椅位置改善；存在持续疼痛时应寻求专业评估。不要作个体诊断。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-health-p01", "semantic_group_id": "health-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "health", "task_type": "summary", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "Compress this into a 100-140 word health-education summary: prolonged sitting reduces everyday movement and may accompany neck or shoulder discomfort and reduced attention; one hard workout does not fully offset sitting all day; regular standing breaks, walking conversations, and better screen and chair positioning can help; persistent pain warrants professional assessment. Do not diagnose an individual.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-health-p02", "semantic_group_id": "health-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "health", "task_type": "procedure", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "写一份400至550字的“办公室午后困倦自我检查流程”。按环境、睡眠、饮食、活动和就医提示五部分组织；给出低风险、可执行的调整建议；明确这不是诊断工具，不推荐药物或补充剂。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-health-p02", "semantic_group_id": "health-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "health", "task_type": "procedure", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 280-380 word self-check process for afternoon sleepiness at work. Organize it under Environment, Sleep, Food, Movement, and When to Seek Help. Offer low-risk practical adjustments, state that it is not a diagnostic tool, and do not recommend medication or supplements.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-health-p03", "semantic_group_id": "health-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "health", "task_type": "comparison", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "用900至1100字比较纸质健康记录与手机健康记录在可访问性、隐私、连续性、共享、误读风险和长期保存方面的优缺点。分别讨论个人使用和与专业人员沟通两种场景，结论应说明选择取决于需求，不宣称任何方式能替代医疗档案。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-health-p03", "semantic_group_id": "health-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "health", "task_type": "comparison", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "In 650-800 words, compare paper and smartphone health logs in accessibility, privacy, continuity, sharing, risk of misinterpretation, and long-term preservation. Discuss both personal tracking and communication with professionals. Conclude conditionally and do not imply that either replaces a medical record.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-health-p04", "semantic_group_id": "health-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "health", "task_type": "risk_communication", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "一项小型调查发现，参加者中每天饮水少于四杯的人更常报告头痛，但调查没有记录天气、咖啡因、工作强度或既往情况。写450至600字，严格分成“发现”“不确定性”“可以做什么”“何时求助”四节；避免把相关性写成因果，也不要给出统一饮水量处方。", "system_prompt": "你是一名公共健康信息编辑，目标是准确传达风险而不制造恐慌或提供个体诊断。"
+    },
+    {
+      "prompt_id": "en-health-p04", "semantic_group_id": "health-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "health", "task_type": "risk_communication", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "A small survey found that participants drinking fewer than four cups of water per day reported headaches more often, but it did not record weather, caffeine, workload, or prior conditions. Write 300-400 words in exactly four sections: Finding, Uncertainty, Practical Steps, and When to Seek Help. Do not turn correlation into causation or prescribe one intake target for everyone.", "system_prompt": "You are a public-health information editor. Communicate uncertainty accurately without alarm or individual diagnosis."
+    },
+    {
+      "prompt_id": "zh-health-n01", "semantic_group_id": "health-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "health", "task_type": "document_writing", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "为社区活动室写一张180至230字的夏季高温活动提醒，包含出发前、活动中、结束后三部分。提醒补水、休息和关注不适，但不要给出药物建议或夸大风险。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-health-n01", "semantic_group_id": "health-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "health", "task_type": "rewrite", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "Rewrite a clinic's generic handout about preparing for a routine appointment into a 650-750 word accessible guide. Cover organizing questions, listing medicines, bringing relevant records, accessibility needs, and taking notes afterward. Do not assume a diagnosis or promise outcomes.", "system_prompt": "Use calm, plain English with short paragraphs and concrete verbs. Avoid cheerful slogans, scare language, and legalistic disclaimers."
+    },
+
+    {
+      "prompt_id": "zh-technology-p01", "semantic_group_id": "technology-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "technology", "task_type": "explanation", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "用160至220字向非技术同事解释浏览器缓存是什么、为什么能加快页面加载、为什么偶尔会显示旧内容，以及清除缓存并不等同于删除网站账号。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-technology-p01", "semantic_group_id": "technology-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "technology", "task_type": "explanation", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "In 100-140 words, explain browser caching to a nontechnical colleague: what it stores, why it speeds loading, why stale content can appear, and why clearing the cache is not the same as deleting a website account.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-technology-p02", "semantic_group_id": "technology-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "technology", "task_type": "procedure", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "为十人研究团队写一份450至600字的共享文件备份流程，按“范围、日常备份、恢复演练、权限、异常处理”组织。区分同步与备份，包含一次验证恢复的步骤，但不要指定商业产品。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-technology-p02", "semantic_group_id": "technology-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "technology", "task_type": "procedure", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 300-400 word shared-file backup process for a ten-person research team. Use the sections Scope, Routine Backup, Restore Drill, Permissions, and Incident Handling. Distinguish synchronization from backup, include a test restoration, and avoid naming products.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-technology-p03", "semantic_group_id": "technology-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "technology", "task_type": "diagnosis", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "一台笔记本电脑在办公室无线网络中视频会议频繁卡顿，但在手机热点下正常，其他网页有时也慢。用450至600字给出按优先级排列的诊断思路，区分设备、无线环境、DNS、带宽占用和服务端因素，不假设已经知道根因。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-technology-p03", "semantic_group_id": "technology-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "technology", "task_type": "diagnosis", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "A laptop's video calls repeatedly freeze on office Wi-Fi but work over a phone hotspot, and other web pages are sometimes slow. In 300-400 words, give a prioritized diagnostic approach covering the device, radio environment, DNS, competing traffic, and service-side causes without assuming the root cause.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-technology-p04", "semantic_group_id": "technology-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "technology", "task_type": "design_review", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "评审一个内部文档搜索系统方案：文档每天同步一次；只有部门级权限；索引保存正文和标题；查询日志保留一年；系统没有删除传播机制。写900至1200字，严格包含“目标复述、主要风险、权衡、分阶段改进、验收指标”五节；列出恰好六项风险和五个可测验收指标。", "system_prompt": "你是一名独立的软件架构评审员。措辞直接，优先指出可验证风险，不替方案方补造未提供的能力。"
+    },
+    {
+      "prompt_id": "en-technology-p04", "semantic_group_id": "technology-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "technology", "task_type": "design_review", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "Review an internal document-search design: documents synchronize daily; permissions exist only at department level; the index stores body text and titles; query logs remain for one year; deletion does not propagate. Write 650-850 words in exactly five sections titled Restated Goal, Main Risks, Trade-offs, Phased Improvements, and Acceptance Metrics. List exactly six risks and five measurable acceptance metrics.", "system_prompt": "You are an independent software architecture reviewer. Be direct, prioritize testable risks, and do not invent capabilities not supplied."
+    },
+    {
+      "prompt_id": "zh-technology-n01", "semantic_group_id": "technology-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "technology", "task_type": "document_writing", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "为实验室群聊写一则180至230字的软件升级通知，分为“时间、影响、准备、反馈”四项。说明升级期间文件服务只读30分钟，已打开文件应提前保存，升级后需要重新登录。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-technology-n01", "semantic_group_id": "technology-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "technology", "task_type": "argument", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 320-420 word internal memo arguing that teams should document manual workarounds before automating them. Include one counterargument, a small example involving report preparation, and a conditional recommendation.", "system_prompt": "Write like a pragmatic senior engineer: terse but not rude, specific about failure modes, and unwilling to treat automation as automatically beneficial."
+    },
+
+    {
+      "prompt_id": "zh-data-p01", "semantic_group_id": "data-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "data_reasoning", "task_type": "data_interpretation", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "某客服团队四周收到工单120、150、132、108件，首次响应中位数为18、24、20、16分钟。用170至230字概括变化，指出一个可能的改善信号和两个仅凭这些数据不能得出的结论。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-data-p01", "semantic_group_id": "data-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "data_reasoning", "task_type": "data_interpretation", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "A support team received 120, 150, 132, and 108 tickets over four weeks; median first-response times were 18, 24, 20, and 16 minutes. In 100-140 words, summarize the pattern, identify one possible improvement signal, and state two conclusions these data alone cannot support.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-data-p02", "semantic_group_id": "data-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "data_reasoning", "task_type": "reasoning", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "评估以下推理：“新页面上线后注册率从8%升到10%，所以新页面让每1000名访客多注册20人。”写450至600字，按“计算是否正确、因果是否成立、需要哪些对照、如何更谨慎表述”组织。给出计算，但不要假设样本量或显著性。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-data-p02", "semantic_group_id": "data-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "data_reasoning", "task_type": "reasoning", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Evaluate this claim: “After a new page launched, registration rose from 8% to 10%, so the page caused 20 extra registrations per 1,000 visitors.” Write 300-400 words under Calculation, Causality, Needed Controls, and Careful Wording. Show the arithmetic but do not assume sample size or statistical significance.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-data-p03", "semantic_group_id": "data-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "data_reasoning", "task_type": "comparison", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "用900至1100字比较平均数、中位数和分位数在描述等待时间时的作用。构造一个包含极端长等待的简单数值例子，解释三个统计量会怎样变化，并讨论面向管理者和面向用户报告时应如何组合呈现。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-data-p03", "semantic_group_id": "data-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "data_reasoning", "task_type": "comparison", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "In 650-800 words, compare the mean, median, and percentiles for reporting waiting times. Construct a simple numerical example containing one extreme wait, explain how the three summaries respond, and discuss how reports for managers and users might combine them.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-data-p04", "semantic_group_id": "data-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "data_reasoning", "task_type": "error_analysis", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "一份报告写道：“A组满意度4.2分，B组4.0分，因此A方案明显更好。”已知量表为1至5分，但没有样本量、离散程度、分组方式和问卷回收率。写450至600字，严格分为“已知、缺失、风险、最低补充分析”四节，并提出恰好五项需要补充的信息。", "system_prompt": "你是一名数据质量审查员，只依据提供的信息判断，不用专业术语掩盖不确定性。"
+    },
+    {
+      "prompt_id": "en-data-p04", "semantic_group_id": "data-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "data_reasoning", "task_type": "error_analysis", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "A report says, “Group A scored 4.2 in satisfaction and Group B scored 4.0, so A is clearly better.” The scale runs from 1 to 5, but sample sizes, dispersion, grouping, and response rates are absent. Write 300-400 words in exactly four sections: Known, Missing, Risks, and Minimum Additional Analysis. Request exactly five missing pieces of information.", "system_prompt": "You are a data-quality reviewer. Judge only from supplied information and do not hide uncertainty behind jargon."
+    },
+    {
+      "prompt_id": "zh-data-n01", "semantic_group_id": "data-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "data_reasoning", "task_type": "data_interpretation", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "某食堂连续五天午餐剩余份数为18、9、21、7、5。写180至230字，列出“直接观察、可能原因、下一步记录”三项；不要把五天数据解释为长期趋势。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-data-n01", "semantic_group_id": "data-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "data_reasoning", "task_type": "argument", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 650-800 word essay arguing that dashboards should show data freshness and missingness as prominently as headline metrics. Address objections about visual clutter and user confusion, and give a concrete example involving a weekly operations dashboard.", "system_prompt": "Use a precise, skeptical analytical voice. Prefer concrete trade-offs over slogans and avoid treating transparency as cost-free."
+    },
+
+    {
+      "prompt_id": "zh-education-p01", "semantic_group_id": "education-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "education", "task_type": "explanation", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "用160至220字向大学新生解释“形成性评价”与“总结性评价”的区别，各举一个课程中的例子，并说明二者可以共同使用。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-education-p01", "semantic_group_id": "education-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "education", "task_type": "explanation", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "In 100-140 words, explain the difference between formative and summative assessment to a first-year university student. Give one course example of each and explain why they can be used together.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-education-p02", "semantic_group_id": "education-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "education", "task_type": "lesson_design", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "为一节45分钟的信息素养课设计450至600字教学方案，主题是“如何判断网络信息的证据强度”。按目标、导入、活动、检查理解、课后任务组织，活动中必须包含对两个相互矛盾短文本的比较。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-education-p02", "semantic_group_id": "education-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "education", "task_type": "lesson_design", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Design a 45-minute information-literacy lesson on judging the strength of online evidence. Write 300-400 words under Objectives, Opening, Activity, Check for Understanding, and Follow-up. The activity must compare two short conflicting texts.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-education-p03", "semantic_group_id": "education-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "education", "task_type": "argument", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "用450至600字讨论课堂是否应允许学生使用生成式人工智能完成初稿。分别说明潜在收益、学习风险、教师负担和可执行边界，提出有条件的折中方案，而不是简单支持或禁止。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-education-p03", "semantic_group_id": "education-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "education", "task_type": "argument", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "In 300-400 words, discuss whether students should be allowed to use generative AI for first drafts. Address potential benefits, learning risks, teacher workload, and enforceable boundaries, then propose a conditional compromise rather than a blanket permission or ban.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-education-p04", "semantic_group_id": "education-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "education", "task_type": "rubric_design", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "为本科生的“数据解读短报告”设计一份900至1100字评分量规。严格包含五个维度，每个维度设置优秀、合格、需改进三级描述，并给出权重；五项权重合计100%。另外单列三种不应重复扣分的情况，避免把写作风格偏好当成事实错误。", "system_prompt": "你是一名课程评价设计者。量规必须可观察、可复核，并尽量减少评分者凭印象打分。"
+    },
+    {
+      "prompt_id": "en-education-p04", "semantic_group_id": "education-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "education", "task_type": "rubric_design", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "Design a 650-800 word rubric for an undergraduate data-interpretation brief. Include exactly five weighted dimensions totaling 100%, each with Excellent, Adequate, and Needs Improvement descriptors. Add exactly three cases that should not receive duplicate penalties, and do not treat stylistic preference as factual error.", "system_prompt": "You are a course-assessment designer. Criteria must be observable, reviewable, and resistant to impressionistic scoring."
+    },
+    {
+      "prompt_id": "zh-education-n01", "semantic_group_id": "education-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "education", "task_type": "document_writing", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "为研究生读书会写一则180至230字的轮值主持说明，分为会前、会上、会后三部分，明确主持人不负责替成员总结全部文献。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-education-n01", "semantic_group_id": "education-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "education", "task_type": "rewrite", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Rewrite a vague assignment prompt—“Research a technology and explain whether it is good or bad”—into a 320-420 word brief with a clear audience, evidence expectations, scope boundaries, deliverables, and criteria for a balanced conclusion.", "system_prompt": "Write as a demanding but fair instructor. Remove ambiguity without prescribing the student's answer or padding the brief with motivational language."
+    },
+
+    {
+      "prompt_id": "zh-business-p01", "semantic_group_id": "business-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "business", "task_type": "comparison", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "用170至230字比较按月订阅与按使用量计费对小型软件团队的影响，至少涉及需求波动、预算可预测性和闲置成本，并给出条件式建议。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-business-p01", "semantic_group_id": "business-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "business", "task_type": "comparison", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "In 100-140 words, compare monthly subscription and usage-based pricing for a small software team. Address demand variability, budget predictability, and idle capacity, then give a conditional recommendation.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-business-p02", "semantic_group_id": "business-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "business", "task_type": "decision_memo", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "一家12人咨询团队在考虑租用联合办公空间或继续远程办公。写450至600字决策备忘录，按成本、协作、招聘、客户接待、风险组织，最后列出作出决定前需要收集的四项信息。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-business-p02", "semantic_group_id": "business-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "business", "task_type": "decision_memo", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "A 12-person consultancy is deciding between a coworking space and remaining remote. Write a 300-400 word decision memo under Cost, Collaboration, Hiring, Client Meetings, and Risk. End with four pieces of information needed before deciding.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-business-p03", "semantic_group_id": "business-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "business", "task_type": "analysis", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "某线上课程前三个月访问量分别为1.2万、1.8万、1.5万，购买转化率为3.1%、2.7%、3.4%，退款率为4.0%、5.8%、4.5%。用900至1100字分析可能的业务含义，区分流量、转化、收入质量和尚缺信息，不假设价格相同。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-business-p03", "semantic_group_id": "business-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "business", "task_type": "analysis", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "An online course had 12,000, 18,000, and 15,000 visits over three months; purchase conversion was 3.1%, 2.7%, and 3.4%; refund rates were 4.0%, 5.8%, and 4.5%. In 650-800 words, analyze possible business meaning across traffic, conversion, revenue quality, and missing information. Do not assume constant price.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-business-p04", "semantic_group_id": "business-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "business", "task_type": "proposal_review", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "评审以下提议：“把客服响应时间目标从24小时改为2小时，可以显著提高续费。”已知没有新增人员预算，也没有按问题复杂度分级。写450至600字，严格分为“主张、隐含假设、潜在副作用、试点设计”四节；列出恰好五个隐含假设和三个试点指标。", "system_prompt": "你是一名运营方案评审员。关注资源约束、指标替代和不可预期后果，不为了显得积极而弱化问题。"
+    },
+    {
+      "prompt_id": "en-business-p04", "semantic_group_id": "business-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "business", "task_type": "proposal_review", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "Review this proposal: “Reducing the customer-support response target from 24 hours to 2 hours will significantly improve renewals.” There is no additional staffing budget and no issue-complexity tiering. Write 300-400 words in exactly four sections: Claim, Hidden Assumptions, Side Effects, and Pilot Design. List exactly five assumptions and three pilot metrics.", "system_prompt": "You are an operations proposal reviewer. Focus on resource constraints, metric substitution, and unintended effects without softening concerns to sound positive."
+    },
+    {
+      "prompt_id": "zh-business-n01", "semantic_group_id": "business-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "business", "task_type": "document_writing", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "为小型门店写一份180至230字的盘点差异记录模板说明，包含商品、账面数量、实点数量、可能原因、复核人五项，并说明“可能原因”不能替代复核。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-business-n01", "semantic_group_id": "business-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "business", "task_type": "argument", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 650-800 word essay arguing that small firms should separate experiments from permanent pricing changes. Address speed, customer trust, operational complexity, and what evidence should trigger expansion or reversal.", "system_prompt": "Use the voice of a conservative commercial strategist: numerate, plainspoken, and alert to reversibility. Avoid startup clichés."
+    },
+
+    {
+      "prompt_id": "zh-office-p01", "semantic_group_id": "office-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "office", "task_type": "rewrite", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "把下面内容改写为160至220字的正式内部邮件，不要过度客套：“数据还有两组没核对完，周五可能交不了。我们预计周一下午完成，周二上午发最终版。请业务组今天确认异常编号A17和B04。”", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-office-p01", "semantic_group_id": "office-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "office", "task_type": "rewrite", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "Rewrite this as a 100-140 word professional internal email without excessive politeness: “Two data groups still need checking, so Friday may not work. We expect to finish Monday afternoon and send the final version Tuesday morning. The operations team needs to confirm anomaly IDs A17 and B04 today.”", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-office-p02", "semantic_group_id": "office-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "office", "task_type": "document_writing", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "为跨部门周会写一份450至600字会议纪要模板说明，按会议信息、决定、待办、风险、待确认事项组织。解释决定与讨论意见的区别，并要求每项待办包含负责人和日期。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-office-p02", "semantic_group_id": "office-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "office", "task_type": "document_writing", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 300-400 word guide to a cross-team meeting-minutes template. Organize it under Meeting Details, Decisions, Actions, Risks, and Open Questions. Explain the difference between a decision and a discussion point, and require an owner and date for every action.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-office-p03", "semantic_group_id": "office-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "office", "task_type": "policy_writing", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "写一份450至600字的内部文件命名与版本管理说明，覆盖命名元素、日期格式、草稿与定稿、修改责任、归档和例外。避免依赖某个软件，并解释为什么不能用“最终版2”作为长期规则。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-office-p03", "semantic_group_id": "office-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "office", "task_type": "policy_writing", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 300-400 word internal file-naming and version-control guide covering naming elements, date format, drafts and approvals, edit responsibility, archiving, and exceptions. Keep it product-neutral and explain why labels such as “final version 2” are not a sustainable rule.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-office-p04", "semantic_group_id": "office-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "office", "task_type": "constraint_rewrite", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "根据以下事实写一份900至1100字项目状态报告：计划完成40项检查，已完成31项；5项等待外部确认；4项因日志缺失无法开始；预算未超支；原定8月5日交付，预计推迟3至5天。严格使用“摘要、完成情况、阻塞、影响、恢复计划、需要决定”六节；不得把等待确认写成已完成，也不得虚构负责人。", "system_prompt": "你是一名项目管理办公室编辑。保持事实边界，发现信息缺失时明确标注，不用模糊乐观措辞掩盖延期。"
+    },
+    {
+      "prompt_id": "en-office-p04", "semantic_group_id": "office-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "office", "task_type": "constraint_rewrite", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "Write a 650-800 word project status report from these facts: 40 checks were planned; 31 are complete; 5 await external confirmation; 4 cannot start because logs are missing; budget is not exceeded; delivery planned for August 5 is expected to slip by 3-5 days. Use exactly six sections: Summary, Completed Work, Blockers, Impact, Recovery Plan, and Decisions Needed. Do not count pending items as complete or invent owners.", "system_prompt": "You are a project-management-office editor. Preserve factual boundaries, label missing information, and do not hide delay behind vague optimism."
+    },
+    {
+      "prompt_id": "zh-office-n01", "semantic_group_id": "office-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "office", "task_type": "document_writing", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "为课题组写一则180至230字的报销材料提醒，分为提交范围、命名方式、截止时间、退回处理四项。说明缺少凭证的材料会退回补充，不承诺具体到账时间。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-office-n01", "semantic_group_id": "office-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "office", "task_type": "rewrite", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Rewrite a defensive incident update into a 300-400 word accountable message. Facts: a scheduled export ran with an outdated filter; 63 records were omitted; no source data was deleted; a corrected file will be available tomorrow; the review step failed to compare row counts. Explain impact and next actions without blaming an individual.", "system_prompt": "Use a candid executive tone. State the error early, avoid euphemisms, separate confirmed impact from uncertainty, and do not perform public-relations spin."
+    },
+
+    {
+      "prompt_id": "zh-public-p01", "semantic_group_id": "public-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "public_history", "task_type": "explanation", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "用160至220字解释公共政策中的“试点”为什么不只是小规模正式实施。说明试点应检验假设、记录副作用和设定停止或调整条件。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-public-p01", "semantic_group_id": "public-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "public_history", "task_type": "explanation", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "In 100-140 words, explain why a public-policy pilot is not merely a smaller permanent rollout. Describe testing assumptions, recording side effects, and defining conditions to stop or adjust.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-public-p02", "semantic_group_id": "public-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "public_history", "task_type": "historical_analysis", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "不指定具体国家，用450至600字分析印刷成本下降可能怎样影响知识传播。按短期变化、机构反应、长期后果、限制条件组织，同时说明识字率、运输和审查制度可能改变结果。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-public-p02", "semantic_group_id": "public-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "public_history", "task_type": "historical_analysis", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Without naming a country, analyze in 300-400 words how falling printing costs might affect the spread of knowledge. Use Short-term Change, Institutional Response, Long-term Effects, and Limiting Conditions, noting how literacy, transport, and censorship could alter outcomes.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-public-p03", "semantic_group_id": "public-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "public_history", "task_type": "comparison", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "用900至1100字比较公开征求意见、代表性访谈和随机抽样调查在公共决策中的价值与局限。讨论参与深度、代表性、成本、时间和解释风险，说明三者回答的问题不同，不能简单按“民主程度”排序。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-public-p03", "semantic_group_id": "public-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "public_history", "task_type": "comparison", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "In 650-800 words, compare open public comments, representative interviews, and random-sample surveys for public decisions. Discuss depth, representativeness, cost, time, and interpretive risk. Explain that they answer different questions and should not be ranked by a simplistic scale of democratic legitimacy.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-public-p04", "semantic_group_id": "public-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "public_history", "task_type": "policy_analysis", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "某公共阅览室计划把周末开放时间延长两小时，但没有新增预算。写450至600字，严格分为“目标、受益者、成本与风险、替代方案、试点评估”五节；提出恰好四个评估指标，并考虑员工排班、使用需求和其他时段调整，不替管理者作最终决定。", "system_prompt": "你是一名中立的政策分析员。明确利益相关者和机会成本，不用价值判断代替证据。"
+    },
+    {
+      "prompt_id": "en-public-p04", "semantic_group_id": "public-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "public_history", "task_type": "policy_analysis", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "A public reading room proposes extending weekend hours by two hours without additional budget. Write 300-400 words in exactly five sections: Goal, Beneficiaries, Costs and Risks, Alternatives, and Pilot Evaluation. Propose exactly four metrics and consider staffing, demand, and changes to other hours without making the final decision.", "system_prompt": "You are a neutral policy analyst. Identify stakeholders and opportunity costs; do not substitute value judgments for evidence."
+    },
+    {
+      "prompt_id": "zh-public-n01", "semantic_group_id": "public-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "public_history", "task_type": "document_writing", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "为社区议事会写一则180至230字的意见征集说明，分为议题范围、提交方式、公开规则、处理流程四项。说明收集意见不等于逐条采纳。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-public-n01", "semantic_group_id": "public-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "public_history", "task_type": "argument", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 650-800 word essay arguing that public notices should distinguish legal requirements, operational choices, and recommendations. Address clarity, accountability, emergency exceptions, and the risk of overwhelming readers.", "system_prompt": "Write in the voice of a careful civic editor: plain, unsentimental, and attentive to the difference between authority and advice."
+    },
+
+    {
+      "prompt_id": "zh-culture-p01", "semantic_group_id": "culture-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "culture_life", "task_type": "explanation", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "用160至220字解释为什么同一个人在家庭、课堂和工作场合可能表现出不同的说话方式。涉及角色、关系、风险和习惯，不把这种变化简单判断为虚伪。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-culture-p01", "semantic_group_id": "culture-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "culture_life", "task_type": "explanation", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "In 100-140 words, explain why the same person may speak differently at home, in class, and at work. Address roles, relationships, risk, and habit without reducing the variation to dishonesty.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-culture-p02", "semantic_group_id": "culture-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "culture_life", "task_type": "comparison", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "比较纸质旅行日记、手机照片记录和语音备忘录在细节、情绪、整理成本、隐私和长期回看方面的差异。写450至600字，使用三个方法小节和一个选择建议小节。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-culture-p02", "semantic_group_id": "culture-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "culture_life", "task_type": "comparison", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Compare a paper travel journal, phone photos, and voice notes in captured detail, emotion, organization cost, privacy, and long-term revisiting. Write 300-400 words with one section per method and a final Choosing a Mix section.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-culture-p03", "semantic_group_id": "culture-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "culture_life", "task_type": "analysis", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "用450至600字分析为什么短视频中的“高效一天”容易让观众误判普通生活。讨论选择性展示、剪辑、资源差异、算法推荐和观众自我比较，同时说明这不意味着所有此类内容都没有价值。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-culture-p03", "semantic_group_id": "culture-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "culture_life", "task_type": "analysis", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "In 300-400 words, analyze why “productive day” short videos can distort viewers' expectations of ordinary life. Discuss selective display, editing, resource differences, recommendation algorithms, and self-comparison while acknowledging that such content can still have value.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-culture-p04", "semantic_group_id": "culture-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "culture_life", "task_type": "advice", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "一群朋友计划四天旅行：有人偏好密集景点，有人需要午休，有人预算有限，有人对饮食有严格要求。写900至1100字协调建议，严格分为“共同约束、冲突点、决策规则、示例安排、分歧处理”五节；给出恰好六条决策规则，不替任何人假设具体预算或健康情况。", "system_prompt": "你是一名中立的群体协调者。优先澄清约束和可逆选择，不用“少数服从多数”跳过实质冲突。"
+    },
+    {
+      "prompt_id": "en-culture-p04", "semantic_group_id": "culture-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "culture_life", "task_type": "advice", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 3072, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "A group of friends is planning a four-day trip: one prefers dense sightseeing, one needs midday rest, one has a limited budget, and one has strict food requirements. Write 650-800 words in exactly five sections: Shared Constraints, Conflicts, Decision Rules, Example Schedule, and Handling Disagreement. Give exactly six decision rules without inventing a budget or medical details.", "system_prompt": "You are a neutral group facilitator. Clarify constraints and reversible choices; do not use majority rule to bypass substantive conflicts."
+    },
+    {
+      "prompt_id": "zh-culture-n01", "semantic_group_id": "culture-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "culture_life", "task_type": "document_writing", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "为小区旧书交换活动写一则180至230字说明，分为可交换范围、品相标注、交换规则、未换出图书处理四项，避免使用商业促销语气。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-culture-n01", "semantic_group_id": "culture-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "culture_life", "task_type": "argument", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 320-420 word cultural commentary arguing that convenience changes social rituals rather than simply destroying them. Use one example involving shared meals or local shopping, acknowledge a genuine loss, and avoid nostalgia as proof.", "system_prompt": "Write with quiet observational wit and concrete detail. Avoid sentimental conclusions, grand historical claims, and rhetorical questions."
+    },
+
+    {
+      "prompt_id": "zh-creative-p01", "semantic_group_id": "creative-p01", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "creative", "task_type": "creative", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "写一个180至230字的微型故事：夜班保安发现大厅里的时钟每天慢一分钟，但只有下雨时会恢复正常。结尾保持克制，不解释全部原因。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-creative-p01", "semantic_group_id": "creative-p01", "version": "v2", "language": "en", "language_origin": "paired", "domain": "creative", "task_type": "creative", "target_length": "short", "target_length_spec": "90-150 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 110-150 word microstory in which a night guard notices that the lobby clock loses one minute every day but returns to the correct time whenever it rains. Keep the ending restrained and do not explain everything.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-creative-p02", "semantic_group_id": "creative-p02", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "creative", "task_type": "description", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "描写一座清晨刚开始营业的室内市场，写450至600字，分为“声音、光线、气味、人群”四节。不要使用“热闹非凡”“人山人海”等套语，也不要让叙述者评价市场好坏。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-creative-p02", "semantic_group_id": "creative-p02", "version": "v2", "language": "en", "language_origin": "paired", "domain": "creative", "task_type": "description", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 1536, "quality_checks": ["language", "length"],
+      "user_prompt": "Describe an indoor market opening in the early morning in 300-400 words. Use four sections titled Sound, Light, Smell, and People. Avoid stock phrases about bustle or crowds, and do not have the narrator judge whether the market is good or bad.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-creative-p03", "semantic_group_id": "creative-p03", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "creative", "task_type": "creative", "target_length": "long", "target_length_spec": "900-1400 Chinese characters", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "写一个900至1100字的短故事：一名档案员发现，同一份旧会议记录在不同读者手中会出现一句不同的补充。故事需要包含一次错误判断和一次没有说出口的道歉，结尾不揭示超自然机制。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-creative-p03", "semantic_group_id": "creative-p03", "version": "v2", "language": "en", "language_origin": "paired", "domain": "creative", "task_type": "creative", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 650-800 word story about an archivist who discovers that the same old meeting minutes contain one different additional sentence for each reader. Include one mistaken judgment and one apology that remains unspoken. Do not reveal a supernatural mechanism at the end.", "system_prompt": null
+    },
+    {
+      "prompt_id": "zh-creative-p04", "semantic_group_id": "creative-p04", "version": "v2", "language": "zh", "language_origin": "paired", "domain": "creative", "task_type": "constraint_rewrite", "target_length": "medium", "target_length_spec": "400-700 Chinese characters", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "把“一个人错过末班车后步行回家”写成450至600字场景，严格由五段组成；每段只能出现一种感官重点，依次为视觉、听觉、触觉、嗅觉、身体内部感受；不得出现梦、回忆、追逐或意外获救。", "system_prompt": "你是一名文学杂志编辑。执行形式约束，但语言应自然，不用华丽比喻掩盖场景动作。"
+    },
+    {
+      "prompt_id": "en-creative-p04", "semantic_group_id": "creative-p04", "version": "v2", "language": "en", "language_origin": "paired", "domain": "creative", "task_type": "constraint_rewrite", "target_length": "medium", "target_length_spec": "250-450 English words", "format_type": "strict", "system_prompt_type": "neutral_role", "difficulty": "challenge", "max_output_tokens": 1536, "quality_checks": ["language", "length", "format"],
+      "user_prompt": "Write a 320-420 word scene about someone walking home after missing the last bus. Use exactly five paragraphs, each centered on one sense in this order: sight, sound, touch, smell, and internal bodily sensation. Do not include dreams, flashbacks, pursuit, or unexpected rescue.", "system_prompt": "You are a literary magazine editor. Enforce the formal constraints, but keep the prose natural and do not use ornate metaphor to replace action."
+    },
+    {
+      "prompt_id": "zh-creative-n01", "semantic_group_id": "creative-zh-n01", "version": "v2", "language": "zh", "language_origin": "zh_native", "domain": "creative", "task_type": "creative", "target_length": "short", "target_length_spec": "150-250 Chinese characters", "format_type": "structured", "system_prompt_type": "none", "difficulty": "core", "max_output_tokens": 512, "quality_checks": ["language", "length"],
+      "user_prompt": "用180至230字写一封没有寄出的短信草稿，分成三次编辑痕迹：第一次解释，第二次删减，第三次只保留一句。主题是归还一本借了很久的书，不出现爱情告白。", "system_prompt": null
+    },
+    {
+      "prompt_id": "en-creative-n01", "semantic_group_id": "creative-en-n01", "version": "v2", "language": "en", "language_origin": "en_native", "domain": "creative", "task_type": "creative", "target_length": "long", "target_length_spec": "600-900 English words", "format_type": "natural", "system_prompt_type": "strong_style", "difficulty": "core", "max_output_tokens": 3072, "quality_checks": ["language", "length"],
+      "user_prompt": "Write a 650-800 word story set during the final hour of a small radio station's last broadcast. The host receives one call from a listener who never gives a name. Nothing dramatic interrupts the signal, and the station still closes on schedule.", "system_prompt": "Use spare, acoustically attentive prose. Let pauses, routine actions, and incomplete sentences carry emotion; avoid melodrama and explanatory closing paragraphs."
+    }
+  ]
+}
+

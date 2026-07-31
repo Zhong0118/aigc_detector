@@ -1,0 +1,227 @@
+{
+  "schema_version": 2,
+  "catalog_id": "zhizengzeng-twenty-models-v2",
+  "gateway": "zhizengzeng",
+  "models": [
+    {
+      "family_id": "openai",
+      "provider": "OpenAI",
+      "model_id": "gpt-4.1-nano-2025-04-14",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "openai",
+      "provider": "OpenAI",
+      "model_id": "gpt-4.1-mini-2025-04-14",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "claude",
+      "provider": "Anthropic",
+      "model_id": "claude-haiku-4-5-20251001",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "claude",
+      "provider": "Anthropic",
+      "model_id": "claude-sonnet-4-6-20260217",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "gemini",
+      "provider": "Google",
+      "model_id": "gemini-2.5-flash-lite",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "gemini",
+      "provider": "Google",
+      "model_id": "gemini-3.1-flash-lite-preview",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "deepseek",
+      "provider": "DeepSeek",
+      "model_id": "deepseek-v4-flash",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "deepseek",
+      "provider": "DeepSeek",
+      "model_id": "deepseek-v4-pro",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "qwen",
+      "provider": "Alibaba",
+      "model_id": "qwen3-30b-a3b-instruct-2507",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "qwen",
+      "provider": "Alibaba",
+      "model_id": "qwen-plus-2025-07-28",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "glm",
+      "provider": "Zhipu",
+      "model_id": "glm-4.5-air",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "glm",
+      "provider": "Zhipu",
+      "model_id": "glm-4.6",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "minimax",
+      "provider": "MiniMax",
+      "model_id": "abab6.5s-chat",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "minimax",
+      "provider": "MiniMax",
+      "model_id": "MiniMax-Text-01",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "kimi",
+      "provider": "Moonshot",
+      "model_id": "moonshot-v1-8k",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "kimi",
+      "provider": "Moonshot",
+      "model_id": "kimi-k2.5",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "doubao",
+      "provider": "ByteDance",
+      "model_id": "doubao-seed-1-6-flash-250828",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "doubao",
+      "provider": "ByteDance",
+      "model_id": "doubao-seed-1-6-251015",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "mimo",
+      "provider": "Xiaomi",
+      "model_id": "mimo-v2.5-pro",
+      "variant_role": "fast",
+      "enabled": true,
+      "fixed_route": true,
+      "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    },
+    {
+      "family_id": "mimo",
+      "provider": "Xiaomi",
+      "model_id": "mimo-v2.5",
+      "variant_role": "balanced",
+      "enabled": true,
+      "fixed_route": false,
+      "reasoning_mode": "provider_default",
+      "protocol": "openai_chat_completions",
+      "roles": ["v2", "smoke_v2"]
+    }
+  ]
+}

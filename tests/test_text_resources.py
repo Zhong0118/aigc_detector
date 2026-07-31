@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 import requests
 
 import scripts.bootstrap_text_resources as bootstrap_text_resources
+from detection.false_positive_controller import FalsePositiveController
 from detection.text_resource_adapters import (
     TextSample,
     adapt_hc3_rows,
@@ -727,6 +728,17 @@ class TextResourceManagerTests(unittest.TestCase):
             "human_calibration_samples": 50,
             "human_validation_samples": 10,
             "ai_validation_samples": 10,
+            "validation_false_positives": 0,
+            "validation_fpr": 0.0,
+            "validation_fpr_interval_95": [0.0, 0.277533],
+            "ai_true_positives": 9,
+            "ai_recall": 0.9,
+            "ai_fnr": 0.1,
+            "ai_recall_interval_95": [0.59585, 0.982124],
+            "validation_auroc": 0.95,
+            "calibration_quantiles": {"p50": 0.2, "p95": 0.7},
+            "reliability_status": "ok",
+            "warnings": [],
         }
         cases = (
             ("legacy", {"groups": {}}, False),
@@ -870,6 +882,140 @@ class TextResourceManagerTests(unittest.TestCase):
             self.assertFalse(missing["artifact_ready"])
             self.assertTrue(missing["artifact_validation_errors"])
 
+    def test_artifact_contract_rejects_adversarial_v2_in_manager_and_controller(
+        self,
+    ) -> None:
+        def artifact(**group_overrides):
+            group = {
+                "low_threshold": 0.4,
+                "high_threshold": 0.85,
+                "threshold_floor": 0.8,
+                "target_fpr": 0.02,
+                "human_calibration_samples": 50,
+                "human_validation_samples": 10,
+                "ai_validation_samples": 10,
+                "validation_false_positives": 0,
+                "validation_fpr": 0.0,
+                "validation_fpr_interval_95": [0.0, 0.277533],
+                "ai_true_positives": 9,
+                "ai_recall": 0.9,
+                "ai_fnr": 0.1,
+                "ai_recall_interval_95": [0.59585, 0.982124],
+                "validation_auroc": 0.95,
+                "calibration_quantiles": {"p50": 0.2, "p95": 0.7},
+                "reliability_status": "ok",
+                "warnings": [],
+            }
+            group.update(group_overrides)
+            return {
+                "artifact_schema_version": 2,
+                "dataset_profile": "multidomain",
+                "target_fpr": 0.02,
+                "groups": {"en:general_qa:short": group},
+            }
+
+        cases = {
+            "validation_fpr_above_one": artifact(validation_fpr=1.01),
+            "ai_recall_negative": artifact(ai_recall=-0.01),
+            "auroc_nonfinite": artifact(validation_auroc=float("inf")),
+            "fpr_interval_out_of_range": artifact(
+                validation_fpr_interval_95=[0.0, 1.01]
+            ),
+            "recall_interval_inverted": artifact(
+                ai_recall_interval_95=[0.9, 0.8]
+            ),
+            "warnings_wrong_type": artifact(warnings="not-a-list"),
+            "negative_human_count": artifact(human_validation_samples=-1),
+            "negative_ai_count": artifact(ai_validation_samples=-1),
+            "invalid_reliability": artifact(reliability_status=""),
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+            )
+            manager.artifact_path.parent.mkdir(parents=True, exist_ok=True)
+            for name, payload in cases.items():
+                with self.subTest(name=name):
+                    manager.artifact_path.write_text(
+                        json.dumps(payload),
+                        encoding="utf-8",
+                    )
+                    manager_status = manager.artifact_status()
+                    controller = FalsePositiveController(
+                        {"artifact_path": str(manager.artifact_path)}
+                    )
+
+                    self.assertFalse(manager_status["artifact_ready"])
+                    self.assertTrue(
+                        manager_status["artifact_validation_errors"],
+                    )
+                    self.assertFalse(controller.status()["artifact_loaded"])
+                    self.assertTrue(controller.artifact_warnings)
+
+    def test_shared_artifact_contract_preserves_v1_runtime_and_v2_readiness(
+        self,
+    ) -> None:
+        legacy = {
+            "version": "legacy-v1",
+            "groups": {
+                "global": {
+                    "low_threshold": 0.4,
+                    "high_threshold": 0.9,
+                }
+            },
+        }
+        valid_v2 = {
+            "artifact_schema_version": 2,
+            "version": "current-v2",
+            "dataset_profile": "multidomain",
+            "target_fpr": 0.02,
+            "groups": {
+                "en:general_qa:short": {
+                    "low_threshold": 0.4,
+                    "high_threshold": 0.85,
+                    "threshold_floor": 0.8,
+                    "target_fpr": 0.02,
+                    "human_calibration_samples": 50,
+                    "human_validation_samples": 10,
+                    "ai_validation_samples": 10,
+                    "validation_false_positives": 0,
+                    "validation_fpr": 0.0,
+                    "validation_fpr_interval_95": [0.0, 0.277533],
+                    "ai_true_positives": 9,
+                    "ai_recall": 0.9,
+                    "ai_fnr": 0.1,
+                    "ai_recall_interval_95": [0.59585, 0.982124],
+                    "validation_auroc": 0.95,
+                    "calibration_quantiles": {"p50": 0.2, "p95": 0.7},
+                    "reliability_status": "ok",
+                    "warnings": [],
+                }
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+            )
+            manager.artifact_path.parent.mkdir(parents=True, exist_ok=True)
+
+            manager.artifact_path.write_text(json.dumps(legacy), encoding="utf-8")
+            legacy_controller = FalsePositiveController(
+                {"artifact_path": str(manager.artifact_path)}
+            )
+            self.assertFalse(manager.artifact_status()["artifact_ready"])
+            self.assertTrue(legacy_controller.status()["artifact_loaded"])
+
+            manager.artifact_path.write_text(json.dumps(valid_v2), encoding="utf-8")
+            v2_controller = FalsePositiveController(
+                {"artifact_path": str(manager.artifact_path)}
+            )
+            self.assertTrue(manager.artifact_status()["artifact_ready"])
+            self.assertTrue(v2_controller.status()["artifact_loaded"])
+
     def test_m4_dispatch_keeps_supported_languages_and_skips_others(self) -> None:
         def loader(*args, **kwargs):
             rows = [
@@ -908,6 +1054,165 @@ class TextResourceManagerTests(unittest.TestCase):
 
         self.assertEqual([sample.language for sample in samples], ["en", "zh"])
         self.assertEqual([sample.label for sample in samples], ["human", "ai"])
+
+    def test_m4_dispatch_recovers_missing_dev_language_conservatively(self) -> None:
+        rows = [
+            {
+                "id": "english-dev",
+                "text": "A carefully reviewed development sample written by a person.",
+                "label": 0,
+                "source": None,
+                "domain": "general",
+            },
+            {
+                "id": "chinese-dev",
+                "text": "这是一段用于验证开发集语言回退逻辑的中文机器文本。",
+                "label": 1,
+                "source": "",
+                "domain": "general",
+                "model": "chatgpt",
+            },
+            {
+                "id": "german-dev",
+                "text": "Dieser deutsche Text darf nicht als Englisch behandelt werden.",
+                "label": 0,
+                "source": "German",
+            },
+            {
+                "id": "arabic-dev",
+                "text": "هذا نص عربي للاختبار",
+                "label": 1,
+                "source": None,
+            },
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+            )
+            samples = list(
+                manager._adapt_rows(
+                    manager.resource_spec("m4_multilingual"),
+                    rows,
+                    "dev",
+                )
+            )
+
+        self.assertEqual(
+            [(sample.source_id, sample.language) for sample in samples],
+            [
+                ("m4_multilingual:dev:english-dev", "en"),
+                ("m4_multilingual:dev:chinese-dev", "zh"),
+            ],
+        )
+        self.assertEqual([sample.label for sample in samples], ["human", "ai"])
+
+    def test_m4_source_preparation_accepts_dev_rows_without_language_field(self) -> None:
+        def loader(*args, **kwargs):
+            split = kwargs["split"]
+            if split == "train":
+                rows = [
+                    {
+                        "id": "train-human",
+                        "text": "A reviewed English sample with enough text for inference.",
+                        "label": 0,
+                        "source": None,
+                        "domain": "general",
+                    },
+                    {
+                        "id": "train-ai",
+                        "text": "这是一段包含足够字符并用于语言推断的中文生成文本。",
+                        "label": 1,
+                        "source": None,
+                        "domain": "general",
+                        "model": "chatgpt",
+                    },
+                ]
+            else:
+                rows = [
+                    {
+                        "id": "dev-german",
+                        "text": "Dieser Text wird wegen seiner Sprache herausgefiltert.",
+                        "label": 0,
+                        "source": "German",
+                    },
+                    {
+                        "id": "dev-arabic",
+                        "text": "هذا النص سيستبعد بسبب اللغة",
+                        "label": 1,
+                        "source": "Arabic",
+                        "model": "chatgpt",
+                    },
+                ]
+            cache = Path(kwargs["cache_dir"])
+            return DiskBackedRows(
+                cache / "downloads" / f"{split}.arrow",
+                rows,
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+                dataset_loader=loader,
+            )
+            spec = manager.resource_spec("m4_multilingual")
+            manager.ensure_dataset(spec)
+            manifest = json.loads(
+                (manager.dataset_dir / spec.name / ".source.complete.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            source_ready = manager.is_source_ready(spec)
+
+        self.assertEqual(
+            manifest["split_evidence"]["dev"]["adapted_samples"],
+            0,
+        )
+        self.assertEqual(
+            manifest["split_evidence"]["dev"]["label_counts"],
+            {"human": 0, "ai": 0},
+        )
+        self.assertTrue(source_ready)
+
+    def test_m4_source_preparation_rejects_when_every_split_is_filtered(self) -> None:
+        def loader(*args, **kwargs):
+            split = kwargs["split"]
+            rows = [
+                {
+                    "id": f"{split}-german",
+                    "text": "Dieser Text wird wegen seiner Sprache herausgefiltert.",
+                    "label": 0,
+                    "source": "German",
+                },
+                {
+                    "id": f"{split}-arabic",
+                    "text": "هذا النص سيستبعد بسبب اللغة",
+                    "label": 1,
+                    "source": "Arabic",
+                    "model": "chatgpt",
+                },
+            ]
+            return DiskBackedRows(
+                Path(kwargs["cache_dir"]) / "downloads" / f"{split}.arrow",
+                rows,
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=tmp,
+                dataset_profile="multidomain",
+                dataset_loader=loader,
+            )
+            spec = manager.resource_spec("m4_multilingual")
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "no adapted samples across",
+            ):
+                manager.ensure_dataset(spec)
+
+            self.assertFalse(manager.is_source_ready(spec))
 
     def test_hf_ensure_scans_every_configured_split_before_publishing_manifest(self) -> None:
         loader_calls = []
@@ -3038,6 +3343,86 @@ class TextResourceManagerTests(unittest.TestCase):
                     )
                 thresholds.append(result["groups"]["en:general_qa:short"]["high_threshold"])
         self.assertEqual(thresholds, [0.4, 0.4])
+
+    def test_sparse_exact_group_uses_a_calibrated_hierarchical_fallback(self) -> None:
+        class Detector:
+            def detect(self, text: str):
+                return type("Result", (), {"score": 0.2})()
+
+        spec = DatasetSpec(
+            name="sparse_exact_fixture",
+            url="https://example.invalid/sparse-exact.zip",
+            license="CC0-1.0",
+            domain="literature",
+            source="https://example.invalid/sparse-exact",
+            language="en",
+            calibration_buckets=("short", "long"),
+        )
+        samples = [
+            TextSample(
+                text="Short human prose.",
+                label="human",
+                language="en",
+                domain="literature",
+                source=spec.name,
+                source_id="short-1",
+            ),
+            *[
+                TextSample(
+                    text=(
+                        f"Long human literary passage number {index}. "
+                        "It contains enough material to enter the long-text bucket."
+                    ),
+                    label="human",
+                    language="en",
+                    domain="literature",
+                    source=spec.name,
+                    source_id=f"long-{index}",
+                )
+                for index in range(3)
+            ],
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = TextResourceManager(
+                project_root=Path(tmp),
+                dataset_specs=(spec,),
+            )
+            with patch.object(
+                manager,
+                "iter_source_samples",
+                return_value=iter(samples),
+            ):
+                payload = build_threshold_artifact(
+                    manager,
+                    Detector(),
+                    human_calibration_limit=10,
+                    human_validation_limit=0,
+                    ai_validation_limit=0,
+                    validation_fraction=0,
+                    minimum_group_samples=2,
+                    minimum_validation_samples=0,
+                    minimum_ai_validation_samples=0,
+                    alpha=0.25,
+                    min_effective_chars=5,
+                    short_text_chars=20,
+                    long_target_chars=40,
+                    long_max_chars=80,
+                    high_threshold_floors={"default": 0.0},
+                )
+
+        self.assertNotIn("en:literature:short", payload["groups"])
+        self.assertIn("en:literature:long", payload["groups"])
+        self.assertIn("en:literature", payload["groups"])
+        self.assertEqual(
+            payload["sparse_exact_groups"]["en:literature:short"],
+            {
+                "human_calibration_samples": 1,
+                "minimum_group_samples": 2,
+                "fallback_group": "en:literature",
+                "reason": "insufficient_exact_group_calibration",
+            },
+        )
 
     def test_artifact_records_selected_identity_keys_for_reproducibility(self) -> None:
         class Detector:

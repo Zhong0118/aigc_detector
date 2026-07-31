@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "run_id": "zhizengzeng-smoke-v3",
+  "gateway": "zhizengzeng",
+  "model_catalog": "../zhizengzeng_model_catalog.json",
+  "model_roles": ["smoke"],
+  "prompt_manifest": "../prompt_manifest.pilot-v1.json",
+  "prompt_ids": ["zh-office-rewrite-001", "en-general-short-001"],
+  "minimum_prompt_count": 2,
+  "sampling": [
+    {"temperature": 0.0, "top_p": null, "max_tokens": 768}
+  ],
+  "repetitions": 1,
+  "max_requests": 20,
+  "enabled": true
+}

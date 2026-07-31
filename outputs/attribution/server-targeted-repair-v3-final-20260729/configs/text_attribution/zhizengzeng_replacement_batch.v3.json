@@ -1,0 +1,27 @@
+{
+  "schema_version": 3,
+  "catalog_id": "zhizengzeng-replacement-batch-v3",
+  "gateway": "zhizengzeng",
+  "models": [
+    {
+      "family_id": "openai", "provider": "OpenAI",
+      "model_id": "gpt-4o-mini-2024-07-18", "variant_role": "replacement_fast",
+      "enabled": true, "fixed_route": true, "reasoning_mode": "standard",
+      "protocol": "openai_chat_completions", "roles": ["replacement_batch_v3"]
+    },
+    {
+      "family_id": "deepseek", "provider": "DeepSeek",
+      "model_id": "deepseek-chat", "variant_role": "replacement_balanced",
+      "enabled": true, "fixed_route": true,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions", "roles": ["replacement_batch_v3"]
+    },
+    {
+      "family_id": "glm", "provider": "Zhipu",
+      "model_id": "glm-4-flashx-250414", "variant_role": "replacement_fast",
+      "enabled": true, "fixed_route": true,
+      "reasoning_mode": "disable_if_supported",
+      "protocol": "openai_chat_completions", "roles": ["replacement_batch_v3"]
+    }
+  ]
+}

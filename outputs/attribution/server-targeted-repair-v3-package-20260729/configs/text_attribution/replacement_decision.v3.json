@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "decision_id": "replacement-routes-v3",
+  "probe_run_id": "zhizengzeng-attribution-replacement-candidates-v3",
+  "probe_summary": {
+    "planned": 12,
+    "succeeded": 12,
+    "failed": 0,
+    "empty_text": 0,
+    "route_mismatch": 0,
+    "truncated": 0
+  },
+  "replacements": [
+    {
+      "family_id": "openai",
+      "variant_role": "fast",
+      "retired_model_id": "gpt-4.1-nano-2025-04-14",
+      "selected_model_id": "gpt-4o-mini-2024-07-18",
+      "selection_basis": "passed the previous targeted connectivity probe"
+    },
+    {
+      "family_id": "deepseek",
+      "variant_role": "balanced",
+      "retired_model_id": "deepseek-v4-pro",
+      "selected_model_id": "deepseek-chat",
+      "selection_basis": "2/2 success, no route mismatch, fastest tested DeepSeek candidate"
+    },
+    {
+      "family_id": "glm",
+      "variant_role": "fast",
+      "retired_model_id": "glm-4.5-air",
+      "selected_model_id": "glm-4-flashx-250414",
+      "selection_basis": "2/2 success, no route mismatch, fastest tested GLM candidate"
+    }
+  ]
+}
