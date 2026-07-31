@@ -2,6 +2,7 @@ torch>=2.6.0,<2.7
 torchvision>=0.21.0,<0.22
 torchaudio>=2.6.0,<2.7
 transformers>=4.50.3,<5.0
+accelerate>=1.0,<2
 huggingface-hub>=0.30,<1.0
 datasets>=3.0,<5
 # Keep Hugging Face datasets compatible even if unrelated packages try to
