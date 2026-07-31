@@ -45,6 +45,29 @@ def metric_row(
                 "support": 5,
             },
         },
+        "confusion_matrix": [[0.8, 0.2], [0.3, 0.7]],
+        "per_model": {
+            "model-a": {
+                "accuracy": 0.75,
+                "correct": 3,
+                "samples": 4,
+            },
+            "model-b": {
+                "accuracy": 0.75,
+                "correct": 4,
+                "samples": 6,
+            },
+        },
+        "subgroups": {
+            "language": {
+                "en": {
+                    "accuracy": 0.75,
+                    "macro_f1": macro_f1,
+                    "weighted_f1": 0.74,
+                    "support": 10,
+                }
+            }
+        },
     }
 
 
@@ -290,6 +313,69 @@ class NeuralSelectionTests(unittest.TestCase):
                 )
                 with self.assertRaisesRegex(ValueError, expected):
                     select_neural_experiments([candidate])
+
+    def test_rejects_nested_test_metrics_inside_validation(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(Path(temporary), "N0")
+            metrics_path = candidate / "metrics.json"
+            payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            payload["N0"]["validation"]["test"] = {"macro_f1": 1.0}
+            metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "validation.*keys|test"):
+                select_neural_experiments([candidate])
+
+    def test_rejects_test_metrics_inside_selection_metadata(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(Path(temporary), "N0")
+            metrics_path = candidate / "metrics.json"
+            payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            payload["selection"]["test_metrics"] = {"macro_f1": 1.0}
+            metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "selection.*keys|test"):
+                select_neural_experiments([candidate])
+
+    def test_rejects_zero_validation_support(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(Path(temporary), "N0")
+            metrics_path = candidate / "metrics.json"
+            payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            validation = payload["N0"]["validation"]
+            validation["overall"]["support"] = 0
+            validation["per_family"]["alpha"]["support"] = 0
+            validation["per_family"]["beta"]["support"] = 0
+            metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "support.*positive"):
+                select_neural_experiments([candidate])
+
+    def test_rejects_validation_support_mismatching_run_config_split(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(
+                Path(temporary),
+                "N0",
+                split_summary={"train": 80, "validation": 999, "test": 10},
+            )
+
+            with self.assertRaisesRegex(ValueError, "validation split.*support"):
+                select_neural_experiments([candidate])
 
     def test_requires_existing_directory_and_both_json_files(self) -> None:
         from research.text_attribution.neural_selection import (

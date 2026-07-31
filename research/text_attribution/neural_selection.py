@@ -13,6 +13,17 @@ from typing import Any
 
 _EXPERIMENT_IDS = frozenset({"N0", "N1", "N2"})
 _FINGERPRINT = re.compile(r"[0-9a-fA-F]{64}")
+_VALIDATION_KEYS = frozenset(
+    {
+        "overall",
+        "per_family",
+        "confusion_matrix",
+        "per_model",
+        "calibration",
+        "subgroups",
+    }
+)
+_SELECTION_KEYS = frozenset({"selected_experiment", "criterion"})
 
 
 @dataclass(frozen=True)
@@ -168,6 +179,7 @@ def _load_candidate(path: Path) -> _Candidate:
     macro_f1, worst_family_f1, nll = _selection_metrics(
         validation,
         family_label_map,
+        _validation_split_support(split_summary, path),
         path,
         experiment_id,
     )
@@ -261,6 +273,18 @@ def _split_summary(
     return tuple(sorted(normalized))
 
 
+def _validation_split_support(
+    split_summary: tuple[tuple[str, int], ...],
+    source: Path,
+) -> int:
+    split_counts = dict(split_summary)
+    if "validation" not in split_counts:
+        raise ValueError(
+            f"{source}: run_config split summary must contain validation"
+        )
+    return split_counts["validation"]
+
+
 def _family_label_map(
     run_config: Mapping[str, Any],
     source: Path,
@@ -314,22 +338,50 @@ def _validation_metrics(
     validation = experiment_metrics.get("validation")
     if not isinstance(validation, Mapping):
         raise ValueError(f"{source}: validation metrics must be an object")
+    if set(validation) != _VALIDATION_KEYS:
+        raise ValueError(
+            f"{source}: validation metric keys must be exactly "
+            f"{sorted(_VALIDATION_KEYS)}"
+        )
+    _reject_test_keys(validation, f"{source}: validation")
 
     selection = metrics.get("selection")
-    if selection is not None:
-        if not isinstance(selection, Mapping):
-            raise ValueError(f"{source}: selection metadata must be an object")
-        selected = selection.get("selected_experiment")
-        if selected is not None and selected != experiment_id:
-            raise ValueError(
-                f"{source}: selection metadata does not match {experiment_id}"
-            )
+    if not isinstance(selection, Mapping):
+        raise ValueError(f"{source}: selection metadata must be an object")
+    if set(selection) != _SELECTION_KEYS:
+        raise ValueError(
+            f"{source}: selection metadata keys must be exactly "
+            f"{sorted(_SELECTION_KEYS)}"
+        )
+    _reject_test_keys(selection, f"{source}: selection")
+    selected = selection["selected_experiment"]
+    if selected != experiment_id:
+        raise ValueError(
+            f"{source}: selection metadata does not match {experiment_id}"
+        )
+    criterion = selection["criterion"]
+    if not isinstance(criterion, str) or not criterion.strip():
+        raise ValueError(f"{source}: selection criterion must be a non-empty string")
     return validation
+
+
+def _reject_test_keys(value: Any, path: str) -> None:
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            if isinstance(key, str) and (
+                key.casefold() == "test" or key.casefold().startswith("test_")
+            ):
+                raise ValueError(f"{path} contains forbidden test data at {key}")
+            _reject_test_keys(item, f"{path}.{key}")
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            _reject_test_keys(item, f"{path}[{index}]")
 
 
 def _selection_metrics(
     row: Mapping[str, Any],
     family_label_map: tuple[tuple[str, int], ...],
+    validation_split_support: int,
     source: Path,
     experiment_id: str,
 ) -> tuple[float, float, float]:
@@ -344,6 +396,8 @@ def _selection_metrics(
         upper=1.0,
     )
     overall_support = _support(overall, f"{prefix}.overall")
+    if overall_support <= 0:
+        raise ValueError(f"{prefix}.overall.support must be positive")
 
     calibration = _required_mapping(row, "calibration", prefix)
     _bounded_metric(
@@ -395,6 +449,11 @@ def _selection_metrics(
     if overall_support != family_support:
         raise ValueError(
             f"{prefix} support totals are inconsistent"
+        )
+    if overall_support != validation_split_support:
+        raise ValueError(
+            f"{prefix} validation split support does not match "
+            "run_config split summary"
         )
     return macro_f1, min(family_f1_values), nll
 
