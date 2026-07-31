@@ -394,8 +394,6 @@ def _validation_metrics(
 def _reject_forbidden_metric_values(value: Any, path: str) -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
-            if isinstance(key, str) and "test" in key.casefold():
-                raise ValueError(f"{path} contains forbidden test data at {key}")
             _reject_forbidden_metric_values(item, f"{path}.{key}")
     elif isinstance(value, list):
         for index, item in enumerate(value):
@@ -502,8 +500,8 @@ def _selection_metrics(
         len(family_label_map),
         prefix,
     )
-    _validate_per_model(row["per_model"], prefix)
-    _validate_subgroups(row["subgroups"], prefix)
+    _validate_per_model(row["per_model"], overall_support, prefix)
+    _validate_subgroups(row["subgroups"], overall_support, prefix)
     return macro_f1, min(family_f1_values), nll
 
 
@@ -525,6 +523,7 @@ def _validate_confusion_matrix(
             f"{family_count}x{family_count}"
         )
     for row_index, matrix_row in enumerate(value):
+        row_total = 0.0
         for column_index, item in enumerate(matrix_row):
             normalized = _finite_number(
                 item,
@@ -537,11 +536,26 @@ def _validate_confusion_matrix(
                 raise ValueError(
                     f"{path}.confusion_matrix values must be within [0, 1]"
                 )
+            row_total += normalized
+        if not math.isclose(
+            row_total,
+            1.0,
+            rel_tol=0.0,
+            abs_tol=1e-6,
+        ):
+            raise ValueError(
+                f"{path}.confusion_matrix row sums must be approximately 1"
+            )
 
 
-def _validate_per_model(value: Any, path: str) -> None:
+def _validate_per_model(
+    value: Any,
+    overall_support: int,
+    path: str,
+) -> None:
     if not isinstance(value, Mapping) or not value:
         raise ValueError(f"{path}.per_model must not be empty")
+    total_support = 0
     for model_id, raw_diagnostics in value.items():
         if not isinstance(model_id, str) or not model_id:
             raise ValueError(
@@ -553,8 +567,17 @@ def _validate_per_model(value: Any, path: str) -> None:
             f"{path}.per_model",
         )
         keys = set(diagnostics)
+        unknown_keys = keys - _PER_MODEL_KEYS
+        if any(
+            isinstance(key, str) and "test" in key.casefold()
+            for key in unknown_keys
+        ):
+            raise ValueError(
+                f"{path}.per_model.{model_id} contains a forbidden test "
+                "metric field"
+            )
         if (
-            not keys <= _PER_MODEL_KEYS
+            unknown_keys
             or "support" not in keys
             or "mean_true_family_probability" not in keys
             or not ({"accuracy", "family_accuracy"} & keys)
@@ -563,7 +586,7 @@ def _validate_per_model(value: Any, path: str) -> None:
                 f"{path}.per_model.{model_id} is missing required metrics "
                 "or contains unknown metrics"
             )
-        _support(
+        total_support += _support(
             diagnostics,
             f"{path}.per_model.{model_id}",
             positive=True,
@@ -581,9 +604,17 @@ def _validate_per_model(value: Any, path: str) -> None:
                     f"{path}.per_model.{model_id}",
                     upper=1.0,
                 )
+    if total_support != overall_support:
+        raise ValueError(
+            f"{path}.per_model support total must equal overall support"
+        )
 
 
-def _validate_subgroups(value: Any, path: str) -> None:
+def _validate_subgroups(
+    value: Any,
+    overall_support: int,
+    path: str,
+) -> None:
     if not isinstance(value, Mapping) or not value:
         raise ValueError(f"{path}.subgroups must not be empty")
     for dimension, raw_groups in value.items():
@@ -595,6 +626,7 @@ def _validate_subgroups(value: Any, path: str) -> None:
             raise ValueError(
                 f"{path}.subgroups.{dimension} must not be empty"
             )
+        dimension_support = 0
         for group_name, raw_metrics in raw_groups.items():
             if not isinstance(group_name, str) or not group_name:
                 raise ValueError(
@@ -607,15 +639,24 @@ def _validate_subgroups(value: Any, path: str) -> None:
                 f"{path}.subgroups.{dimension}",
             )
             metric_keys = set(metrics)
+            unknown_keys = metric_keys - _SUBGROUP_ALLOWED_KEYS
+            if any(
+                isinstance(key, str) and "test" in key.casefold()
+                for key in unknown_keys
+            ):
+                raise ValueError(
+                    f"{path}.subgroups.{dimension}.{group_name} contains "
+                    "a forbidden test metric field"
+                )
             if (
                 not _SUBGROUP_REQUIRED_KEYS <= metric_keys
-                or not metric_keys <= _SUBGROUP_ALLOWED_KEYS
+                or unknown_keys
             ):
                 raise ValueError(
                     f"{path}.subgroups.{dimension}.{group_name} is missing "
                     "required metrics or contains unknown metrics"
                 )
-            _support(
+            dimension_support += _support(
                 metrics,
                 f"{path}.subgroups.{dimension}.{group_name}",
                 positive=True,
@@ -628,6 +669,11 @@ def _validate_subgroups(value: Any, path: str) -> None:
                         f"{path}.subgroups.{dimension}.{group_name}",
                         upper=1.0,
                     )
+        if dimension_support != overall_support:
+            raise ValueError(
+                f"{path}.subgroups.{dimension} support total must equal "
+                "overall support"
+            )
 
 
 def _required_mapping(
@@ -647,6 +693,12 @@ def _require_exact_keys(
     path: str,
 ) -> None:
     if set(mapping) != expected:
+        unknown_keys = set(mapping) - expected
+        if any(
+            isinstance(key, str) and "test" in key.casefold()
+            for key in unknown_keys
+        ):
+            raise ValueError(f"{path} contains a forbidden test metric field")
         raise ValueError(f"{path} keys must be exactly {sorted(expected)}")
 
 

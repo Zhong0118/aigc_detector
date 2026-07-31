@@ -370,6 +370,31 @@ class NeuralSelectionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "forbidden test"):
                     select_neural_experiments([candidate])
 
+    def test_allows_test_substrings_in_dynamic_metric_identifiers(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(Path(temporary), "N0")
+            metrics_path = candidate / "metrics.json"
+            payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            validation = payload["N0"]["validation"]
+            validation["per_model"] = {
+                "claude-haiku-test": validation["per_model"]["model-a"],
+                "gpt-fast-test": validation["per_model"]["model-b"],
+            }
+            validation["subgroups"] = {
+                "test_language": {
+                    "latest-test": validation["subgroups"]["language"]["en"]
+                }
+            }
+            metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            summary = select_neural_experiments([candidate])
+
+            self.assertEqual(summary.top_two, ("N0",))
+
     def test_rejects_nonfinite_numbers_anywhere_in_validation(self) -> None:
         from research.text_attribution.neural_selection import (
             select_neural_experiments,
@@ -440,6 +465,59 @@ class NeuralSelectionTests(unittest.TestCase):
                     "confusion_matrix.*shape|confusion_matrix.*\\[0, 1\\]",
                 ):
                     select_neural_experiments([candidate])
+
+    def test_rejects_confusion_matrix_rows_not_summing_to_one(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(Path(temporary), "N0")
+            metrics_path = candidate / "metrics.json"
+            payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            payload["N0"]["validation"]["confusion_matrix"] = [
+                [0.4, 0.4],
+                [0.3, 0.7],
+            ]
+            metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "row.*sum"):
+                select_neural_experiments([candidate])
+
+    def test_rejects_per_model_support_total_mismatch(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(Path(temporary), "N0")
+            metrics_path = candidate / "metrics.json"
+            payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            payload["N0"]["validation"]["per_model"]["model-a"]["support"] = 1000
+            metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "per_model.*support.*overall"):
+                select_neural_experiments([candidate])
+
+    def test_rejects_subgroup_dimension_support_total_mismatch(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(Path(temporary), "N0")
+            metrics_path = candidate / "metrics.json"
+            payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            payload["N0"]["validation"]["subgroups"]["language"]["en"][
+                "support"
+            ] = 999
+            metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "subgroups.*support.*overall",
+            ):
+                select_neural_experiments([candidate])
 
     def test_rejects_empty_per_model_and_subgroup_mappings(self) -> None:
         from research.text_attribution.neural_selection import (
