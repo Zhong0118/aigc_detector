@@ -167,6 +167,8 @@ class NeuralFamilyAttributionCliTests(unittest.TestCase):
             config_path, data_path, split_path = prepare_inputs(root)
             argv = [
                 *common_args(root, config_path, data_path, split_path),
+                "--device",
+                "cpu",
                 "--dry-run",
             ]
             program = f"""
@@ -196,6 +198,7 @@ raise SystemExit(main({argv!r}))
             self.assertEqual(completed.returncode, 0, completed.stderr)
             summary = json.loads(completed.stdout)
             self.assertEqual(summary["experiment"], "N0")
+            self.assertEqual(summary["device"], "cpu")
             self.assertEqual(summary["model_name"], "test/n0")
             self.assertIsNone(summary["revision"])
             self.assertEqual(summary["max_length"], 128)
@@ -353,11 +356,14 @@ raise SystemExit(main({argv!r}))
                 main(
                     [
                         *common_args(root, config_path, data_path, split_path),
+                        "--device",
+                        "cpu",
                         "--smoke-test",
                     ]
                 )
 
             request = captured[0]
+            self.assertTrue(request.smoke_test)
             self.assertFalse(request.bf16)
             train_counts = {
                 model: sum(sample.model_id == model for sample in request.train_samples)
@@ -372,7 +378,7 @@ raise SystemExit(main({argv!r}))
             self.assertTrue(all(count <= 2 for count in train_counts.values()))
             self.assertTrue(all(count <= 1 for count in validation_counts.values()))
             run_config = json.loads((root / "output" / "run_config.json").read_text())
-            self.assertEqual(run_config["requested_device"], "cuda:0")
+            self.assertEqual(run_config["requested_device"], "cpu")
             self.assertEqual(run_config["device"], "cpu")
             self.assertFalse(run_config["bf16"])
             self.assertFalse(run_config["training"]["bf16"])
@@ -471,7 +477,7 @@ raise SystemExit(main({argv!r}))
                     "--seed",
                     "99",
                     "--device",
-                    "cpu",
+                    "cuda:0",
                     "--hf-cache",
                     str(cache),
                     "--no-bf16",
@@ -502,8 +508,38 @@ raise SystemExit(main({argv!r}))
             self.assertFalse(request.bf16)
             self.assertEqual(request.resume_from_checkpoint, resume)
             run_config = json.loads((root / "output" / "run_config.json").read_text())
-            self.assertEqual(run_config["requested_device"], "cpu")
-            self.assertEqual(run_config["device"], "cpu")
+            self.assertEqual(run_config["requested_device"], "cuda:0")
+            self.assertEqual(run_config["device"], "cuda:0")
+
+    def test_formal_cpu_run_is_rejected_before_trainer_call(self) -> None:
+        from scripts.run_family_attribution_neural import main
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path, data_path, split_path = prepare_inputs(root)
+            captured: list[NeuralTrainingRequest] = []
+            module = fake_training_module(captured)
+            with (
+                patch.dict(
+                    sys.modules,
+                    {"research.text_attribution.neural_training": module},
+                ),
+                self.assertRaisesRegex(
+                    ValueError,
+                    "formal neural training.*cuda:0.*smoke-test",
+                ),
+            ):
+                main(
+                    [
+                        *common_args(root, config_path, data_path, split_path),
+                        "--device",
+                        "cpu",
+                    ]
+                )
+
+            self.assertEqual(captured, [])
+            self.assertFalse((root / "output").exists())
+            self.assertEqual(list(root.glob(".output.run-*")), [])
 
     def test_rejects_nonzero_cuda_device_without_training(self) -> None:
         from scripts.run_family_attribution_neural import main

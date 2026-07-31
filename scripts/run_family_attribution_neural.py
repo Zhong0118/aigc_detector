@@ -265,6 +265,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             "transformers": _dependency_version("transformers"),
         },
     }
+    if not args.dry_run and not args.smoke_test and args.device == "cpu":
+        raise ValueError(
+            "formal neural training requires --device cuda:0; "
+            "use --smoke-test for CPU execution"
+        )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     if args.dry_run:
         return 0
