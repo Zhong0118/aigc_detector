@@ -716,9 +716,12 @@ The runbook includes:
 
 The cross-platform Python packager creates a project-root overlay ZIP containing
 the necessary research modules, Phase2 scripts, configs, docs, requirements and
-tests. It writes a manifest with source commit, file sizes and SHA256 hashes.
-It rejects secret-like content and never includes `.git`, `.env*`, raw data,
-outputs, caches, models, checkpoints or weight files.
+tests. It writes a manifest with source commit, dirty-worktree state, file sizes
+and SHA256 hashes. It rejects secret-like content and symlink ancestry, and
+never includes `.git`, `.env*`, raw data, outputs, caches, models, checkpoints
+or weight files. `--verify ARCHIVE` independently checks CRC, exact entry set,
+manifest schema, sizes and hashes before server use. The runbook also captures
+the actual CUDA/PyTorch environment with `pip freeze` and `nvidia-smi`.
 
 Run:
 

@@ -31,6 +31,9 @@ unzip -o aigc-detector-attribution-phase2-server.zip \
   -d ~/projects/aigc_detector
 cd ~/projects/aigc_detector
 
+python -m scripts.package_attribution_phase2_server \
+  --verify /你的上传目录/aigc-detector-attribution-phase2-server.zip
+
 mkdir -p data/attribution/raw data/attribution/splits
 mv /你的上传目录/zhizengzeng-attribution-server-6k-v5.jsonl \
   data/attribution/raw/
@@ -53,6 +56,20 @@ test -f data/attribution/splits/family-attribution-v5-seed42.json
 ```bash
 conda activate zx
 cd ~/projects/aigc_detector
+```
+
+`requirements-attribution-phase2.txt` 故意不安装 PyTorch，因为 PyPI 包名本身不能
+表达服务器驱动、CUDA runtime 和 wheel 索引的完整组合。先检查 `zx` 环境中现有
+PyTorch；若不是 CUDA 版本，则根据服务器实际 CUDA/驱动，从 PyTorch 官方索引安装
+匹配版本，再安装其余依赖：
+
+```bash
+python - <<'PY'
+import torch
+print(torch.__version__, torch.version.cuda, torch.cuda.is_available())
+raise SystemExit(0 if torch.cuda.is_available() else 1)
+PY
+
 python -m pip install -r requirements-attribution-phase2.txt
 ```
 
@@ -78,6 +95,29 @@ PY
 应看到 `gpu_count: 2`，且两张卡均为 4090D。若当前 PyTorch 没有 CUDA 支持，先按
 服务器 CUDA 版本安装匹配的 PyTorch，再安装本清单中的其余依赖。不要让代码静默
 关闭 BF16；只有硬件确实不支持时才在正式单实验命令中显式加 `--no-bf16`。
+
+在每次正式实验前保存可审计的环境快照。它记录实际 CUDA PyTorch，而不是伪造一个
+脱离服务器环境的通用 lock：
+
+```bash
+mkdir -p logs/attribution-phase2/environment-seed42
+python -m pip freeze --all \
+  > logs/attribution-phase2/environment-seed42/pip-freeze.txt
+python - \
+  > logs/attribution-phase2/environment-seed42/torch-runtime.txt <<'PY'
+import platform
+import torch
+print("python", platform.python_version())
+print("torch", torch.__version__)
+print("torch_cuda_runtime", torch.version.cuda)
+print("cuda_available", torch.cuda.is_available())
+print("cudnn", torch.backends.cudnn.version())
+PY
+nvidia-smi -q \
+  > logs/attribution-phase2/environment-seed42/nvidia-smi-q.txt
+sha256sum requirements-attribution-phase2.txt requirements.txt \
+  > logs/attribution-phase2/environment-seed42/requirements.sha256
+```
 
 可运行随包测试（不会下载模型）：
 
@@ -129,7 +169,7 @@ python -u -m scripts.run_family_attribution_neural \
 成功后检查：
 
 ```bash
-test -f outputs/attribution/family-phase2-smoke/N0-seed42/COMPLETED
+test -f outputs/attribution/family-phase2-smoke/N0-seed42/COMPLETED.json
 python -m json.tool \
   outputs/attribution/family-phase2-smoke/N0-seed42/run_config.json | head
 ```
@@ -278,7 +318,7 @@ CUDA_VISIBLE_DEVICES=0 python -u -m scripts.run_family_attribution_neural \
 
 ```text
 <实验输出>/
-├── COMPLETED
+├── COMPLETED.json
 ├── model/
 ├── tokenizer/
 ├── checkpoints/

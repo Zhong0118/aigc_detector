@@ -1,6 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${1:-}" == "__phase2_run_one" ]]; then
+  shift
+  if [[ "$#" -ne 10 ]]; then
+    echo "Invalid internal Phase2 runner invocation." >&2
+    exit 64
+  fi
+  readonly experiment="$1"
+  readonly physical_gpu="$2"
+  readonly python_bin="$3"
+  readonly phase2_config="$4"
+  readonly data_jsonl="$5"
+  readonly split_manifest="$6"
+  readonly hf_cache="$7"
+  readonly output_dir="$8"
+  readonly seed="$9"
+  readonly log_path="${10}"
+  export CUDA_VISIBLE_DEVICES="$physical_gpu"
+
+  echo "[$(date --iso-8601=seconds)] Starting ${experiment}; physical GPU=${physical_gpu}; process device=cuda:0; log=${log_path}"
+  set +e
+  "$python_bin" -u -m scripts.run_family_attribution_neural \
+    --config "$phase2_config" \
+    --experiment "$experiment" \
+    --input "$data_jsonl" \
+    --split-manifest "$split_manifest" \
+    --output-dir "$output_dir" \
+    --seed "$seed" \
+    --device "cuda:0" \
+    --hf-cache "$hf_cache" \
+    2>&1 | tee "$log_path"
+  pipeline_status=("${PIPESTATUS[@]}")
+  set -e
+  if [[ "${pipeline_status[0]}" -ne 0 ]]; then
+    exit "${pipeline_status[0]}"
+  fi
+  exit "${pipeline_status[1]}"
+fi
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -27,6 +65,8 @@ readonly SEED="$5"
 readonly PYTHON_BIN="${PYTHON_BIN:-python}"
 readonly PHASE2_CONFIG="${PHASE2_CONFIG:-configs/text_attribution/training/family_neural_screening.v1.json}"
 readonly LOG_DIR="${PHASE2_LOG_DIR:-logs/attribution-phase2}"
+readonly SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+readonly BASH_BIN="${BASH:-bash}"
 
 if [[ ! -f "$DATA_JSONL" ]]; then
   echo "Missing dataset: $DATA_JSONL" >&2
@@ -40,44 +80,57 @@ if [[ ! -f "$PHASE2_CONFIG" ]]; then
   echo "Missing Phase2 config: $PHASE2_CONFIG" >&2
   exit 66
 fi
+if ! command -v setsid >/dev/null 2>&1; then
+  echo "GNU/Linux setsid is required for safe child-process cleanup." >&2
+  exit 69
+fi
 
 mkdir -p "$LOG_DIR" "$HF_CACHE" "$OUTPUT_ROOT"
 
-run_experiment() {
+child_pids=()
+terminate_children() {
+  local exit_code="$1"
+  local pid
+  trap - INT TERM
+  echo "Interrupted; stopping Phase2 python|tee process groups..." >&2
+  for pid in "${child_pids[@]}"; do
+    if kill -0 "$pid" 2>/dev/null; then
+      kill -TERM -- "-$pid" 2>/dev/null || true
+    fi
+  done
+  for pid in "${child_pids[@]}"; do
+    wait "$pid" 2>/dev/null || true
+  done
+  exit "$exit_code"
+}
+trap 'terminate_children 130' INT
+trap 'terminate_children 143' TERM
+
+started_pid=""
+start_experiment() {
   local experiment="$1"
+  local physical_gpu="$2"
   local output_dir="${OUTPUT_ROOT}/${experiment}-seed${SEED}"
   local log_path="${LOG_DIR}/${experiment}-seed${SEED}.log"
 
-  echo "[$(date --iso-8601=seconds)] Starting ${experiment}; visible GPU=${CUDA_VISIBLE_DEVICES}; log=${log_path}"
-  "$PYTHON_BIN" -u -m scripts.run_family_attribution_neural \
-    --config "$PHASE2_CONFIG" \
-    --experiment "$experiment" \
-    --input "$DATA_JSONL" \
-    --split-manifest "$SPLIT_MANIFEST" \
-    --output-dir "$output_dir" \
-    --seed "$SEED" \
-    --device "cuda:0" \
-    --hf-cache "$HF_CACHE" \
-    2>&1 | tee "$log_path"
+  setsid "$BASH_BIN" "$SCRIPT_PATH" __phase2_run_one \
+    "$experiment" \
+    "$physical_gpu" \
+    "$PYTHON_BIN" \
+    "$PHASE2_CONFIG" \
+    "$DATA_JSONL" \
+    "$SPLIT_MANIFEST" \
+    "$HF_CACHE" \
+    "$output_dir" \
+    "$SEED" \
+    "$log_path" &
+  started_pid=$!
 }
 
-child_pids=()
-on_signal() {
-  local pid
-  echo "Interrupted; stopping Phase2 child jobs..." >&2
-  for pid in "${child_pids[@]}"; do
-    if kill -0 "$pid" 2>/dev/null; then
-      kill "$pid" 2>/dev/null || true
-    fi
-  done
-  exit 130
-}
-trap on_signal INT TERM
-
-CUDA_VISIBLE_DEVICES="0" run_experiment "N0" &
-n0_pid=$!
-CUDA_VISIBLE_DEVICES="1" run_experiment "N1" &
-n1_pid=$!
+start_experiment "N0" "0"
+n0_pid="$started_pid"
+start_experiment "N1" "1"
+n1_pid="$started_pid"
 child_pids=("$n0_pid" "$n1_pid")
 
 parallel_status=0
@@ -105,10 +158,15 @@ if [[ "$parallel_status" -ne 0 ]]; then
 fi
 
 echo "N0 and N1 are complete; starting N2 on physical GPU 0."
-if CUDA_VISIBLE_DEVICES="0" run_experiment "N2"; then
+start_experiment "N2" "0"
+n2_pid="$started_pid"
+child_pids=("$n2_pid")
+if wait "$n2_pid"; then
+  child_pids=()
   echo "N2 completed successfully."
 else
   n2_status=$?
+  child_pids=()
   echo "N2 failed with exit code ${n2_status}; see ${LOG_DIR}/N2-seed${SEED}.log" >&2
   exit "$n2_status"
 fi
