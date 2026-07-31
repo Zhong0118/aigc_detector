@@ -48,14 +48,16 @@ def metric_row(
         "confusion_matrix": [[0.8, 0.2], [0.3, 0.7]],
         "per_model": {
             "model-a": {
+                "support": 4,
                 "accuracy": 0.75,
-                "correct": 3,
-                "samples": 4,
+                "mean_confidence": 0.8,
+                "mean_true_family_probability": 0.7,
             },
             "model-b": {
+                "support": 6,
                 "accuracy": 0.75,
-                "correct": 4,
-                "samples": 6,
+                "mean_confidence": 0.8,
+                "mean_true_family_probability": 0.7,
             },
         },
         "subgroups": {
@@ -63,7 +65,6 @@ def metric_row(
                 "en": {
                     "accuracy": 0.75,
                     "macro_f1": macro_f1,
-                    "weighted_f1": 0.74,
                     "support": 10,
                 }
             }
@@ -343,6 +344,153 @@ class NeuralSelectionTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "selection.*keys|test"):
                 select_neural_experiments([candidate])
+
+    def test_rejects_any_casefolded_test_substring_in_nested_keys(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        for forbidden_key in (
+            "holdout_test_metrics",
+            "evaluation_test",
+            "testMetrics",
+        ):
+            with (
+                self.subTest(forbidden_key=forbidden_key),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                candidate = write_candidate(Path(temporary), "N0")
+                metrics_path = candidate / "metrics.json"
+                payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+                payload["N0"]["validation"]["subgroups"]["language"]["en"][
+                    forbidden_key
+                ] = 0.9
+                metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+                with self.assertRaisesRegex(ValueError, "forbidden test"):
+                    select_neural_experiments([candidate])
+
+    def test_rejects_nonfinite_numbers_anywhere_in_validation(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = write_candidate(Path(temporary), "N0")
+            metrics_path = candidate / "metrics.json"
+            payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            payload["N0"]["validation"]["confusion_matrix"][0][0] = float("nan")
+            metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "finite"):
+                select_neural_experiments([candidate])
+
+    def test_rejects_negative_or_boolean_nested_supports(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        cases = (
+            ("per_model", -1),
+            ("subgroups", -1),
+            ("subgroups", True),
+        )
+        for location, invalid_support in cases:
+            with (
+                self.subTest(location=location, support=invalid_support),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                candidate = write_candidate(Path(temporary), "N0")
+                metrics_path = candidate / "metrics.json"
+                payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+                validation = payload["N0"]["validation"]
+                if location == "per_model":
+                    validation["per_model"]["model-a"]["support"] = invalid_support
+                else:
+                    validation["subgroups"]["language"]["en"][
+                        "support"
+                    ] = invalid_support
+                metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+                with self.assertRaisesRegex(ValueError, "support|boolean"):
+                    select_neural_experiments([candidate])
+
+    def test_rejects_invalid_confusion_matrix_shape_and_range(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        matrices = (
+            [[1.0, 0.0]],
+            [[1.1, -0.1], [0.3, 0.7]],
+        )
+        for matrix in matrices:
+            with (
+                self.subTest(matrix=matrix),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                candidate = write_candidate(Path(temporary), "N0")
+                metrics_path = candidate / "metrics.json"
+                payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+                payload["N0"]["validation"]["confusion_matrix"] = matrix
+                metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "confusion_matrix.*shape|confusion_matrix.*\\[0, 1\\]",
+                ):
+                    select_neural_experiments([candidate])
+
+    def test_rejects_empty_per_model_and_subgroup_mappings(self) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        mutations = (
+            lambda validation: validation.__setitem__("per_model", {}),
+            lambda validation: validation["subgroups"].__setitem__(
+                "language", {}
+            ),
+        )
+        for mutate in mutations:
+            with tempfile.TemporaryDirectory() as temporary:
+                candidate = write_candidate(Path(temporary), "N0")
+                metrics_path = candidate / "metrics.json"
+                payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+                mutate(payload["N0"]["validation"])
+                metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+                with self.assertRaisesRegex(ValueError, "must not be empty"):
+                    select_neural_experiments([candidate])
+
+    def test_rejects_missing_required_nested_metrics_and_calibration_keys(
+        self,
+    ) -> None:
+        from research.text_attribution.neural_selection import (
+            select_neural_experiments,
+        )
+
+        mutations = (
+            lambda validation: validation["per_model"]["model-a"].pop(
+                "mean_true_family_probability"
+            ),
+            lambda validation: validation["subgroups"]["language"]["en"].pop(
+                "macro_f1"
+            ),
+            lambda validation: validation["calibration"].__setitem__(
+                "unknown_metric", 0.1
+            ),
+        )
+        for mutate in mutations:
+            with tempfile.TemporaryDirectory() as temporary:
+                candidate = write_candidate(Path(temporary), "N0")
+                metrics_path = candidate / "metrics.json"
+                payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+                mutate(payload["N0"]["validation"])
+                metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+                with self.assertRaisesRegex(ValueError, "required|exactly"):
+                    select_neural_experiments([candidate])
 
     def test_rejects_zero_validation_support(self) -> None:
         from research.text_attribution.neural_selection import (

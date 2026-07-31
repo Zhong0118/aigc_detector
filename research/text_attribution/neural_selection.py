@@ -24,6 +24,32 @@ _VALIDATION_KEYS = frozenset(
     }
 )
 _SELECTION_KEYS = frozenset({"selected_experiment", "criterion"})
+_OVERALL_KEYS = frozenset(
+    {"accuracy", "macro_f1", "weighted_f1", "support"}
+)
+_PER_FAMILY_KEYS = frozenset(
+    {"precision", "recall", "f1-score", "support"}
+)
+_CALIBRATION_KEYS = frozenset(
+    {
+        "expected_calibration_error",
+        "multiclass_brier_score",
+        "negative_log_likelihood",
+    }
+)
+_PER_MODEL_KEYS = frozenset(
+    {
+        "support",
+        "accuracy",
+        "family_accuracy",
+        "mean_confidence",
+        "mean_true_family_probability",
+    }
+)
+_SUBGROUP_REQUIRED_KEYS = frozenset(
+    {"support", "accuracy", "macro_f1"}
+)
+_SUBGROUP_ALLOWED_KEYS = _SUBGROUP_REQUIRED_KEYS | {"weighted_f1"}
 
 
 @dataclass(frozen=True)
@@ -343,7 +369,7 @@ def _validation_metrics(
             f"{source}: validation metric keys must be exactly "
             f"{sorted(_VALIDATION_KEYS)}"
         )
-    _reject_test_keys(validation, f"{source}: validation")
+    _reject_forbidden_metric_values(validation, f"{source}: validation")
 
     selection = metrics.get("selection")
     if not isinstance(selection, Mapping):
@@ -353,7 +379,7 @@ def _validation_metrics(
             f"{source}: selection metadata keys must be exactly "
             f"{sorted(_SELECTION_KEYS)}"
         )
-    _reject_test_keys(selection, f"{source}: selection")
+    _reject_forbidden_metric_values(selection, f"{source}: selection")
     selected = selection["selected_experiment"]
     if selected != experiment_id:
         raise ValueError(
@@ -365,17 +391,19 @@ def _validation_metrics(
     return validation
 
 
-def _reject_test_keys(value: Any, path: str) -> None:
+def _reject_forbidden_metric_values(value: Any, path: str) -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
-            if isinstance(key, str) and (
-                key.casefold() == "test" or key.casefold().startswith("test_")
-            ):
+            if isinstance(key, str) and "test" in key.casefold():
                 raise ValueError(f"{path} contains forbidden test data at {key}")
-            _reject_test_keys(item, f"{path}.{key}")
+            _reject_forbidden_metric_values(item, f"{path}.{key}")
     elif isinstance(value, list):
         for index, item in enumerate(value):
-            _reject_test_keys(item, f"{path}[{index}]")
+            _reject_forbidden_metric_values(item, f"{path}[{index}]")
+    elif isinstance(value, bool):
+        raise ValueError(f"{path} must not contain boolean metric values")
+    elif isinstance(value, (int, float)) and not math.isfinite(float(value)):
+        raise ValueError(f"{path} must contain only finite numeric values")
 
 
 def _selection_metrics(
@@ -387,6 +415,7 @@ def _selection_metrics(
 ) -> tuple[float, float, float]:
     prefix = f"{source}: metrics.{experiment_id}.validation"
     overall = _required_mapping(row, "overall", prefix)
+    _require_exact_keys(overall, _OVERALL_KEYS, f"{prefix}.overall")
     for metric in ("accuracy", "macro_f1", "weighted_f1"):
         _bounded_metric(overall, metric, f"{prefix}.overall", upper=1.0)
     macro_f1 = _bounded_metric(
@@ -395,11 +424,18 @@ def _selection_metrics(
         f"{prefix}.overall",
         upper=1.0,
     )
-    overall_support = _support(overall, f"{prefix}.overall")
-    if overall_support <= 0:
-        raise ValueError(f"{prefix}.overall.support must be positive")
+    overall_support = _support(
+        overall,
+        f"{prefix}.overall",
+        positive=True,
+    )
 
     calibration = _required_mapping(row, "calibration", prefix)
+    _require_exact_keys(
+        calibration,
+        _CALIBRATION_KEYS,
+        f"{prefix}.calibration",
+    )
     _bounded_metric(
         calibration,
         "expected_calibration_error",
@@ -433,6 +469,11 @@ def _selection_metrics(
             family,
             f"{prefix}.per_family",
         )
+        _require_exact_keys(
+            diagnostics,
+            _PER_FAMILY_KEYS,
+            f"{prefix}.per_family.{family}",
+        )
         for metric in ("precision", "recall", "f1-score"):
             value = _bounded_metric(
                 diagnostics,
@@ -455,7 +496,138 @@ def _selection_metrics(
             f"{prefix} validation split support does not match "
             "run_config split summary"
         )
+
+    _validate_confusion_matrix(
+        row["confusion_matrix"],
+        len(family_label_map),
+        prefix,
+    )
+    _validate_per_model(row["per_model"], prefix)
+    _validate_subgroups(row["subgroups"], prefix)
     return macro_f1, min(family_f1_values), nll
+
+
+def _validate_confusion_matrix(
+    value: Any,
+    family_count: int,
+    path: str,
+) -> None:
+    if (
+        not isinstance(value, list)
+        or len(value) != family_count
+        or any(
+            not isinstance(row, list) or len(row) != family_count
+            for row in value
+        )
+    ):
+        raise ValueError(
+            f"{path}.confusion_matrix shape must be "
+            f"{family_count}x{family_count}"
+        )
+    for row_index, matrix_row in enumerate(value):
+        for column_index, item in enumerate(matrix_row):
+            normalized = _finite_number(
+                item,
+                (
+                    f"{path}.confusion_matrix"
+                    f"[{row_index}][{column_index}]"
+                ),
+            )
+            if not 0.0 <= normalized <= 1.0:
+                raise ValueError(
+                    f"{path}.confusion_matrix values must be within [0, 1]"
+                )
+
+
+def _validate_per_model(value: Any, path: str) -> None:
+    if not isinstance(value, Mapping) or not value:
+        raise ValueError(f"{path}.per_model must not be empty")
+    for model_id, raw_diagnostics in value.items():
+        if not isinstance(model_id, str) or not model_id:
+            raise ValueError(
+                f"{path}.per_model identifiers must be non-empty strings"
+            )
+        diagnostics = _required_mapping(
+            value,
+            model_id,
+            f"{path}.per_model",
+        )
+        keys = set(diagnostics)
+        if (
+            not keys <= _PER_MODEL_KEYS
+            or "support" not in keys
+            or "mean_true_family_probability" not in keys
+            or not ({"accuracy", "family_accuracy"} & keys)
+        ):
+            raise ValueError(
+                f"{path}.per_model.{model_id} is missing required metrics "
+                "or contains unknown metrics"
+            )
+        _support(
+            diagnostics,
+            f"{path}.per_model.{model_id}",
+            positive=True,
+        )
+        for metric in (
+            "accuracy",
+            "family_accuracy",
+            "mean_confidence",
+            "mean_true_family_probability",
+        ):
+            if metric in diagnostics:
+                _bounded_metric(
+                    diagnostics,
+                    metric,
+                    f"{path}.per_model.{model_id}",
+                    upper=1.0,
+                )
+
+
+def _validate_subgroups(value: Any, path: str) -> None:
+    if not isinstance(value, Mapping) or not value:
+        raise ValueError(f"{path}.subgroups must not be empty")
+    for dimension, raw_groups in value.items():
+        if not isinstance(dimension, str) or not dimension:
+            raise ValueError(
+                f"{path}.subgroups dimensions must be non-empty strings"
+            )
+        if not isinstance(raw_groups, Mapping) or not raw_groups:
+            raise ValueError(
+                f"{path}.subgroups.{dimension} must not be empty"
+            )
+        for group_name, raw_metrics in raw_groups.items():
+            if not isinstance(group_name, str) or not group_name:
+                raise ValueError(
+                    f"{path}.subgroups.{dimension} group names must be "
+                    "non-empty strings"
+                )
+            metrics = _required_mapping(
+                raw_groups,
+                group_name,
+                f"{path}.subgroups.{dimension}",
+            )
+            metric_keys = set(metrics)
+            if (
+                not _SUBGROUP_REQUIRED_KEYS <= metric_keys
+                or not metric_keys <= _SUBGROUP_ALLOWED_KEYS
+            ):
+                raise ValueError(
+                    f"{path}.subgroups.{dimension}.{group_name} is missing "
+                    "required metrics or contains unknown metrics"
+                )
+            _support(
+                metrics,
+                f"{path}.subgroups.{dimension}.{group_name}",
+                positive=True,
+            )
+            for metric in ("accuracy", "macro_f1", "weighted_f1"):
+                if metric in metrics:
+                    _bounded_metric(
+                        metrics,
+                        metric,
+                        f"{path}.subgroups.{dimension}.{group_name}",
+                        upper=1.0,
+                    )
 
 
 def _required_mapping(
@@ -469,6 +641,15 @@ def _required_mapping(
     return value
 
 
+def _require_exact_keys(
+    mapping: Mapping[str, Any],
+    expected: frozenset[str],
+    path: str,
+) -> None:
+    if set(mapping) != expected:
+        raise ValueError(f"{path} keys must be exactly {sorted(expected)}")
+
+
 def _bounded_metric(
     mapping: Mapping[str, Any],
     key: str,
@@ -478,22 +659,38 @@ def _bounded_metric(
 ) -> float:
     if key not in mapping:
         raise ValueError(f"{path} is missing required metric {key}")
-    value = mapping[key]
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError(f"{path}.{key} must be a finite number")
-    normalized = float(value)
-    if not math.isfinite(normalized):
-        raise ValueError(f"{path}.{key} must be finite")
+    normalized = _finite_number(mapping[key], f"{path}.{key}")
     if normalized < 0.0 or (upper is not None and normalized > upper):
         bound = f"[0, {upper:g}]" if upper is not None else "nonnegative"
         raise ValueError(f"{path}.{key} must be within {bound}")
     return normalized
 
 
-def _support(mapping: Mapping[str, Any], path: str) -> int:
+def _finite_number(value: Any, path: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{path} must be a finite number")
+    normalized = float(value)
+    if not math.isfinite(normalized):
+        raise ValueError(f"{path} must be finite")
+    return normalized
+
+
+def _support(
+    mapping: Mapping[str, Any],
+    path: str,
+    *,
+    positive: bool = False,
+) -> int:
     if "support" not in mapping:
         raise ValueError(f"{path} is missing required support")
     value = mapping["support"]
-    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ValueError(f"{path}.support must be a nonnegative integer")
-    return value
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(float(value))
+        or not float(value).is_integer()
+        or (float(value) <= 0 if positive else float(value) < 0)
+    ):
+        qualifier = "positive" if positive else "nonnegative"
+        raise ValueError(f"{path}.support must be a {qualifier} integer")
+    return int(value)
