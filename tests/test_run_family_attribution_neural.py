@@ -7,7 +7,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 import sys
 import tempfile
 import unittest
@@ -129,8 +129,12 @@ def fake_training_module(
         tokenizer_dir = request.output_dir / "tokenizer"
         model_dir.mkdir()
         tokenizer_dir.mkdir()
+        checkpoint_dir = request.output_dir / "checkpoints"
+        checkpoint_dir.mkdir()
         (model_dir / "config.json").write_text("{}", encoding="utf-8")
+        (model_dir / "large-model-marker.bin").write_bytes(b"model-only")
         (tokenizer_dir / "tokenizer_config.json").write_text("{}", encoding="utf-8")
+        (checkpoint_dir / "checkpoint-marker.bin").write_bytes(b"checkpoint-only")
         history = ({"epoch": 1.0, "eval_macro_f1": 1.0},)
         (request.output_dir / "trainer_history.json").write_text(
             json.dumps(list(history)),
@@ -171,8 +175,9 @@ import json
 import sys
 real_import = builtins.__import__
 def guarded_import(name, *args, **kwargs):
-    if name == "transformers" or name.startswith("transformers."):
-        raise AssertionError("dry-run imported transformers")
+    blocked = ("numpy", "sklearn", "matplotlib", "seaborn", "transformers")
+    if name.split(".", 1)[0] in blocked:
+        raise AssertionError(f"dry-run imported blocked dependency: {{name}}")
     if name == "research.text_attribution.neural_training":
         raise AssertionError("dry-run imported neural_training")
     return real_import(name, *args, **kwargs)
@@ -233,6 +238,7 @@ raise SystemExit(main({argv!r}))
             self.assertFalse((root / "output").exists())
 
     def test_fake_training_writes_validation_only_report_and_history(self) -> None:
+        from research.text_attribution import attribution_reporting
         from scripts.run_family_attribution_neural import main
 
         with tempfile.TemporaryDirectory() as temporary:
@@ -240,15 +246,36 @@ raise SystemExit(main({argv!r}))
             config_path, data_path, split_path = prepare_inputs(root)
             captured: list[NeuralTrainingRequest] = []
             module = fake_training_module(captured)
-            with patch.dict(
-                sys.modules,
-                {"research.text_attribution.neural_training": module},
+            real_writer = attribution_reporting.write_attribution_report
+
+            def assert_empty_report_workspace(**kwargs: object) -> dict[str, str]:
+                report_root = Path(kwargs["output_dir"])
+                self.assertTrue(report_root.is_dir())
+                self.assertEqual(list(report_root.iterdir()), [])
+                return real_writer(**kwargs)
+
+            with (
+                patch.dict(
+                    sys.modules,
+                    {"research.text_attribution.neural_training": module},
+                ),
+                patch.object(
+                    attribution_reporting,
+                    "write_attribution_report",
+                    side_effect=assert_empty_report_workspace,
+                ) as writer,
             ):
                 exit_code = main(common_args(root, config_path, data_path, split_path))
 
             output = root / "output"
             self.assertEqual(exit_code, 0)
+            writer.assert_called_once()
             self.assertEqual(len(captured), 1)
+            self.assertTrue((output / "model" / "large-model-marker.bin").is_file())
+            self.assertTrue(
+                (output / "checkpoints" / "checkpoint-marker.bin").is_file()
+            )
+            self.assertFalse((output / "report_work").exists())
             metrics = json.loads((output / "metrics.json").read_text())
             self.assertEqual(set(metrics["N0"]), {"validation"})
             self.assertEqual(
@@ -417,7 +444,7 @@ raise SystemExit(main({argv!r}))
             )
             self.assertEqual(list(root.glob(".output.run-*")), [])
 
-    def test_cli_overrides_are_passed_to_training_request(self) -> None:
+    def test_cli_overrides_are_passed_without_mutating_cuda_environment(self) -> None:
         from scripts.run_family_attribution_neural import main
 
         with tempfile.TemporaryDirectory() as temporary:
@@ -444,7 +471,7 @@ raise SystemExit(main({argv!r}))
                     "--seed",
                     "99",
                     "--device",
-                    "cuda:7",
+                    "cpu",
                     "--hf-cache",
                     str(cache),
                     "--no-bf16",
@@ -452,11 +479,19 @@ raise SystemExit(main({argv!r}))
                     str(resume),
                 ]
             )
-            with patch.dict(
-                sys.modules,
-                {"research.text_attribution.neural_training": module},
+            with (
+                patch.dict(
+                    sys.modules,
+                    {"research.text_attribution.neural_training": module},
+                ),
+                patch.dict(
+                    os.environ,
+                    {"CUDA_VISIBLE_DEVICES": "7"},
+                    clear=False,
+                ),
             ):
                 main(args)
+                self.assertEqual(os.environ["CUDA_VISIBLE_DEVICES"], "7")
 
             request = captured[0]
             self.assertEqual(request.experiment.model_id, "test/n1")
@@ -467,8 +502,43 @@ raise SystemExit(main({argv!r}))
             self.assertFalse(request.bf16)
             self.assertEqual(request.resume_from_checkpoint, resume)
             run_config = json.loads((root / "output" / "run_config.json").read_text())
-            self.assertEqual(run_config["requested_device"], "cuda:7")
-            self.assertEqual(run_config["device"], "cuda:0")
+            self.assertEqual(run_config["requested_device"], "cpu")
+            self.assertEqual(run_config["device"], "cpu")
+
+    def test_rejects_nonzero_cuda_device_without_training(self) -> None:
+        from scripts.run_family_attribution_neural import main
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path, data_path, split_path = prepare_inputs(root)
+            captured: list[NeuralTrainingRequest] = []
+            module = fake_training_module(captured)
+            for invalid_device in ("cuda", "cuda:1", "cuda:7"):
+                with self.subTest(device=invalid_device):
+                    with (
+                        patch.dict(
+                            sys.modules,
+                            {"research.text_attribution.neural_training": module},
+                        ),
+                        self.assertRaisesRegex(
+                            ValueError,
+                            "cpu.*cuda:0.*CUDA_VISIBLE_DEVICES",
+                        ),
+                    ):
+                        main(
+                            [
+                                *common_args(
+                                    root,
+                                    config_path,
+                                    data_path,
+                                    split_path,
+                                ),
+                                "--device",
+                                invalid_device,
+                            ]
+                        )
+            self.assertEqual(captured, [])
+            self.assertFalse((root / "output").exists())
 
     def test_explicit_test_evaluation_adds_test_metrics_and_predictions(self) -> None:
         from scripts import run_family_attribution_neural as cli
@@ -524,6 +594,106 @@ raise SystemExit(main({argv!r}))
                 call["tokenizer_dir"],
                 captured[0].output_dir / "tokenizer",
             )
+
+    def test_saved_model_prediction_preserves_ten_family_label_order(self) -> None:
+        import torch
+        from transformers import (
+            BertConfig,
+            BertForSequenceClassification,
+            BertTokenizerFast,
+        )
+
+        from scripts import run_family_attribution_neural as cli
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tokenizer_dir = root / "tokenizer"
+            model_dir = root / "model"
+            vocab_path = root / "vocab.txt"
+            vocab_path.write_text(
+                "\n".join(
+                    [
+                        "[PAD]",
+                        "[UNK]",
+                        "[CLS]",
+                        "[SEP]",
+                        "[MASK]",
+                        "first",
+                        "second",
+                        "sample",
+                        ".",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            tokenizer = BertTokenizerFast(
+                vocab_file=str(vocab_path),
+                do_lower_case=True,
+            )
+            tokenizer.save_pretrained(tokenizer_dir)
+            family_labels = tuple(f"family-{index}" for index in range(10))
+            torch.manual_seed(7)
+            model = BertForSequenceClassification(
+                BertConfig(
+                    vocab_size=len(tokenizer),
+                    hidden_size=16,
+                    num_hidden_layers=1,
+                    num_attention_heads=2,
+                    intermediate_size=24,
+                    max_position_embeddings=64,
+                    num_labels=len(family_labels),
+                    id2label=dict(enumerate(family_labels)),
+                    label2id={
+                        label: index for index, label in enumerate(family_labels)
+                    },
+                )
+            )
+            model.save_pretrained(model_dir)
+            samples = (
+                SimpleNamespace(text="first sample."),
+                SimpleNamespace(text="second sample."),
+            )
+
+            probabilities = cli._predict_saved_model(
+                model_dir=model_dir,
+                tokenizer_dir=tokenizer_dir,
+                samples=samples,
+                family_labels=family_labels,
+                max_length=32,
+                device="cpu",
+                hf_cache=None,
+            )
+
+            self.assertEqual(probabilities.shape, (2, 10))
+            np.testing.assert_allclose(
+                probabilities.sum(axis=1),
+                np.ones(2),
+                rtol=0.0,
+                atol=1e-6,
+            )
+            config_path = model_dir / "config.json"
+            config_payload = json.loads(config_path.read_text(encoding="utf-8"))
+            config_payload["id2label"] = {
+                str(index): family_labels[9 - index] for index in range(10)
+            }
+            config_path.write_text(
+                json.dumps(config_payload),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                ValueError,
+                "id2label.*family_labels",
+            ):
+                cli._predict_saved_model(
+                    model_dir=model_dir,
+                    tokenizer_dir=tokenizer_dir,
+                    samples=samples,
+                    family_labels=family_labels,
+                    max_length=32,
+                    device="cpu",
+                    hf_cache=None,
+                )
 
 
 if __name__ == "__main__":

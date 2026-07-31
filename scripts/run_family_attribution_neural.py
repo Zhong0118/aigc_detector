@@ -13,13 +13,6 @@ import tempfile
 from typing import Any, Sequence
 from uuid import uuid4
 
-import numpy as np
-
-from research.text_attribution.attribution_metrics import (
-    build_prediction_records,
-    evaluate_family_predictions,
-)
-from research.text_attribution.attribution_reporting import write_attribution_report
 from research.text_attribution.neural_config import load_neural_screening_config
 from research.text_attribution.split_manifest import (
     apply_split_manifest,
@@ -89,15 +82,16 @@ def _effective_runtime(
     smoke_test: bool,
     configured_bf16: bool,
 ) -> tuple[str, bool, int, bool]:
+    if requested_device not in {"cpu", "cuda:0"}:
+        raise ValueError(
+            "device must be 'cpu' or 'cuda:0'; select a physical GPU with "
+            "CUDA_VISIBLE_DEVICES before launching the process"
+        )
     if smoke_test:
         return "cpu", False, 2, True
     if requested_device == "cpu":
         return "cpu", False, -1, True
-    if requested_device in {"cuda", "cuda:0"}:
-        return "cuda:0", configured_bf16, -1, False
-    if requested_device.startswith("cuda:") and requested_device[5:].isdigit():
-        return "cuda:0", configured_bf16, -1, False
-    raise ValueError("device must be 'cpu', 'cuda', or 'cuda:<index>'")
+    return "cuda:0", configured_bf16, -1, False
 
 
 def _dependency_version(distribution: str) -> str:
@@ -105,37 +99,6 @@ def _dependency_version(distribution: str) -> str:
         return metadata.version(distribution)
     except metadata.PackageNotFoundError:
         return "not-installed"
-
-
-def _configure_training_device_environment(
-    device: str,
-    *,
-    smoke_test: bool,
-) -> tuple[bool, str | None, str]:
-    """Select the visible CUDA device before the training engine imports torch."""
-
-    if smoke_test:
-        return False, None, "cpu"
-    if device == "cpu":
-        previous = os.environ.get("CUDA_VISIBLE_DEVICES")
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""
-        return True, previous, "cpu"
-    if device in {"cuda", "cuda:0"}:
-        return False, None, device
-    if device.startswith("cuda:") and device[5:].isdigit():
-        previous = os.environ.get("CUDA_VISIBLE_DEVICES")
-        os.environ["CUDA_VISIBLE_DEVICES"] = device[5:]
-        return True, previous, "cuda:0"
-    raise ValueError("device must be 'cpu', 'cuda', or 'cuda:<index>'")
-
-
-def _restore_cuda_visible_devices(changed: bool, previous: str | None) -> None:
-    if not changed:
-        return
-    if previous is None:
-        os.environ.pop("CUDA_VISIBLE_DEVICES", None)
-    else:
-        os.environ["CUDA_VISIBLE_DEVICES"] = previous
 
 
 def _preserve_failed_run(staging: Path, output_dir: Path, error: BaseException) -> Path:
@@ -174,12 +137,14 @@ def _predict_saved_model(
     model_dir: Path,
     tokenizer_dir: Path,
     samples: tuple[Any, ...],
+    family_labels: tuple[str, ...],
     max_length: int,
     device: str,
     hf_cache: Path | None,
-) -> np.ndarray:
+) -> Any:
     """Reload final saved artifacts and predict an explicitly requested test split."""
 
+    import numpy as np
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -193,6 +158,9 @@ def _predict_saved_model(
         cache_dir=hf_cache,
         local_files_only=True,
     )
+    expected_id2label = dict(enumerate(family_labels))
+    if model.config.id2label != expected_id2label:
+        raise ValueError("saved model id2label must exactly match family_labels order")
     target = torch.device(device)
     model.to(target)
     model.eval()
@@ -301,6 +269,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.dry_run:
         return 0
 
+    from research.text_attribution.attribution_metrics import (
+        build_prediction_records,
+        evaluate_family_predictions,
+    )
+    from research.text_attribution.attribution_reporting import (
+        write_attribution_report,
+    )
+
     output_dir = Path(args.output_dir)
     if output_dir.exists():
         raise FileExistsError(f"output-dir already exists: {output_dir}")
@@ -311,8 +287,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             dir=output_dir.parent,
         )
     )
-    device_environment_changed = False
-    previous_cuda_visible_devices: str | None = None
     try:
         train_samples = splits["train"]
         validation_samples = splits["validation"]
@@ -330,14 +304,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 seed=seed,
             )
 
-        (
-            device_environment_changed,
-            previous_cuda_visible_devices,
-            effective_device,
-        ) = _configure_training_device_environment(
-            args.device,
-            smoke_test=args.smoke_test,
-        )
         from research.text_attribution.neural_training import (
             NeuralTrainingRequest,
             train_neural_experiment,
@@ -388,6 +354,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 model_dir=result.model_dir,
                 tokenizer_dir=result.tokenizer_dir,
                 samples=test_samples,
+                family_labels=dataset.family_labels,
                 max_length=experiment.max_length,
                 device=effective_device,
                 hf_cache=None if args.hf_cache is None else Path(args.hf_cache),
@@ -405,24 +372,30 @@ def main(argv: Sequence[str] | None = None) -> int:
                 family_labels=dataset.family_labels,
             )
 
-        write_attribution_report(
-            output_dir=staging,
+        report_work = staging / "report_work"
+        report_work.mkdir()
+        report_paths = write_attribution_report(
+            output_dir=report_work,
             run_config=summary,
             dataset_audit=dataset.audit,
             split_summary=summary["splits"],
             metrics=metrics,
             predictions=records,
         )
+        for report_path in report_paths.values():
+            source = Path(report_path)
+            destination = staging / source.name
+            if destination.exists():
+                raise RuntimeError(
+                    f"report artifact conflicts with training artifact: {destination}"
+                )
+            os.replace(source, destination)
+        report_work.rmdir()
         os.replace(staging, output_dir)
     except BaseException as error:
         if staging.exists():
             _preserve_failed_run(staging, output_dir, error)
         raise
-    finally:
-        _restore_cuda_visible_devices(
-            device_environment_changed,
-            previous_cuda_visible_devices,
-        )
     return 0
 
 
