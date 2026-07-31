@@ -17,6 +17,7 @@ from transformers import (
     BertConfig,
     BertForSequenceClassification,
     BertTokenizerFast,
+    CanineTokenizer,
     TrainingArguments,
 )
 
@@ -500,20 +501,23 @@ def test_staged_artifact_publish_rolls_back_partial_move(
     output_dir.mkdir()
     staging_dir = output_dir / ".staging-test"
     (staging_dir / "model").mkdir(parents=True)
-    (staging_dir / "tokenizer").mkdir()
     (staging_dir / "model" / "config.json").write_text(
         "{}",
         encoding="utf-8",
     )
     (staging_dir / "model" / "model.safetensors").write_bytes(b"weights")
-    (staging_dir / "tokenizer" / "tokenizer_config.json").write_text(
-        "{}",
+    vocab_path = staging_dir / "vocab.txt"
+    vocab_path.write_text(
+        "[PAD]\n[UNK]\n[CLS]\n[SEP]\n[MASK]\ntoken\n",
         encoding="utf-8",
     )
-    (staging_dir / "tokenizer" / "tokenizer.json").write_text(
-        "{}",
-        encoding="utf-8",
+    BertTokenizerFast(
+        vocab_file=str(vocab_path),
+        do_lower_case=True,
+    ).save_pretrained(
+        staging_dir / "tokenizer",
     )
+    vocab_path.unlink()
     (staging_dir / "trainer_history.json").write_text(
         "[]",
         encoding="utf-8",
@@ -535,6 +539,35 @@ def test_staged_artifact_publish_rolls_back_partial_move(
     assert not (output_dir / "tokenizer").exists()
     assert not (output_dir / "trainer_history.json").exists()
     assert not (output_dir / "COMPLETED.json").exists()
+
+
+def test_staged_artifact_validation_accepts_reloadable_canine_tokenizer(
+    tmp_path: Path,
+) -> None:
+    module = _training_module()
+    staging_dir = tmp_path / "staging"
+    (staging_dir / "model").mkdir(parents=True)
+    (staging_dir / "model" / "config.json").write_text(
+        "{}",
+        encoding="utf-8",
+    )
+    (staging_dir / "model" / "model.safetensors").write_bytes(b"weights")
+    tokenizer_dir = staging_dir / "tokenizer"
+    CanineTokenizer().save_pretrained(tokenizer_dir)
+    (staging_dir / "trainer_history.json").write_text(
+        "[]",
+        encoding="utf-8",
+    )
+
+    assert not (tokenizer_dir / "tokenizer.json").exists()
+    assert not (tokenizer_dir / "vocab.txt").exists()
+    module._validate_staged_artifacts(staging_dir)
+
+    reloaded = AutoTokenizer.from_pretrained(
+        tokenizer_dir,
+        local_files_only=True,
+    )
+    assert isinstance(reloaded, CanineTokenizer)
 
 
 def test_smoke_arguments_force_cpu_and_disable_training_evaluation(

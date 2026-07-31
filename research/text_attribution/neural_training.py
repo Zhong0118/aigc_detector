@@ -651,16 +651,15 @@ def _validate_staged_artifacts(staging_dir: Path) -> None:
     tokenizer_dir = staging_dir / "tokenizer"
     if not (tokenizer_dir / "tokenizer_config.json").is_file():
         raise RuntimeError("staged tokenizer is missing tokenizer_config.json")
-    tokenizer_asset_names = (
-        "tokenizer.json",
-        "vocab.txt",
-        "spiece.model",
-        "sentencepiece.bpe.model",
-    )
-    if not any(
-        (tokenizer_dir / name).is_file() for name in tokenizer_asset_names
-    ):
-        raise RuntimeError("staged tokenizer is missing vocabulary assets")
+    try:
+        AutoTokenizer.from_pretrained(
+            tokenizer_dir,
+            local_files_only=True,
+        )
+    except Exception as error:
+        raise RuntimeError(
+            "staged tokenizer cannot be reloaded locally"
+        ) from error
 
     history_path = staging_dir / "trainer_history.json"
     try:
