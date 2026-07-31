@@ -66,13 +66,38 @@ def _write_config(tmp_path: Path, payload: dict[str, object]) -> Path:
     return path
 
 
-def test_repository_config_defines_only_the_three_approved_experiments() -> None:
+def test_repository_config_matches_every_approved_screening_value() -> None:
     config = load_neural_screening_config(CONFIG_PATH)
 
+    assert config.schema_version == 1
+    assert config.run_id == "family-attribution-neural-screening-v1"
+    assert config.seed == 42
+    assert config.model_catalog == (
+        CONFIG_PATH.parent / "../zhizengzeng_model_catalog.v5.json"
+    ).resolve()
     assert list(config.experiments) == ["N0", "N1", "N2"]
-    assert config.experiments["N0"].max_length == 512
-    assert config.experiments["N1"].max_length == 512
-    assert config.experiments["N2"].max_length == 1024
+    assert {
+        experiment_id: (
+            experiment.model_id,
+            experiment.max_length,
+            experiment.per_device_train_batch_size,
+            experiment.gradient_accumulation_steps,
+        )
+        for experiment_id, experiment in config.experiments.items()
+    } == {
+        "N0": ("FacebookAI/xlm-roberta-base", 512, 16, 2),
+        "N1": ("microsoft/mdeberta-v3-base", 512, 16, 2),
+        "N2": ("google/canine-c", 1024, 8, 4),
+    }
+    for experiment in config.experiments.values():
+        assert experiment.learning_rate == 2e-5
+        assert experiment.epochs == 6
+        assert experiment.weight_decay == 0.01
+        assert experiment.warmup_ratio == 0.1
+        assert experiment.label_smoothing_factor == 0.05
+        assert experiment.early_stopping_patience == 2
+        assert experiment.save_total_limit == 2
+        assert experiment.bf16 is True
 
 
 def test_model_catalog_is_resolved_relative_to_the_config_file(
