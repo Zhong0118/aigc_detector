@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "run_id": "family-attribution-neural-screening-v1",
+  "seed": 42,
+  "model_catalog": "../zhizengzeng_model_catalog.v5.json",
+  "common": {
+    "learning_rate": 2e-5,
+    "epochs": 6,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "label_smoothing_factor": 0.05,
+    "gradient_accumulation_steps": 2,
+    "early_stopping_patience": 2,
+    "save_total_limit": 2,
+    "bf16": true
+  },
+  "experiments": {
+    "N0": {
+      "model_id": "FacebookAI/xlm-roberta-base",
+      "max_length": 512,
+      "per_device_train_batch_size": 16,
+      "gradient_accumulation_steps": 2
+    },
+    "N1": {
+      "model_id": "microsoft/mdeberta-v3-base",
+      "max_length": 512,
+      "per_device_train_batch_size": 16,
+      "gradient_accumulation_steps": 2
+    },
+    "N2": {
+      "model_id": "google/canine-c",
+      "max_length": 1024,
+      "per_device_train_batch_size": 8,
+      "gradient_accumulation_steps": 4
+    }
+  }
+}
