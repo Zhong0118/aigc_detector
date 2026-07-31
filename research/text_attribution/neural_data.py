@@ -117,6 +117,7 @@ def _sample_sort_key(sample: AttributionSample) -> tuple[Any, ...]:
 
 def select_smoke_samples(
     samples: Sequence[AttributionSample],
+    *,
     per_model: int,
     seed: int,
 ) -> tuple[AttributionSample, ...]:

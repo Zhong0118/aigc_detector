@@ -117,6 +117,20 @@ class NeuralAttributionDatasetTests(unittest.TestCase):
                         (sample,), tokenizer, {"openai": 0}, max_length=invalid
                     )
 
+    def test_rejects_non_integer_family_label_ids_including_bool(self) -> None:
+        tokenizer = RecordingTokenizer()
+        sample = make_sample("sample-1")
+
+        for invalid in ("0", 1.5, True):
+            with self.subTest(label_id=invalid):
+                with self.assertRaisesRegex(ValueError, "family_to_id"):
+                    NeuralAttributionDataset(
+                        (sample,),
+                        tokenizer,
+                        {"openai": invalid},
+                        max_length=16,
+                    )
+
 
 class FamilyLabelMapTests(unittest.TestCase):
     def test_preserves_input_order_and_builds_inverse(self) -> None:
@@ -237,6 +251,10 @@ class SmokeSampleTests(unittest.TestCase):
                         per_model=1,
                         seed=invalid,
                     )
+
+    def test_requires_per_model_and_seed_as_keyword_arguments(self) -> None:
+        with self.assertRaises(TypeError):
+            select_smoke_samples(self.samples, 1, 7)
 
 
 if __name__ == "__main__":
