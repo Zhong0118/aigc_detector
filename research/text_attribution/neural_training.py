@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 import importlib
 import inspect
@@ -10,6 +11,7 @@ import json
 import math
 import os
 from pathlib import Path
+import shutil
 import tempfile
 from typing import Any
 
@@ -19,8 +21,11 @@ import torch
 from sklearn.metrics import accuracy_score, f1_score
 from torch.utils.data import WeightedRandomSampler
 
-from transformers import __version__ as _transformers_version
+import transformers
 from transformers.utils import import_utils as _transformers_import_utils
+
+_transformers_version = transformers.__version__
+_peft_available_at_import = _transformers_import_utils._peft_available
 
 
 def _is_transformers_439(version: str) -> bool:
@@ -43,17 +48,12 @@ def _needs_legacy_accelerator_adapter(
     )
 
 
-# Transformers 4.39 eagerly imports installed PEFT from Trainer. Only suppress
-# that optional integration when its real import is incompatible; newer
-# Transformers versions keep their normal import behavior untouched.
-if (
-    _is_transformers_439(_transformers_version)
-    and _transformers_import_utils.is_peft_available()
-):
+_peft_439_import_incompatible = False
+if _is_transformers_439(_transformers_version) and _peft_available_at_import:
     try:
         importlib.import_module("peft")
     except ImportError:
-        _transformers_import_utils._peft_available = False
+        _peft_439_import_incompatible = True
 
 from accelerate import Accelerator, DataLoaderConfiguration
 from transformers import (
@@ -62,10 +62,26 @@ from transformers import (
     DataCollatorWithPadding,
     EarlyStoppingCallback,
     EvalPrediction,
-    Trainer,
     TrainingArguments,
 )
-import transformers.trainer as _transformers_trainer
+
+
+@contextmanager
+def _temporary_peft_compatibility():
+    if not _peft_439_import_incompatible:
+        yield
+        return
+    original_peft_available = _transformers_import_utils._peft_available
+    _transformers_import_utils._peft_available = False
+    try:
+        yield
+    finally:
+        _transformers_import_utils._peft_available = original_peft_available
+
+
+with _temporary_peft_compatibility():
+    from transformers import Trainer
+    import transformers.trainer as _transformers_trainer
 
 from research.text_attribution.neural_config import NeuralExperimentConfig
 from research.text_attribution.neural_data import (
@@ -76,35 +92,52 @@ from research.text_attribution.neural_data import (
 from research.text_attribution.training_data import AttributionSample
 
 
-if _needs_legacy_accelerator_adapter(
-    _transformers_version,
-    inspect.signature(Accelerator.__init__).parameters,
-):
+class _LegacyKwargCompatibleAccelerator(Accelerator):
+    """Translate Transformers 4.39 dataloader kwargs for Accelerate 1.x."""
 
-    class _LegacyKwargCompatibleAccelerator(Accelerator):
-        """Translate Transformers 4.39 dataloader kwargs for Accelerate 1.x."""
-
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
-            legacy_names = (
-                "split_batches",
-                "dispatch_batches",
-                "even_batches",
-                "use_seedable_sampler",
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        legacy_names = (
+            "split_batches",
+            "dispatch_batches",
+            "even_batches",
+            "use_seedable_sampler",
+        )
+        if any(name in kwargs for name in legacy_names):
+            dataloader_config = DataLoaderConfiguration(
+                split_batches=kwargs.pop("split_batches", False),
+                dispatch_batches=kwargs.pop("dispatch_batches", None),
+                even_batches=kwargs.pop("even_batches", True),
+                use_seedable_sampler=kwargs.pop(
+                    "use_seedable_sampler",
+                    False,
+                ),
             )
-            if any(name in kwargs for name in legacy_names):
-                dataloader_config = DataLoaderConfiguration(
-                    split_batches=kwargs.pop("split_batches", False),
-                    dispatch_batches=kwargs.pop("dispatch_batches", None),
-                    even_batches=kwargs.pop("even_batches", True),
-                    use_seedable_sampler=kwargs.pop(
-                        "use_seedable_sampler",
-                        False,
-                    ),
-                )
-                kwargs["dataloader_config"] = dataloader_config
-            super().__init__(*args, **kwargs)
+            kwargs["dataloader_config"] = dataloader_config
+        super().__init__(*args, **kwargs)
 
-    _transformers_trainer.Accelerator = _LegacyKwargCompatibleAccelerator
+
+@contextmanager
+def _temporary_trainer_compatibility():
+    needs_accelerator_adapter = _needs_legacy_accelerator_adapter(
+        _transformers_version,
+        inspect.signature(Accelerator.__init__).parameters,
+    )
+    if not _peft_439_import_incompatible and not needs_accelerator_adapter:
+        yield
+        return
+    original_accelerator = _transformers_trainer.Accelerator
+    original_peft_available = _transformers_import_utils._peft_available
+    if _peft_439_import_incompatible:
+        _transformers_import_utils._peft_available = False
+    if needs_accelerator_adapter:
+        _transformers_trainer.Accelerator = _LegacyKwargCompatibleAccelerator
+    try:
+        yield
+    finally:
+        if needs_accelerator_adapter:
+            _transformers_trainer.Accelerator = original_accelerator
+        if _peft_439_import_incompatible:
+            _transformers_import_utils._peft_available = original_peft_available
 
 
 @dataclass(frozen=True)
@@ -147,21 +180,42 @@ class ModelBalancedTrainer(Trainer):
         self._model_balanced_train_samples = (
             None if train_samples is None else tuple(train_samples)
         )
-        super().__init__(*args, **kwargs)
+        with _temporary_trainer_compatibility():
+            super().__init__(*args, **kwargs)
 
     def get_train_dataloader(self):
         if self.train_dataset is None:
             raise ValueError("ModelBalancedTrainer requires a train dataset")
-        return super().get_train_dataloader()
+        with _temporary_peft_compatibility():
+            return super().get_train_dataloader()
 
-    def _get_train_sampler(self):
-        if self.train_dataset is None:
+    def get_eval_dataloader(self, eval_dataset=None):
+        with _temporary_peft_compatibility():
+            return super().get_eval_dataloader(eval_dataset)
+
+    def train(self, *args: Any, **kwargs: Any):
+        with _temporary_peft_compatibility():
+            return super().train(*args, **kwargs)
+
+    def predict(self, *args: Any, **kwargs: Any):
+        with _temporary_peft_compatibility():
+            return super().predict(*args, **kwargs)
+
+    def save_model(self, *args: Any, **kwargs: Any) -> None:
+        with _temporary_peft_compatibility():
+            super().save_model(*args, **kwargs)
+
+    def _get_train_sampler(self, train_dataset=None):
+        selected_dataset = (
+            self.train_dataset if train_dataset is None else train_dataset
+        )
+        if selected_dataset is None:
             raise ValueError("ModelBalancedTrainer requires a train dataset")
         if self._model_balanced_train_samples is None:
             raise ValueError(
                 "ModelBalancedTrainer requires train_samples for model balancing"
             )
-        if len(self._model_balanced_train_samples) != len(self.train_dataset):
+        if len(self._model_balanced_train_samples) != len(selected_dataset):
             raise ValueError(
                 "train_samples and train dataset must contain the same number "
                 "of rows"
@@ -171,14 +225,10 @@ class ModelBalancedTrainer(Trainer):
             model_balanced_weights(self._model_balanced_train_samples),
             dtype=torch.double,
         )
-        generator = torch.Generator()
-        data_seed = self.args.data_seed
-        generator.manual_seed(self.args.seed if data_seed is None else data_seed)
         return WeightedRandomSampler(
             weights=weights,
             num_samples=len(weights),
             replacement=True,
-            generator=generator,
         )
 
 
@@ -207,6 +257,7 @@ def train_neural_experiment(
     if request.hf_cache is not None:
         request.hf_cache.mkdir(parents=True, exist_ok=True)
 
+    transformers.set_seed(request.seed)
     tokenizer = AutoTokenizer.from_pretrained(
         request.experiment.model_id,
         cache_dir=request.hf_cache,
@@ -266,18 +317,30 @@ def train_neural_experiment(
     validation_logits = np.asarray(raw_predictions).copy()
     validation_probabilities = logits_to_probabilities(validation_logits)
 
-    model_dir = request.output_dir / "model"
-    tokenizer_dir = request.output_dir / "tokenizer"
-    trainer.save_model(str(model_dir))
-    tokenizer.save_pretrained(tokenizer_dir)
-
     history = tuple(
         _json_safe_mapping(row) for row in trainer.state.log_history
     )
-    _write_json_atomically(
-        request.output_dir / "trainer_history.json",
-        list(history),
+    staging_dir = Path(
+        tempfile.mkdtemp(
+            dir=request.output_dir,
+            prefix=".neural-artifacts-",
+        )
     )
+    try:
+        staged_model_dir = staging_dir / "model"
+        staged_tokenizer_dir = staging_dir / "tokenizer"
+        trainer.save_model(str(staged_model_dir))
+        tokenizer.save_pretrained(staged_tokenizer_dir)
+        _write_json_atomically(
+            staging_dir / "trainer_history.json",
+            list(history),
+        )
+        _publish_staged_artifacts(staging_dir, request.output_dir)
+    finally:
+        shutil.rmtree(staging_dir, ignore_errors=True)
+
+    model_dir = request.output_dir / "model"
+    tokenizer_dir = request.output_dir / "tokenizer"
     return NeuralTrainingResult(
         model_dir=model_dir,
         tokenizer_dir=tokenizer_dir,
@@ -323,6 +386,7 @@ def _validate_request(
         raise TypeError("output_dir must be a Path")
     if request.output_dir.exists() and not request.output_dir.is_dir():
         raise ValueError("output_dir must not be an existing file")
+    _ensure_final_artifacts_absent(request.output_dir)
     if request.hf_cache is not None:
         if not isinstance(request.hf_cache, Path):
             raise TypeError("hf_cache must be a Path or None")
@@ -347,6 +411,18 @@ def _validate_request(
                 "resume_from_checkpoint must contain trainer_state.json"
             )
     return family_to_id, id_to_family
+
+
+def _ensure_final_artifacts_absent(output_dir: Path) -> None:
+    final_names = (
+        "model",
+        "tokenizer",
+        "trainer_history.json",
+        "COMPLETED.json",
+    )
+    for name in final_names:
+        if (output_dir / name).exists():
+            raise ValueError(f"final artifact already exists: {output_dir / name}")
 
 
 def _validate_experiment(experiment: NeuralExperimentConfig) -> None:
@@ -417,9 +493,8 @@ def _build_training_arguments(
     checkpoint_dir: Path,
 ) -> TrainingArguments:
     smoke = request.smoke_test
-    return TrainingArguments(
+    arguments: dict[str, Any] = dict(
         output_dir=str(checkpoint_dir),
-        evaluation_strategy="no" if smoke else "epoch",
         save_strategy="no" if smoke else "epoch",
         load_best_model_at_end=not smoke,
         metric_for_best_model="macro_f1",
@@ -449,6 +524,24 @@ def _build_training_arguments(
         logging_strategy="steps",
         logging_steps=1,
         disable_tqdm=True,
+    )
+    strategy_parameter = _evaluation_strategy_parameter(
+        inspect.signature(TrainingArguments.__init__).parameters
+    )
+    arguments[strategy_parameter] = "no" if smoke else "epoch"
+    return TrainingArguments(**arguments)
+
+
+def _evaluation_strategy_parameter(
+    training_argument_parameters: Collection[str],
+) -> str:
+    if "eval_strategy" in training_argument_parameters:
+        return "eval_strategy"
+    if "evaluation_strategy" in training_argument_parameters:
+        return "evaluation_strategy"
+    raise RuntimeError(
+        "TrainingArguments exposes neither eval_strategy nor "
+        "evaluation_strategy"
     )
 
 
@@ -501,6 +594,88 @@ def _json_safe_value(value: Any) -> Any:
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
     return str(value)
+
+
+def _publish_staged_artifacts(
+    staging_dir: Path,
+    output_dir: Path,
+) -> None:
+    _validate_staged_artifacts(staging_dir)
+    _ensure_final_artifacts_absent(output_dir)
+    publications = (
+        (staging_dir / "model", output_dir / "model"),
+        (staging_dir / "tokenizer", output_dir / "tokenizer"),
+        (
+            staging_dir / "trainer_history.json",
+            output_dir / "trainer_history.json",
+        ),
+    )
+    moved: list[tuple[Path, Path]] = []
+    completed_path = output_dir / "COMPLETED.json"
+    try:
+        for source, destination in publications:
+            os.replace(source, destination)
+            moved.append((destination, source))
+        _write_json_atomically(
+            completed_path,
+            {
+                "status": "complete",
+                "model_dir": "model",
+                "tokenizer_dir": "tokenizer",
+                "trainer_history": "trainer_history.json",
+            },
+        )
+    except BaseException:
+        completed_path.unlink(missing_ok=True)
+        for destination, source in reversed(moved):
+            try:
+                os.replace(destination, source)
+            except OSError:
+                _remove_owned_artifact(destination)
+        raise
+
+
+def _validate_staged_artifacts(staging_dir: Path) -> None:
+    model_dir = staging_dir / "model"
+    if not (model_dir / "config.json").is_file():
+        raise RuntimeError("staged model is missing config.json")
+    model_weight_names = (
+        "model.safetensors",
+        "model.safetensors.index.json",
+        "pytorch_model.bin",
+        "pytorch_model.bin.index.json",
+    )
+    if not any((model_dir / name).is_file() for name in model_weight_names):
+        raise RuntimeError("staged model is missing saved weights")
+
+    tokenizer_dir = staging_dir / "tokenizer"
+    if not (tokenizer_dir / "tokenizer_config.json").is_file():
+        raise RuntimeError("staged tokenizer is missing tokenizer_config.json")
+    tokenizer_asset_names = (
+        "tokenizer.json",
+        "vocab.txt",
+        "spiece.model",
+        "sentencepiece.bpe.model",
+    )
+    if not any(
+        (tokenizer_dir / name).is_file() for name in tokenizer_asset_names
+    ):
+        raise RuntimeError("staged tokenizer is missing vocabulary assets")
+
+    history_path = staging_dir / "trainer_history.json"
+    try:
+        history = json.loads(history_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError("staged trainer history is not valid JSON") from error
+    if not isinstance(history, list):
+        raise RuntimeError("staged trainer history must be a JSON list")
+
+
+def _remove_owned_artifact(path: Path) -> None:
+    if path.is_dir():
+        shutil.rmtree(path)
+    else:
+        path.unlink(missing_ok=True)
 
 
 def _write_json_atomically(destination: Path, payload: Any) -> None:

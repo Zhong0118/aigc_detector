@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 import importlib
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -240,13 +241,20 @@ def test_model_balanced_trainer_uses_weighted_sampler_only_for_training(
     )
 
     train_sampler = trainer._get_train_sampler()
+    explicit_train_sampler = trainer._get_train_sampler(train_dataset)
     eval_dataloader = trainer.get_eval_dataloader()
 
     assert isinstance(train_sampler, torch.utils.data.WeightedRandomSampler)
+    assert isinstance(
+        explicit_train_sampler,
+        torch.utils.data.WeightedRandomSampler,
+    )
     np.testing.assert_allclose(
         np.asarray(train_sampler.weights),
         np.asarray([0.5, 0.5, 1.0]),
     )
+    assert train_sampler.generator is None
+    assert explicit_train_sampler.generator is None
     assert not isinstance(
         eval_dataloader.sampler,
         torch.utils.data.WeightedRandomSampler,
@@ -287,6 +295,51 @@ def test_train_neural_experiment_validates_request_before_loading_model(
             module.train_neural_experiment(request)
 
     loader.assert_not_called()
+
+
+def test_training_arguments_selects_versioned_evaluation_parameter() -> None:
+    module = _training_module()
+
+    assert module._evaluation_strategy_parameter(
+        {"self", "eval_strategy", "output_dir"}
+    ) == "eval_strategy"
+    assert module._evaluation_strategy_parameter(
+        {"self", "evaluation_strategy", "output_dir"}
+    ) == "evaluation_strategy"
+
+
+def test_train_neural_experiment_seeds_before_loading_model(
+    tmp_path: Path,
+) -> None:
+    module = _training_module()
+    model_dir = tmp_path / "unused-model"
+    request = _request(module, tmp_path, model_dir)
+    events: list[str] = []
+
+    def stop_model_loading(*args, **kwargs):
+        events.append("model")
+        raise RuntimeError("stop after model load boundary")
+
+    with (
+        patch(
+            "transformers.set_seed",
+            side_effect=lambda seed: events.append(f"seed:{seed}"),
+        ),
+        patch.object(
+            module.AutoTokenizer,
+            "from_pretrained",
+            side_effect=lambda *args, **kwargs: events.append("tokenizer"),
+        ),
+        patch.object(
+            module.AutoModelForSequenceClassification,
+            "from_pretrained",
+            side_effect=stop_model_loading,
+        ),
+        pytest.raises(RuntimeError, match="model load boundary"),
+    ):
+        module.train_neural_experiment(request)
+
+    assert events == [f"seed:{request.seed}", "tokenizer", "model"]
 
 
 def test_train_neural_experiment_requires_every_split_to_cover_labels(
@@ -412,6 +465,78 @@ def test_validate_request_requires_trainer_state_checkpoint_marker(
         module._validate_request(request)
 
 
+@pytest.mark.parametrize(
+    ("artifact_name", "directory"),
+    [
+        ("model", True),
+        ("tokenizer", True),
+        ("trainer_history.json", False),
+        ("COMPLETED.json", False),
+    ],
+)
+def test_validate_request_rejects_existing_final_artifact(
+    tmp_path: Path,
+    artifact_name: str,
+    directory: bool,
+) -> None:
+    module = _training_module()
+    request = _request(module, tmp_path, tmp_path / "unused-model")
+    request.output_dir.mkdir()
+    artifact_path = request.output_dir / artifact_name
+    if directory:
+        artifact_path.mkdir()
+    else:
+        artifact_path.write_text("existing", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="artifact.*already exists"):
+        module._validate_request(request)
+
+
+def test_staged_artifact_publish_rolls_back_partial_move(
+    tmp_path: Path,
+) -> None:
+    module = _training_module()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    staging_dir = output_dir / ".staging-test"
+    (staging_dir / "model").mkdir(parents=True)
+    (staging_dir / "tokenizer").mkdir()
+    (staging_dir / "model" / "config.json").write_text(
+        "{}",
+        encoding="utf-8",
+    )
+    (staging_dir / "model" / "model.safetensors").write_bytes(b"weights")
+    (staging_dir / "tokenizer" / "tokenizer_config.json").write_text(
+        "{}",
+        encoding="utf-8",
+    )
+    (staging_dir / "tokenizer" / "tokenizer.json").write_text(
+        "{}",
+        encoding="utf-8",
+    )
+    (staging_dir / "trainer_history.json").write_text(
+        "[]",
+        encoding="utf-8",
+    )
+    real_replace = os.replace
+
+    def fail_second_publish(source, destination):
+        if Path(destination) == output_dir / "tokenizer":
+            raise OSError("injected publish failure")
+        return real_replace(source, destination)
+
+    with (
+        patch.object(module.os, "replace", side_effect=fail_second_publish),
+        pytest.raises(OSError, match="injected publish failure"),
+    ):
+        module._publish_staged_artifacts(staging_dir, output_dir)
+
+    assert not (output_dir / "model").exists()
+    assert not (output_dir / "tokenizer").exists()
+    assert not (output_dir / "trainer_history.json").exists()
+    assert not (output_dir / "COMPLETED.json").exists()
+
+
 def test_smoke_arguments_force_cpu_and_disable_training_evaluation(
     tmp_path: Path,
 ) -> None:
@@ -457,6 +582,34 @@ def test_accelerator_adapter_gate_never_targets_transformers_450() -> None:
     )
 
 
+def test_trainer_construction_restores_transformers_globals(
+    tmp_path: Path,
+) -> None:
+    module = _training_module()
+    original_peft_available = module._peft_available_at_import
+
+    trainer = module.ModelBalancedTrainer(
+        model=BertForSequenceClassification(
+            BertConfig(
+                vocab_size=32,
+                hidden_size=12,
+                num_hidden_layers=1,
+                num_attention_heads=2,
+                intermediate_size=16,
+                num_labels=10,
+            )
+        ),
+        args=TrainingArguments(output_dir=str(tmp_path), report_to=[]),
+    )
+
+    assert trainer is not None
+    assert module._transformers_trainer.Accelerator is module.Accelerator
+    assert (
+        module._transformers_import_utils._peft_available
+        is original_peft_available
+    )
+
+
 def test_smoke_training_runs_offline_and_saves_reloadable_artifacts(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -494,6 +647,19 @@ def test_smoke_training_runs_offline_and_saves_reloadable_artifacts(
     )
     assert not tuple((request.output_dir / "checkpoints").glob("checkpoint-*"))
     assert result.best_checkpoint is None
+    completed = json.loads(
+        (request.output_dir / "COMPLETED.json").read_text(encoding="utf-8")
+    )
+    assert completed["status"] == "complete"
+    assert completed["model_dir"] == "model"
+    assert completed["tokenizer_dir"] == "tokenizer"
+    assert completed["trainer_history"] == "trainer_history.json"
+    assert not tuple(request.output_dir.glob(".neural-artifacts-*"))
+    assert module._transformers_trainer.Accelerator is module.Accelerator
+    assert (
+        module._transformers_import_utils._peft_available
+        is module._peft_available_at_import
+    )
     reloaded_model = AutoModelForSequenceClassification.from_pretrained(
         result.model_dir,
         local_files_only=True,
