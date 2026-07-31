@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from collections.abc import Mapping
 import random
-from typing import Any, Mapping, Sequence
+from typing import Any, Sequence
 
 from torch.utils.data import Dataset
 
@@ -57,14 +58,18 @@ class NeuralAttributionDataset(Dataset):
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         sample = self._samples[index]
-        model_input = dict(
-            self._tokenizer(
-                sample.text,
-                truncation=True,
-                max_length=self._max_length,
-                padding=False,
-            )
+        tokenizer_output = self._tokenizer(
+            sample.text,
+            truncation=True,
+            max_length=self._max_length,
+            padding=False,
         )
+        if not isinstance(tokenizer_output, Mapping):
+            raise TypeError(
+                "tokenizer output must be a Mapping, "
+                f"got {type(tokenizer_output).__name__}"
+            )
+        model_input = dict(tokenizer_output)
         model_input["labels"] = self._family_to_id[sample.family_id]
         return model_input
 

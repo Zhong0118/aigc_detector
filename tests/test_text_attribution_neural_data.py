@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import UserDict
 import unittest
 
 from research.text_attribution.neural_data import (
@@ -41,6 +42,14 @@ class RecordingTokenizer:
         return {"input_ids": [11, 12], "attention_mask": [1, 1]}
 
 
+class StaticTokenizer:
+    def __init__(self, output: object) -> None:
+        self.output = output
+
+    def __call__(self, text: str, **kwargs: object) -> object:
+        return self.output
+
+
 class NeuralAttributionDatasetTests(unittest.TestCase):
     def test_tokenizes_with_exact_parameters_and_returns_integer_label(self) -> None:
         sample = make_sample("sample-1")
@@ -73,6 +82,39 @@ class NeuralAttributionDatasetTests(unittest.TestCase):
             {"input_ids": [11, 12], "attention_mask": [1, 1], "labels": 7},
         )
         self.assertIs(type(item["labels"]), int)
+
+    def test_accepts_custom_mapping_and_returns_a_shallow_copy(self) -> None:
+        tokenizer_output = UserDict(
+            {"input_ids": [21, 22], "attention_mask": [1, 1]}
+        )
+        dataset = NeuralAttributionDataset(
+            (make_sample("sample-1"),),
+            StaticTokenizer(tokenizer_output),
+            {"openai": 2},
+            max_length=32,
+        )
+
+        item = dataset[0]
+
+        self.assertIsInstance(item, dict)
+        self.assertIsNot(item, tokenizer_output)
+        self.assertIs(item["input_ids"], tokenizer_output["input_ids"])
+        self.assertNotIn("labels", tokenizer_output)
+        self.assertEqual(item["labels"], 2)
+
+    def test_rejects_non_mapping_tokenizer_outputs_with_clear_context(self) -> None:
+        invalid_outputs = ([("input_ids", [31, 32])], None)
+
+        for output in invalid_outputs:
+            with self.subTest(output=output):
+                dataset = NeuralAttributionDataset(
+                    (make_sample("sample-1"),),
+                    StaticTokenizer(output),
+                    {"openai": 0},
+                    max_length=32,
+                )
+                with self.assertRaisesRegex(TypeError, r"tokenizer.*Mapping"):
+                    dataset[0]
 
     def test_model_input_does_not_leak_sample_metadata(self) -> None:
         sample = make_sample("secret-request-key")
