@@ -43,6 +43,7 @@ _EXACT_FILES = (
     "scripts/package_attribution_phase3_server.py",
     "configs/text_attribution/zhizengzeng_model_catalog.v5.json",
     "configs/text_attribution/training/family_phase3_enhancement.v1.json",
+    "docs/ATTRIBUTION_PHASE3_RUNBOOK.md",
     "docs/superpowers/specs/2026-08-02-family-attribution-phase3-enhancement-design.md",
     "docs/superpowers/plans/2026-08-02-family-attribution-phase3-enhancement.md",
     "tests/__init__.py",

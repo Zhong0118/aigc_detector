@@ -18,6 +18,7 @@ seed_csv=$6
 
 python_bin=${PYTHON_BIN:-python}
 setsid_bin=${PHASE3_SETSID_BIN:-setsid}
+parent_decision_value=
 
 if [ -f "$stage_or_recipe" ]; then
   mode_flag=--recipe
@@ -32,8 +33,14 @@ else
       run_label=$stage_or_recipe
       ;;
     A2|A3|A4)
-      echo "Promoted stages must be scheduled with their promoted_recipe.json path." >&2
-      exit 2
+      if [ -z "${PHASE3_PARENT_DECISION:-}" ] || [ ! -f "$PHASE3_PARENT_DECISION" ]; then
+        echo "Promoted stage $stage_or_recipe requires PHASE3_PARENT_DECISION=/path/stage_decision.json." >&2
+        exit 2
+      fi
+      mode_flag=--stage
+      mode_value=$stage_or_recipe
+      run_label=$stage_or_recipe
+      parent_decision_value=$PHASE3_PARENT_DECISION
       ;;
     *)
       echo "Unknown canonical stage or missing recipe file: $stage_or_recipe" >&2
@@ -101,13 +108,29 @@ cleanup_process_groups() {
 trap cleanup_process_groups INT TERM HUP
 
 launch_task() {
-  slot=$1
-  seed=$2
-  view=$3
-  gpu=$slot
-  task_name="${run_label}-${view}-seed${seed}"
-  run_output="$output_root/$task_name"
-  log_path="$output_root/logs/$task_name.log"
+  local slot=$1
+  local seed=$2
+  local view=$3
+  local gpu=$slot
+  local task_name="${run_label}-${view}-seed${seed}"
+  local run_output="$output_root/$task_name"
+  local log_path="$output_root/logs/$task_name.log"
+  local command_args=(
+    "$python_bin" -m scripts.run_family_attribution_phase3
+    "$mode_flag" "$mode_value"
+  )
+  if [ -n "$parent_decision_value" ]; then
+    command_args+=(--parent-decision "$parent_decision_value")
+  fi
+  command_args+=(
+    --input "$data_jsonl"
+    --split-manifest "$split_manifest"
+    --hf-cache "$hf_cache"
+    --output-dir "$run_output"
+    --view "$view"
+    --seed "$seed"
+    --device cuda:0
+  )
 
   echo "Starting $task_name on physical GPU $gpu"
   "$setsid_bin" bash -c '
@@ -117,15 +140,7 @@ launch_task() {
     "$@" 2>&1 | tee "$log_path"
   ' phase3-child "$log_path" \
     env CUDA_VISIBLE_DEVICES="$gpu" \
-    "$python_bin" -m scripts.run_family_attribution_phase3 \
-    "$mode_flag" "$mode_value" \
-    --input "$data_jsonl" \
-    --split-manifest "$split_manifest" \
-    --hf-cache "$hf_cache" \
-    --output-dir "$run_output" \
-    --view "$view" \
-    --seed "$seed" \
-    --device cuda:0 &
+    "${command_args[@]}" &
 
   pids[$slot]=$!
   task_names[$slot]=$task_name

@@ -127,3 +127,31 @@ def test_scheduler_contains_process_group_interrupt_cleanup() -> None:
     assert "kill -TERM -- -" in source
     assert "trap" in source
     assert "tee" in source
+
+
+def test_promoted_stage_uses_explicit_parent_decision(tmp_path) -> None:
+    decision = tmp_path / "stage_decision.json"
+    decision.write_text("{}", encoding="utf-8")
+    calls, env = _fake_environment(tmp_path)
+    env["PHASE3_PARENT_DECISION"] = str(decision)
+    result = subprocess.run(
+        [
+            "bash",
+            str(SCRIPT),
+            "A3",
+            "data.jsonl",
+            "split.json",
+            "cache",
+            str(tmp_path / "outputs"),
+            "42",
+        ],
+        cwd=SCRIPT.parents[1],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=20,
+    )
+    assert result.returncode == 0, result.stderr
+    lines = calls.read_text(encoding="utf-8").splitlines()
+    assert all("--stage A3" in line for line in lines)
+    assert all(f"--parent-decision {decision}" in line for line in lines)

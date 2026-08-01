@@ -40,6 +40,9 @@ def test_package_contains_phase3_contract_and_no_runtime_artifacts(tmp_path) -> 
             "scripts/select_family_attribution_phase3.py",
             "scripts/run_attribution_phase3.sh",
             "scripts/package_attribution_phase3_server.py",
+            "docs/ATTRIBUTION_PHASE3_RUNBOOK.md",
+            "docs/superpowers/specs/2026-08-02-family-attribution-phase3-enhancement-design.md",
+            "docs/superpowers/plans/2026-08-02-family-attribution-phase3-enhancement.md",
             "tests/test_text_attribution_phase3_config.py",
             "tests/test_text_attribution_phase3_selection.py",
             "tests/test_attribution_phase3_server_package.py",
@@ -77,6 +80,31 @@ def test_package_contains_phase3_contract_and_no_runtime_artifacts(tmp_path) -> 
             assert record["sha256"] == hashlib.sha256(payload).hexdigest()
         shell_mode = archive.getinfo("scripts/run_attribution_phase3.sh").external_attr >> 16
         assert shell_mode & 0o111
+
+
+def test_runbook_covers_full_validation_only_lifecycle() -> None:
+    text = (PROJECT_ROOT / "docs/ATTRIBUTION_PHASE3_RUNBOOK.md").read_text(
+        encoding="utf-8"
+    )
+    for required in (
+        "--verify",
+        "HF_ENDPOINT",
+        "pip freeze",
+        "nvidia-smi",
+        "--dry-run",
+        "--smoke-test",
+        "--preflight-only",
+        "A1-alpha01",
+        "A1-alpha03",
+        "--parent-decision",
+        "--resume-from-checkpoint",
+        "12,22,32,72,82",
+        "COMPLETED.json",
+        "test_evaluated",
+        "promoted_recipe.json",
+    ):
+        assert required in text
+    assert "--evaluate-test" not in text
 
 
 def test_package_bytes_are_reproducible(tmp_path) -> None:
