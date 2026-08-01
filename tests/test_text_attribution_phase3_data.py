@@ -461,3 +461,14 @@ def test_structured_sampler_rejects_impossible_contract() -> None:
         StructuredContrastiveBatchSampler(samples, 16, 42)
     with pytest.raises(ValueError, match="batch_size.*16"):
         StructuredContrastiveBatchSampler(_contrastive_samples(), 8, 42)
+
+
+def test_a4_microbatch_is_one_complete_contrastive_rectangle() -> None:
+    from research.text_attribution.phase3_data import (
+        StructuredContrastiveBatchSampler,
+    )
+
+    samples = _contrastive_samples()
+    batch = next(iter(StructuredContrastiveBatchSampler(samples, 4, 42)))
+    assert len(batch) == 4
+    _assert_structured([samples[index] for index in batch])

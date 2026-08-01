@@ -179,8 +179,10 @@ class StructuredContrastiveBatchSampler:
         batch_size: int,
         seed: int,
     ) -> None:
-        if batch_size != 16:
-            raise ValueError("structured Phase3 batch_size must be exactly 16")
+        if batch_size not in {4, 16}:
+            raise ValueError(
+                "structured Phase3 batch_size must be 16 for A3 or 4 for A4"
+            )
         if not isinstance(seed, int):
             raise ValueError("structured sampler seed must be an integer")
         self._samples = tuple(samples)
