@@ -7,8 +7,11 @@ started.
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass
+import hashlib
 from pathlib import Path
+import random
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
@@ -159,6 +162,203 @@ class Phase3AttributionDataset:
             ],
             "contrastive_model_ids": model_label,
         }
+
+
+class StructuredContrastiveBatchSampler:
+    """Deterministic 2-family x 2-group rectangle batches for Phase3 A3.
+
+    Each four-item block is a complete rectangle.  Consequently every emitted
+    anchor has a same-family/different-group positive and a
+    same-group/different-family hard negative.  Four blocks form the fixed formal
+    batch size of 16.
+    """
+
+    def __init__(
+        self,
+        samples: Sequence[AttributionSample],
+        batch_size: int,
+        seed: int,
+    ) -> None:
+        if batch_size != 16:
+            raise ValueError("structured Phase3 batch_size must be exactly 16")
+        if not isinstance(seed, int):
+            raise ValueError("structured sampler seed must be an integer")
+        self._samples = tuple(samples)
+        self._batch_size = batch_size
+        self._seed = seed
+        self._epoch = 0
+
+        cells: dict[tuple[str, str], list[int]] = defaultdict(list)
+        for original_index, sample in sorted(
+            enumerate(self._samples),
+            key=lambda item: (
+                item[1].family_id,
+                item[1].semantic_prompt_group,
+                item[1].model_id,
+                item[1].request_key,
+                item[0],
+            ),
+        ):
+            cells[(sample.family_id, sample.semantic_prompt_group)].append(
+                original_index
+            )
+        self._cells = {key: tuple(value) for key, value in cells.items()}
+
+        families = sorted({sample.family_id for sample in self._samples})
+        groups_by_family = {
+            family_id: {
+                group_id
+                for candidate_family, group_id in self._cells
+                if candidate_family == family_id
+            }
+            for family_id in families
+        }
+        valid_pairs: list[tuple[str, str, tuple[str, ...]]] = []
+        for left_index, left_family in enumerate(families):
+            for right_family in families[left_index + 1 :]:
+                common_groups = tuple(
+                    sorted(
+                        groups_by_family[left_family]
+                        & groups_by_family[right_family]
+                    )
+                )
+                if len(common_groups) >= 2:
+                    valid_pairs.append(
+                        (left_family, right_family, common_groups)
+                    )
+        if not valid_pairs:
+            raise ValueError(
+                "structured contrastive batching is impossible: need two families "
+                "sharing at least two semantic groups"
+            )
+        self._valid_pairs = tuple(valid_pairs)
+
+    def __len__(self) -> int:
+        return len(self._samples) // self._batch_size
+
+    def set_epoch(self, epoch: int) -> None:
+        if not isinstance(epoch, int) or epoch < 0:
+            raise ValueError("sampler epoch must be a nonnegative integer")
+        self._epoch = epoch
+
+    def state_dict(self) -> dict[str, int]:
+        return {"epoch": self._epoch}
+
+    def load_state_dict(self, state: Mapping[str, Any]) -> None:
+        if set(state) != {"epoch"}:
+            raise ValueError("sampler state must contain exactly epoch")
+        self.set_epoch(state["epoch"])
+
+    def __iter__(self):
+        rng = random.Random(_sampler_epoch_seed(self._seed, self._epoch))
+        pair_order = list(self._valid_pairs)
+        rng.shuffle(pair_order)
+        blocks_per_batch = self._batch_size // 4
+        block_cursor = 0
+
+        for _ in range(len(self)):
+            batch: list[int] = []
+            for _ in range(blocks_per_batch):
+                if block_cursor and block_cursor % len(pair_order) == 0:
+                    rng.shuffle(pair_order)
+                family_left, family_right, common_groups = pair_order[
+                    block_cursor % len(pair_order)
+                ]
+                block_cursor += 1
+                group_left, group_right = rng.sample(common_groups, 2)
+                if rng.randrange(2):
+                    family_left, family_right = family_right, family_left
+                if rng.randrange(2):
+                    group_left, group_right = group_right, group_left
+                batch.extend(
+                    self._sample_rectangle(
+                        rng,
+                        family_left,
+                        family_right,
+                        group_left,
+                        group_right,
+                    )
+                )
+            yield batch
+
+    def _sample_rectangle(
+        self,
+        rng: random.Random,
+        family_left: str,
+        family_right: str,
+        group_left: str,
+        group_right: str,
+    ) -> tuple[int, int, int, int]:
+        left_anchor = rng.choice(self._cells[(family_left, group_left)])
+        left_positive = _choose_preferred_model(
+            rng,
+            self._cells[(family_left, group_right)],
+            self._samples,
+            avoid_model=self._samples[left_anchor].model_id,
+        )
+        right_anchor = rng.choice(self._cells[(family_right, group_left)])
+        right_positive = _choose_preferred_model(
+            rng,
+            self._cells[(family_right, group_right)],
+            self._samples,
+            avoid_model=self._samples[right_anchor].model_id,
+        )
+        return left_anchor, left_positive, right_anchor, right_positive
+
+
+def summarize_contrastive_batches(
+    samples: Sequence[AttributionSample],
+    batches: Sequence[Sequence[int]],
+) -> dict[str, int | float | bool]:
+    """Audit structured batches without importing the training framework."""
+
+    anchor_count = 0
+    positive_count = 0
+    hard_negative_count = 0
+    different_model_positive_count = 0
+    all_batches_valid = True
+    for batch in batches:
+        if len(batch) != 16:
+            all_batches_valid = False
+        rows = [samples[index] for index in batch]
+        for anchor in rows:
+            anchor_count += 1
+            positives = [
+                other
+                for other in rows
+                if other.family_id == anchor.family_id
+                and other.semantic_prompt_group
+                != anchor.semantic_prompt_group
+            ]
+            negatives = [
+                other
+                for other in rows
+                if other.family_id != anchor.family_id
+                and other.semantic_prompt_group
+                == anchor.semantic_prompt_group
+            ]
+            if positives:
+                positive_count += 1
+                if any(other.model_id != anchor.model_id for other in positives):
+                    different_model_positive_count += 1
+            else:
+                all_batches_valid = False
+            if negatives:
+                hard_negative_count += 1
+            else:
+                all_batches_valid = False
+
+    denominator = max(anchor_count, 1)
+    return {
+        "batch_count": len(batches),
+        "anchor_count": anchor_count,
+        "all_batches_valid": all_batches_valid,
+        "cross_group_positive_anchor_rate": positive_count / denominator,
+        "same_group_hard_negative_anchor_rate": hard_negative_count / denominator,
+        "different_model_positive_anchor_rate": (
+            different_model_positive_count / denominator
+        ),
+    }
 
 
 def tokenize_phase3_windows(
@@ -357,6 +557,24 @@ def _view_roles(view_id: str) -> tuple[str | None, str | None]:
         raise ValueError(
             f"unknown Phase3 data view {view_id!r}; expected {tuple(PHASE3_VIEW_ROLES)!r}"
         ) from exc
+
+
+def _sampler_epoch_seed(seed: int, epoch: int) -> int:
+    digest = hashlib.sha256(f"phase3\0{seed}\0{epoch}".encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], "big", signed=False)
+
+
+def _choose_preferred_model(
+    rng: random.Random,
+    candidates: Sequence[int],
+    samples: Sequence[AttributionSample],
+    *,
+    avoid_model: str,
+) -> int:
+    preferred = [
+        index for index in candidates if samples[index].model_id != avoid_model
+    ]
+    return rng.choice(preferred or list(candidates))
 
 
 def _validate_rows_against_catalog(

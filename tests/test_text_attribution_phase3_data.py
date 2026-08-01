@@ -342,3 +342,122 @@ def test_holdout_validation_dataset_ignores_unseen_model_labels() -> None:
     assert {dataset[index]["contrastive_model_ids"] for index in range(len(dataset))} == {
         -100
     }
+
+
+def _contrastive_samples() -> tuple[AttributionSample, ...]:
+    rows = []
+    for family_index, family_id in enumerate(("a", "b", "c", "d")):
+        for group_index in range(4):
+            rows.append(
+                _sample(
+                    model_id=f"{family_id}-model-{group_index % 2}",
+                    family_id=family_id,
+                    split="train",
+                    index=family_index * 4 + group_index,
+                )
+            )
+            rows[-1] = replace(
+                rows[-1],
+                request_key=f"{family_id}-{group_index}",
+                semantic_prompt_group=f"shared-{group_index}",
+            )
+    return tuple(rows)
+
+
+def _assert_structured(rows: list[AttributionSample]) -> None:
+    for anchor in rows:
+        assert any(
+            other.family_id == anchor.family_id
+            and other.semantic_prompt_group != anchor.semantic_prompt_group
+            for other in rows
+        )
+        assert any(
+            other.family_id != anchor.family_id
+            and other.semantic_prompt_group == anchor.semantic_prompt_group
+            for other in rows
+        )
+
+
+def test_every_structured_batch_has_positive_and_hard_negative() -> None:
+    from research.text_attribution.phase3_data import (
+        StructuredContrastiveBatchSampler,
+    )
+
+    samples = _contrastive_samples()
+    sampler = StructuredContrastiveBatchSampler(samples, batch_size=16, seed=42)
+    batches = list(sampler)
+    assert len(batches) == 1
+    assert len(batches[0]) == 16
+    _assert_structured([samples[index] for index in batches[0]])
+
+
+def test_structured_sampler_is_order_independent_and_seeded() -> None:
+    from research.text_attribution.phase3_data import (
+        StructuredContrastiveBatchSampler,
+    )
+
+    samples = _contrastive_samples() * 2
+    forward = StructuredContrastiveBatchSampler(samples, 16, 42)
+    reversed_samples = tuple(reversed(samples))
+    reverse = StructuredContrastiveBatchSampler(reversed_samples, 16, 42)
+
+    forward_keys = [
+        [samples[index].request_key for index in batch] for batch in forward
+    ]
+    reverse_keys = [
+        [reversed_samples[index].request_key for index in batch] for batch in reverse
+    ]
+    assert forward_keys == reverse_keys
+
+    another_seed = StructuredContrastiveBatchSampler(samples, 16, 52)
+    other_keys = [
+        [samples[index].request_key for index in batch] for batch in another_seed
+    ]
+    assert other_keys != forward_keys
+
+
+def test_structured_sampler_epoch_state_is_resumable() -> None:
+    from research.text_attribution.phase3_data import (
+        StructuredContrastiveBatchSampler,
+    )
+
+    samples = _contrastive_samples() * 2
+    sampler = StructuredContrastiveBatchSampler(samples, 16, 42)
+    epoch_zero = list(sampler)
+    sampler.set_epoch(3)
+    epoch_three = list(sampler)
+    assert epoch_three != epoch_zero
+
+    restored = StructuredContrastiveBatchSampler(samples, 16, 42)
+    restored.load_state_dict(sampler.state_dict())
+    assert list(restored) == epoch_three
+
+
+def test_structured_sampler_audit_records_model_preference() -> None:
+    from research.text_attribution.phase3_data import (
+        StructuredContrastiveBatchSampler,
+        summarize_contrastive_batches,
+    )
+
+    samples = _contrastive_samples()
+    batches = list(StructuredContrastiveBatchSampler(samples, 16, 42))
+    summary = summarize_contrastive_batches(samples, batches)
+    assert summary["batch_count"] == 1
+    assert summary["all_batches_valid"] is True
+    assert summary["cross_group_positive_anchor_rate"] == 1.0
+    assert summary["same_group_hard_negative_anchor_rate"] == 1.0
+    assert 0.0 <= summary["different_model_positive_anchor_rate"] <= 1.0
+
+
+def test_structured_sampler_rejects_impossible_contract() -> None:
+    from research.text_attribution.phase3_data import (
+        StructuredContrastiveBatchSampler,
+    )
+
+    samples = tuple(
+        replace(row, family_id="only-family") for row in _contrastive_samples()
+    )
+    with pytest.raises(ValueError, match="structured.*impossible"):
+        StructuredContrastiveBatchSampler(samples, 16, 42)
+    with pytest.raises(ValueError, match="batch_size.*16"):
+        StructuredContrastiveBatchSampler(_contrastive_samples(), 8, 42)
