@@ -165,11 +165,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.smoke_test:
         data_view = _smoke_data_view(data_view)
 
+    split_manifest_hash = _sha256_file(split_path)
+    catalog_hash = _sha256_file(catalog_path)
     run_fingerprint = compute_phase3_run_fingerprint(
         recipe_hash=recipe.recipe_hash,
         dataset_fingerprint=manifest.dataset_fingerprint,
-        split_manifest_hash=_sha256_file(split_path),
-        catalog_hash=_sha256_file(catalog_path),
+        split_manifest_hash=split_manifest_hash,
+        catalog_hash=catalog_hash,
         view_id=data_view.view_id,
         seed=args.seed,
     )
@@ -183,6 +185,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         catalog_path=catalog_path,
         split_path=split_path,
         run_fingerprint=run_fingerprint,
+        split_manifest_hash=split_manifest_hash,
+        catalog_hash=catalog_hash,
         test_request_key_count=len(test_request_keys),
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
@@ -360,6 +364,8 @@ def _run_summary(
     catalog_path,
     split_path,
     run_fingerprint,
+    split_manifest_hash,
+    catalog_hash,
     test_request_key_count,
 ) -> dict[str, Any]:
     return {
@@ -378,6 +384,8 @@ def _run_summary(
         "catalog": str(catalog_path),
         "split_manifest": str(split_path),
         "split_dataset_fingerprint": manifest.dataset_fingerprint,
+        "split_manifest_hash": split_manifest_hash,
+        "catalog_hash": catalog_hash,
         "split_seed": manifest.seed,
         "train_samples": len(data_view.train_samples),
         "validation_samples": len(data_view.validation_samples),
