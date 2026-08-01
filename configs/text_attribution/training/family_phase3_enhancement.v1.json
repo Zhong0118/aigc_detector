@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "run_id": "family-attribution-phase3-enhancement-v1",
+  "backbone_model_id": "FacebookAI/xlm-roberta-base",
+  "model_catalog": "../zhizengzeng_model_catalog.v5.json",
+  "max_length": 512,
+  "training": {
+    "learning_rate": 0.00002,
+    "epochs": 6,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "label_smoothing_factor": 0.05,
+    "early_stopping_patience": 2,
+    "save_total_limit": 2,
+    "bf16": true,
+    "per_device_train_batch_size": 16,
+    "gradient_accumulation_steps": 2,
+    "a4_per_device_train_batch_size": 4,
+    "a4_gradient_accumulation_steps": 8,
+    "a4_low_memory_batch_size": 2,
+    "a4_low_memory_gradient_accumulation_steps": 16,
+    "projection_dimension": 256,
+    "contrastive_temperature": 0.07
+  },
+  "canonical_recipes": {
+    "A0": {
+      "parent_recipe_id": null,
+      "auxiliary_weight": 0.0,
+      "consistency_weight": 0.0,
+      "contrastive_weight": 0.0,
+      "window_mode": "single"
+    },
+    "A1-alpha01": {
+      "parent_recipe_id": "A0",
+      "auxiliary_weight": 0.1,
+      "consistency_weight": 0.0,
+      "contrastive_weight": 0.0,
+      "window_mode": "single"
+    },
+    "A1-alpha03": {
+      "parent_recipe_id": "A0",
+      "auxiliary_weight": 0.3,
+      "consistency_weight": 0.0,
+      "contrastive_weight": 0.0,
+      "window_mode": "single"
+    }
+  },
+  "transforms": {
+    "A2": {
+      "consistency_weight": 0.1
+    },
+    "A3": {
+      "contrastive_weight": 0.1
+    },
+    "A4": {
+      "window_mode": "head-center-tail"
+    }
+  },
+  "screening_seeds": [42, 52, 62],
+  "confirmation_seeds": [12, 22, 32, 72, 82],
+  "data_views": [
+    "closed",
+    "fast-to-balanced",
+    "balanced-to-fast"
+  ],
+  "gates": {
+    "closed_macro_f1_min_gain": 0.01,
+    "closed_seed_wins_min": 2,
+    "worst_family_min_gain": 0.0,
+    "mimo_min_gain": 0.0,
+    "glm_min_gain": 0.0,
+    "holdout_combined_min_gain": 0.0,
+    "holdout_direction_min_gain": -0.01,
+    "forbid_zero_family_f1": true
+  }
+}
