@@ -219,3 +219,51 @@ def evaluate_family_predictions(
             for field in ("language", "target_length", "task_type", "temperature")
         },
     }
+
+
+def evaluate_phase3_predictions(
+    records: Iterable[FamilyPrediction],
+    family_labels: Sequence[str],
+    *,
+    view_id: str,
+    train_visible_model_labels: Sequence[str],
+    window_mode: str,
+    ece_bins: int = 10,
+) -> dict[str, Any]:
+    """Add Phase3 view diagnostics without changing Phase2 call signatures."""
+
+    if view_id not in {"closed", "fast-to-balanced", "balanced-to-fast"}:
+        raise ValueError("unknown Phase3 validation view")
+    if window_mode not in {"single", "head-center-tail"}:
+        raise ValueError("unknown Phase3 window mode")
+    visible_models = tuple(train_visible_model_labels)
+    if not visible_models or len(visible_models) != len(set(visible_models)):
+        raise ValueError(
+            "Phase3 train-visible model labels must be unique and nonempty"
+        )
+    evaluated_records = tuple(records)
+    result = evaluate_family_predictions(
+        evaluated_records,
+        family_labels,
+        ece_bins=ece_bins,
+    )
+    validation_models = tuple(
+        sorted({record.model_id for record in evaluated_records})
+    )
+    unseen_models = tuple(
+        model_id for model_id in validation_models if model_id not in visible_models
+    )
+    result["phase3_diagnostics"] = {
+        "view_id": view_id,
+        "window_mode": window_mode,
+        "train_visible_model_count": len(visible_models),
+        "validation_model_count": len(validation_models),
+        "validation_unseen_model_count": len(unseen_models),
+        "validation_unseen_models": list(unseen_models),
+        "auxiliary_model_metric_scope": (
+            "train-visible-validation-models"
+            if view_id == "closed"
+            else "not-scored"
+        ),
+    }
+    return result

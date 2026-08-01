@@ -813,3 +813,43 @@ def write_attribution_report(
         name: str(path)
         for name, path in _artifact_paths(root).items()
     }
+
+
+def write_phase3_attribution_report(
+    *,
+    output_dir: str | Path,
+    run_config: Mapping[str, Any],
+    dataset_audit: Mapping[str, Any],
+    split_summary: Mapping[str, int],
+    metrics: Mapping[str, Any],
+    predictions: Sequence[FamilyPrediction | Mapping[str, Any]],
+) -> dict[str, str]:
+    """Write the durable report contract with a Phase3-specific front matter."""
+
+    paths = write_attribution_report(
+        output_dir=output_dir,
+        run_config=run_config,
+        dataset_audit=dataset_audit,
+        split_summary=split_summary,
+        metrics=metrics,
+        predictions=predictions,
+    )
+    report_path = Path(paths["report"])
+    original = report_path.read_text(encoding="utf-8")
+    header = "\n".join(
+        [
+            "# Phase3 Family Attribution Enhancement Report",
+            "",
+            f"- Stage: `{run_config.get('stage_id', 'unspecified')}`",
+            f"- Recipe: `{run_config.get('recipe_id', 'unspecified')}`",
+            f"- Recipe hash: `{run_config.get('recipe_hash', 'unspecified')}`",
+            f"- Validation view: `{run_config.get('view_id', 'unspecified')}`",
+            "- Selection scope: `validation_only`",
+            "- Test evaluated: `false`",
+            "",
+        ]
+    )
+    if original.startswith("# Family Attribution Baseline Report\n"):
+        original = original.split("\n", 1)[1]
+    _write_text_durable(report_path, header + original)
+    return paths
