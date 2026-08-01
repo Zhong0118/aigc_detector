@@ -38,6 +38,7 @@ def test_package_contains_phase3_contract_and_no_runtime_artifacts(tmp_path) -> 
             "research/text_attribution/phase3_selection.py",
             "scripts/run_family_attribution_phase3.py",
             "scripts/select_family_attribution_phase3.py",
+            "scripts/summarize_attribution_phase3_confirmation.py",
             "scripts/run_attribution_phase3.sh",
             "scripts/package_attribution_phase3_server.py",
             "docs/ATTRIBUTION_PHASE3_RUNBOOK.md",
@@ -131,6 +132,28 @@ def test_verify_accepts_valid_and_rejects_unmanifested_entry(tmp_path) -> None:
         handle.writestr("unexpected.txt", "bad")
     with pytest.raises(ValueError, match="entry set|unmanifested"):
         verify_phase3_server_package(archive)
+
+
+def test_verify_rejects_self_consistent_but_truncated_archive(tmp_path) -> None:
+    from scripts.package_attribution_phase3_server import (
+        MANIFEST_NAME,
+        build_phase3_server_package,
+        verify_phase3_server_package,
+    )
+
+    source = tmp_path / "source.zip"
+    truncated = tmp_path / "truncated.zip"
+    build_phase3_server_package(PROJECT_ROOT, source)
+    with zipfile.ZipFile(source) as original:
+        manifest = json.loads(original.read(MANIFEST_NAME))
+        removed = manifest["files"].pop()
+        with zipfile.ZipFile(truncated, "w") as destination:
+            for name in original.namelist():
+                if name not in {MANIFEST_NAME, removed["path"]}:
+                    destination.writestr(original.getinfo(name), original.read(name))
+            destination.writestr(MANIFEST_NAME, json.dumps(manifest))
+    with pytest.raises(ValueError, match="allowlist|missing"):
+        verify_phase3_server_package(truncated)
 
 
 def test_package_rejects_symlink_secret_weight_and_traversal(tmp_path, monkeypatch) -> None:

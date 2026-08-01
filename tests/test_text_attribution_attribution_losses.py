@@ -49,6 +49,26 @@ def test_consistency_is_positive_and_has_finite_gradients() -> None:
     assert torch.isfinite(model_logits.grad).all()
 
 
+def test_consistency_uses_family_to_aggregated_kl_direction() -> None:
+    torch, losses = _torch_and_losses()
+    family_logits = torch.log(torch.tensor([[0.8, 0.2]], dtype=torch.float64))
+    model_logits = torch.log(
+        torch.tensor([[0.1, 0.2, 0.3, 0.4]], dtype=torch.float64)
+    )
+    actual = losses.hierarchical_consistency_loss(
+        family_logits,
+        model_logits,
+        torch.tensor([0, 0, 1, 1]),
+    )
+    family = torch.tensor([[0.8, 0.2]], dtype=torch.float64)
+    aggregated = torch.tensor([[0.3, 0.7]], dtype=torch.float64)
+    expected = (family * (family.log() - aggregated.log())).sum()
+    reverse = (aggregated * (aggregated.log() - family.log())).sum()
+
+    assert actual.item() == pytest.approx(expected.item())
+    assert actual.item() != pytest.approx(reverse.item())
+
+
 def test_supcon_rejects_batch_without_valid_positive() -> None:
     torch, losses = _torch_and_losses()
     with pytest.raises(ValueError, match="valid anchor"):

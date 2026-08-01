@@ -53,10 +53,11 @@ def hierarchical_consistency_loss(
     )
     aggregated = aggregated.clamp_min(epsilon)
     aggregated = aggregated / aggregated.sum(dim=-1, keepdim=True)
-    family_log_probabilities = functional.log_softmax(family_logits, dim=-1)
+    family_probabilities = functional.softmax(family_logits, dim=-1)
+    aggregated_log_probabilities = aggregated.log()
     loss = functional.kl_div(
-        family_log_probabilities,
-        aggregated,
+        aggregated_log_probabilities,
+        family_probabilities,
         reduction="batchmean",
     ).clamp_min(0.0)
     _require_finite(loss, "hierarchical consistency")

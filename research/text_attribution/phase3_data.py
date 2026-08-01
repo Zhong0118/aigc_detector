@@ -165,12 +165,11 @@ class Phase3AttributionDataset:
 
 
 class StructuredContrastiveBatchSampler:
-    """Deterministic 2-family x 2-group rectangle batches for Phase3 A3.
+    """Deterministic structured batches for Phase3 A3 and its A4 descendants.
 
-    Each four-item block is a complete rectangle.  Consequently every emitted
-    anchor has a same-family/different-group positive and a
-    same-group/different-family hard negative.  Four blocks form the fixed formal
-    batch size of 16.
+    A3 batch 16 is exactly eight families across one shared pair of semantic
+    groups. A4 batch 4 uses the smallest complete two-family rectangle. Every
+    anchor therefore has a cross-group positive and a same-group hard negative.
     """
 
     def __init__(
@@ -234,6 +233,26 @@ class StructuredContrastiveBatchSampler:
                 "sharing at least two semantic groups"
             )
         self._valid_pairs = tuple(valid_pairs)
+        group_pairs: list[tuple[str, str, tuple[str, ...]]] = []
+        all_groups = sorted({group for _, group in self._cells})
+        for left_index, group_left in enumerate(all_groups):
+            for group_right in all_groups[left_index + 1 :]:
+                common_families = tuple(
+                    family
+                    for family in families
+                    if (family, group_left) in self._cells
+                    and (family, group_right) in self._cells
+                )
+                if len(common_families) >= 8:
+                    group_pairs.append(
+                        (group_left, group_right, common_families)
+                    )
+        if batch_size == 16 and not group_pairs:
+            raise ValueError(
+                "structured contrastive batching is impossible: batch 16 needs "
+                "eight families sharing the same two semantic groups"
+            )
+        self._group_pairs = tuple(group_pairs)
 
     def __len__(self) -> int:
         return len(self._samples) // self._batch_size
@@ -253,34 +272,63 @@ class StructuredContrastiveBatchSampler:
 
     def __iter__(self):
         rng = random.Random(_sampler_epoch_seed(self._seed, self._epoch))
+        if self._batch_size == 16:
+            yield from self._iter_eight_family_batches(rng)
+            return
         pair_order = list(self._valid_pairs)
         rng.shuffle(pair_order)
-        blocks_per_batch = self._batch_size // 4
         block_cursor = 0
 
         for _ in range(len(self)):
-            batch: list[int] = []
-            for _ in range(blocks_per_batch):
-                if block_cursor and block_cursor % len(pair_order) == 0:
-                    rng.shuffle(pair_order)
-                family_left, family_right, common_groups = pair_order[
-                    block_cursor % len(pair_order)
-                ]
-                block_cursor += 1
-                group_left, group_right = rng.sample(common_groups, 2)
-                if rng.randrange(2):
-                    family_left, family_right = family_right, family_left
-                if rng.randrange(2):
-                    group_left, group_right = group_right, group_left
-                batch.extend(
-                    self._sample_rectangle(
-                        rng,
-                        family_left,
-                        family_right,
-                        group_left,
-                        group_right,
-                    )
+            if block_cursor and block_cursor % len(pair_order) == 0:
+                rng.shuffle(pair_order)
+            family_left, family_right, common_groups = pair_order[
+                block_cursor % len(pair_order)
+            ]
+            block_cursor += 1
+            group_left, group_right = rng.sample(common_groups, 2)
+            if rng.randrange(2):
+                family_left, family_right = family_right, family_left
+            if rng.randrange(2):
+                group_left, group_right = group_right, group_left
+            yield list(
+                self._sample_rectangle(
+                    rng,
+                    family_left,
+                    family_right,
+                    group_left,
+                    group_right,
                 )
+            )
+
+    def _iter_eight_family_batches(self, rng: random.Random):
+        pair_order = list(self._group_pairs)
+        rng.shuffle(pair_order)
+        family_offsets = {pair: rng.randrange(len(pair[2])) for pair in pair_order}
+        for batch_index in range(len(self)):
+            if batch_index and batch_index % len(pair_order) == 0:
+                rng.shuffle(pair_order)
+            group_left, group_right, common_families = pair_order[
+                batch_index % len(pair_order)
+            ]
+            pair = (group_left, group_right, common_families)
+            start = family_offsets[pair]
+            chosen = [
+                common_families[(start + offset) % len(common_families)]
+                for offset in range(8)
+            ]
+            family_offsets[pair] = (start + 8) % len(common_families)
+            batch: list[int] = []
+            for family in chosen:
+                left = rng.choice(self._cells[(family, group_left)])
+                right = _choose_preferred_model(
+                    rng,
+                    self._cells[(family, group_right)],
+                    self._samples,
+                    avoid_model=self._samples[left].model_id,
+                )
+                batch.extend((left, right))
+            rng.shuffle(batch)
             yield batch
 
     def _sample_rectangle(
@@ -320,7 +368,7 @@ def summarize_contrastive_batches(
     different_model_positive_count = 0
     all_batches_valid = True
     for batch in batches:
-        if len(batch) != 16:
+        if len(batch) not in {4, 16}:
             all_batches_valid = False
         rows = [samples[index] for index in batch]
         for anchor in rows:

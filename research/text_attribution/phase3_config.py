@@ -94,6 +94,7 @@ _RECIPE_FIELDS = frozenset(
         "early_stopping_patience",
         "save_total_limit",
         "bf16",
+        "gradient_checkpointing",
         "recipe_hash",
     }
 )
@@ -180,6 +181,7 @@ class ResolvedPhase3Recipe:
     early_stopping_patience: int
     save_total_limit: int
     bf16: bool
+    gradient_checkpointing: bool
     recipe_hash: str
 
     def to_dict(self, *, include_hash: bool = True) -> dict[str, object]:
@@ -205,6 +207,7 @@ class ResolvedPhase3Recipe:
             "early_stopping_patience": self.early_stopping_patience,
             "save_total_limit": self.save_total_limit,
             "bf16": self.bf16,
+            "gradient_checkpointing": self.gradient_checkpointing,
         }
         if include_hash:
             payload["recipe_hash"] = self.recipe_hash
@@ -344,6 +347,56 @@ def write_resolved_recipe(path: str | Path, recipe: ResolvedPhase3Recipe) -> Pat
     return destination
 
 
+def apply_a4_low_memory_profile(
+    config: Phase3Config,
+    recipe: ResolvedPhase3Recipe,
+) -> ResolvedPhase3Recipe:
+    """Return the explicit, hash-bound A4 batch-2 memory profile.
+
+    A batch of two cannot simultaneously contain the documented cross-group
+    positive and same-group hard negative.  Therefore this profile is valid only
+    when A3 was not promoted and the selected A4 parent has no contrastive term.
+    Contrastive A4 runs retain batch four and can use gradient checkpointing.
+    """
+
+    if recipe.stage_id != "A4":
+        raise ValueError("the low-memory profile is defined only for A4")
+    if recipe.contrastive_weight > 0:
+        raise ValueError(
+            "A4 batch-2 low-memory mode is incompatible with inherited A3 "
+            "contrastive loss; keep batch 4 and enable gradient checkpointing"
+        )
+    provisional = replace(
+        recipe,
+        per_device_train_batch_size=config.training.a4_low_memory_batch_size,
+        gradient_accumulation_steps=(
+            config.training.a4_low_memory_gradient_accumulation_steps
+        ),
+        recipe_hash="",
+    )
+    return replace(provisional, recipe_hash=_recipe_hash(provisional))
+
+
+def apply_gradient_checkpointing_profile(
+    recipe: ResolvedPhase3Recipe,
+) -> ResolvedPhase3Recipe:
+    """Enable gradient checkpointing as part of the immutable recipe hash."""
+
+    if recipe.gradient_checkpointing:
+        return recipe
+    provisional = replace(recipe, gradient_checkpointing=True, recipe_hash="")
+    return replace(provisional, recipe_hash=_recipe_hash(provisional))
+
+
+def apply_no_bf16_profile(recipe: ResolvedPhase3Recipe) -> ResolvedPhase3Recipe:
+    """Disable BF16 as an explicit, hash-bound compatibility profile."""
+
+    if not recipe.bf16:
+        return recipe
+    provisional = replace(recipe, bf16=False, recipe_hash="")
+    return replace(provisional, recipe_hash=_recipe_hash(provisional))
+
+
 def load_resolved_recipe(path: str | Path) -> ResolvedPhase3Recipe:
     return _recipe_from_mapping(_read_json_object(Path(path), "resolved recipe"))
 
@@ -382,6 +435,7 @@ def _make_recipe(
         early_stopping_patience=training.early_stopping_patience,
         save_total_limit=training.save_total_limit,
         bf16=training.bf16,
+        gradient_checkpointing=False,
         recipe_hash="",
     )
     return replace(provisional, recipe_hash=_recipe_hash(provisional))
@@ -493,6 +547,9 @@ def _recipe_from_mapping(values: Mapping[str, object]) -> ResolvedPhase3Recipe:
             payload, "save_total_limit", "resolved recipe"
         ),
         bf16=_require_bool(payload, "bf16", "resolved recipe"),
+        gradient_checkpointing=_require_bool(
+            payload, "gradient_checkpointing", "resolved recipe"
+        ),
         recipe_hash=_require_hash(payload.get("recipe_hash")),
     )
     if recipe.backbone_model_id != _BACKBONE:
@@ -786,4 +843,3 @@ def _require_string_tuple(value: object, field: str) -> tuple[str, ...]:
     ):
         raise ValueError(f"{field} must be a list of non-empty strings")
     return tuple(value)
-

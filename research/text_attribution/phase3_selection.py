@@ -84,6 +84,7 @@ class _RunMetric:
     view_id: str
     macro_f1: float
     nll: float
+    ece: float
     per_family_f1: Mapping[str, float]
     run_dir: Path
     run_fingerprint: str
@@ -94,6 +95,7 @@ class _RunMetric:
             "view_id": self.view_id,
             "macro_f1": self.macro_f1,
             "nll": self.nll,
+            "ece": self.ece,
             "per_family_f1": dict(self.per_family_f1),
             "run_dir": str(self.run_dir),
             "run_fingerprint": self.run_fingerprint,
@@ -118,6 +120,8 @@ def select_phase3_stage(request: Phase3SelectionRequest) -> Phase3StageDecision:
         raise ValueError("selection requires a parent run root")
     if not request.candidate_run_roots:
         raise ValueError("selection requires at least one candidate run root")
+    if request.stage_id == "A1" and len(request.candidate_run_roots) != 2:
+        raise ValueError("A1 selection requires both canonical candidates")
     if request.stage_id != "A1" and len(request.candidate_run_roots) != 1:
         raise ValueError(f"{request.stage_id} selection requires one candidate")
 
@@ -159,11 +163,7 @@ def select_phase3_stage(request: Phase3SelectionRequest) -> Phase3StageDecision:
 
     selected_candidate, selected_gates, selected_passed = max(
         evaluated,
-        key=lambda row: (
-            row[2],
-            _metric_mean(row[0], "closed", "macro_f1"),
-            -_a1_recipe_order(row[0].recipe.recipe_id),
-        ),
+        key=lambda row: _selection_order_key(request.stage_id, row),
     )
     selected_recipe = (
         selected_candidate.recipe if selected_passed else parent.recipe
@@ -231,8 +231,13 @@ def write_phase3_stage_decision(
     )
 
 
-def _load_run_matrix(root: Path, config: Phase3Config) -> _RunMatrix:
+def _load_run_matrix(
+    root: Path,
+    config: Phase3Config,
+    seeds: Sequence[int] | None = None,
+) -> _RunMatrix:
     root = Path(root)
+    expected_seeds = tuple(config.screening_seeds if seeds is None else seeds)
     completed_paths = sorted(root.rglob("COMPLETED.json"))
     if not completed_paths:
         raise ValueError(f"complete run matrix missing under {root}")
@@ -271,7 +276,7 @@ def _load_run_matrix(root: Path, config: Phase3Config) -> _RunMatrix:
 
         seed = run_config.get("training_seed")
         view_id = run_config.get("view_id")
-        if seed not in config.screening_seeds or view_id not in config.data_views:
+        if seed not in expected_seeds or view_id not in config.data_views:
             raise ValueError(f"unexpected seed/view in run matrix: {run_dir}")
         key = (seed, view_id)
         if key in rows:
@@ -305,6 +310,9 @@ def _load_run_matrix(root: Path, config: Phase3Config) -> _RunMatrix:
             nll = _finite_float(
                 validation["calibration"]["negative_log_likelihood"]
             )
+            ece = _finite_float(
+                validation["calibration"]["expected_calibration_error"]
+            )
             per_family = {
                 family: _finite_float(values["f1-score"])
                 for family, values in validation["per_family"].items()
@@ -313,13 +321,14 @@ def _load_run_matrix(root: Path, config: Phase3Config) -> _RunMatrix:
             raise ValueError(f"invalid metrics contract in {run_dir}") from exc
         if not per_family or any(not 0 <= value <= 1 for value in per_family.values()):
             raise ValueError(f"invalid per-family F1 values in {run_dir}")
-        if not 0 <= macro_f1 <= 1 or nll < 0:
+        if not 0 <= macro_f1 <= 1 or nll < 0 or not 0 <= ece <= 1:
             raise ValueError(f"invalid aggregate metric values in {run_dir}")
         rows[key] = _RunMetric(
             seed=seed,
             view_id=view_id,
             macro_f1=macro_f1,
             nll=nll,
+            ece=ece,
             per_family_f1=MappingProxyType(per_family),
             run_dir=run_dir,
             run_fingerprint=fingerprint,
@@ -327,14 +336,16 @@ def _load_run_matrix(root: Path, config: Phase3Config) -> _RunMatrix:
 
     expected = {
         (seed, view)
-        for seed in config.screening_seeds
+        for seed in expected_seeds
         for view in config.data_views
     }
     missing = expected - set(rows)
     extra = set(rows) - expected
-    if missing or extra or len(rows) != 9:
+    expected_count = len(expected_seeds) * len(config.data_views)
+    if missing or extra or len(rows) != expected_count:
         raise ValueError(
-            "complete 3-seed x 3-view matrix required; "
+            f"complete {len(expected_seeds)}-seed x {len(config.data_views)}-view "
+            "matrix required; "
             f"missing={sorted(missing)!r}, extra={sorted(extra)!r}"
         )
     assert recipe is not None and identity is not None
@@ -343,13 +354,81 @@ def _load_run_matrix(root: Path, config: Phase3Config) -> _RunMatrix:
         raise ValueError("run matrix family label order mismatch")
     ordered_rows = {
         (seed, view): rows[(seed, view)]
-        for seed in config.screening_seeds
+        for seed in expected_seeds
         for view in config.data_views
     }
     return _RunMatrix(
         recipe=recipe,
         identity=identity,
         rows=MappingProxyType(ordered_rows),
+    )
+
+
+def build_phase3_confirmation_summary(
+    *,
+    config: Phase3Config,
+    winner_screening_root: Path,
+    winner_confirmation_root: Path,
+    comparator_screening_root: Path,
+    comparator_confirmation_root: Path,
+) -> dict[str, Any]:
+    """Combine frozen 3+5 seed matrices without reopening promotion decisions."""
+
+    winner = _merge_confirmation_matrices(
+        _load_run_matrix(winner_screening_root, config, config.screening_seeds),
+        _load_run_matrix(
+            winner_confirmation_root, config, config.confirmation_seeds
+        ),
+    )
+    comparator = _merge_confirmation_matrices(
+        _load_run_matrix(comparator_screening_root, config, config.screening_seeds),
+        _load_run_matrix(
+            comparator_confirmation_root, config, config.confirmation_seeds
+        ),
+    )
+    if winner.identity != comparator.identity:
+        raise ValueError("confirmation recipes use mismatched data fingerprints")
+    if winner.recipe.recipe_hash == comparator.recipe.recipe_hash:
+        raise ValueError("confirmation winner and comparator must be distinct recipes")
+    view_differences = {
+        view: _metric_mean(winner, view, "macro_f1")
+        - _metric_mean(comparator, view, "macro_f1")
+        for view in config.data_views
+    }
+    return {
+        "schema_version": 1,
+        "selection_scope": "validation_only",
+        "test_evaluated": False,
+        "seed_role": "post_selection_confirmation",
+        "seeds": [*config.screening_seeds, *config.confirmation_seeds],
+        "winner_recipe": winner.recipe.to_dict(),
+        "comparator_recipe": comparator.recipe.to_dict(),
+        "winner": _summarize_matrix(winner),
+        "comparator": _summarize_matrix(comparator),
+        "winner_minus_comparator_macro_f1": view_differences,
+        "closed_seed_wins": sum(
+            winner.rows[(seed, "closed")].macro_f1
+            > comparator.rows[(seed, "closed")].macro_f1
+            for seed in (*config.screening_seeds, *config.confirmation_seeds)
+        ),
+    }
+
+
+def _merge_confirmation_matrices(
+    screening: _RunMatrix,
+    confirmation: _RunMatrix,
+) -> _RunMatrix:
+    if screening.recipe.recipe_hash != confirmation.recipe.recipe_hash:
+        raise ValueError("screening and confirmation recipe hashes do not match")
+    if screening.identity != confirmation.identity:
+        raise ValueError("screening and confirmation data fingerprints do not match")
+    overlap = set(screening.rows) & set(confirmation.rows)
+    if overlap:
+        raise ValueError(f"screening and confirmation matrices overlap: {sorted(overlap)!r}")
+    return _RunMatrix(
+        recipe=screening.recipe,
+        identity=screening.identity,
+        rows=MappingProxyType({**screening.rows, **confirmation.rows}),
     )
 
 
@@ -402,6 +481,7 @@ def _evaluate_gates(
             "family": family,
         }
         for row in candidate.rows.values()
+        if row.view_id == "closed"
         for family, value in row.per_family_f1.items()
         if value <= 0.0
     ]
@@ -431,7 +511,7 @@ def _evaluate_gates(
             passed=not zero_entries if gates.forbid_zero_family_f1 else True,
             actual={"zero_count": len(zero_entries), "examples": zero_entries[:10]},
             threshold={"zero_count": 0},
-            detail="No candidate seed/view/family may have F1 equal to zero.",
+            detail="No candidate closed seed/family may have F1 equal to zero.",
         ),
     )
 
@@ -447,6 +527,8 @@ def _validate_stage_recipes(
         allowed = {"A1-alpha01", "A1-alpha03"}
         if any(candidate.recipe.recipe_id not in allowed for candidate in candidates):
             raise ValueError("A1 selection candidates must be canonical A1 recipes")
+        if {candidate.recipe.recipe_id for candidate in candidates} != allowed:
+            raise ValueError("A1 selection requires both canonical A1 recipes")
         return
     if any(candidate.recipe.stage_id != stage_id for candidate in candidates):
         raise ValueError(f"{stage_id} selection received a wrong-stage candidate")
@@ -456,13 +538,24 @@ def _validate_stage_recipes(
         "A4": set(),
     }
     if stage_id == "A4":
-        if parent.recipe.stage_id != "A3":
-            raise ValueError("A4 selection parent must be A3")
+        if parent.recipe.stage_id not in {
+            "A0",
+            "A1-alpha01",
+            "A1-alpha03",
+            "A2",
+            "A3",
+        }:
+            raise ValueError("A4 selection parent must be the A3 decision winner")
     elif stage_id == "A3":
         if parent.recipe.stage_id not in {"A0", "A1-alpha01", "A1-alpha03", "A2"}:
             raise ValueError("A3 selection parent must be an A0/A1/A2 winner")
     elif parent.recipe.recipe_id not in allowed_parents[stage_id]:
         raise ValueError("A2 selection parent must be a promoted canonical A1")
+    if any(
+        candidate.recipe.parent_recipe_id != parent.recipe.recipe_id
+        for candidate in candidates
+    ):
+        raise ValueError(f"{stage_id} candidate parent recipe does not match parent matrix")
 
 
 def _gate(gate_id: str, actual: float | int, threshold: float | int):
@@ -482,6 +575,7 @@ def _summarize_matrix(matrix: _RunMatrix) -> dict[str, Any]:
         summary[view_id] = {
             "macro_f1": _summary_values([row.macro_f1 for row in rows]),
             "nll": _summary_values([row.nll for row in rows]),
+            "ece": _summary_values([row.ece for row in rows]),
             "worst_family_f1": _summary_values(
                 [min(row.per_family_f1.values()) for row in rows]
             ),
@@ -543,6 +637,31 @@ def _finite_float(value: Any) -> float:
 def _a1_recipe_order(recipe_id: str) -> int:
     order = {"A1-alpha01": 0, "A1-alpha03": 1}
     return order.get(recipe_id, 0)
+
+
+def _selection_order_key(stage_id: str, row) -> tuple[Any, ...]:
+    matrix, _gates, passed = row
+    if stage_id != "A1":
+        return (passed, _metric_mean(matrix, "closed", "macro_f1"))
+    holdout_mean = _mean(
+        metric.macro_f1
+        for metric in matrix.rows.values()
+        if metric.view_id in {"fast-to-balanced", "balanced-to-fast"}
+    )
+    closed_worst = _mean(
+        min(metric.per_family_f1.values())
+        for metric in matrix.rows.values()
+        if metric.view_id == "closed"
+    )
+    return (
+        passed,
+        _metric_mean(matrix, "closed", "macro_f1"),
+        holdout_mean,
+        closed_worst,
+        -_metric_mean(matrix, "closed", "nll"),
+        -_metric_mean(matrix, "closed", "ece"),
+        -_a1_recipe_order(matrix.recipe.recipe_id),
+    )
 
 
 def _maybe_skip_a2(

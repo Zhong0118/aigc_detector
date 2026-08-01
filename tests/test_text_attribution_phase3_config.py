@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from research.text_attribution.phase3_config import (
+    apply_a4_low_memory_profile,
     load_phase3_config,
     load_resolved_recipe,
     resolve_phase3_recipe,
@@ -129,6 +130,27 @@ def test_promoted_transforms_add_exactly_one_factor(tmp_path: Path) -> None:
     assert a4.per_device_train_batch_size == 4
     assert a4.gradient_accumulation_steps == 8
 
+    with pytest.raises(ValueError, match="contrastive|gradient checkpointing"):
+        apply_a4_low_memory_profile(config, a4)
+
+
+def test_a4_low_memory_profile_is_explicit_and_rehashed(tmp_path: Path) -> None:
+    config = load_phase3_config(CONFIG_PATH)
+    a0 = resolve_phase3_recipe(config, "A0")
+    a3_decision = _write_parent_decision(
+        tmp_path / "a3-fallback.json",
+        stage_id="A3",
+        promoted=False,
+        recipe=a0,
+    )
+    a4 = resolve_phase3_recipe(config, "A4", a3_decision)
+
+    low_memory = apply_a4_low_memory_profile(config, a4)
+
+    assert low_memory.per_device_train_batch_size == 2
+    assert low_memory.gradient_accumulation_steps == 16
+    assert low_memory.recipe_hash != a4.recipe_hash
+
 
 def test_a3_uses_fallback_recipe_after_failed_a1(tmp_path: Path) -> None:
     config = load_phase3_config(CONFIG_PATH)
@@ -196,4 +218,3 @@ def test_recipe_dataclass_is_immutable() -> None:
     changed = replace(recipe, auxiliary_weight=0.1)
     assert changed.auxiliary_weight == 0.1
     assert recipe.auxiliary_weight == 0.0
-

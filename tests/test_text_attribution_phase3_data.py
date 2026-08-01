@@ -346,7 +346,7 @@ def test_holdout_validation_dataset_ignores_unseen_model_labels() -> None:
 
 def _contrastive_samples() -> tuple[AttributionSample, ...]:
     rows = []
-    for family_index, family_id in enumerate(("a", "b", "c", "d")):
+    for family_index, family_id in enumerate(tuple("abcdefghij")):
         for group_index in range(4):
             rows.append(
                 _sample(
@@ -386,9 +386,17 @@ def test_every_structured_batch_has_positive_and_hard_negative() -> None:
     samples = _contrastive_samples()
     sampler = StructuredContrastiveBatchSampler(samples, batch_size=16, seed=42)
     batches = list(sampler)
-    assert len(batches) == 1
-    assert len(batches[0]) == 16
-    _assert_structured([samples[index] for index in batches[0]])
+    assert len(batches) == len(samples) // 16
+    for batch in batches:
+        rows = [samples[index] for index in batch]
+        assert len(batch) == 16
+        assert len({row.family_id for row in rows}) == 8
+        assert len({row.semantic_prompt_group for row in rows}) == 2
+        assert all(
+            sum(other.family_id == row.family_id for other in rows) == 2
+            for row in rows
+        )
+        _assert_structured(rows)
 
 
 def test_structured_sampler_is_order_independent_and_seeded() -> None:
@@ -442,7 +450,7 @@ def test_structured_sampler_audit_records_model_preference() -> None:
     samples = _contrastive_samples()
     batches = list(StructuredContrastiveBatchSampler(samples, 16, 42))
     summary = summarize_contrastive_batches(samples, batches)
-    assert summary["batch_count"] == 1
+    assert summary["batch_count"] == len(samples) // 16
     assert summary["all_batches_valid"] is True
     assert summary["cross_group_positive_anchor_rate"] == 1.0
     assert summary["same_group_hard_negative_anchor_rate"] == 1.0

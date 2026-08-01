@@ -39,6 +39,7 @@ _EXACT_FILES = (
     "research/text_attribution/phase3_selection.py",
     "scripts/run_family_attribution_phase3.py",
     "scripts/select_family_attribution_phase3.py",
+    "scripts/summarize_attribution_phase3_confirmation.py",
     "scripts/run_attribution_phase3.sh",
     "scripts/package_attribution_phase3_server.py",
     "configs/text_attribution/zhizengzeng_model_catalog.v5.json",
@@ -352,6 +353,13 @@ def verify_phase3_server_package(
             raise ValueError("manifest file records must use stable path order")
         if set(names) != set(indexed) | {MANIFEST_NAME}:
             raise ValueError("archive entry set contains unmanifested or missing files")
+        if set(indexed) != set(_EXACT_FILES):
+            missing = sorted(set(_EXACT_FILES) - set(indexed))
+            extra = sorted(set(indexed) - set(_EXACT_FILES))
+            raise ValueError(
+                "archive does not match the exact Phase3 server allowlist; "
+                f"missing={missing!r}, extra={extra!r}"
+            )
         for relative_path, record in indexed.items():
             payload = archive.read(relative_path)
             _validate_no_secret(relative_path, payload)

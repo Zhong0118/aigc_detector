@@ -71,6 +71,11 @@ def test_resolve_canonical_recipe_without_training_dependencies() -> None:
     assert recipe.auxiliary_weight == 0.1
 
 
+def test_low_memory_flag_is_restricted_to_a4() -> None:
+    with pytest.raises(SystemExit):
+        parse_args(["--stage", "A0", "--a4-low-memory", *REQUIRED])
+
+
 def test_run_fingerprint_is_canonical_and_sensitive() -> None:
     first = compute_phase3_run_fingerprint(
         recipe_hash="a" * 64,

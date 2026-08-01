@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from dataclasses import replace
 import hashlib
 import json
@@ -16,6 +17,9 @@ from uuid import uuid4
 
 from research.text_attribution.phase3_config import (
     ResolvedPhase3Recipe,
+    apply_a4_low_memory_profile,
+    apply_gradient_checkpointing_profile,
+    apply_no_bf16_profile,
     load_phase3_config,
     load_resolved_recipe,
     resolve_phase3_recipe,
@@ -69,6 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--resume-from-checkpoint")
     parser.add_argument("--gradient-checkpointing", action="store_true")
+    parser.add_argument("--a4-low-memory", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     return parser
 
@@ -84,18 +89,31 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         parser.error("--recipe replay must not receive --parent-decision")
     if args.preflight_only and args.smoke_test:
         parser.error("--preflight-only and --smoke-test are distinct modes")
+    if args.preflight_only and args.resume_from_checkpoint:
+        parser.error("preflight cannot resume a formal training checkpoint")
+    if args.a4_low_memory and args.stage != "A4" and not args.recipe:
+        parser.error("--a4-low-memory is valid only for A4")
     return args
 
 
 def resolve_cli_recipe(args: argparse.Namespace) -> ResolvedPhase3Recipe:
-    if args.recipe:
-        return load_resolved_recipe(args.recipe)
     config = load_phase3_config(args.config)
-    return resolve_phase3_recipe(
-        config,
-        args.stage,
-        None if args.parent_decision is None else Path(args.parent_decision),
+    recipe = (
+        load_resolved_recipe(args.recipe)
+        if args.recipe
+        else resolve_phase3_recipe(
+            config,
+            args.stage,
+            None if args.parent_decision is None else Path(args.parent_decision),
+        )
     )
+    if args.a4_low_memory:
+        recipe = apply_a4_low_memory_profile(config, recipe)
+    if args.gradient_checkpointing:
+        recipe = apply_gradient_checkpointing_profile(recipe)
+    if args.no_bf16:
+        recipe = apply_no_bf16_profile(recipe)
+    return recipe
 
 
 def compute_phase3_run_fingerprint(
@@ -130,6 +148,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     config = load_phase3_config(args.config)
     recipe = resolve_cli_recipe(args)
+    if args.preflight_only and recipe.stage_id != "A4":
+        raise ValueError("--preflight-only is restricted to A4 recipes")
     if recipe.backbone_model_id != config.backbone_model_id:
         raise ValueError("resolved recipe backbone does not match Phase3 config")
     allowed_seeds = set(config.screening_seeds) | set(config.confirmation_seeds)
@@ -164,6 +184,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     if args.smoke_test:
         data_view = _smoke_data_view(data_view)
+    validation_only_audit = _build_validation_only_audit(
+        (*splits["train"], *splits["validation"])
+    )
 
     split_manifest_hash = _sha256_file(split_path)
     catalog_hash = _sha256_file(catalog_path)
@@ -187,8 +210,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         run_fingerprint=run_fingerprint,
         split_manifest_hash=split_manifest_hash,
         catalog_hash=catalog_hash,
-        test_request_key_count=len(test_request_keys),
     )
+    del dataset, splits
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     if args.dry_run:
         return 0
@@ -206,8 +229,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             data_view=data_view,
             output_dir=staging,
             seed=args.seed,
+            run_fingerprint=run_fingerprint,
+            dataset_fingerprint=manifest.dataset_fingerprint,
+            split_manifest_hash=split_manifest_hash,
+            catalog_hash=catalog_hash,
             hf_cache=None if args.hf_cache is None else Path(args.hf_cache),
-            bf16=not args.no_bf16,
+            bf16=recipe.bf16,
             smoke_test=args.smoke_test,
             require_cuda=not args.smoke_test,
             resume_from_checkpoint=(
@@ -215,8 +242,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if args.resume_from_checkpoint is None
                 else Path(args.resume_from_checkpoint)
             ),
-            gradient_checkpointing=args.gradient_checkpointing,
             preflight_only=args.preflight_only,
+            use_cpu=args.device == "cpu",
         )
         result = train_phase3_experiment(request)
         if args.preflight_only:
@@ -276,7 +303,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         report_paths = write_phase3_attribution_report(
             output_dir=report_dir,
             run_config=summary,
-            dataset_audit=dataset.audit,
+            dataset_audit=validation_only_audit,
             split_summary={
                 "train": len(data_view.train_samples),
                 "validation": len(data_view.validation_samples),
@@ -303,7 +330,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "train_visible_model_labels": list(
                     data_view.train_visible_model_to_id
                 ),
-                "test_request_key_count": len(test_request_keys),
                 "test_evaluated": False,
             },
         )
@@ -366,7 +392,6 @@ def _run_summary(
     run_fingerprint,
     split_manifest_hash,
     catalog_hash,
-    test_request_key_count,
 ) -> dict[str, Any]:
     return {
         "schema_version": 1,
@@ -389,7 +414,6 @@ def _run_summary(
         "split_seed": manifest.seed,
         "train_samples": len(data_view.train_samples),
         "validation_samples": len(data_view.validation_samples),
-        "test_request_key_count": test_request_key_count,
         "family_labels": list(data_view.family_to_id),
         "train_visible_model_labels": list(
             data_view.train_visible_model_to_id
@@ -400,9 +424,31 @@ def _run_summary(
         "smoke_test": args.smoke_test,
         "preflight_only": args.preflight_only,
         "device": args.device,
-        "bf16": recipe.bf16 and not args.no_bf16,
+        "bf16": recipe.bf16,
+        "gradient_checkpointing": recipe.gradient_checkpointing,
         "resume_from_checkpoint": args.resume_from_checkpoint,
         "versions": {"python": platform.python_version()},
+    }
+
+
+def _build_validation_only_audit(samples) -> dict[str, Any]:
+    """Summarize only train+validation rows; never publish test distribution."""
+
+    rows = tuple(samples)
+    return {
+        "schema_version": 1,
+        "scope": "train_and_validation_only",
+        "test_evaluated": False,
+        "kept_records": len(rows),
+        "counts_by_label": dict(sorted(Counter(row.family_id for row in rows).items())),
+        "counts_by_model": dict(sorted(Counter(row.model_id for row in rows).items())),
+        "counts_by_language": dict(sorted(Counter(row.language for row in rows).items())),
+        "counts_by_target_length": dict(
+            sorted(Counter(row.target_length for row in rows).items())
+        ),
+        "semantic_prompt_groups": len(
+            {row.semantic_prompt_group for row in rows}
+        ),
     }
 
 

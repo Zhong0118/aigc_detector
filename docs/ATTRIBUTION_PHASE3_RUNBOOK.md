@@ -205,6 +205,22 @@ CUDA_VISIBLE_DEVICES=0 python -u -m scripts.run_family_attribution_phase3 \
   --hf-cache "$P3_CACHE" --preflight-only
 ```
 
+预检会执行真实 loss、反向传播和恰好 10 个 optimizer step，并在
+`preflight_metrics.json` 记录吞吐与峰值 CUDA 显存。如果 A3 已晋级且 A4 显存不足，
+保留 batch 4 并显式增加 `--gradient-checkpointing`；该选择会进入
+`resolved_recipe.json` 和 recipe hash。如果 A3 未晋级、A4 不含对比损失，也可显式使用
+`--a4-low-memory` 选择 batch 2 / 累积 16。batch 2 无法满足 A3 对比批次约束，因此代码会
+拒绝把它用于含 A3 对比损失的 A4。
+
+如果预检需要 `--gradient-checkpointing` 才通过，后续正式矩阵必须重放预检写出的同一
+配方，不能回到未开启版本：
+
+```bash
+bash scripts/run_attribution_phase3.sh \
+  "$P3_ROOT/preflight/A4-closed-seed42/resolved_recipe.json" \
+  "$P3_DATA" "$P3_SPLIT" "$P3_CACHE" "$P3_ROOT/A4" "42,52,62"
+```
+
 ## 7. 在 tmux 中运行 A0 与 A1 的 3×3 矩阵
 
 ```bash
@@ -345,7 +361,8 @@ CUDA_VISIBLE_DEVICES=0 python -u -m scripts.run_family_attribution_phase3 \
   "$P3_ROOT/.A3-closed-seed42.failed-<随机ID>/checkpoints/checkpoint-<步数>"
 ```
 
-恢复前会比较 checkpoint 与当前 `recipe_hash`，不匹配会停止。不要覆盖旧目录。
+恢复前会同时比较 checkpoint 的 `recipe_hash`、run fingerprint、数据指纹、split 指纹、
+catalog 指纹、seed 和 validation view；任一不匹配都会停止。不要覆盖旧目录。
 
 ## 10. 最终 5 个补充 seed
 
@@ -369,6 +386,18 @@ bash scripts/run_attribution_phase3.sh \
 
 这 5 个 seed 是稳定性确认，不用于回头调 A1–A4。与 42/52/62 合并后，报告 8-seed
 均值、样本标准差、每个 holdout 方向和最弱家族表现。
+
+两套 5-seed 矩阵完成后，用下面的命令直接生成整体 JSON；四个 root 分别指向胜者与
+比较对象原来的 3-seed 筛选矩阵，以及刚完成的 5-seed 确认矩阵：
+
+```bash
+python -m scripts.summarize_attribution_phase3_confirmation \
+  --winner-screening-root <胜者原3-seed根目录> \
+  --winner-confirmation-root "$P3_ROOT/confirmation/winner" \
+  --comparator-screening-root <比较对象原3-seed根目录> \
+  --comparator-confirmation-root "$P3_ROOT/confirmation/comparator" \
+  --output "$P3_ROOT/confirmation/eight-seed-summary.json"
+```
 
 ## 11. 成功契约与下载分析包
 

@@ -196,6 +196,7 @@ projection_dimension
 window_mode
 batch_size
 gradient_accumulation_steps
+gradient_checkpointing
 全部公共训练超参数
 ```
 
@@ -352,8 +353,10 @@ tokenizer 首先在不截断且不添加特殊 token 的情况下得到内容 to
 验证输出记录每条样本的有效窗口数，并报告短、中、长文本子组指标、吞吐和显存。
 
 A4 初始 per-device batch 4、梯度累积 8，有效 batch 保持 32。正式运行前必须执行
-10 optimizer-step GPU preflight。如果显存不足，用户只能显式选择 batch 2、累积 16
-的预定义低显存配置；代码不得静默降低 batch、长度、窗口数或精度。
+10 optimizer-step GPU preflight。如果 A3 对比损失已晋级，显存不足时必须保留 batch 4
+并显式启用、哈希绑定 gradient checkpointing；batch 2 无法同时提供正样本和困难负样本。
+仅当 A3 未晋级、A4 不含对比损失时，才可显式选择 batch 2、累积 16 的预定义低显存
+配置。代码不得静默降低 batch、长度、窗口数或精度。
 
 ## 训练生命周期
 

@@ -9,6 +9,7 @@ import json
 import math
 from pathlib import Path
 import tempfile
+import time
 from typing import Any, Mapping
 
 import numpy as np
@@ -31,7 +32,7 @@ from research.text_attribution.phase3_data import (
 
 try:  # Imported only in the server training environment.
     import torch
-    from torch.utils.data import Sampler, WeightedRandomSampler
+    from torch.utils.data import Sampler
     from transformers import (
         AutoModel,
         AutoTokenizer,
@@ -45,7 +46,6 @@ try:  # Imported only in the server training environment.
 except ImportError as exc:  # pragma: no cover - controller environment
     torch = None
     Sampler = None
-    WeightedRandomSampler = None
     AutoModel = None
     AutoTokenizer = None
     EarlyStoppingCallback = None
@@ -65,6 +65,10 @@ class Phase3TrainingRequest:
     data_view: Phase3DataView | None
     output_dir: Path
     seed: int
+    run_fingerprint: str | None = None
+    dataset_fingerprint: str | None = None
+    split_manifest_hash: str | None = None
+    catalog_hash: str | None = None
     hf_cache: Path | None = None
     bf16: bool = True
     smoke_test: bool = False
@@ -73,8 +77,8 @@ class Phase3TrainingRequest:
     model_source: str | Path | None = None
     tokenizer_source: str | Path | None = None
     max_steps: int | None = None
-    gradient_checkpointing: bool = False
     preflight_only: bool = False
+    use_cpu: bool = False
 
 
 @dataclass(frozen=True)
@@ -107,8 +111,8 @@ if Trainer is not None:
 
 
     class _RecipeCheckpointCallback(TrainerCallback):
-        def __init__(self, recipe_hash: str) -> None:
-            self.recipe_hash = recipe_hash
+        def __init__(self, request: Phase3TrainingRequest) -> None:
+            self.request = request
 
         def on_save(self, args, state, control, **kwargs):
             checkpoint = Path(args.output_dir) / f"checkpoint-{state.global_step}"
@@ -116,7 +120,13 @@ if Trainer is not None:
                 checkpoint / "phase3_checkpoint.json",
                 {
                     "schema_version": 1,
-                    "recipe_hash": self.recipe_hash,
+                    "recipe_hash": self.request.recipe.recipe_hash,
+                    "run_fingerprint": self.request.run_fingerprint,
+                    "dataset_fingerprint": self.request.dataset_fingerprint,
+                    "split_manifest_hash": self.request.split_manifest_hash,
+                    "catalog_hash": self.request.catalog_hash,
+                    "seed": self.request.seed,
+                    "view_id": self.request.data_view.view_id,
                     "global_step": int(state.global_step),
                 },
             )
@@ -159,13 +169,10 @@ if Trainer is not None:
                 [1.0 / counts[row.model_id] for row in self.phase3_train_samples],
                 dtype=torch.double,
             )
-            generator = torch.Generator()
-            generator.manual_seed(self.phase3_seed)
-            return WeightedRandomSampler(
-                weights,
+            return _EpochWeightedSampler(
+                weights=weights,
                 num_samples=len(self.phase3_train_samples),
-                replacement=True,
-                generator=generator,
+                seed=self.phase3_seed,
             )
 
         def compute_loss(
@@ -220,6 +227,33 @@ if Trainer is not None:
             trainer_output = {"logits": output.family_logits}
             return (losses.total, trainer_output) if return_outputs else losses.total
 
+
+    class _EpochWeightedSampler(Sampler):
+        """Weighted sampler whose epoch order is reproducible after resume."""
+
+        def __init__(self, *, weights, num_samples: int, seed: int) -> None:
+            self.weights = weights
+            self.num_samples = num_samples
+            self.seed = seed
+            self.epoch = 0
+
+        def __len__(self) -> int:
+            return self.num_samples
+
+        def set_epoch(self, epoch: int) -> None:
+            self.epoch = int(epoch)
+
+        def __iter__(self):
+            generator = torch.Generator()
+            generator.manual_seed(self.seed + self.epoch * 1_000_003)
+            indices = torch.multinomial(
+                self.weights,
+                self.num_samples,
+                replacement=True,
+                generator=generator,
+            )
+            yield from indices.tolist()
+
 else:
 
     class Phase3Trainer:  # pragma: no cover - dependency message only
@@ -229,7 +263,14 @@ else:
 
 def validate_phase3_checkpoint(
     checkpoint: str | Path,
+    *,
     expected_recipe_hash: str,
+    expected_run_fingerprint: str,
+    expected_dataset_fingerprint: str,
+    expected_split_manifest_hash: str,
+    expected_catalog_hash: str,
+    expected_seed: int,
+    expected_view_id: str,
 ) -> Mapping[str, Any]:
     metadata_path = Path(checkpoint) / "phase3_checkpoint.json"
     try:
@@ -241,6 +282,12 @@ def validate_phase3_checkpoint(
     if not isinstance(payload, dict) or set(payload) != {
         "schema_version",
         "recipe_hash",
+        "run_fingerprint",
+        "dataset_fingerprint",
+        "split_manifest_hash",
+        "catalog_hash",
+        "seed",
+        "view_id",
         "global_step",
     }:
         raise ValueError("Phase3 checkpoint metadata has unknown or missing fields")
@@ -248,6 +295,18 @@ def validate_phase3_checkpoint(
         raise ValueError("unsupported Phase3 checkpoint schema_version")
     if payload["recipe_hash"] != expected_recipe_hash:
         raise ValueError("checkpoint recipe hash does not match requested recipe hash")
+    expected_identity = {
+        "run_fingerprint": expected_run_fingerprint,
+        "dataset_fingerprint": expected_dataset_fingerprint,
+        "split_manifest_hash": expected_split_manifest_hash,
+        "catalog_hash": expected_catalog_hash,
+        "seed": expected_seed,
+        "view_id": expected_view_id,
+    }
+    for field, expected in expected_identity.items():
+        if payload[field] != expected:
+            label = field.replace("_", " ")
+            raise ValueError(f"checkpoint {label} does not match requested run")
     if not isinstance(payload["global_step"], int) or payload["global_step"] < 0:
         raise ValueError("checkpoint global_step must be a nonnegative integer")
     return payload
@@ -272,6 +331,18 @@ def validate_phase3_runtime_policy(
     return bool(bf16_requested and cuda_available and bf16_supported)
 
 
+def _validate_training_identity(request: Phase3TrainingRequest) -> None:
+    fields = {
+        "run_fingerprint": request.run_fingerprint,
+        "dataset_fingerprint": request.dataset_fingerprint,
+        "split_manifest_hash": request.split_manifest_hash,
+        "catalog_hash": request.catalog_hash,
+    }
+    for name, value in fields.items():
+        if not isinstance(value, str) or len(value) != 64:
+            raise ValueError(f"Phase3 {name} must be a 64-character hash")
+
+
 def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingResult:
     """Train and publish exactly one recipe × seed × data-view run."""
 
@@ -287,9 +358,17 @@ def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingRes
             raise ValueError("Phase3 seed must be nonnegative")
         if request.max_steps is not None and request.max_steps <= 0:
             raise ValueError("max_steps must be positive when provided")
+        _validate_training_identity(request)
         if request.resume_from_checkpoint is not None:
             validate_phase3_checkpoint(
-                request.resume_from_checkpoint, request.recipe.recipe_hash
+                request.resume_from_checkpoint,
+                expected_recipe_hash=request.recipe.recipe_hash,
+                expected_run_fingerprint=request.run_fingerprint,
+                expected_dataset_fingerprint=request.dataset_fingerprint,
+                expected_split_manifest_hash=request.split_manifest_hash,
+                expected_catalog_hash=request.catalog_hash,
+                expected_seed=request.seed,
+                expected_view_id=request.data_view.view_id,
             )
         if (
             request.recipe.contrastive_weight > 0
@@ -299,7 +378,7 @@ def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingRes
                 "contrastive Phase3 recipes require batch 16 (A3) or batch 4 (A4)"
             )
 
-        cuda_available = bool(torch.cuda.is_available())
+        cuda_available = bool(torch.cuda.is_available() and not request.use_cpu)
         bf16_supported = bool(
             cuda_available
             and hasattr(torch.cuda, "is_bf16_supported")
@@ -325,7 +404,7 @@ def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingRes
         backbone = AutoModel.from_pretrained(source, cache_dir=cache_dir)
         if getattr(backbone.config, "model_type", None) != "xlm-roberta":
             raise ValueError("Phase3 backbone must be an XLM-R-compatible model")
-        if request.gradient_checkpointing:
+        if request.recipe.gradient_checkpointing:
             backbone.gradient_checkpointing_enable()
 
         view = request.data_view
@@ -373,6 +452,7 @@ def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingRes
                 tokenizer,
                 family_labels,
                 model_labels,
+                effective_bf16,
             )
 
         checkpoint_dir = output_dir / "checkpoints"
@@ -383,7 +463,7 @@ def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingRes
             view.model_to_family_id[view.id_to_train_visible_model[index]]
             for index in range(len(view.id_to_train_visible_model))
         )
-        callbacks = [_RecipeCheckpointCallback(request.recipe.recipe_hash)]
+        callbacks = [_RecipeCheckpointCallback(request)]
         if request.max_steps is None and not request.smoke_test:
             callbacks.append(
                 EarlyStoppingCallback(
@@ -511,7 +591,10 @@ def _training_arguments(
     effective_bf16: bool,
 ):
     max_steps = request.max_steps
-    if max_steps is None and request.smoke_test:
+    short_run = request.smoke_test or request.preflight_only or max_steps is not None
+    if request.preflight_only:
+        max_steps = 10
+    elif max_steps is None and request.smoke_test:
         max_steps = 2
     kwargs: dict[str, Any] = {
         "output_dir": str(checkpoint_dir),
@@ -531,9 +614,9 @@ def _training_arguments(
         ),
         "bf16": effective_bf16,
         "logging_steps": 1,
-        "save_strategy": "epoch",
+        "save_strategy": "no" if short_run else "epoch",
         "save_total_limit": request.recipe.save_total_limit,
-        "load_best_model_at_end": True,
+        "load_best_model_at_end": not short_run,
         "metric_for_best_model": "macro_f1",
         "greater_is_better": True,
         "report_to": [],
@@ -552,10 +635,15 @@ def _training_arguments(
     if max_steps is not None:
         kwargs["max_steps"] = max_steps
     signature = inspect.signature(TrainingArguments.__init__).parameters
+    evaluation_strategy = "no" if short_run else "epoch"
     if "eval_strategy" in signature:
-        kwargs["eval_strategy"] = "epoch"
+        kwargs["eval_strategy"] = evaluation_strategy
     else:  # Transformers 4.39 compatibility for existing server environments.
-        kwargs["evaluation_strategy"] = "epoch"
+        kwargs["evaluation_strategy"] = evaluation_strategy
+    if "use_cpu" in signature:
+        kwargs["use_cpu"] = request.use_cpu
+    elif "no_cuda" in signature:
+        kwargs["no_cuda"] = request.use_cpu
     return TrainingArguments(**kwargs)
 
 
@@ -602,12 +690,58 @@ def _run_preflight(
     tokenizer,
     family_labels,
     model_labels,
+    effective_bf16,
 ) -> Phase3TrainingResult:
+    view = request.data_view
+    model_to_family_ids = tuple(
+        view.model_to_family_id[view.id_to_train_visible_model[index]]
+        for index in range(len(view.id_to_train_visible_model))
+    )
+    arguments = _training_arguments(
+        request,
+        request.output_dir / "preflight-trainer",
+        effective_bf16=effective_bf16,
+    )
+    trainer_kwargs: dict[str, Any] = {
+        "model": model,
+        "args": arguments,
+        "train_dataset": dataset,
+        "data_collator": default_data_collator,
+        "callbacks": [],
+        "recipe": request.recipe,
+        "train_samples": view.train_samples,
+        "model_to_family_ids": model_to_family_ids,
+        "seed": request.seed,
+    }
+    if "processing_class" in inspect.signature(Trainer.__init__).parameters:
+        trainer_kwargs["processing_class"] = tokenizer
+    else:
+        trainer_kwargs["tokenizer"] = tokenizer
+    trainer = Phase3Trainer(**trainer_kwargs)
+    if torch.cuda.is_available() and not request.use_cpu:
+        torch.cuda.reset_peak_memory_stats()
+        torch.cuda.synchronize()
+    started = time.perf_counter()
+    trainer.train()
+    if torch.cuda.is_available() and not request.use_cpu:
+        torch.cuda.synchronize()
+    elapsed = time.perf_counter() - started
+    if int(trainer.state.global_step) != 10:
+        raise RuntimeError(
+            "A4 preflight must complete exactly 10 optimizer steps; "
+            f"got {trainer.state.global_step}"
+        )
+    peak_memory = (
+        int(torch.cuda.max_memory_allocated())
+        if torch.cuda.is_available() and not request.use_cpu
+        else 0
+    )
+
     batch_size = min(request.recipe.per_device_train_batch_size, len(dataset))
     if batch_size < 1:
         raise ValueError("Phase3 preflight requires nonempty training data")
     collated = default_data_collator([dataset[index] for index in range(batch_size)])
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = next(model.parameters()).device
     model.to(device).eval()
     model_inputs = {
         key: value.to(device)
@@ -621,6 +755,7 @@ def _run_preflight(
     model_dir = save_phase3_model(model, request.output_dir / "model")
     tokenizer_dir = request.output_dir / "tokenizer"
     tokenizer.save_pretrained(tokenizer_dir)
+    write_resolved_recipe(request.output_dir / "resolved_recipe.json", request.recipe)
     logits = output.family_logits.detach().float().cpu().numpy()
     probabilities = _softmax(logits)
     labels = np.asarray(
@@ -630,6 +765,29 @@ def _run_preflight(
             ]
             for index in range(batch_size)
         ]
+    )
+    _atomic_write_json(
+        request.output_dir / "preflight_metrics.json",
+        {
+            "schema_version": 1,
+            "optimizer_steps": 10,
+            "elapsed_seconds": elapsed,
+            "optimizer_steps_per_second": 10 / max(elapsed, 1e-12),
+            "peak_cuda_memory_bytes": peak_memory,
+            "batch_size": request.recipe.per_device_train_batch_size,
+            "gradient_accumulation_steps": (
+                request.recipe.gradient_accumulation_steps
+            ),
+            "gradient_checkpointing": request.recipe.gradient_checkpointing,
+        },
+    )
+    _atomic_write_json(
+        request.output_dir / "trainer_history.json",
+        [dict(row) for row in trainer.state.log_history],
+    )
+    _atomic_write_json(
+        request.output_dir / "loss_components.json",
+        [dict(row) for row in trainer.phase3_loss_history],
     )
     _atomic_write_json(
         request.output_dir / "COMPLETED.json",
@@ -645,8 +803,8 @@ def _run_preflight(
         validation_logits=logits,
         validation_probabilities=probabilities,
         validation_labels=labels,
-        trainer_history=(),
-        loss_components=(),
+        trainer_history=tuple(dict(row) for row in trainer.state.log_history),
+        loss_components=tuple(dict(row) for row in trainer.phase3_loss_history),
         best_checkpoint=None,
     )
 
