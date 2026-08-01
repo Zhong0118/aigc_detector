@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 from research.text_attribution.training_data import (
     AttributionSample,
@@ -104,6 +104,142 @@ class Phase3DataView:
         """Return the auxiliary label, ignoring concrete models unseen in training."""
 
         return self.train_visible_model_to_id.get(sample.model_id, -100)
+
+
+class Phase3AttributionDataset:
+    """Tokenizer-backed dataset exposing only tensors/labels to the trainer."""
+
+    def __init__(
+        self,
+        *,
+        samples: Sequence[AttributionSample],
+        data_view: Phase3DataView,
+        tokenizer: Any,
+        max_length: int,
+        window_mode: str,
+    ) -> None:
+        self._samples = tuple(samples)
+        self._data_view = data_view
+        self._tokenizer = tokenizer
+        self._max_length = max_length
+        self._window_mode = window_mode
+        group_names = tuple(
+            dict.fromkeys(row.semantic_prompt_group for row in self._samples)
+        )
+        self._group_to_id = {
+            group_name: index for index, group_name in enumerate(group_names)
+        }
+
+        for row in self._samples:
+            if row.family_id not in data_view.family_to_id:
+                raise ValueError(
+                    f"dataset family missing from data view: {row.family_id!r}"
+                )
+
+    def __len__(self) -> int:
+        return len(self._samples)
+
+    def __getitem__(self, index: int) -> dict[str, Any]:
+        sample = self._samples[index]
+        encoded = tokenize_phase3_windows(
+            self._tokenizer,
+            sample.text,
+            max_length=self._max_length,
+            window_mode=self._window_mode,
+        )
+        family_label = self._data_view.family_to_id[sample.family_id]
+        model_label = self._data_view.model_label_for(sample)
+        return {
+            **encoded,
+            "family_labels": family_label,
+            "model_labels": model_label,
+            "contrastive_family_labels": family_label,
+            "contrastive_group_ids": self._group_to_id[
+                sample.semantic_prompt_group
+            ],
+            "contrastive_model_ids": model_label,
+        }
+
+
+def tokenize_phase3_windows(
+    tokenizer: Any,
+    text: str,
+    max_length: int,
+    window_mode: str,
+) -> dict[str, list[list[int]] | list[int]]:
+    """Tokenize one text as a single window or deduplicated head/center/tail.
+
+    Content is tokenized without special tokens, sliced, and then wrapped using the
+    tokenizer's native special-token method.  Inactive A4 windows are all padding
+    with an all-zero attention mask, so no synthetic duplicate reaches the encoder.
+    """
+
+    if window_mode not in {"single", "head-center-tail"}:
+        raise ValueError(
+            "window mode must be exactly 'single' or 'head-center-tail'"
+        )
+    special_count = int(tokenizer.num_special_tokens_to_add(pair=False))
+    content_length = max_length - special_count
+    if content_length < 1:
+        raise ValueError(
+            "max_length must leave room for at least one non-special token"
+        )
+    pad_token_id = tokenizer.pad_token_id
+    if not isinstance(pad_token_id, int):
+        raise ValueError("tokenizer must define an integer pad_token_id")
+
+    raw = tokenizer(text, add_special_tokens=False, truncation=False)
+    if not isinstance(raw, Mapping) or "input_ids" not in raw:
+        raise ValueError("tokenizer must return an input_ids field")
+    token_ids = [int(token_id) for token_id in raw["input_ids"]]
+
+    if window_mode == "single":
+        slices = [token_ids[:content_length]]
+        target_windows = 1
+    else:
+        target_windows = 3
+        maximum_start = max(0, len(token_ids) - content_length)
+        starts = (0, maximum_start // 2, maximum_start)
+        slices = []
+        seen: set[tuple[int, ...]] = set()
+        for start in starts:
+            window = tuple(token_ids[start : start + content_length])
+            if window in seen:
+                continue
+            seen.add(window)
+            slices.append(list(window))
+
+    input_windows: list[list[int]] = []
+    attention_windows: list[list[int]] = []
+    window_mask: list[int] = []
+    for token_slice in slices:
+        wrapped = [
+            int(token_id)
+            for token_id in tokenizer.build_inputs_with_special_tokens(token_slice)
+        ]
+        if len(wrapped) > max_length:
+            raise ValueError(
+                "tokenizer special-token wrapping exceeded configured max_length"
+            )
+        active_length = len(wrapped)
+        input_windows.append(
+            wrapped + [pad_token_id] * (max_length - active_length)
+        )
+        attention_windows.append(
+            [1] * active_length + [0] * (max_length - active_length)
+        )
+        window_mask.append(1)
+
+    while len(input_windows) < target_windows:
+        input_windows.append([pad_token_id] * max_length)
+        attention_windows.append([0] * max_length)
+        window_mask.append(0)
+
+    return {
+        "input_ids": input_windows,
+        "attention_mask": attention_windows,
+        "window_mask": window_mask,
+    }
 
 
 def load_variant_catalog(path: str | Path) -> VariantCatalog:
