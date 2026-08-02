@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 from pathlib import Path
 
@@ -149,3 +150,71 @@ def test_output_directory_must_not_exist(tmp_path) -> None:
 
     with pytest.raises(FileExistsError):
         validate_output_ownership(Path(args.output_dir))
+
+
+def test_contrastive_smoke_preserves_a_valid_structured_batch() -> None:
+    from research.text_attribution.phase3_data import (
+        Phase3DataView,
+        StructuredContrastiveBatchSampler,
+    )
+    from research.text_attribution.training_data import AttributionSample
+    from research.text_attribution.phase3_config import (
+        load_phase3_config,
+        resolve_phase3_recipe,
+    )
+    from scripts.run_family_attribution_phase3 import _smoke_data_view
+
+    rows = []
+    for family_index in range(10):
+        family = f"family-{family_index}"
+        model = f"model-{family_index}"
+        for row_index, group in enumerate(
+            (f"unique-{family}-0", f"unique-{family}-1", "shared-0", "shared-1")
+        ):
+            rows.append(
+                AttributionSample(
+                    request_key=f"{family}-{row_index}",
+                    text="smoke",
+                    family_id=family,
+                    model_id=model,
+                    prompt_id=group,
+                    semantic_prompt_group=group,
+                    language="en",
+                    task_type="qa",
+                    target_length="short",
+                    temperature=0.7,
+                    repeat_index=0,
+                )
+            )
+    families = tuple(f"family-{index}" for index in range(10))
+    models = tuple(f"model-{index}" for index in range(10))
+    view = Phase3DataView(
+        view_id="closed",
+        train_samples=tuple(rows),
+        validation_samples=tuple(rows[:10]),
+        family_to_id={family: index for index, family in enumerate(families)},
+        id_to_family={index: family for index, family in enumerate(families)},
+        train_visible_model_to_id={model: index for index, model in enumerate(models)},
+        id_to_train_visible_model={index: model for index, model in enumerate(models)},
+        model_to_family_id={model: index for index, model in enumerate(models)},
+    )
+    a0 = resolve_phase3_recipe(load_phase3_config(CONFIG_PATH), "A0")
+    a3 = replace(
+        a0,
+        stage_id="A3",
+        recipe_id="A0+A3",
+        contrastive_weight=0.1,
+        recipe_hash="f" * 64,
+    )
+
+    smoke = _smoke_data_view(view, a3, seed=42)
+    batches = list(
+        StructuredContrastiveBatchSampler(
+            smoke.train_samples,
+            batch_size=16,
+            seed=42,
+        )
+    )
+
+    assert len(smoke.train_samples) == 16
+    assert len(batches) == 1

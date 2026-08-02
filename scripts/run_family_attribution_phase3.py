@@ -27,6 +27,7 @@ from research.text_attribution.phase3_config import (
 from research.text_attribution.phase3_data import (
     PHASE3_VIEW_ROLES,
     Phase3DataView,
+    StructuredContrastiveBatchSampler,
     build_phase3_data_view,
     load_variant_catalog,
 )
@@ -183,7 +184,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         test_request_keys=test_request_keys,
     )
     if args.smoke_test:
-        data_view = _smoke_data_view(data_view)
+        data_view = _smoke_data_view(data_view, recipe, seed=args.seed)
     validation_only_audit = _build_validation_only_audit(
         (*splits["train"], *splits["validation"])
     )
@@ -361,7 +362,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-def _smoke_data_view(view: Phase3DataView) -> Phase3DataView:
+def _smoke_data_view(
+    view: Phase3DataView,
+    recipe: ResolvedPhase3Recipe,
+    *,
+    seed: int,
+) -> Phase3DataView:
     def select(samples, per_model: int):
         selected = []
         counts: dict[str, int] = {}
@@ -372,9 +378,19 @@ def _smoke_data_view(view: Phase3DataView) -> Phase3DataView:
                 counts[row.model_id] = count + 1
         return tuple(selected)
 
+    if recipe.contrastive_weight > 0:
+        sampler = StructuredContrastiveBatchSampler(
+            view.train_samples,
+            batch_size=recipe.per_device_train_batch_size,
+            seed=seed,
+        )
+        first_batch = next(iter(sampler))
+        train_samples = tuple(view.train_samples[index] for index in first_batch)
+    else:
+        train_samples = select(view.train_samples, 2)
     return replace(
         view,
-        train_samples=select(view.train_samples, 2),
+        train_samples=train_samples,
         validation_samples=select(view.validation_samples, 1),
     )
 
