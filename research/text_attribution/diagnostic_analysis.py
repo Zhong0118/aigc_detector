@@ -221,6 +221,8 @@ def analyze_complementarity(
     second_correct = second_predicted == truth
     average = (first + second) / 2.0
     average_predicted = np.argmax(average, axis=1)
+    oracle_correct = first_correct | second_correct
+    oracle_predicted = np.where(oracle_correct, truth, first_predicted)
 
     epsilon = 1e-12
     midpoint = (first + second) / 2.0
@@ -257,6 +259,15 @@ def analyze_complementarity(
             int((first_correct & ~second_correct).sum()), int((~second_correct).sum())
         ),
         "oracle_top1_accuracy": float(np.mean(first_correct | second_correct)),
+        "oracle_macro_f1": float(
+            f1_score(
+                truth,
+                oracle_predicted,
+                labels=np.arange(len(labels)),
+                average="macro",
+                zero_division=0,
+            )
+        ),
         "equal_weight_top1_accuracy": float(np.mean(average_predicted == truth)),
         "equal_weight_macro_f1": float(
             f1_score(

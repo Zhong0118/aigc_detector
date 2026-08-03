@@ -107,12 +107,15 @@ def load_model_catalog(path: str | Path) -> tuple[CatalogModel, ...]:
 def load_training_dataset(
     data_path: str | Path,
     catalog_path: str | Path,
+    included_semantic_groups: frozenset[str] | None = None,
 ) -> TrainingDataset:
     """Load cleaned samples, enforcing family labels from the formal catalog."""
 
     catalog = load_model_catalog(catalog_path)
     catalog_by_model = {model.model_id: model for model in catalog}
-    cleaned_samples, clean_audit = load_clean_samples(data_path)
+    cleaned_samples, clean_audit = load_clean_samples(
+        data_path, included_semantic_groups=included_semantic_groups
+    )
 
     samples: list[AttributionSample] = []
     for sample in cleaned_samples:

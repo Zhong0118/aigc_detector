@@ -743,4 +743,4 @@ outputs/attribution/family-phase4/
 
 它复用已有 A4 权重和预测，重算 Accuracy/Precision/Recall/F1/Top-K/校准/子组/CI，按相同冻结 V5 split 训练字符 TF-IDF LR 与显式风格 LR，并通过五折语义组交叉拟合输出 E1 OOF 结果、生产 seed 42 artifact 和是否超过 A4 的直接结论。诊断仍是硬校验和晋级证据，但不再作为需要用户等待的独立里程碑。
 
-Fast Track 不重新训练 A4、不读取 test、不实现 Unknown，也不改变 Phase2/Phase3 文件。只有 E1 的互补性或 oracle 结果证明值得继续，下一实施计划才增加第二神经分支 E2/E3；否则直接进入学习曲线和 V6 数据决策。
+Fast Track 不重新训练 A4、不处理 test 文本或标签、不实现 Unknown，也不改变 Phase2/Phase3 文件。数据加载只读取 prompt_id 来排除 frozen-test 语义组，test 文本不会进入清洗、标准化、训练或指标计算。只有 E1 的互补性或 oracle 结果证明值得继续，下一实施计划才增加第二神经分支 E2/E3；否则直接进入学习曲线和 V6 数据决策。

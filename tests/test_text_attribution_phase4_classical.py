@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+import json
 
 from research.text_attribution.diagnostic_analysis import RunIdentity
 from research.text_attribution.phase3_data import build_phase3_data_view, load_variant_catalog
@@ -94,3 +95,34 @@ def test_existing_output_root_is_rejected(tmp_path: Path) -> None:
         assert "output" in str(exc).lower()
     else:
         raise AssertionError("existing classical output root must be rejected")
+
+
+def test_test_split_text_is_filtered_before_normalization(
+    tmp_path: Path, monkeypatch
+) -> None:
+    request = _request(tmp_path)
+    manifest = json.loads(request.split_manifest_path.read_text(encoding="utf-8"))
+    assignments = manifest["group_assignments"]
+    rows = [json.loads(line) for line in request.data_path.read_text().splitlines()]
+    for row in rows:
+        prompt_id = row["prompt"]["prompt_id"]
+        group = prompt_id.removeprefix("zh-").removeprefix("en-")
+        if assignments[group] == "test":
+            row["text"] = "DO_NOT_NORMALIZE_FROZEN_TEST_TEXT"
+    request.data_path.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    from research.text_attribution import baseline_data
+
+    original = baseline_data.normalize_text
+
+    def guarded(text: str) -> str:
+        if "DO_NOT_NORMALIZE" in text:
+            raise AssertionError("frozen test text reached normalization")
+        return original(text)
+
+    monkeypatch.setattr(baseline_data, "normalize_text", guarded)
+    result = train_aligned_classical_branches(request)
+    assert set(result.runs) == {"B0", "B1"}

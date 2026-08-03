@@ -38,6 +38,8 @@ python -u -m scripts.run_family_attribution_phase4_fast_track \
   --split-manifest "$P3_SPLIT" \
   --a0-root "$P3_ROOT/A0" \
   --a4-root "$P3_ROOT/A4" \
+  --a0-confirmation-root "$P3_ROOT/confirmation/winner" \
+  --a4-confirmation-root "$P3_ROOT/confirmation/comparator" \
   --output-dir "$P4_ROOT/fast-track-v1" \
   --dry-run
 ```
@@ -47,8 +49,9 @@ Preflight must report `test_evaluated=false` and `matrix_cells=24`. If any A0/A4
 ## 4. Run Fast Track in tmux
 
 ```bash
+mkdir -p "$P4_ROOT"
 tmux new-session -d -s attribution-phase4-fast-track \
-  "cd /home/zhongxu/projects/aigc_detector && python -u -m scripts.run_family_attribution_phase4_fast_track --input '$P3_DATA' --catalog configs/text_attribution/zhizengzeng_model_catalog.v5.json --split-manifest '$P3_SPLIT' --a0-root '$P3_ROOT/A0' --a4-root '$P3_ROOT/A4' --output-dir '$P4_ROOT/fast-track-v1' 2>&1 | tee '$P4_ROOT/fast-track-v1.log'"
+  "cd /home/zhongxu/projects/aigc_detector && python -u -m scripts.run_family_attribution_phase4_fast_track --input '$P3_DATA' --catalog configs/text_attribution/zhizengzeng_model_catalog.v5.json --split-manifest '$P3_SPLIT' --a0-root '$P3_ROOT/A0' --a4-root '$P3_ROOT/A4' --a0-confirmation-root '$P3_ROOT/confirmation/winner' --a4-confirmation-root '$P3_ROOT/confirmation/comparator' --output-dir '$P4_ROOT/fast-track-v1' 2>&1 | tee '$P4_ROOT/fast-track-v1.log'"
 ```
 
 Monitor:

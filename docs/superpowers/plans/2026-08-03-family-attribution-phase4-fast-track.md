@@ -59,6 +59,8 @@ python -u -m scripts.run_family_attribution_phase4_fast_track \
   --split-manifest "$P3_SPLIT" \
   --a0-root "$P3_ROOT/A0" \
   --a4-root "$P3_ROOT/A4" \
+  --a0-confirmation-root "$P3_ROOT/confirmation/winner" \
+  --a4-confirmation-root "$P3_ROOT/confirmation/comparator" \
   --output-dir "$P3_ROOT/../family-phase4/fast-track-v1"
 ```
 
@@ -463,7 +465,7 @@ Read `run_config.json`, `resolved_recipe.json`, `label_maps.json`, `metrics.json
 
 - [ ] **Step 4: Implement complementarity calculations**
 
-For branch pair A/B, return counts and rates for `both_correct`, `a_only_correct`, `b_only_correct`, `both_wrong`, label disagreement, mean Jensen-Shannon divergence, A-error correction by B, B-error correction by A, per-family correction, oracle Top-1, and equal-weight Top-1/Macro-F1. Compute Jensen-Shannon with epsilon `1e-12` and natural logarithms.
+For branch pair A/B, return counts and rates for `both_correct`, `a_only_correct`, `b_only_correct`, `both_wrong`, label disagreement, mean Jensen-Shannon divergence, A-error correction by B, B-error correction by A, per-family correction, oracle Top-1/Macro-F1, and equal-weight Top-1/Macro-F1. Compute Jensen-Shannon with epsilon `1e-12` and natural logarithms.
 
 - [ ] **Step 5: Run diagnostic and Phase3 regression tests**
 
@@ -873,12 +875,14 @@ CLI arguments are exactly:
 --split-manifest
 --a0-root
 --a4-root
+--a0-confirmation-root
+--a4-confirmation-root
 --output-dir
 --dry-run
 --bootstrap-resamples
 ```
 
-`--bootstrap-resamples` is allowed only to reduce local fixture/smoke cost and must be recorded; formal output requires the configured 2,000. Discover paths `A0-{view}-seed{seed}` and `A4-{view}-seed{seed}`. Validate the entire matrix before creating staging or fitting B0/B1.
+`--bootstrap-resamples` is allowed only to reduce local fixture/smoke cost and must be recorded; formal output requires the configured 2,000. Discover the first three seeds under the stage roots and confirmation seeds under `confirmation/winner` and `confirmation/comparator`, accepting alternative directory prefixes only after validating the embedded stage/seed/view/recipe identity. Validate the entire matrix before creating staging or fitting B0/B1.
 
 - [ ] **Step 4: Implement one continuous seed/view loop**
 
@@ -1037,6 +1041,8 @@ python -u -m scripts.run_family_attribution_phase4_fast_track \
   --split-manifest "$P3_SPLIT" \
   --a0-root "$P3_ROOT/A0" \
   --a4-root "$P3_ROOT/A4" \
+  --a0-confirmation-root "$P3_ROOT/confirmation/winner" \
+  --a4-confirmation-root "$P3_ROOT/confirmation/comparator" \
   --output-dir "$P3_ROOT/../family-phase4/fast-track-v1" \
   --dry-run
 ```
@@ -1045,7 +1051,7 @@ Formal run inside tmux:
 
 ```bash
 tmux new-session -d -s attribution-phase4-fast-track \
-  "cd /home/zhongxu/projects/aigc_detector && python -u -m scripts.run_family_attribution_phase4_fast_track --input '$P3_DATA' --catalog configs/text_attribution/zhizengzeng_model_catalog.v5.json --split-manifest '$P3_SPLIT' --a0-root '$P3_ROOT/A0' --a4-root '$P3_ROOT/A4' --output-dir '$P3_ROOT/../family-phase4/fast-track-v1' 2>&1 | tee '$P3_ROOT/../family-phase4-fast-track.log'"
+  "cd /home/zhongxu/projects/aigc_detector && python -u -m scripts.run_family_attribution_phase4_fast_track --input '$P3_DATA' --catalog configs/text_attribution/zhizengzeng_model_catalog.v5.json --split-manifest '$P3_SPLIT' --a0-root '$P3_ROOT/A0' --a4-root '$P3_ROOT/A4' --a0-confirmation-root '$P3_ROOT/confirmation/winner' --a4-confirmation-root '$P3_ROOT/confirmation/comparator' --output-dir '$P3_ROOT/../family-phase4/fast-track-v1' 2>&1 | tee '$P3_ROOT/../family-phase4-fast-track.log'"
 ```
 
 Completion check:

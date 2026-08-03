@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass
 import hashlib
 import json
@@ -115,9 +115,10 @@ def assign_group_folds(
         for fold in range(folds):
             projected = fold_counts.copy()
             projected[fold] += counts
+            missing_family_penalty = int(np.sum(projected == 0))
             family_imbalance = int(np.sum(np.ptp(projected, axis=0)))
             candidates.append(
-                (family_imbalance, int(fold_sizes[fold]), fold)
+                (missing_family_penalty, family_imbalance, int(fold_sizes[fold]), fold)
             )
         selected = min(candidates)[-1]
         group_fold[group] = selected

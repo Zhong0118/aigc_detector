@@ -132,3 +132,28 @@ def test_runtime_returns_family_only_for_supported_evidence() -> None:
     assert decision.status == "family_only"
     assert decision.top_families[0] == ("a", 0.9)
     assert decision.prediction_set == ("a",)
+
+
+def test_non_deployable_artifact_always_abstains() -> None:
+    artifact = SelectivePolicyArtifact(
+        schema_version=1,
+        rule_family="confidence-only",
+        family_labels=LABELS,
+        branch_order=("A4", "B0", "B1"),
+        max_probability_min=0.1,
+        margin_min=None,
+        entropy_max=None,
+        js_max=None,
+        disagreement_max=None,
+        min_effective_characters=1,
+        deployment_ready=False,
+        config_hash="config",
+    )
+    evidence = AttributionEvidence(
+        fused_probabilities=(0.99, 0.01),
+        branch_probabilities={name: (0.99, 0.01) for name in artifact.branch_order},
+        effective_character_count=400,
+    )
+    decision = decide_attribution(artifact, evidence)
+    assert decision.status == "abstain"
+    assert "policy_not_deployable" in decision.warnings

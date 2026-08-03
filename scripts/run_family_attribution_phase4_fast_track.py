@@ -4,18 +4,21 @@
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict
-from dataclasses import asdict
+from datetime import datetime, timezone
 import hashlib
 import json
 import math
 import os
 from pathlib import Path
+import platform
 import shutil
+import subprocess
 import tempfile
 from typing import Any, Mapping, Sequence
 
 import numpy as np
+import scipy
+import sklearn
 
 from research.text_attribution.diagnostic_analysis import (
     ExpectedRun,
@@ -50,8 +53,7 @@ from research.text_attribution.selective_policy import (
     SelectiveFitRequest,
     fit_selective_policy,
 )
-from research.text_attribution.split_manifest import apply_split_manifest, load_split_manifest
-from research.text_attribution.training_data import load_training_dataset
+from research.text_attribution.split_manifest import load_split_manifest
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -71,6 +73,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--split-manifest", required=True)
     parser.add_argument("--a0-root", required=True)
     parser.add_argument("--a4-root", required=True)
+    parser.add_argument("--a0-confirmation-root")
+    parser.add_argument("--a4-confirmation-root")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--bootstrap-resamples", type=int)
     parser.add_argument("--dry-run", action="store_true")
@@ -89,12 +93,32 @@ def main(argv: Sequence[str] | None = None) -> int:
         raise ValueError(
             "bootstrap-resamples must be positive and no greater than configured"
         )
+    if (
+        not args.dry_run
+        and args.bootstrap_resamples is not None
+        and bootstrap_resamples != config.bootstrap_resamples
+    ):
+        raise ValueError(
+            "formal Phase4 runs must use the configured bootstrap-resamples"
+        )
     output_dir = Path(args.output_dir).resolve()
     if output_dir.exists():
         raise FileExistsError(f"Phase4 output directory already exists: {output_dir}")
     a0_root = Path(args.a0_root).resolve()
     a4_root = Path(args.a4_root).resolve()
-    matrix = _load_matrix(config, a0_root, a4_root)
+    a0_confirmation_root = Path(
+        args.a0_confirmation_root or a0_root.parent / "confirmation/winner"
+    ).resolve()
+    a4_confirmation_root = Path(
+        args.a4_confirmation_root or a4_root.parent / "confirmation/comparator"
+    ).resolve()
+    matrix = _load_matrix(
+        config,
+        a0_root,
+        a4_root,
+        a0_confirmation_root,
+        a4_confirmation_root,
+    )
     preflight = {
         "schema_version": 1,
         "run_id": config.run_id,
@@ -113,11 +137,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     data_path = Path(args.input).resolve()
     catalog_path = Path(args.catalog).resolve()
     split_path = Path(args.split_manifest).resolve()
-    dataset = load_training_dataset(data_path, catalog_path)
-    manifest = load_split_manifest(split_path)
-    splits = apply_split_manifest(dataset.samples, manifest)
-    test_request_keys = frozenset(row.request_key for row in splits["test"])
-    del dataset, splits
+    load_split_manifest(split_path)
+    test_request_keys: frozenset[str] = frozenset()
 
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(
@@ -146,7 +167,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "test_evaluated": False,
             },
         )
+        _fsync_directory(staging)
         os.replace(staging, output_dir)
+        _fsync_directory(output_dir.parent)
     except Exception as exc:
         _write_json(
             staging / "FAILED.json",
@@ -165,21 +188,74 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _load_matrix(
-    config: Phase4FastTrackConfig, a0_root: Path, a4_root: Path
+    config: Phase4FastTrackConfig,
+    a0_root: Path,
+    a4_root: Path,
+    a0_confirmation_root: Path,
+    a4_confirmation_root: Path,
 ) -> dict[tuple[int, str], tuple[PredictionRun, PredictionRun]]:
     matrix = {}
+    reference: PredictionRun | None = None
     for seed in config.seeds:
         for view in config.views:
-            a0 = load_prediction_run(
-                a0_root / f"A0-{view}-seed{seed}", ExpectedRun("A0", seed, view)
+            a0 = _discover_prediction_run(
+                a0_root,
+                a0_confirmation_root,
+                ExpectedRun("A0", seed, view),
             )
-            a4 = load_prediction_run(
-                a4_root / f"A4-{view}-seed{seed}",
+            a4 = _discover_prediction_run(
+                a4_root,
+                a4_confirmation_root,
                 ExpectedRun("A4", seed, view, config.a4_recipe_hash),
             )
             align_prediction_runs((a0, a4))
+            if reference is None:
+                reference = a0
+            _validate_cross_cell_identity(reference, a0)
+            _validate_cross_cell_identity(reference, a4)
             matrix[(seed, view)] = (a0, a4)
     return matrix
+
+
+def _discover_prediction_run(
+    primary_root: Path,
+    confirmation_root: Path,
+    expected: ExpectedRun,
+) -> PredictionRun:
+    suffix = f"-{expected.view_id}-seed{expected.seed}"
+    candidates = [primary_root / f"{expected.branch_id}{suffix}"]
+    for root in (primary_root, confirmation_root):
+        if root.is_dir():
+            candidates.extend(path for path in root.glob(f"*{suffix}") if path.is_dir())
+    unique = tuple(dict.fromkeys(path.resolve() for path in candidates))
+    valid = []
+    failures = []
+    for candidate in unique:
+        try:
+            valid.append(load_prediction_run(candidate, expected))
+        except (FileNotFoundError, ValueError) as exc:
+            failures.append(f"{candidate}: {exc}")
+    if len(valid) != 1:
+        detail = "; ".join(failures[:3])
+        raise ValueError(
+            f"expected exactly one valid {expected.branch_id} run for "
+            f"{expected.view_id}-seed{expected.seed}, found {len(valid)}; {detail}"
+        )
+    return valid[0]
+
+
+def _validate_cross_cell_identity(
+    reference: PredictionRun, candidate: PredictionRun
+) -> None:
+    left = reference.identity
+    right = candidate.identity
+    if (
+        left.dataset_fingerprint != right.dataset_fingerprint
+        or left.split_manifest_hash != right.split_manifest_hash
+        or left.catalog_hash != right.catalog_hash
+        or reference.family_labels != candidate.family_labels
+    ):
+        raise ValueError("cross-cell dataset, split, catalog, or family-label mismatch")
 
 
 def _run_fast_track(
@@ -218,10 +294,17 @@ def _run_fast_track(
     complementarity_cells = []
     production = None
     config_hash = canonical_config_hash(config)
+    total_cells = len(config.seeds) * len(config.views)
+    cell_index = 0
 
     for seed in config.seeds:
         for view in config.views:
+            cell_index += 1
             cell = f"{view}-seed{seed}"
+            print(
+                f"Starting Phase4 cell {cell_index}/{total_cells}: {cell}",
+                flush=True,
+            )
             a0, a4 = matrix[(seed, view)]
             expected_keys = tuple(sorted(row.request_key for row in a4.records))
             classical = train_aligned_classical_branches(
@@ -250,7 +333,14 @@ def _run_fast_track(
                 for left, right in (("A4", "B0"), ("A4", "B1"), ("B0", "B1"))
             }
             complementarity_cells.append(
-                {"seed": seed, "view": view, "pairs": complementarity}
+                {
+                    "seed": seed,
+                    "view": view,
+                    "a4_macro_f1": evaluate_phase4_predictions(
+                        a4.records, a4.family_labels
+                    )["overall"]["macro_f1"],
+                    "pairs": complementarity,
+                }
             )
             diagnostic_dir = staging / "diagnostics" / cell
             diagnostic_dir.mkdir()
@@ -316,7 +406,11 @@ def _run_fast_track(
                 selective_dir / "policy.json", policy.final_artifact.to_dict()
             )
             if seed == config.production_seed and view == "closed":
-                production = (fusion, policy, classical, a4)
+                production = (fusion, policy, classical, a4, b0, b1)
+            print(
+                f"Completed Phase4 cell {cell_index}/{total_cells}: {cell}",
+                flush=True,
+            )
 
     if production is None:
         raise RuntimeError("production seed closed-view artifact was not generated")
@@ -324,13 +418,13 @@ def _run_fast_track(
     labels = production[3].family_labels
     for system in ("A0", "A4", "E1"):
         systems[system] = {}
-        for offset, view in enumerate(config.views):
+        for view in config.views:
             systems[system][view] = aggregate_system(
                 metrics_by_system_view[system][view],
                 records_by_system_view[system][view],
                 labels,
                 bootstrap_resamples=bootstrap_resamples,
-                bootstrap_seed=config.bootstrap_seed + offset,
+                bootstrap_seed=config.bootstrap_seed,
             )
     selective_metrics = evaluate_selective_predictions(
         tuple(selective_closed_records),
@@ -353,8 +447,12 @@ def _run_fast_track(
         "worst_family_guardrail": systems["E1"]["closed"]["worst_family_f1"]["mean"]
         >= systems["A4"]["closed"]["worst_family_f1"]["mean"],
     }
-    zero_recall = any(
-        row["eligible_support"] > 0 and row["accepted_recall"] == 0.0
+    family_collapse = any(
+        row["eligible_support"] > 0
+        and (
+            row["accepted_recall"] in {None, 0.0}
+            or row["accepted_precision"] in {None, 0.0}
+        )
         for row in selective_metrics["per_family"].values()
     )
     selective_ready = bool(
@@ -363,10 +461,10 @@ def _run_fast_track(
         and selective_metrics["coverage"] >= config.coverage_min
         and selective_metrics["ece"] is not None
         and selective_metrics["ece"] <= config.ece_max
-        and not zero_recall
+        and not family_collapse
     )
     e1_promoted = all(gates.values())
-    oracle_gain = _mean_oracle_gain(complementarity_cells, systems)
+    oracle_gain = _mean_oracle_gain(complementarity_cells)
     if e1_promoted and selective_ready:
         next_action = "冻结 E1 Fast Track，并补推理 API 与多文本聚合。"
     elif e1_promoted:
@@ -376,7 +474,7 @@ def _run_fast_track(
     else:
         next_action = "停止堆融合，进入学习曲线与 V6 扩数。"
 
-    fusion, policy, classical, a4 = production
+    fusion, policy, classical, a4, b0, b1 = production
     artifacts = staging / "artifacts"
     _write_json(artifacts / "seed42-fusion.json", fusion.final_artifact.to_dict())
     _write_json(
@@ -386,27 +484,71 @@ def _run_fast_track(
             "temperatures": dict(fusion.final_artifact.temperatures),
         },
     )
-    _write_json(
-        artifacts / "seed42-selective-policy.json", policy.final_artifact.to_dict()
+    deployed_policy = policy.final_artifact.to_dict()
+    deployed_policy["deployment_ready"] = bool(
+        deployed_policy["deployment_ready"] and selective_ready
     )
+    _write_json(artifacts / "seed42-selective-policy.json", deployed_policy)
     model_hashes = {
         branch: _sha256_file(run.run_dir / "model.joblib")
         for branch, run in classical.runs.items()
     }
     _write_json(
+        artifacts / "phase4_parent_decision.json",
+        {
+            "schema_version": 1,
+            "stage_id": "E0",
+            "recipe_id": "A0+A4",
+            "role": "post_selection_confirmation_nominee",
+            "source": "Phase3 eight-seed validation-only confirmation",
+            "recipe_hash": config.a4_recipe_hash,
+            "test_evaluated": False,
+        },
+    )
+    _write_json(
         artifacts / "artifact_manifest.json",
         {
             "schema_version": 1,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "source_commit": _source_commit(),
             "production_seed": config.production_seed,
             "view_id": "closed",
             "config_hash": config_hash,
+            "family_labels": list(a4.family_labels),
             "dataset_fingerprint": a4.identity.dataset_fingerprint,
             "split_manifest_hash": a4.identity.split_manifest_hash,
             "catalog_hash": a4.identity.catalog_hash,
             "a4_run_fingerprint": a4.identity.run_fingerprint,
+            "recipe_hashes": {
+                "A4": a4.identity.recipe_hash,
+                "B0": b0.identity.recipe_hash,
+                "B1": b1.identity.recipe_hash,
+            },
             "classical_model_hashes": model_hashes,
             "fusion_hash": _canonical_hash(fusion.final_artifact.to_dict()),
-            "policy_hash": _canonical_hash(policy.final_artifact.to_dict()),
+            "policy_hash": _canonical_hash(deployed_policy),
+            "calibration_request_keys_hash": (
+                fusion.final_artifact.fit_request_keys_hash
+            ),
+            "cross_fit": {
+                "folds": config.cross_fit_folds,
+                "fold_seed": config.fold_seed,
+                "bootstrap_resamples": bootstrap_resamples,
+                "bootstrap_seed": config.bootstrap_seed,
+                "weight_step": config.weight_step,
+            },
+            "selection_thresholds": {
+                "accepted_precision_min": config.accepted_precision_min,
+                "coverage_min": config.coverage_min,
+                "ece_max": config.ece_max,
+            },
+            "selective_metrics": selective_metrics,
+            "runtime_versions": {
+                "python": platform.python_version(),
+                "numpy": np.__version__,
+                "scipy": scipy.__version__,
+                "scikit_learn": sklearn.__version__,
+            },
             "test_evaluated": False,
         },
     )
@@ -424,7 +566,7 @@ def _run_fast_track(
         },
         "complementarity": {
             "cell_count": len(complementarity_cells),
-            "a4_b0_oracle_gain_mean": oracle_gain,
+            "a4_b0_closed_oracle_macro_f1_gain_mean": oracle_gain,
         },
         "selective": selective_metrics,
         "decision": {
@@ -437,15 +579,13 @@ def _run_fast_track(
     }
 
 
-def _mean_oracle_gain(
-    cells: Sequence[Mapping[str, Any]], systems: Mapping[str, Any]
-) -> float:
-    oracle = [cell["pairs"]["A4-B0"]["oracle_top1_accuracy"] for cell in cells]
-    a4_accuracy = [
-        systems["A4"][view]["accuracy"]["mean"]
-        for view in ("closed", "fast-to-balanced", "balanced-to-fast")
+def _mean_oracle_gain(cells: Sequence[Mapping[str, Any]]) -> float:
+    gains = [
+        cell["pairs"]["A4-B0"]["oracle_macro_f1"] - cell["a4_macro_f1"]
+        for cell in cells
+        if cell["view"] == "closed"
     ]
-    return float(np.mean(oracle) - np.mean(a4_accuracy))
+    return float(np.mean(gains))
 
 
 def _write_predictions(path: Path, records: Sequence[Any]) -> None:
@@ -459,11 +599,36 @@ def _write_predictions(path: Path, records: Sequence[Any]) -> None:
 
 
 def _write_json(path: Path, payload: Any) -> None:
-    path.write_text(
+    encoded = (
         json.dumps(_json_safe(payload), ensure_ascii=False, indent=2, sort_keys=True)
-        + "\n",
-        encoding="utf-8",
+        + "\n"
     )
+    with path.open("w", encoding="utf-8") as handle:
+        handle.write(encoded)
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _source_commit() -> str:
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=PROJECT_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    commit = result.stdout.strip()
+    if len(commit) != 40:
+        raise ValueError("source commit must be a full Git SHA")
+    return commit
 
 
 def _json_safe(value: Any) -> Any:

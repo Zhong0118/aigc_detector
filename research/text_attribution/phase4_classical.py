@@ -25,7 +25,7 @@ from research.text_attribution.phase3_data import (
     load_variant_catalog,
 )
 from research.text_attribution.phase4_metrics import evaluate_phase4_predictions
-from research.text_attribution.split_manifest import apply_split_manifest, load_split_manifest
+from research.text_attribution.split_manifest import load_split_manifest
 from research.text_attribution.training_data import load_training_dataset
 
 
@@ -69,7 +69,6 @@ def train_aligned_classical_branches(
     if request.view_id != request.expected_identity.view_id:
         raise ValueError("classical view must match expected A4 identity")
 
-    dataset = load_training_dataset(request.data_path, request.catalog_path)
     manifest = load_split_manifest(request.split_manifest_path)
     if manifest.dataset_fingerprint != request.expected_identity.dataset_fingerprint:
         raise ValueError("classical dataset fingerprint does not match A4")
@@ -78,10 +77,27 @@ def train_aligned_classical_branches(
     if _sha256_file(request.catalog_path) != request.expected_identity.catalog_hash:
         raise ValueError("classical catalog hash does not match A4")
 
-    splits = apply_split_manifest(dataset.samples, manifest)
-    actual_test_keys = frozenset(row.request_key for row in splits["test"])
-    if actual_test_keys != request.test_request_keys:
-        raise ValueError("test request-key contract mismatch")
+    included_groups = frozenset(
+        group
+        for group, split_name in manifest.group_assignments.items()
+        if split_name in {"train", "validation"}
+    )
+    dataset = load_training_dataset(
+        request.data_path,
+        request.catalog_path,
+        included_semantic_groups=included_groups,
+    )
+    splits = {
+        split_name: tuple(
+            sample
+            for sample in dataset.samples
+            if manifest.group_assignments.get(sample.semantic_prompt_group) == split_name
+        )
+        for split_name in ("train", "validation")
+    }
+    present_groups = {sample.semantic_prompt_group for sample in dataset.samples}
+    if present_groups != set(included_groups):
+        raise ValueError("train/validation groups do not match frozen split manifest")
     view = build_phase3_data_view(
         splits,
         load_variant_catalog(request.catalog_path),

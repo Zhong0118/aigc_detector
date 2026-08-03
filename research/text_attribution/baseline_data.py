@@ -51,6 +51,7 @@ def normalize_text(text: str) -> str:
 
 def load_clean_samples(
     path: str | Path,
+    included_semantic_groups: frozenset[str] | None = None,
 ) -> tuple[list[BaselineSample], dict[str, Any]]:
     """Load JSONL and apply deterministic attribution-quality filters.
 
@@ -59,12 +60,23 @@ def load_clean_samples(
     """
 
     input_path = Path(path)
-    rows = list(_read_jsonl(input_path))
     excluded: Counter[str] = Counter()
     samples: list[BaselineSample] = []
     seen: set[tuple[str, str, float, str]] = set()
+    raw_records = 0
 
-    for row in rows:
+    for row in _read_jsonl(input_path):
+        raw_records += 1
+        if included_semantic_groups is not None:
+            prompt = row.get("prompt")
+            prompt_id = (
+                str(prompt.get("prompt_id", "")).strip()
+                if isinstance(prompt, dict)
+                else ""
+            )
+            if semantic_prompt_group(prompt_id) not in included_semantic_groups:
+                excluded["outside_requested_groups"] += 1
+                continue
         text = str(row.get("text", "")).strip()
         if not text:
             excluded["empty_text"] += 1
@@ -137,9 +149,9 @@ def load_clean_samples(
 
     audit: dict[str, Any] = {
         "input_path": str(input_path),
-        "raw_records": len(rows),
+        "raw_records": raw_records,
         "kept_records": len(samples),
-        "excluded_records": len(rows) - len(samples),
+        "excluded_records": raw_records - len(samples),
         "excluded_by_reason": dict(sorted(excluded.items())),
         "counts_by_label": _sample_counts(samples, "label"),
         "counts_by_language": _sample_counts(samples, "language"),

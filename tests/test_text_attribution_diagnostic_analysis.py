@@ -158,3 +158,4 @@ def test_complementarity_counts_corrections_and_oracle(tmp_path: Path) -> None:
     assert result["b_only_correct"] == 1
     assert result["both_wrong"] == 1
     assert result["oracle_top1_accuracy"] == 0.75
+    assert 0.0 <= result["oracle_macro_f1"] <= 1.0

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import shutil
 
 from research.text_attribution.attribution_metrics import build_prediction_records
 from research.text_attribution.phase3_data import build_phase3_data_view, load_variant_catalog
@@ -139,7 +140,9 @@ def test_dry_run_discovers_matrix_without_creating_output(
     assert '"test_evaluated": false' in capsys.readouterr().out
 
 
-def test_end_to_end_writes_direct_model_result_and_artifacts(tmp_path: Path) -> None:
+def test_end_to_end_writes_direct_model_result_and_artifacts(
+    tmp_path: Path, capsys
+) -> None:
     paths = _fixture(tmp_path)
     output = tmp_path / "result"
     assert main(_args(paths, output)) == 0
@@ -153,6 +156,15 @@ def test_end_to_end_writes_direct_model_result_and_artifacts(tmp_path: Path) -> 
     assert (output / "artifacts/seed42-selective-policy.json").is_file()
     assert (output / "phase4_fast_track_report.md").is_file()
     assert json.loads((output / "COMPLETED.json").read_text())["status"] == "complete"
+    manifest = json.loads(
+        (output / "artifacts/artifact_manifest.json").read_text(encoding="utf-8")
+    )
+    assert len(manifest["source_commit"]) == 40
+    assert manifest["family_labels"]
+    assert manifest["cross_fit"]["fold_seed"] == 20260803
+    console = capsys.readouterr().out
+    assert "Starting Phase4 cell 1/3" in console
+    assert "Completed Phase4 cell 3/3" in console
 
 
 def test_existing_output_directory_is_rejected(tmp_path: Path) -> None:
@@ -165,3 +177,68 @@ def test_existing_output_directory_is_rejected(tmp_path: Path) -> None:
         assert "output" in str(exc).lower()
     else:
         raise AssertionError("existing output directory must be rejected")
+
+
+def test_confirmation_seed_roots_are_discovered_by_validated_identity(
+    tmp_path: Path,
+) -> None:
+    paths = _fixture(tmp_path)
+    payload = json.loads(paths["config"].read_text(encoding="utf-8"))
+    payload["seeds"] = [42, 12]
+    _write_json(paths["config"], payload)
+    a0_confirmation = tmp_path / "confirmation" / "winner"
+    a4_confirmation = tmp_path / "confirmation" / "comparator"
+    for view in VIEWS:
+        for branch, source_root, target_root, prefix in (
+            ("A0", paths["a0"], a0_confirmation, "promoted_recipe"),
+            ("A4", paths["a4"], a4_confirmation, "resolved_recipe"),
+        ):
+            source = source_root / f"{branch}-{view}-seed42"
+            target = target_root / f"{prefix}-{view}-seed12"
+            shutil.copytree(source, target)
+            run_config = json.loads((target / "run_config.json").read_text())
+            run_config["training_seed"] = 12
+            run_config["run_fingerprint"] = f"{branch}-{view}-12"
+            _write_json(target / "run_config.json", run_config)
+    args = _args(paths, tmp_path / "result")
+    args.extend(
+        [
+            "--a0-confirmation-root",
+            str(a0_confirmation),
+            "--a4-confirmation-root",
+            str(a4_confirmation),
+            "--dry-run",
+        ]
+    )
+    assert main(args) == 0
+
+
+def test_cross_cell_identity_mismatch_is_rejected_before_training(tmp_path: Path) -> None:
+    paths = _fixture(tmp_path)
+    for branch, root in (("A0", paths["a0"]), ("A4", paths["a4"])):
+        config_path = root / f"{branch}-fast-to-balanced-seed42/run_config.json"
+        payload = json.loads(config_path.read_text())
+        payload["split_dataset_fingerprint"] = "different-dataset"
+        _write_json(config_path, payload)
+    try:
+        main([*_args(paths, tmp_path / "result"), "--dry-run"])
+    except ValueError as exc:
+        assert "cross-cell" in str(exc)
+    else:
+        raise AssertionError("cross-cell identity mismatch must fail")
+
+
+def test_formal_run_rejects_reduced_bootstrap_override(tmp_path: Path) -> None:
+    paths = _fixture(tmp_path)
+    payload = json.loads(paths["config"].read_text(encoding="utf-8"))
+    payload["bootstrap_resamples"] = 2000
+    _write_json(paths["config"], payload)
+    args = _args(paths, tmp_path / "result")
+    bootstrap_index = args.index("--bootstrap-resamples") + 1
+    args[bootstrap_index] = "20"
+    try:
+        main(args)
+    except ValueError as exc:
+        assert "formal" in str(exc).lower()
+    else:
+        raise AssertionError("formal bootstrap override must be rejected")

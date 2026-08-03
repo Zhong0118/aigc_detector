@@ -140,6 +140,8 @@ def decide_attribution(
 ) -> AttributionDecision:
     """Return a calibrated family set or abstain; Phase4 never returns unknown."""
 
+    if not artifact.deployment_ready:
+        return _abstain("policy_not_deployable")
     try:
         fused = np.asarray([evidence.fused_probabilities], dtype=float)
         branches = {
