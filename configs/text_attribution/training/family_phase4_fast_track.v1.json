@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "run_id": "family-attribution-phase4-fast-track-v1",
+  "a4_recipe_hash": "1d4b21b8e2bb1477d4872049805cf6d1ca8e037ec52e2a538f851eb335dd71f2",
+  "seeds": [42, 52, 62, 12, 22, 32, 72, 82],
+  "views": ["closed", "fast-to-balanced", "balanced-to-fast"],
+  "production_seed": 42,
+  "branches": ["A4", "B0", "B1"],
+  "cross_fit_folds": 5,
+  "fold_seed": 20260803,
+  "bootstrap_resamples": 2000,
+  "bootstrap_seed": 20260803,
+  "ece_bins": 10,
+  "weight_step": 0.05,
+  "max_single_branch_macro_f1_drop": 0.005,
+  "e1_closed_macro_f1_min_gain": 0.01,
+  "holdout_max_drop": 0.01,
+  "accepted_precision_min": 0.9,
+  "coverage_min": 0.4,
+  "ece_max": 0.05
+}
