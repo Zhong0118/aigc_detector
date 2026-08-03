@@ -54,6 +54,9 @@ Thumbs.db
 # Local code index
 .codegraph/
 
+# Local Git worktrees
+.worktrees/
+
 # Environment variables
 .env
 .env.local
