@@ -10,6 +10,7 @@ from research.text_attribution.phase4_classical import (
     ClassicalBranchRequest,
     train_aligned_classical_branches,
 )
+from research.text_attribution import phase4_classical
 from research.text_attribution.split_manifest import (
     apply_split_manifest,
     create_split_manifest,
@@ -86,6 +87,28 @@ def test_nonproduction_seed_discards_models_but_keeps_predictions(tmp_path: Path
         assert (run.run_dir / "predictions.jsonl").is_file()
 
 
+def test_full_dataset_identity_is_loaded_only_once_per_process(
+    tmp_path: Path, monkeypatch
+) -> None:
+    first = _request(tmp_path)
+    second = ClassicalBranchRequest(
+        **{**first.__dict__, "output_root": tmp_path / "classical-second"}
+    )
+    phase4_classical._load_verified_splits.cache_clear()
+    original = phase4_classical.load_training_dataset
+    calls = 0
+
+    def counted(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(phase4_classical, "load_training_dataset", counted)
+    train_aligned_classical_branches(first)
+    train_aligned_classical_branches(second)
+    assert calls == 1
+
+
 def test_existing_output_root_is_rejected(tmp_path: Path) -> None:
     request = _request(tmp_path)
     request.output_root.mkdir(parents=True)
@@ -97,9 +120,7 @@ def test_existing_output_root_is_rejected(tmp_path: Path) -> None:
         raise AssertionError("existing classical output root must be rejected")
 
 
-def test_test_split_text_is_filtered_before_normalization(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_frozen_test_text_tampering_breaks_dataset_fingerprint(tmp_path: Path) -> None:
     request = _request(tmp_path)
     manifest = json.loads(request.split_manifest_path.read_text(encoding="utf-8"))
     assignments = manifest["group_assignments"]
@@ -114,15 +135,9 @@ def test_test_split_text_is_filtered_before_normalization(
         encoding="utf-8",
     )
 
-    from research.text_attribution import baseline_data
-
-    original = baseline_data.normalize_text
-
-    def guarded(text: str) -> str:
-        if "DO_NOT_NORMALIZE" in text:
-            raise AssertionError("frozen test text reached normalization")
-        return original(text)
-
-    monkeypatch.setattr(baseline_data, "normalize_text", guarded)
-    result = train_aligned_classical_branches(request)
-    assert set(result.runs) == {"B0", "B1"}
+    try:
+        train_aligned_classical_branches(request)
+    except ValueError as exc:
+        assert "fingerprint" in str(exc).lower()
+    else:
+        raise AssertionError("tampered frozen data must fail identity verification")

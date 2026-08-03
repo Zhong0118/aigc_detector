@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 import hashlib
 import json
 import os
@@ -25,8 +26,8 @@ from research.text_attribution.phase3_data import (
     load_variant_catalog,
 )
 from research.text_attribution.phase4_metrics import evaluate_phase4_predictions
-from research.text_attribution.split_manifest import load_split_manifest
-from research.text_attribution.training_data import load_training_dataset
+from research.text_attribution.split_manifest import apply_split_manifest, load_split_manifest
+from research.text_attribution.training_data import AttributionSample, load_training_dataset
 
 
 @dataclass(frozen=True)
@@ -77,32 +78,22 @@ def train_aligned_classical_branches(
     if _sha256_file(request.catalog_path) != request.expected_identity.catalog_hash:
         raise ValueError("classical catalog hash does not match A4")
 
-    included_groups = frozenset(
-        group
-        for group, split_name in manifest.group_assignments.items()
-        if split_name in {"train", "validation"}
+    data_stat = request.data_path.stat()
+    train_samples, validation_samples, actual_test_keys = _load_verified_splits(
+        str(request.data_path.resolve()),
+        str(request.catalog_path.resolve()),
+        str(request.split_manifest_path.resolve()),
+        data_stat.st_size,
+        data_stat.st_mtime_ns,
     )
-    dataset = load_training_dataset(
-        request.data_path,
-        request.catalog_path,
-        included_semantic_groups=included_groups,
-    )
-    splits = {
-        split_name: tuple(
-            sample
-            for sample in dataset.samples
-            if manifest.group_assignments.get(sample.semantic_prompt_group) == split_name
-        )
-        for split_name in ("train", "validation")
-    }
-    present_groups = {sample.semantic_prompt_group for sample in dataset.samples}
-    if present_groups != set(included_groups):
-        raise ValueError("train/validation groups do not match frozen split manifest")
+    if request.test_request_keys and actual_test_keys != request.test_request_keys:
+        raise ValueError("test request-key contract mismatch")
+    splits = {"train": train_samples, "validation": validation_samples}
     view = build_phase3_data_view(
         splits,
         load_variant_catalog(request.catalog_path),
         request.view_id,
-        test_request_keys=request.test_request_keys,
+        test_request_keys=actual_test_keys,
     )
     validation_keys = tuple(sorted(row.request_key for row in view.validation_samples))
     if validation_keys != request.expected_validation_keys:
@@ -215,6 +206,31 @@ def _write_predictions(path: Path, records: tuple[Any, ...]) -> None:
             for row in records
         ),
         encoding="utf-8",
+    )
+
+
+@lru_cache(maxsize=4)
+def _load_verified_splits(
+    data_path: str,
+    catalog_path: str,
+    split_manifest_path: str,
+    data_size: int,
+    data_mtime_ns: int,
+) -> tuple[
+    tuple[AttributionSample, ...],
+    tuple[AttributionSample, ...],
+    frozenset[str],
+]:
+    """Verify the full frozen dataset once, then retain no frozen-test text."""
+
+    del data_size, data_mtime_ns
+    dataset = load_training_dataset(data_path, catalog_path)
+    manifest = load_split_manifest(split_manifest_path)
+    splits = apply_split_manifest(dataset.samples, manifest)
+    return (
+        splits["train"],
+        splits["validation"],
+        frozenset(row.request_key for row in splits["test"]),
     )
 
 

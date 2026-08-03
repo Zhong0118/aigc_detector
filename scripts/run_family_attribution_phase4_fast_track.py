@@ -61,6 +61,17 @@ DEFAULT_CONFIG = (
     PROJECT_ROOT
     / "configs/text_attribution/training/family_phase4_fast_track.v1.json"
 )
+_PROVENANCE_FILES = (
+    "configs/text_attribution/training/family_phase4_fast_track.v1.json",
+    "research/text_attribution/baseline_data.py",
+    "research/text_attribution/diagnostic_analysis.py",
+    "research/text_attribution/phase4_classical.py",
+    "research/text_attribution/phase4_config.py",
+    "research/text_attribution/phase4_metrics.py",
+    "research/text_attribution/probability_fusion.py",
+    "research/text_attribution/selective_policy.py",
+    "scripts/run_family_attribution_phase4_fast_track.py",
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -144,6 +155,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     staging = Path(
         tempfile.mkdtemp(prefix=f".{output_dir.name}.run-", dir=output_dir.parent)
     )
+    published = False
     try:
         summary = _run_fast_track(
             config=config,
@@ -167,19 +179,27 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "test_evaluated": False,
             },
         )
-        _fsync_directory(staging)
+        _fsync_tree(staging)
         os.replace(staging, output_dir)
+        published = True
         _fsync_directory(output_dir.parent)
     except Exception as exc:
-        _write_json(
-            staging / "FAILED.json",
-            {
-                "schema_version": 1,
-                "status": "failed",
-                "error_type": type(exc).__name__,
-                "error": str(exc),
-            },
-        )
+        failure_root = output_dir if published else staging
+        try:
+            completed = failure_root / "COMPLETED.json"
+            if published and completed.exists():
+                completed.unlink()
+            _write_json(
+                failure_root / "FAILED.json",
+                {
+                    "schema_version": 1,
+                    "status": "failed",
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                },
+            )
+        except OSError:
+            pass
         raise
     finally:
         if staging.exists() and (staging / "FAILED.json").exists() is False:
@@ -196,6 +216,7 @@ def _load_matrix(
 ) -> dict[tuple[int, str], tuple[PredictionRun, PredictionRun]]:
     matrix = {}
     reference: PredictionRun | None = None
+    recipe_hashes: dict[str, str] = {}
     for seed in config.seeds:
         for view in config.views:
             a0 = _discover_prediction_run(
@@ -213,6 +234,14 @@ def _load_matrix(
                 reference = a0
             _validate_cross_cell_identity(reference, a0)
             _validate_cross_cell_identity(reference, a4)
+            for run in (a0, a4):
+                previous = recipe_hashes.setdefault(
+                    run.identity.branch_id, run.identity.recipe_hash
+                )
+                if previous != run.identity.recipe_hash:
+                    raise ValueError(
+                        f"cross-cell {run.identity.branch_id} recipe hash mismatch"
+                    )
             matrix[(seed, view)] = (a0, a4)
     return matrix
 
@@ -464,8 +493,9 @@ def _run_fast_track(
         and not family_collapse
     )
     e1_promoted = all(gates.values())
+    deployment_ready = bool(e1_promoted and selective_ready)
     oracle_gain = _mean_oracle_gain(complementarity_cells)
-    if e1_promoted and selective_ready:
+    if deployment_ready:
         next_action = "冻结 E1 Fast Track，并补推理 API 与多文本聚合。"
     elif e1_promoted:
         next_action = "保留 E1 研究模型，补充 calibration/OOD 数据后再部署。"
@@ -486,7 +516,7 @@ def _run_fast_track(
     )
     deployed_policy = policy.final_artifact.to_dict()
     deployed_policy["deployment_ready"] = bool(
-        deployed_policy["deployment_ready"] and selective_ready
+        deployed_policy["deployment_ready"] and deployment_ready
     )
     _write_json(artifacts / "seed42-selective-policy.json", deployed_policy)
     model_hashes = {
@@ -511,6 +541,8 @@ def _run_fast_track(
             "schema_version": 1,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "source_commit": _source_commit(),
+            "source_tree_dirty": _source_tree_dirty(),
+            "source_file_hashes": _source_file_hashes(),
             "production_seed": config.production_seed,
             "view_id": "closed",
             "config_hash": config_hash,
@@ -566,13 +598,13 @@ def _run_fast_track(
         },
         "complementarity": {
             "cell_count": len(complementarity_cells),
-            "a4_b0_closed_oracle_macro_f1_gain_mean": oracle_gain,
+            "a4_best_branch_closed_oracle_macro_f1_gain_mean": oracle_gain,
         },
         "selective": selective_metrics,
         "decision": {
             "evidence_valid": True,
             "e1_promoted": e1_promoted,
-            "selective_deployment_ready": selective_ready,
+            "selective_deployment_ready": deployment_ready,
             "gates": gates,
             "next_action": next_action,
         },
@@ -581,7 +613,11 @@ def _run_fast_track(
 
 def _mean_oracle_gain(cells: Sequence[Mapping[str, Any]]) -> float:
     gains = [
-        cell["pairs"]["A4-B0"]["oracle_macro_f1"] - cell["a4_macro_f1"]
+        max(
+            cell["pairs"]["A4-B0"]["oracle_macro_f1"],
+            cell["pairs"]["A4-B1"]["oracle_macro_f1"],
+        )
+        - cell["a4_macro_f1"]
         for cell in cells
         if cell["view"] == "closed"
     ]
@@ -617,6 +653,23 @@ def _fsync_directory(path: Path) -> None:
         os.close(descriptor)
 
 
+def _fsync_tree(root: Path) -> None:
+    for path in sorted(root.rglob("*")):
+        if path.is_file():
+            descriptor = os.open(path, os.O_RDONLY)
+            try:
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+    for path in sorted(
+        (candidate for candidate in root.rglob("*") if candidate.is_dir()),
+        key=lambda candidate: len(candidate.parts),
+        reverse=True,
+    ):
+        _fsync_directory(path)
+    _fsync_directory(root)
+
+
 def _source_commit() -> str:
     result = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -629,6 +682,24 @@ def _source_commit() -> str:
     if len(commit) != 40:
         raise ValueError("source commit must be a full Git SHA")
     return commit
+
+
+def _source_tree_dirty() -> bool:
+    result = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=PROJECT_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return bool(result.stdout.strip())
+
+
+def _source_file_hashes() -> dict[str, str]:
+    return {
+        relative: _sha256_file(PROJECT_ROOT / relative)
+        for relative in _PROVENANCE_FILES
+    }
 
 
 def _json_safe(value: Any) -> Any:

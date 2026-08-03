@@ -13,6 +13,7 @@ from research.text_attribution.split_manifest import (
     save_split_manifest,
 )
 from research.text_attribution.training_data import load_training_dataset
+from scripts import run_family_attribution_phase4_fast_track as phase4_cli
 from scripts.run_family_attribution_phase4_fast_track import main
 from tests.text_attribution_test_utils import write_dataset, write_model_catalog
 
@@ -162,6 +163,11 @@ def test_end_to_end_writes_direct_model_result_and_artifacts(
     assert len(manifest["source_commit"]) == 40
     assert manifest["family_labels"]
     assert manifest["cross_fit"]["fold_seed"] == 20260803
+    assert manifest["source_file_hashes"]
+    policy = json.loads(
+        (output / "artifacts/seed42-selective-policy.json").read_text()
+    )
+    assert policy["deployment_ready"] is False
     console = capsys.readouterr().out
     assert "Starting Phase4 cell 1/3" in console
     assert "Completed Phase4 cell 3/3" in console
@@ -228,6 +234,18 @@ def test_cross_cell_identity_mismatch_is_rejected_before_training(tmp_path: Path
         raise AssertionError("cross-cell identity mismatch must fail")
 
 
+def test_cross_cell_a0_recipe_mismatch_is_rejected(tmp_path: Path) -> None:
+    paths = _fixture(tmp_path)
+    recipe_path = paths["a0"] / "A0-fast-to-balanced-seed42/resolved_recipe.json"
+    _write_json(recipe_path, {"recipe_hash": "different-a0-recipe"})
+    try:
+        main([*_args(paths, tmp_path / "result"), "--dry-run"])
+    except ValueError as exc:
+        assert "recipe hash mismatch" in str(exc)
+    else:
+        raise AssertionError("cross-cell A0 recipe mismatch must fail")
+
+
 def test_formal_run_rejects_reduced_bootstrap_override(tmp_path: Path) -> None:
     paths = _fixture(tmp_path)
     payload = json.loads(paths["config"].read_text(encoding="utf-8"))
@@ -242,3 +260,36 @@ def test_formal_run_rejects_reduced_bootstrap_override(tmp_path: Path) -> None:
         assert "formal" in str(exc).lower()
     else:
         raise AssertionError("formal bootstrap override must be rejected")
+
+
+def test_post_rename_fsync_failure_removes_completion_marker(
+    tmp_path: Path, monkeypatch
+) -> None:
+    paths = _fixture(tmp_path)
+    output = tmp_path / "result"
+    original_replace = phase4_cli.os.replace
+    published = False
+
+    def tracked_replace(source: Path, target: Path) -> None:
+        nonlocal published
+        original_replace(source, target)
+        if Path(target) == output:
+            published = True
+
+    original_fsync_directory = phase4_cli._fsync_directory
+
+    def failing_fsync_directory(path: Path) -> None:
+        if published and Path(path) == output.parent:
+            raise OSError("simulated parent fsync failure")
+        original_fsync_directory(path)
+
+    monkeypatch.setattr(phase4_cli.os, "replace", tracked_replace)
+    monkeypatch.setattr(phase4_cli, "_fsync_directory", failing_fsync_directory)
+    try:
+        main(_args(paths, output))
+    except OSError as exc:
+        assert "fsync" in str(exc)
+    else:
+        raise AssertionError("post-rename fsync failure must propagate")
+    assert (output / "FAILED.json").is_file()
+    assert not (output / "COMPLETED.json").exists()

@@ -140,9 +140,9 @@ def decide_attribution(
 ) -> AttributionDecision:
     """Return a calibrated family set or abstain; Phase4 never returns unknown."""
 
-    if not artifact.deployment_ready:
-        return _abstain("policy_not_deployable")
     try:
+        if not artifact.deployment_ready:
+            return _abstain("policy_not_deployable")
         fused = np.asarray([evidence.fused_probabilities], dtype=float)
         branches = {
             name: np.asarray([evidence.branch_probabilities[name]], dtype=float)
@@ -155,7 +155,7 @@ def decide_attribution(
             _validate_probability_matrix(values, len(artifact.family_labels))
         features = _evidence_features(fused, branches)
         accepted = bool(_apply_artifact(artifact, features, np.asarray([0]))[0])
-    except (KeyError, TypeError, ValueError):
+    except (AttributeError, KeyError, TypeError, ValueError):
         return _abstain("artifact_mismatch")
     if evidence.effective_character_count < artifact.min_effective_characters:
         return _abstain("short_text")

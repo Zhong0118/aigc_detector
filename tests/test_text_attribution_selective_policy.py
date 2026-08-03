@@ -157,3 +157,14 @@ def test_non_deployable_artifact_always_abstains() -> None:
     decision = decide_attribution(artifact, evidence)
     assert decision.status == "abstain"
     assert "policy_not_deployable" in decision.warnings
+
+
+def test_malformed_artifact_fails_safe() -> None:
+    evidence = AttributionEvidence(
+        fused_probabilities=(0.9, 0.1),
+        branch_probabilities={"A4": (0.9, 0.1)},
+        effective_character_count=400,
+    )
+    decision = decide_attribution(None, evidence)  # type: ignore[arg-type]
+    assert decision.status == "abstain"
+    assert decision.warnings == ("artifact_mismatch",)
