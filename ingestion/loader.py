@@ -21,10 +21,12 @@ from typing import Optional
 
 import numpy as np
 
+from ingestion.document_text import extract_document_text
+
 # 扩展名到模态的映射表。
 # FastAPI 上传文件后，会先保存成临时文件，再通过这个表判断走哪个检测分支。
 MODALITY_MAP = {
-    "text": {".txt", ".md", ".csv", ".json", ".html"},
+    "text": {".txt", ".md", ".csv", ".json", ".html", ".docx"},
     "image": {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff"},
     "audio": {".wav", ".mp3", ".flac", ".ogg", ".m4a"},
     "video": {".mp4", ".avi", ".mov", ".mkv", ".webm"},
@@ -72,7 +74,7 @@ def load_content(path: str | Path) -> ContentItem:
     """读取文件内容并返回统一 ContentItem。
 
     这个函数会先调用 detect_modality 判断类型，再按类型读取：
-    - text: 读取为字符串
+    - text: 读取为字符串（.txt/.md/.docx 等）
     - image: 读取为 PIL.Image RGB 对象
     - audio: 用 librosa 读取为 16000Hz numpy 数组
     - video: 用 OpenCV VideoCapture 打开视频
@@ -84,8 +86,8 @@ def load_content(path: str | Path) -> ContentItem:
     modality = detect_modality(path)
 
     if modality == "text":
-        # 文本直接读成 str，后续可以传给文本检测 API 或本地文本模型。
-        raw_data = path.read_text(encoding="utf-8")
+        # 文本直接读成 str；Word 文档会先抽出段落纯文本再进入检测器。
+        raw_data = extract_document_text(path)
     elif modality == "image":
         # 图片统一转 RGB，避免 PNG 透明通道、灰度图等格式差异影响后续检测器。
         from PIL import Image

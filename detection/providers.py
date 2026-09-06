@@ -102,10 +102,22 @@ class ApiFirstDetectionEngine:
         """
         path = Path(path)
         results: list[ProviderResult] = []
+        text_payload = raw_data if isinstance(raw_data, str) else None
+        if modality == "text" and text_payload is None:
+            from ingestion.document_text import extract_document_text, is_document_path
+
+            if is_document_path(path):
+                text_payload = extract_document_text(path)
+            else:
+                text_payload = path.read_text(encoding="utf-8", errors="ignore")
 
         # 如果 config 中打开 Hive/Sightengine，这里会进入对应 provider。
         # provider 失败不会中断全流程，而是返回 status=error，方便前端展示。
-        api_results = self._run_configured_api_providers(path, modality)
+        api_results = self._run_configured_api_providers(
+            path,
+            modality,
+            text_override=text_payload if modality == "text" else None,
+        )
         results.extend(api_results)
 
         if self.demo_enabled:
@@ -127,7 +139,7 @@ class ApiFirstDetectionEngine:
             results.extend(local_results)
 
         if modality == "text" and bool(self.text_fp_cfg.get("enabled", False)):
-            text = raw_data if isinstance(raw_data, str) else path.read_text(encoding="utf-8", errors="ignore")
+            text = text_payload if text_payload is not None else ""
             decision = self._text_fp_controller.evaluate(text, results)
             final_score = float(decision.score or 0.0)
             high_threshold = float(decision.high_threshold or self.threshold)
@@ -276,7 +288,14 @@ class ApiFirstDetectionEngine:
             ]
 
         try:
-            text = raw_data if isinstance(raw_data, str) else path.read_text(encoding="utf-8", errors="ignore")
+            from ingestion.document_text import extract_document_text, is_document_path
+
+            if isinstance(raw_data, str):
+                text = raw_data
+            elif is_document_path(path):
+                text = extract_document_text(path)
+            else:
+                text = path.read_text(encoding="utf-8", errors="ignore")
             detector = self._get_local_text_detector(text_cfg)
             result = detector.detect(text)
             return [
@@ -796,6 +815,10 @@ class ApiFirstDetectionEngine:
         """读取文本内容给 Hive 文本检测接口。"""
         if text_override is not None:
             return text_override
+        from ingestion.document_text import extract_document_text, is_document_path
+
+        if is_document_path(path):
+            return extract_document_text(path)
         return path.read_text(encoding="utf-8", errors="ignore")
 
     def _extract_ai_score(self, payload: Any) -> float | None:

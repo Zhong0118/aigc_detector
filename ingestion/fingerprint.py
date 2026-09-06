@@ -64,8 +64,11 @@ def _text_fingerprint(path: Path) -> str:
     """计算文本内容指纹。
 
     会先统一小写并折叠空白字符，这样简单的换行/多空格变化不会导致完全不同的指纹。
+    Word 文档先抽出段落纯文本，再按同一规则哈希。
     """
-    text = path.read_text(encoding="utf-8")
+    from .document_text import extract_document_text
+
+    text = extract_document_text(path)
     normalized = " ".join(text.lower().split())
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 

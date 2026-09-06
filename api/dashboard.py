@@ -5,6 +5,7 @@
 可视化成分数、证据、溯源和报告。
 """
 
+import html
 import os
 import sys
 from pathlib import Path
@@ -43,6 +44,18 @@ st.markdown(
         margin-bottom: 0.7rem;
         background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
     }
+    .segment-card {
+        border-radius: 10px;
+        padding: 0.75rem 0.95rem;
+        margin-bottom: 0.55rem;
+        border: 1px solid #e2e8f0;
+    }
+    .segment-ai { background: #fef2f2; border-color: #fecaca; }
+    .segment-mid { background: #fffbeb; border-color: #fde68a; }
+    .segment-human { background: #eff6ff; border-color: #bfdbfe; }
+    .segment-title { font-weight: 650; margin-bottom: 0.2rem; }
+    .segment-meta { color: #64748b; font-size: 0.86rem; margin-bottom: 0.35rem; }
+    .segment-text { color: #0f172a; line-height: 1.55; font-size: 0.95rem; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -86,7 +99,7 @@ def request_json(method: str, url: str, **kwargs):
     如果后端没启动或接口报错，直接在 Streamlit 页面显示错误。
     """
     try:
-        resp = requests.request(method, url, timeout=120, **kwargs)
+        resp = requests.request(method, url, timeout=600, **kwargs)
     except requests.RequestException as exc:
         st.error(f"Backend unavailable: {exc}")
         return None
@@ -120,6 +133,102 @@ def request_with_progress(method: str, url: str, **kwargs):
         return payload
     finally:
         st.session_state["is_analyzing"] = False
+
+
+def collect_segments(data: dict) -> list[dict]:
+    """从检测结论或本地文本模型详情里取出分块结果。"""
+    detection = data.get("detection") or {}
+    decision = detection.get("decision") or {}
+    segments = list(decision.get("segments") or [])
+    if segments:
+        return segments
+    for provider in detection.get("providers") or []:
+        details = provider.get("details") or {}
+        raw = details.get("segments") or []
+        if isinstance(raw, list) and raw:
+            return raw
+    return []
+
+
+def segment_verdict(score: float, low_threshold: float, high_threshold: float) -> tuple[str, str]:
+    """把单块分数映射成直观标签和卡片样式。"""
+    if score > high_threshold:
+        return "疑似 AI", "segment-ai"
+    if score > low_threshold:
+        return "不确定", "segment-mid"
+    return "更像人工", "segment-human"
+
+
+def summarize_segments(segments: list[dict], low_threshold: float, high_threshold: float) -> dict:
+    """统计整篇：总块数、AI 块数、字符加权 AI 率。"""
+    total = len(segments)
+    ai_n = 0
+    mid_n = 0
+    human_n = 0
+    weighted = 0.0
+    weight = 0
+    for item in segments:
+        score = float(item.get("score") or 0.0)
+        start = int(item.get("start") or 0)
+        end = int(item.get("end") or start)
+        chars = max(1, end - start)
+        if "text" in item and item["text"]:
+            chars = max(chars, len(str(item["text"])))
+        weighted += score * chars
+        weight += chars
+        verdict, _ = segment_verdict(score, low_threshold, high_threshold)
+        if verdict == "疑似 AI":
+            ai_n += 1
+        elif verdict == "不确定":
+            mid_n += 1
+        else:
+            human_n += 1
+    return {
+        "total": total,
+        "ai": ai_n,
+        "uncertain": mid_n,
+        "human": human_n,
+        "ai_block_rate": (ai_n / total) if total else 0.0,
+        "weighted_ai_rate": (weighted / weight) if weight else 0.0,
+    }
+
+
+def render_segment_panel(segments: list[dict], low_threshold: float, high_threshold: float) -> None:
+    """展示整篇计数，以及每一块的 AI 率与原文摘要。"""
+    stats = summarize_segments(segments, low_threshold, high_threshold)
+    st.subheader("分块 AI 率")
+    cols = st.columns(5)
+    cols[0].metric("总块数", stats["total"])
+    cols[1].metric("疑似 AI", stats["ai"])
+    cols[2].metric("不确定", stats["uncertain"])
+    cols[3].metric("更像人工", stats["human"])
+    cols[4].metric("AI 块占比", f"{stats['ai_block_rate']:.1%}")
+    st.caption(
+        f"字符加权 AI 率 {stats['weighted_ai_rate']:.1%}。"
+        f"单块超过高风险阈值 {high_threshold:.0%} 计为疑似 AI，"
+        f"低于低风险阈值 {low_threshold:.0%} 计为更像人工。"
+    )
+
+    if segments:
+        st.markdown("**每一块**")
+        for idx, item in enumerate(segments):
+            score = float(item.get("score") or 0.0)
+            verdict, css = segment_verdict(score, low_threshold, high_threshold)
+            start = item.get("start", 0)
+            end = item.get("end", 0)
+            text = str(item.get("text") or "").strip()
+            preview = text if len(text) <= 220 else text[:220] + "…"
+            block_no = int(item.get("index", idx)) + 1
+            st.markdown(
+                f"""
+                <div class="segment-card {css}">
+                  <div class="segment-title">第 {block_no} 块 · {verdict} · AI率 {score:.1%}</div>
+                  <div class="segment-meta">字符 {start}-{end} · {max(0, int(end) - int(start))} 字</div>
+                  <div class="segment-text">{html.escape(preview)}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def render_score_gauge(score: float, low_threshold: float = 0.4, high_threshold: float = 0.8):
@@ -165,8 +274,12 @@ def render_analysis(data: dict):
     decision = detection.get("decision") or {}
     provenance = data["provenance"]
     report = data["report"]
+    low_threshold = float(decision.get("low_threshold") or 0.4)
+    high_threshold = float(decision.get("high_threshold") or detection.get("threshold") or 0.8)
+    segments = collect_segments(data)
+    segment_stats = summarize_segments(segments, low_threshold, high_threshold) if segments else None
 
-    # 顶部四个 metric 用来快速回答：分数多少、标签是什么、类型是什么、记录 ID 是多少。
+    # 顶部 metric 用来快速回答：分数、结论、分块 AI 计数。
     label_names = {
         "low_risk": "未明显检出",
         "uncertain": "不确定",
@@ -181,15 +294,28 @@ def render_analysis(data: dict):
         "official_news": "公文/新闻",
         "general_qa": "普通写作/问答",
     }
-    top = st.columns([1.15, 1.15, 1, 0.8])
-    top[0].metric("AI 特征风险分数", f"{detection['score']:.2%}")
-    top[1].metric("检测结论", label_names.get(detection["label"], detection["label"]))
-    top[2].metric("文本类型", domain_names.get(decision.get("domain"), data["modality"].upper()))
-    top[3].metric("记录 ID", data["content_id"])
-    st.caption(
-        "该数值是检测模块输出并用于阈值判定的风险分数，"
-        "不是内容由 AI 生成的概率。"
-    )
+    if segment_stats:
+        top = st.columns([1.1, 1.1, 0.9, 0.9, 0.9])
+        top[0].metric("整篇加权 AI 率", f"{segment_stats['weighted_ai_rate']:.1%}")
+        top[1].metric("检测结论", label_names.get(detection["label"], detection["label"]))
+        top[2].metric("总块数", segment_stats["total"])
+        top[3].metric("疑似 AI 块", f"{segment_stats['ai']} / {segment_stats['total']}")
+        top[4].metric("AI 块占比", f"{segment_stats['ai_block_rate']:.1%}")
+        st.caption(
+            f"文本类型：{domain_names.get(decision.get('domain'), data['modality'].upper())}。"
+            f"单块超过 {high_threshold:.0%} 计为疑似 AI；"
+            f"整篇加权 AI 率按字符长度加权，不是简单块数平均。"
+        )
+    else:
+        top = st.columns([1.15, 1.15, 1, 0.8])
+        top[0].metric("AI 特征风险分数", f"{detection['score']:.2%}")
+        top[1].metric("检测结论", label_names.get(detection["label"], detection["label"]))
+        top[2].metric("文本类型", domain_names.get(decision.get("domain"), data["modality"].upper()))
+        top[3].metric("记录 ID", data["content_id"])
+        st.caption(
+            "该数值是检测模块输出并用于阈值判定的风险分数，"
+            "不是内容由 AI 生成的概率。"
+        )
 
     if detection["label"] == "uncertain":
         st.warning("当前分数位于不确定区间，不能直接判为 AI。")
@@ -199,8 +325,6 @@ def render_analysis(data: dict):
     left, right = st.columns([0.92, 1.08])
     with left:
         # 左侧主要展示检测层证据。
-        low_threshold = float(decision.get("low_threshold") or 0.4)
-        high_threshold = float(decision.get("high_threshold") or detection.get("threshold") or 0.8)
         render_score_gauge(detection["score"], low_threshold, high_threshold)
         if decision:
             threshold_cols = st.columns(3)
@@ -280,8 +404,8 @@ def render_analysis(data: dict):
             caption = details.get("explanation") or details.get("note") or details.get("score_source", "")
             cols[3].caption(public_evidence_text(str(caption)))
 
-        segments = decision.get("segments") or []
         if segments:
+            render_segment_panel(segments, low_threshold, high_threshold)
             st.subheader("片段风险分布")
             segment_scores = [float(item.get("score") or 0.0) for item in segments]
             colors = [
@@ -291,14 +415,14 @@ def render_analysis(data: dict):
             fig = go.Figure(
                 data=[
                     go.Bar(
-                        x=[f"片段 {int(item.get('index', idx)) + 1}" for idx, item in enumerate(segments)],
+                        x=[f"第 {int(item.get('index', idx)) + 1} 块" for idx, item in enumerate(segments)],
                         y=segment_scores,
                         marker_color=colors,
                         customdata=[
                             f"字符 {item.get('start', 0)}-{item.get('end', 0)}"
                             for item in segments
                         ],
-                        hovertemplate="%{x}<br>风险=%{y:.2%}<br>%{customdata}<extra></extra>",
+                        hovertemplate="%{x}<br>AI率=%{y:.1%}<br>%{customdata}<extra></extra>",
                     )
                 ]
             )
@@ -454,8 +578,8 @@ with text_tab:
 with file_tab:
     # 文件上传页：上传文件后调用 `/api/v1/analyze/file`。
     uploaded_file = st.file_uploader(
-        "File Upload",
-        type=["txt", "md", "csv", "json", "html", "jpg", "jpeg", "png", "bmp", "webp", "tiff", "wav", "mp3", "flac", "ogg", "m4a", "mp4", "avi", "mov", "mkv", "webm"],
+        "上传文档或媒体文件（Word .docx 可直接上传，无需先转 txt）",
+        type=["txt", "md", "csv", "json", "html", "docx", "jpg", "jpeg", "png", "bmp", "webp", "tiff", "wav", "mp3", "flac", "ogg", "m4a", "mp4", "avi", "mov", "mkv", "webm"],
     )
     analyzing = st.session_state["is_analyzing"]
     if st.button(
