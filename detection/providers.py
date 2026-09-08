@@ -337,6 +337,8 @@ class ApiFirstDetectionEngine:
                 max_length=int(cfg.get("max_length", 512)),
                 segment_target_chars=int(cfg.get("segment_target_chars", 480)),
                 segment_max_chars=int(cfg.get("segment_max_chars", 640)),
+                en_segment_target_chars=int(cfg.get("en_segment_target_chars", 1400)),
+                en_segment_max_chars=int(cfg.get("en_segment_max_chars", 1800)),
                 segment_overlap_sentences=int(cfg.get("segment_overlap_sentences", 1)),
             )
         return self._local_text_detector

@@ -26,7 +26,7 @@ from ingestion.document_text import extract_document_text
 # 扩展名到模态的映射表。
 # FastAPI 上传文件后，会先保存成临时文件，再通过这个表判断走哪个检测分支。
 MODALITY_MAP = {
-    "text": {".txt", ".md", ".csv", ".json", ".html", ".docx"},
+    "text": {".txt", ".md", ".csv", ".json", ".html", ".doc", ".docx"},
     "image": {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff"},
     "audio": {".wav", ".mp3", ".flac", ".ogg", ".m4a"},
     "video": {".mp4", ".avi", ".mov", ".mkv", ".webm"},
@@ -86,7 +86,7 @@ def load_content(path: str | Path) -> ContentItem:
     modality = detect_modality(path)
 
     if modality == "text":
-        # 文本直接读成 str；Word 文档会先抽出段落纯文本再进入检测器。
+        # 文本直接读成 str；Word .doc/.docx 会先抽出段落纯文本再进入检测器。
         raw_data = extract_document_text(path)
     elif modality == "image":
         # 图片统一转 RGB，避免 PNG 透明通道、灰度图等格式差异影响后续检测器。

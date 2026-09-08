@@ -74,8 +74,14 @@ detection:
         zh_short: "yuchuantian/AIGC_detector_zhv3short"
         en_long: "yuchuantian/AIGC_detector_env3"
         en_short: "yuchuantian/AIGC_detector_env3short"
+      # 中文 BERT 长/短模型都是 512 token。中文大约 1 字 ≈ 1 token，
+      # 480/640 已经贴近上限，再加大只会被 tokenizer 截断。
       segment_target_chars: 480
       segment_max_chars: 640
+      # 英文 RoBERTa 同样 512 token，但英文大约 4 字符 ≈ 1 token，
+      # 原来的 480 字符窗口只用到了长模型大约四分之一容量。
+      en_segment_target_chars: 1400
+      en_segment_max_chars: 1800
       segment_overlap_sentences: 1
   text:
     model_name: "distilgpt2"

@@ -578,8 +578,8 @@ with text_tab:
 with file_tab:
     # 文件上传页：上传文件后调用 `/api/v1/analyze/file`。
     uploaded_file = st.file_uploader(
-        "上传文档或媒体文件（Word .docx 可直接上传，无需先转 txt）",
-        type=["txt", "md", "csv", "json", "html", "docx", "jpg", "jpeg", "png", "bmp", "webp", "tiff", "wav", "mp3", "flac", "ogg", "m4a", "mp4", "avi", "mov", "mkv", "webm"],
+        "上传文档或媒体文件（Word .doc / .docx 可直接上传，无需先转 txt）",
+        type=["txt", "md", "csv", "json", "html", "doc", "docx", "jpg", "jpeg", "png", "bmp", "webp", "tiff", "wav", "mp3", "flac", "ogg", "m4a", "mp4", "avi", "mov", "mkv", "webm"],
     )
     analyzing = st.session_state["is_analyzing"]
     if st.button(

@@ -1163,6 +1163,8 @@ def _build_detector(config: dict[str, Any]) -> RoutedTextAigcDetector:
         max_length=int(local.get("max_length", 512)),
         segment_target_chars=int(local.get("segment_target_chars", 480)),
         segment_max_chars=int(local.get("segment_max_chars", 640)),
+        en_segment_target_chars=int(local.get("en_segment_target_chars", 1400)),
+        en_segment_max_chars=int(local.get("en_segment_max_chars", 1800)),
         segment_overlap_sentences=int(
             local.get("segment_overlap_sentences", 1)
         ),

@@ -113,12 +113,15 @@ class RoutedTextAigcDetector:
         max_length: int = 512,
         segment_target_chars: int = 480,
         segment_max_chars: int = 640,
+        en_segment_target_chars: int | None = None,
+        en_segment_max_chars: int | None = None,
         segment_overlap_sentences: int = 1,
     ) -> None:
         """初始化本地文本路由器。
 
         models 需要包含 zh_long/zh_short/en_long/en_short 四个键。
         cache_dir 建议固定为 models/huggingface，方便后续部署服务器。
+        中文窗口按 BERT 512 token 贴近字符数；英文窗口更大，避免长模型吃不饱。
         """
         self.models = models
         self.cache_dir = str(Path(cache_dir))
@@ -127,16 +130,24 @@ class RoutedTextAigcDetector:
         self.device = self._resolve_device(device)
         self.mixed_strategy = mixed_strategy
         self.max_length = int(max_length)
-        self.segmenter = SentenceAwareSegmenter(
+        overlap = int(segment_overlap_sentences)
+        self.zh_segmenter = SentenceAwareSegmenter(
             target_chars=int(segment_target_chars),
             max_chars=int(segment_max_chars),
-            overlap_sentences=int(segment_overlap_sentences),
+            overlap_sentences=overlap,
         )
+        self.en_segmenter = SentenceAwareSegmenter(
+            target_chars=int(en_segment_target_chars or 1400),
+            max_chars=int(en_segment_max_chars or 1800),
+            overlap_sentences=overlap,
+        )
+        self.segmenter = self.zh_segmenter
         self._loaded: dict[str, tuple[Any, Any]] = {}
 
     def detect(self, text: str) -> DetectionResult:
         """执行一次本地文本检测。"""
-        segments = self.segmenter.split(text)
+        language = self.detect_language(text)
+        segments = self._segmenter_for(language).split(text)
         branch_score_lists: dict[str, list[float]] = {}
         branch_details: dict[str, Any] = {}
         segment_details: list[dict[str, Any]] = []
@@ -185,7 +196,7 @@ class RoutedTextAigcDetector:
             score=round(final_score, 4),
             label="ai" if final_score >= self.threshold else "human",
             details={
-                "language": self.detect_language(text),
+                "language": language,
                 "length_bucket": self.length_bucket(text),
                 "selected_models": sorted(branch_details),
                 "cache_dir": self.cache_dir,
@@ -196,6 +207,12 @@ class RoutedTextAigcDetector:
                 "note": "Local open-source text detector branch with language/length routing.",
             },
         )
+
+    def _segmenter_for(self, language: str) -> SentenceAwareSegmenter:
+        """英文用更大窗口；中文和中英混合仍用接近 512 token 的中文窗口。"""
+        if language == "en":
+            return self.en_segmenter
+        return self.zh_segmenter
 
     def select_model_keys(self, text: str) -> list[str]:
         """根据语言和长度选择模型键。"""
