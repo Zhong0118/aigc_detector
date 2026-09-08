@@ -63,6 +63,8 @@ Thumbs.db
 
 # Logs
 *.log
+logs/
+*.pid
 
 # Data files (keep structure but ignore contents)
 data/
@@ -72,8 +74,19 @@ third_party/
 tools/c2patool/
 
 # Uploads / outputs
+# Stop listing local output dumps and the already-tracked copies that
+# disappeared from this server checkout. Restore a path with
+# `git checkout HEAD -- <path>` if it is needed again.
 output/
+outputs/
 uploads/
+
+# Local backups, transfer packs, and analysis archives
+.backup_*/
+transfer/
+*.tar.gz
+*.tar
+*.zip
 
 .codex_artifacts
 tmp/
