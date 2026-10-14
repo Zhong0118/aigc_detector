@@ -155,14 +155,19 @@ class ReportGenerator:
 
         attribution = provenance.get("attribution")
         if isinstance(attribution, dict) and attribution:
-            status = attribution.get("status", "unknown")
+            status = attribution.get("family_status") or attribution.get("status", "unknown")
             confidence = attribution.get("confidence")
             top_k = attribution.get("top_k") if isinstance(attribution.get("top_k"), list) else []
+            verdict = attribution.get("verdict")
             top_text = ""
             if top_k:
                 first = top_k[0]
-                top_text = f"，首位候选来源为“{first.get('model')}”"
-            if confidence is not None:
+                top_text = f"，首位为“{first.get('model')}”"
+            if status == "unknown":
+                evidence.append("家族溯源结论为“AI-家族不明”：首位家族概率低于 20%，不输出硬家族标签。")
+            elif verdict:
+                evidence.append(f"家族溯源结论为“{verdict}”{top_text}。")
+            elif confidence is not None:
                 evidence.append(f"来源归因模块状态为“{status}”{top_text}，候选来源置信度约为 {float(confidence):.2%}。")
             else:
                 evidence.append(f"来源归因模块状态为“{status}”，当前未形成可用候选来源。")
@@ -588,6 +593,9 @@ class ReportGenerator:
     def _threshold_warning(self, warning: str) -> str:
         return {
             "calibrated_threshold_near_score_ceiling": "校准阈值接近模型分数上限",
+            "calibrated_high_threshold_replaced_by_floor": "运行高阈值已回落到有效的产品阈值",
+            "runtime_high_threshold_capped_to_floor": "阈值产物中的运行高阈值曾被调整",
+            "effective_high_threshold_not_evaluated": "当前运行阈值未完成独立验证，暂不报告误报率和召回率",
             "holdout_fpr_above_target": "真人验证集误报率显著高于目标",
             "insufficient_human_validation": "真人验证样本不足",
             "insufficient_ai_validation": "AI 验证样本不足",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import statistics
 from dataclasses import asdict, dataclass, field
@@ -169,6 +170,7 @@ class FalsePositiveController:
     ) -> FalsePositiveDecision:
         diagnostics = self._threshold_diagnostics(
             group,
+            effective_high=high,
             extra_warnings=threshold_warnings or [],
         )
         return FalsePositiveDecision(
@@ -203,23 +205,27 @@ class FalsePositiveController:
     ) -> tuple[str, float, float, list[str]]:
         artifact_warnings = list(self.artifact_warnings)
         if language != "mixed":
-            return (
-                *self._language_thresholds(language, domain, length_bucket),
-                artifact_warnings,
+            group, low, high, extra = self._language_thresholds(
+                language, domain, length_bucket
             )
+            return group, low, high, [*artifact_warnings, *extra]
 
         mixed = self._calibrated_thresholds("mixed", domain, length_bucket)
         if mixed is not None:
-            return (*mixed, artifact_warnings)
+            group, low, high, extra = mixed
+            return group, low, high, [*artifact_warnings, *extra]
 
         candidates = (
             self._language_thresholds("zh", domain, length_bucket),
             self._language_thresholds("en", domain, length_bucket),
         )
         selected = max(candidates, key=lambda item: (item[2], -item[1], item[0]))
+        group, low, high, extra = selected
         return (
-            *selected,
-            [*artifact_warnings, "mixed_language_threshold_fallback"],
+            group,
+            low,
+            high,
+            [*artifact_warnings, "mixed_language_threshold_fallback", *extra],
         )
 
     def _language_thresholds(
@@ -227,7 +233,7 @@ class FalsePositiveController:
         language: str,
         domain: str,
         length_bucket: str,
-    ) -> tuple[str, float, float]:
+    ) -> tuple[str, float, float, list[str]]:
         calibrated = self._calibrated_thresholds(language, domain, length_bucket)
         if calibrated is not None:
             return calibrated
@@ -235,10 +241,12 @@ class FalsePositiveController:
         for candidate in (language, "global"):
             entry = groups.get(candidate)
             if isinstance(entry, dict):
+                high, extra = self._usable_high_threshold(entry, domain)
                 return (
                     candidate,
                     float(entry.get("low_threshold", self.default_low)),
-                    float(entry.get("high_threshold", self.default_high)),
+                    high,
+                    extra,
                 )
         entry = self.domain_thresholds.get(domain)
         if isinstance(entry, dict):
@@ -246,15 +254,21 @@ class FalsePositiveController:
                 f"built-in:{domain}:{length_bucket}",
                 float(entry.get("low_threshold", self.default_low)),
                 float(entry.get("high_threshold", self.default_high)),
+                [],
             )
-        return f"built-in:{domain}:{length_bucket}", self.default_low, self.default_high
+        return (
+            f"built-in:{domain}:{length_bucket}",
+            self.default_low,
+            self.default_high,
+            [],
+        )
 
     def _calibrated_thresholds(
         self,
         language: str,
         domain: str,
         length_bucket: str,
-    ) -> tuple[str, float, float] | None:
+    ) -> tuple[str, float, float, list[str]] | None:
         groups = self.artifact.get("groups", {})
         for candidate in (
             f"{language}:{domain}:{length_bucket}",
@@ -262,17 +276,42 @@ class FalsePositiveController:
         ):
             entry = groups.get(candidate)
             if isinstance(entry, dict):
+                high, extra = self._usable_high_threshold(entry, domain)
                 return (
                     candidate,
                     float(entry.get("low_threshold", self.default_low)),
-                    float(entry.get("high_threshold", self.default_high)),
+                    high,
+                    extra,
                 )
         return None
+
+    def _usable_high_threshold(
+        self, entry: dict[str, Any], domain: str
+    ) -> tuple[float, list[str]]:
+        """Use a valid product cutoff; calibration search floors are not cutoffs."""
+
+        high = float(entry.get("high_threshold", self.default_high))
+        low = float(entry.get("low_threshold", self.default_low))
+        if high >= 0.99:
+            domain_entry = self.domain_thresholds.get(domain) or {}
+            for candidate in (domain_entry.get("high_threshold"), self.default_high):
+                if isinstance(candidate, bool):
+                    continue
+                try:
+                    product_high = float(candidate)
+                except (TypeError, ValueError):
+                    continue
+                # The strict bounds also reject NaN/infinity. Preserve the
+                # validated calibrated cutoff if neither fallback is safe.
+                if low < product_high < high and round(low, 4) < round(product_high, 4):
+                    return product_high, ["calibrated_high_threshold_replaced_by_floor"]
+        return high, []
 
     def _threshold_diagnostics(
         self,
         group: str,
         *,
+        effective_high: float,
         extra_warnings: list[str],
     ) -> tuple[
         float | None,
@@ -290,12 +329,38 @@ class FalsePositiveController:
         validation_fpr = entry.get("validation_fpr")
         ai_recall = entry.get("ai_recall")
         validation_auroc = entry.get("validation_auroc")
-        warnings = [
-            *[str(item) for item in entry.get("warnings", [])],
-            *extra_warnings,
-        ]
+        entry_warnings = [str(item) for item in entry.get("warnings", [])]
+        warnings = [*entry_warnings, *extra_warnings]
+        changed_cutoff = (
+            not math.isclose(
+                effective_high,
+                float(entry.get("high_threshold", effective_high)),
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            )
+            or "calibrated_high_threshold_replaced_by_floor" in extra_warnings
+            or "runtime_high_threshold_capped_to_floor" in entry_warnings
+        )
+        calibrated_high = entry.get("calibrated_high_threshold")
+        if calibrated_high is not None and not isinstance(calibrated_high, bool):
+            try:
+                calibrated_high = float(calibrated_high)
+            except (TypeError, ValueError):
+                calibrated_high = None
+            if calibrated_high is not None and math.isfinite(calibrated_high):
+                changed_cutoff = changed_cutoff or not math.isclose(
+                    effective_high, calibrated_high, rel_tol=0.0, abs_tol=1e-12
+                )
+        if changed_cutoff:
+            validation_fpr = None
+            ai_recall = None
+            warnings.append("effective_high_threshold_not_evaluated")
         warnings = list(dict.fromkeys(warnings))
-        reliability = str(entry.get("reliability_status", "not_evaluated"))
+        reliability = (
+            "not_evaluated"
+            if changed_cutoff
+            else str(entry.get("reliability_status", "not_evaluated"))
+        )
         if extra_warnings and reliability == "ok":
             reliability = "warning"
         return (

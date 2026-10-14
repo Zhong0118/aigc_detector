@@ -96,6 +96,27 @@ class FalsePositiveReportTests(unittest.TestCase):
         self.assertNotIn("校准 AI 风险分数", joined)
         self.assertNotIn("检测分数属于概率证据", joined)
 
+    def test_report_explains_runtime_cutoff_has_no_measured_fpr(self) -> None:
+        analysis = analysis_for("uncertain", 0.72, ["score_in_uncertain_interval"])
+        analysis["detection"]["decision"].update(
+            {
+                "threshold_validation_fpr": None,
+                "threshold_validation_samples": 1000,
+                "threshold_ai_recall": None,
+                "threshold_ai_validation_samples": 900,
+                "threshold_validation_auroc": 0.91,
+                "threshold_warnings": ["effective_high_threshold_not_evaluated"],
+            }
+        )
+        report = ReportGenerator(config={"report": {"provider": "template"}}).generate(
+            analysis
+        )
+        text = json.dumps(report, ensure_ascii=False)
+        self.assertIn("当前运行阈值未完成独立验证", text)
+        self.assertNotIn("真人验证集误报率为", text)
+        self.assertNotIn("AI 验证集召回率为", text)
+        self.assertIn("AUROC 为 0.910", text)
+
     def test_report_keeps_builtin_fallback_readable_without_validation_metrics(self) -> None:
         analysis = analysis_for("uncertain", 0.72, ["score_in_uncertain_interval"])
         analysis["detection"]["decision"]["threshold_group"] = (

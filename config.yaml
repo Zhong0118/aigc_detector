@@ -37,6 +37,9 @@ detection:
     resource_sources:
       raid_adversarial:
         enabled: false
+    # Conservative product thresholds. If a calibrated high hugs the ceiling,
+    # use a valid domain/default high above the low threshold. That fallback
+    # has no measured FPR/recall until separately validated; old metrics are hidden.
     domain_thresholds:
       literature:
         low_threshold: 0.35
@@ -54,11 +57,11 @@ detection:
     hive:
       enabled: true
       api_version: "v3_vlm"
-      api_key_env: "LJ9NfOyoJrxKgomS9kfvPQ=="
+      api_key_env: "HIVE_API_KEY"
     sightengine:
       enabled: true
-      api_user_env: "1813021110"
-      api_secret_env: "YzYcSfvs93dSk7Quie7DgWpuvToZBmWJ"
+      api_user_env: "SIGHTENGINE_API_USER"
+      api_secret_env: "SIGHTENGINE_API_SECRET"
   local_models:
     enabled: true
     text_yuchuan:
@@ -148,12 +151,32 @@ provenance:
       enabled: true
       top_k: 5
       providers:
-        trained_classifier:
+        window_a0_equal_fusion:
           enabled: true
+          provider: "window_a0_equal_fusion"
+          seed: 42
+          control_seed: 62
+          top_k: 5
+          min_blocks: 8
+          max_blocks: 12
+          min_family_probability: 0.20
+          a0_model_dir: "outputs/attribution/family-window-split/A0-closed-seed42/model"
+          a0_tokenizer_dir: "outputs/attribution/family-window-split/A0-closed-seed42/tokenizer"
+          b0_model_path: "outputs/attribution/family-phase4/fast-track-v1/classical/closed-seed42/B0/model.joblib"
+          b1_model_path: "outputs/attribution/family-phase4/fast-track-v1/classical/closed-seed42/B1/model.joblib"
+          b3_model_path: "outputs/attribution/family-phase1/final/models/B3.joblib"
+          weights:
+            A0: 0.25
+            B0: 0.25
+            B1: 0.25
+            B3: 0.25
+          note: "Equal-weight baseline, not a validated deployment winner. Use a verified validation lock for tuned weights. Seed 62 is control-only; model artifacts must pass recipe identity checks."
+        trained_classifier:
+          enabled: false
           provider: "trained_classifier"
           model_path: "models/attribution/text_source_classifier.joblib"
           top_k: 5
-          note: "Self-trained text source classifier. Train it with scripts/train_text_attribution.py."
+          note: "Legacy self-trained text source classifier. Disabled while the window-A0 fusion is the production text branch."
         llmdet:
           enabled: false
           provider: "llmdet"
@@ -177,7 +200,7 @@ provenance:
             - "opt_3b"
           note: "LLMDet is an experimental candidate-source attribution branch; it is not definitive proof."
         openturingbench:
-          enabled: true
+          enabled: false
           provider: "openturingbench"
           mode: "prototype_dataset"
           dataset_name: "MLNTeam-Unical/OpenTuringBench"
@@ -188,7 +211,7 @@ provenance:
           min_chars: 30
           note: "Build prototypes from OpenTuringBench before this branch becomes active."
         embedding_prototype:
-          enabled: true
+          enabled: false
           provider: "embedding_prototype"
           prototypes_path: "data/attribution/text/custom_text_prototypes.jsonl"
           analyzer: "char_wb"
@@ -257,7 +280,7 @@ provenance:
 report:
   provider: "llm"
   llm_provider: "deepseek"
-  api_key_env: "sk-ccae2f2b91ea47f6944000b577d051a3"
+  api_key_env: "DEEPSEEK_API_KEY"
   base_url: "https://api.deepseek.com"
   model: "deepseek-v4-flash"
   thinking: "disabled"
