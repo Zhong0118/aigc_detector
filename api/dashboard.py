@@ -375,9 +375,8 @@ def render_analysis(data: dict):
             if decision.get("threshold_warnings"):
                 warning_names = {
                     "calibrated_threshold_near_score_ceiling": "校准阈值接近模型分数上限",
-                    "calibrated_high_threshold_replaced_by_floor": "运行高阈值已回落到有效的产品阈值",
-                    "runtime_high_threshold_capped_to_floor": "阈值产物中的运行高阈值曾被调整",
-                    "effective_high_threshold_not_evaluated": "当前运行阈值未完成独立验证，暂不报告误报率和召回率",
+                    "calibrated_high_threshold_replaced_by_floor": "贴顶校准高阈值已回落到文体下限",
+                    "runtime_high_threshold_capped_to_floor": "贴顶校准高阈值已回落到文体下限（学术 88%）",
                     "holdout_fpr_above_target": "真人验证集误报率显著高于目标",
                     "insufficient_human_validation": "真人验证样本不足",
                     "insufficient_ai_validation": "AI 验证样本不足",
@@ -507,7 +506,7 @@ def render_analysis(data: dict):
                     f"- {item.get('model', 'unknown')}: "
                     f"{float(item.get('probability') or 0.0):.2%}"
                 )
-            st.caption("按进入溯源的检测块长度×检测分加权，不相邻块不粘贴。生产头是切窗 A0+B0+B1+B3（等权基线或经核验后显式配置的 validation 权重）。")
+            st.caption("按进入溯源的检测块长度×检测分加权，不相邻块不粘贴。生产头是切窗 A0+B0+B1+B3（validation 锁定权重）。")
 
         blocks = attribution.get("blocks") or []
         if blocks:

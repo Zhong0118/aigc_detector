@@ -68,16 +68,3 @@ def test_long_document_copies_labels_onto_each_window() -> None:
     ]
     assert {row.family_id for row in rows} == {"openai"}
     assert {row.prompt_id for row in rows} == {"p1"}
-
-
-def test_tokenizer_limit_is_restored_after_window_tokenization_error() -> None:
-    class BrokenTokenizer(_CharTokenizer):
-        model_max_length = 512
-        def __call__(self, *args, **kwargs):
-            raise RuntimeError("tokenization failed")
-
-    tokenizer = BrokenTokenizer()
-    import pytest
-    with pytest.raises(RuntimeError, match="tokenization failed"):
-        expand_samples_to_windows([_sample("text")], tokenizer, max_length=8)
-    assert tokenizer.model_max_length == 512

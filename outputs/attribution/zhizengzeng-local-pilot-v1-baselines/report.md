@@ -11,8 +11,9 @@
 
 | Method | Accuracy | Macro-F1 | Weighted-F1 |
 |---|---:|---:|---:|
-| Char TF-IDF + LR | 0.3500 | 0.3239 | 0.3314 |
+| Char TF-IDF + LR | 0.3526 | 0.3263 | 0.3342 |
 | Word/Char TF-IDF + SVM | 0.3141 | 0.2692 | 0.2762 |
+| Frozen E5 + Linear Probe | 0.1731 | 0.1378 | 0.1419 |
 
 ## Interpretation boundary
 

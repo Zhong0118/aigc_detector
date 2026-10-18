@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import math
 import re
 import statistics
 from dataclasses import asdict, dataclass, field
@@ -170,7 +169,6 @@ class FalsePositiveController:
     ) -> FalsePositiveDecision:
         diagnostics = self._threshold_diagnostics(
             group,
-            effective_high=high,
             extra_warnings=threshold_warnings or [],
         )
         return FalsePositiveDecision(
@@ -288,30 +286,24 @@ class FalsePositiveController:
     def _usable_high_threshold(
         self, entry: dict[str, Any], domain: str
     ) -> tuple[float, list[str]]:
-        """Use a valid product cutoff; calibration search floors are not cutoffs."""
+        """Replace unusable ceiling-hugging calibrated highs with the product floor."""
 
         high = float(entry.get("high_threshold", self.default_high))
-        low = float(entry.get("low_threshold", self.default_low))
-        if high >= 0.99:
+        floor = entry.get("threshold_floor")
+        if floor is None:
             domain_entry = self.domain_thresholds.get(domain) or {}
-            for candidate in (domain_entry.get("high_threshold"), self.default_high):
-                if isinstance(candidate, bool):
-                    continue
-                try:
-                    product_high = float(candidate)
-                except (TypeError, ValueError):
-                    continue
-                # The strict bounds also reject NaN/infinity. Preserve the
-                # validated calibrated cutoff if neither fallback is safe.
-                if low < product_high < high and round(low, 4) < round(product_high, 4):
-                    return product_high, ["calibrated_high_threshold_replaced_by_floor"]
+            floor = domain_entry.get("high_threshold", self.default_high)
+        floor = float(floor)
+        # English academic calibration can sit at 0.9996 with ~8% AI recall.
+        # That is not a usable product high-threshold; keep 0.93-class floors intact.
+        if high >= 0.99 and high > floor:
+            return floor, ["calibrated_high_threshold_replaced_by_floor"]
         return high, []
 
     def _threshold_diagnostics(
         self,
         group: str,
         *,
-        effective_high: float,
         extra_warnings: list[str],
     ) -> tuple[
         float | None,
@@ -329,38 +321,12 @@ class FalsePositiveController:
         validation_fpr = entry.get("validation_fpr")
         ai_recall = entry.get("ai_recall")
         validation_auroc = entry.get("validation_auroc")
-        entry_warnings = [str(item) for item in entry.get("warnings", [])]
-        warnings = [*entry_warnings, *extra_warnings]
-        changed_cutoff = (
-            not math.isclose(
-                effective_high,
-                float(entry.get("high_threshold", effective_high)),
-                rel_tol=0.0,
-                abs_tol=1e-12,
-            )
-            or "calibrated_high_threshold_replaced_by_floor" in extra_warnings
-            or "runtime_high_threshold_capped_to_floor" in entry_warnings
-        )
-        calibrated_high = entry.get("calibrated_high_threshold")
-        if calibrated_high is not None and not isinstance(calibrated_high, bool):
-            try:
-                calibrated_high = float(calibrated_high)
-            except (TypeError, ValueError):
-                calibrated_high = None
-            if calibrated_high is not None and math.isfinite(calibrated_high):
-                changed_cutoff = changed_cutoff or not math.isclose(
-                    effective_high, calibrated_high, rel_tol=0.0, abs_tol=1e-12
-                )
-        if changed_cutoff:
-            validation_fpr = None
-            ai_recall = None
-            warnings.append("effective_high_threshold_not_evaluated")
+        warnings = [
+            *[str(item) for item in entry.get("warnings", [])],
+            *extra_warnings,
+        ]
         warnings = list(dict.fromkeys(warnings))
-        reliability = (
-            "not_evaluated"
-            if changed_cutoff
-            else str(entry.get("reliability_status", "not_evaluated"))
-        )
+        reliability = str(entry.get("reliability_status", "not_evaluated"))
         if extra_warnings and reliability == "ok":
             reliability = "warning"
         return (

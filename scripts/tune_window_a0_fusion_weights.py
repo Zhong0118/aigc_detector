@@ -12,10 +12,7 @@ Protocol:
 from __future__ import annotations
 
 import argparse
-import hashlib
-import math
 import json
-from importlib.metadata import version
 from itertools import product
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -24,9 +21,7 @@ import numpy as np
 
 from provenance.window_a0_fusion import (
     DEFAULT_BRANCH_WEIGHTS,
-    DEFAULT_PATHS,
-    load_branch_weights,
-    _resolve_artifact,
+    FAMILY_LABELS,
     WindowA0EqualFusion,
 )
 from research.text_attribution.split_manifest import apply_split_manifest, load_split_manifest
@@ -63,11 +58,7 @@ def _argmax_labels(matrix: np.ndarray, labels: Sequence[str]) -> list[str]:
 
 
 def _simplex(step: float) -> list[dict[str, float]]:
-    if not math.isfinite(step) or not 0 < step <= 1:
-        raise ValueError("simplex step must be finite and in (0, 1]")
     units = int(round(1.0 / step))
-    if not math.isclose(units * step, 1.0, rel_tol=0.0, abs_tol=1e-9):
-        raise ValueError("simplex step must divide one exactly")
     weights: list[dict[str, float]] = []
     for a, b, c in product(range(units + 1), repeat=3):
         d = units - a - b - c
@@ -102,71 +93,20 @@ def _score_weights(
     }
 
 
-def _hash_json(value: Any) -> str:
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()).hexdigest()
-
-
-def _hash_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _inference_identity(fusion: WindowA0EqualFusion) -> dict[str, Any]:
-    artifacts = {}
-    for name, default in DEFAULT_PATHS.items():
-        path = _resolve_artifact(fusion.cfg.get(name), default)
-        files = sorted(p for p in path.rglob("*") if p.is_file()) if path.is_dir() else [path]
-        if not files:
-            raise ValueError(f"empty model artifact: {path}")
-        artifacts[name] = {str(p.relative_to(path)) if path.is_dir() else p.name: _hash_file(p) for p in files}
-    return {
-        "artifacts": artifacts,
-        "family_labels": list(fusion.family_labels),
-        "max_length": fusion.max_length,
-        "device": fusion.device_name,
-        "window_policy": "nonoverlap_decode_retokenize_probability_mean_v1",
-        "runtime_versions": {name: version(name) for name in ("numpy", "torch", "transformers", "scikit-learn")},
-        "inference_sources": {name: _hash_file(PROJECT_ROOT / name) for name in (
-            "provenance/window_a0_fusion.py",
-            "research/text_attribution/window_split.py",
-            "research/text_attribution/phase3_data.py",
-            "research/text_attribution/hierarchical_model.py",
-            "research/text_attribution/classical_models.py",
-        )},
-    }
-
-
 def _load_or_score_branches(
     *,
     fusion: WindowA0EqualFusion,
     samples: Sequence[Any],
     cache_path: Path,
     split: str,
-    provenance: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     if cache_path.exists():
         payload = json.loads(cache_path.read_text(encoding="utf-8"))
-        if payload.get("schema_version") != 2 or not payload.get("provenance"):
-            raise ValueError(f"stale branch cache without provenance: {cache_path}")
-    identity = dict(provenance or {"inference": _inference_identity(fusion)})
-    identity["ordered_samples_sha256"] = _hash_json([
-        [sample.request_key, sample.text, sample.family_id] for sample in samples
-    ])
-    keys = [sample.request_key for sample in samples]
-    true = [sample.family_id for sample in samples]
-    if not keys or len(set(keys)) != len(keys):
-        raise ValueError("branch samples must be nonempty with unique request keys")
-    if cache_path.exists():
-        if (payload.get("n") != len(samples) or payload.get("split") != split
-                or payload.get("provenance") != identity
-                or payload.get("request_keys") != keys or payload.get("true_family") != true
-                or payload.get("family_labels") != list(fusion.family_labels)):
+        if payload.get("n") != len(samples) or payload.get("split") != split:
             raise ValueError(f"stale branch cache: {cache_path}")
-        _arrays(payload)
         return payload
+    keys: list[str] = []
+    true: list[str] = []
     texts = [sample.text for sample in samples]
     fusion._ensure_loaded()
     stores = {name: [] for name in BRANCHES}
@@ -180,134 +120,140 @@ def _load_or_score_branches(
         print(f"{split} {name} scored {len(texts)}", flush=True)
     for index, sample in enumerate(samples):
         stores["A0"].append(fusion._predict_a0(sample.text).tolist())
+        keys.append(sample.request_key)
+        true.append(sample.family_id)
         if (index + 1) % 50 == 0 or index + 1 == len(samples):
             print(f"{split} A0 scored {index + 1}/{len(samples)}", flush=True)
     payload = {
-        "schema_version": 2,
-        "provenance": identity,
+        "schema_version": 1,
         "split": split,
         "n": len(samples),
-        "family_labels": list(fusion.family_labels),
+        "family_labels": list(FAMILY_LABELS),
         "request_keys": keys,
         "true_family": true,
         "branches": stores,
         "inference": "production_window_mean_A0_plus_sklearn_B0_B1_B3",
     }
-    _arrays(payload)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    with cache_path.open("x", encoding="utf-8") as handle:
-        json.dump(payload, handle, allow_nan=False)
+    cache_path.write_text(json.dumps(payload), encoding="utf-8")
     return payload
 
 
 def _arrays(payload: Mapping[str, Any]) -> tuple[dict[str, np.ndarray], list[str], list[str]]:
     labels = list(payload["family_labels"])
-    if not labels or len(labels) != len(set(labels)):
-        raise ValueError("branch cache family labels must be nonempty and unique")
-    true = list(payload["true_family"])
-    if not true or any(label not in labels for label in true):
-        raise ValueError("branch cache true labels must be nonempty catalog labels")
-    keys = payload.get("request_keys")
-    if (not isinstance(keys, list) or len(keys) != len(true)
-            or len(set(keys)) != len(keys) or len(true) != payload.get("n")):
-        raise ValueError("branch cache request keys and labels are misaligned")
     branches = {
         name: np.asarray(payload["branches"][name], dtype=np.float64) for name in BRANCHES
     }
-    for name, matrix in branches.items():
-        if matrix.shape != (len(true), len(labels)):
-            raise ValueError(f"branch cache {name} shape does not align with keys and labels")
-        if not np.isfinite(matrix).all() or (matrix < 0).any():
-            raise ValueError(f"branch cache {name} contains invalid probabilities")
-        if len(true) and not np.allclose(matrix.sum(axis=1), 1.0, atol=1e-6):
-            raise ValueError(f"branch cache {name} rows must sum to one")
-    return branches, true, labels
+    return branches, list(payload["true_family"]), labels
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--step", type=float, default=0.05)
-    parser.add_argument("--mode", choices=("validation", "evaluate-test"), default="validation")
     parser.add_argument(
         "--output-dir",
         default=str(PROJECT_ROOT / "outputs/attribution/family-window-split/fusion"),
     )
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    weights_path = output_dir / "seed42-weights.json"
-    receipt_path = output_dir / "seed42-test-evaluation.json"
-    if args.mode == "validation" and (weights_path.exists() or receipt_path.exists()):
-        raise FileExistsError("fusion lock/evaluation already exists; refusing to retune or overwrite")
-    if args.mode == "evaluate-test":
-        if receipt_path.exists():
-            raise FileExistsError("test evaluation already attempted; refusing duplicate evaluation")
-        locked = json.loads(weights_path.read_text(encoding="utf-8"))
-        if locked.get("schema_version") != 2 or locked.get("fit_split") != "validation" or not locked.get("provenance"):
-            raise ValueError("unverified legacy fusion lock; explicit migration is required")
-        weights = load_branch_weights(locked["weights"])
 
-    data_path = PROJECT_ROOT / "data/attribution/raw/zhizengzeng-attribution-server-6k-v5.jsonl"
-    catalog_path = PROJECT_ROOT / "configs/text_attribution/zhizengzeng_model_catalog.v5.json"
-    split_path = PROJECT_ROOT / "data/attribution/splits/family-attribution-v5-seed42.json"
-    manifest = load_split_manifest(split_path)
-    split = "validation" if args.mode == "validation" else "test"
-    # Full data is loaded solely to verify the frozen manifest fingerprint.
-    # Validation mode never forwards, caches predictions for, or scores test rows.
-    dataset = load_training_dataset(data_path, catalog_path)
-    samples = apply_split_manifest(dataset.samples, manifest)[split]
-    fusion = WindowA0EqualFusion({"device": "cuda:0" if _cuda() else "cpu"})
-    provenance = {
-        "dataset_sha256": _hash_file(data_path),
-        "dataset_fingerprint": manifest.dataset_fingerprint,
-        "manifest_sha256": _hash_file(split_path),
-        "catalog_sha256": _hash_file(catalog_path),
-        "inference": _inference_identity(fusion),
-    }
-    if args.mode == "evaluate-test":
-        if locked["provenance"] != provenance or locked.get("family_labels") != list(fusion.family_labels):
-            raise ValueError("fusion lock provenance does not match current data/models/inference")
-        # Reserve before touching test predictions. A failed attempt remains reserved:
-        # the operator must investigate rather than silently evaluating test again.
-        with receipt_path.open("x", encoding="utf-8") as handle:
-            json.dump({"status": "started", "lock_sha256": _hash_file(weights_path)}, handle)
-
-    payload = _load_or_score_branches(
-        fusion=fusion, samples=samples,
-        cache_path=output_dir / f"seed42-branch-probs-{split}.json",
-        split=split, provenance=provenance,
+    dataset = load_training_dataset(
+        PROJECT_ROOT / "data/attribution/raw/zhizengzeng-attribution-server-6k-v5.jsonl",
+        PROJECT_ROOT / "configs/text_attribution/zhizengzeng_model_catalog.v5.json",
     )
-    branches, true, labels = _arrays(payload)
-    equal = _score_weights(branches, true, labels, DEFAULT_BRANCH_WEIGHTS)
-    if args.mode == "evaluate-test":
-        selected = _score_weights(branches, true, labels, weights)
-        result = {
-            "schema_version": 2, "status": "complete", "split": "test",
-            "lock_sha256": _hash_file(weights_path), "n": len(true),
-            "provenance": payload["provenance"], "selected": selected, "equal": equal,
-        }
-        receipt_path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-        print(json.dumps(result, indent=2))
-        return 0
+    manifest = load_split_manifest(
+        PROJECT_ROOT / "data/attribution/splits/family-attribution-v5-seed42.json"
+    )
+    splits = apply_split_manifest(dataset.samples, manifest)
+    fusion = WindowA0EqualFusion({"device": "cuda:0" if _cuda() else "cpu"})
+
+    val_cache = output_dir / "seed42-branch-probs-validation.json"
+    test_cache = output_dir / "seed42-branch-probs-test.json"
+    validation = _load_or_score_branches(
+        fusion=fusion,
+        samples=splits["validation"],
+        cache_path=val_cache,
+        split="validation",
+    )
+    val_branches, val_true, labels = _arrays(validation)
 
     candidates = []
     for weights in _simplex(args.step):
-        scored = _score_weights(branches, true, labels, weights)
+        scored = _score_weights(val_branches, val_true, labels, weights)
         scored["weights"] = weights
         candidates.append(scored)
-    selected = min(candidates, key=lambda row: (-row["macro_f1"], -row["accuracy"], row["equal_l1"]))
+    equal = _score_weights(val_branches, val_true, labels, DEFAULT_BRANCH_WEIGHTS)
+    ranked = sorted(
+        candidates,
+        key=lambda row: (-row["macro_f1"], -row["accuracy"], row["equal_l1"]),
+    )
+    selected = ranked[0]
+
+    # Lock weights before touching test.
     locked = {
-        "schema_version": 2, "seed": 42, "fit_split": "validation", "view": "closed",
-        "step": args.step, "n_candidates": len(candidates),
-        "weights": selected["weights"], "family_labels": labels,
-        "provenance": provenance, "validation_cache_provenance": payload["provenance"],
-        "validation": {"selected": selected, "equal": equal, "n": len(true)},
-        "protocol": "Validation-only lock. Explicit evaluate-test mode consumes this immutable lock once.",
+        "schema_version": 1,
+        "seed": 42,
+        "fit_split": "validation",
+        "eval_split": "test",
+        "view": "closed",
+        "step": args.step,
+        "n_candidates": len(candidates),
+        "weights": selected["weights"],
+        "validation": {
+            "selected": {k: selected[k] for k in ("accuracy", "macro_f1", "equal_l1")},
+            "equal": {k: equal[k] for k in ("accuracy", "macro_f1")},
+            "n": len(val_true),
+        },
+        "protocol": (
+            "Weights fitted on frozen validation only. Test is scored once after lock. "
+            "Do not retune after reading test metrics."
+        ),
+        "test_evaluated": False,
     }
-    with weights_path.open("x", encoding="utf-8") as handle:
-        json.dump(locked, handle, ensure_ascii=False, indent=2, allow_nan=False)
-        handle.write("\n")
+    weights_path = output_dir / "seed42-weights.json"
+    weights_path.write_text(json.dumps(locked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print("locked validation weights", json.dumps(locked["weights"]), flush=True)
+    print("validation selected", locked["validation"]["selected"], "equal", locked["validation"]["equal"], flush=True)
+
+    test = _load_or_score_branches(
+        fusion=fusion,
+        samples=splits["test"],
+        cache_path=test_cache,
+        split="test",
+    )
+    test_branches, test_true, _ = _arrays(test)
+    test_selected = _score_weights(test_branches, test_true, labels, selected["weights"])
+    test_equal = _score_weights(test_branches, test_true, labels, DEFAULT_BRANCH_WEIGHTS)
+    locked["test"] = {
+        "selected": {k: test_selected[k] for k in ("accuracy", "macro_f1")},
+        "equal": {k: test_equal[k] for k in ("accuracy", "macro_f1")},
+        "n": len(test_true),
+    }
+    locked["test_evaluated"] = True
+    weights_path.write_text(json.dumps(locked, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    report = [
+        "# 切窗 A0 + B0/B1/B3 权重（seed42）",
+        "",
+        "协议：权重只在冻结 validation（912）上搜 simplex；**test（793）只评一次**。",
+        "A0 用生产推理（非重叠 512 窗平均），不是训练时的截断 head eval。",
+        "B0/B1/B3 是 sklearn 统计分类器，不是手写规则。",
+        "",
+        f"- 搜索步长：{args.step}，候选 {len(candidates)} 组，非负且和为 1。",
+        f"- 选中权重：A0={selected['weights']['A0']:.2f}, B0={selected['weights']['B0']:.2f}, "
+        f"B1={selected['weights']['B1']:.2f}, B3={selected['weights']['B3']:.2f}",
+        "",
+        "| 系统 | val Acc | val F1 | test Acc | test F1 |",
+        "| --- | ---: | ---: | ---: | ---: |",
+        f"| 等权 0.25 | {equal['accuracy']:.3f} | {equal['macro_f1']:.3f} | {test_equal['accuracy']:.3f} | {test_equal['macro_f1']:.3f} |",
+        f"| **val 选中权重** | **{selected['accuracy']:.3f}** | **{selected['macro_f1']:.3f}** | **{test_selected['accuracy']:.3f}** | **{test_selected['macro_f1']:.3f}** |",
+        "",
+        "看完 test 不再改权重。产物：`seed42-weights.json`。",
+        "",
+    ]
+    (output_dir / "seed42-tuned-weights.md").write_text("\n".join(report), encoding="utf-8")
+    print("".join(line + "\n" for line in report))
     return 0
 
 

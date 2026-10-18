@@ -593,9 +593,6 @@ class ReportGenerator:
     def _threshold_warning(self, warning: str) -> str:
         return {
             "calibrated_threshold_near_score_ceiling": "校准阈值接近模型分数上限",
-            "calibrated_high_threshold_replaced_by_floor": "运行高阈值已回落到有效的产品阈值",
-            "runtime_high_threshold_capped_to_floor": "阈值产物中的运行高阈值曾被调整",
-            "effective_high_threshold_not_evaluated": "当前运行阈值未完成独立验证，暂不报告误报率和召回率",
             "holdout_fpr_above_target": "真人验证集误报率显著高于目标",
             "insufficient_human_validation": "真人验证样本不足",
             "insufficient_ai_validation": "AI 验证样本不足",

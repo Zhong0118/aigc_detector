@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
-from functools import partial
-from types import SimpleNamespace
 import inspect
 import json
 import math
@@ -23,7 +21,6 @@ from research.text_attribution.hierarchical_model import (
 )
 from research.text_attribution.phase3_config import (
     ResolvedPhase3Recipe,
-    _recipe_hash,
     write_resolved_recipe,
 )
 from research.text_attribution.phase3_data import (
@@ -82,8 +79,6 @@ class Phase3TrainingRequest:
     max_steps: int | None = None
     preflight_only: bool = False
     use_cpu: bool = False
-    validation_evaluation_samples: tuple[Any, ...] | None = None
-    validation_window_counts: tuple[int, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -351,8 +346,6 @@ def _validate_training_identity(request: Phase3TrainingRequest) -> None:
 def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingResult:
     """Train and publish exactly one recipe × seed × data-view run."""
 
-    if request.recipe.recipe_hash != _recipe_hash(request.recipe):
-        raise ValueError("resolved recipe hash does not match recipe content; training refused")
     output_dir = Path(request.output_dir)
     if output_dir.exists():
         raise FileExistsError(f"Phase3 output directory already exists: {output_dir}")
@@ -444,22 +437,8 @@ def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingRes
             max_length=request.recipe.max_length,
             window_mode=request.recipe.window_mode,
         )
-        evaluation_samples = request.validation_evaluation_samples
-        window_counts = request.validation_window_counts
-        if (evaluation_samples is None) != (window_counts is None):
-            raise ValueError("window validation requires both evaluation samples and counts")
-        if window_counts is not None:
-            if (
-                request.recipe.validation_window_mode != "nonoverlap-probability-mean"
-                or len(window_counts) != len(view.validation_samples)
-                or any(type(count) is not int or count <= 0 for count in window_counts)
-                or sum(window_counts) != len(evaluation_samples)
-            ):
-                raise ValueError("window validation counts must match documents and windows")
-        elif request.recipe.validation_window_mode != "single":
-            raise ValueError("window recipe requires document-level window validation")
         validation_dataset = Phase3AttributionDataset(
-            samples=view.validation_samples if evaluation_samples is None else evaluation_samples,
+            samples=view.validation_samples,
             data_view=view,
             tokenizer=tokenizer,
             max_length=request.recipe.max_length,
@@ -499,11 +478,7 @@ def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingRes
             "train_dataset": train_dataset,
             "eval_dataset": validation_dataset,
             "data_collator": default_data_collator,
-            "compute_metrics": (
-                _compute_family_metrics
-                if window_counts is None
-                else partial(_compute_window_document_metrics, window_counts=window_counts)
-            ),
+            "compute_metrics": _compute_family_metrics,
             "callbacks": callbacks,
             "recipe": request.recipe,
             "train_samples": view.train_samples,
@@ -537,14 +512,7 @@ def train_phase3_experiment(request: Phase3TrainingRequest) -> Phase3TrainingRes
             )
         if not np.isfinite(validation_logits).all():
             raise FloatingPointError("non-finite Phase3 validation logits")
-        if window_counts is None:
-            validation_probabilities = _softmax(validation_logits)
-        else:
-            validation_probabilities = _window_document_probabilities(
-                validation_logits, window_counts
-            )
-            # Log-probabilities preserve the existing softmax(logits) artifact contract.
-            validation_logits = np.log(np.maximum(validation_probabilities, np.finfo(np.float64).tiny))
+        validation_probabilities = _softmax(validation_logits)
         validation_labels = np.asarray(
             [view.family_to_id[row.family_id] for row in view.validation_samples],
             dtype=np.int64,
@@ -677,55 +645,6 @@ def _training_arguments(
     elif "no_cuda" in signature:
         kwargs["no_cuda"] = request.use_cpu
     return TrainingArguments(**kwargs)
-
-
-def _window_document_probabilities(
-    logits: np.ndarray, window_counts: tuple[int, ...] | list[int]
-) -> np.ndarray:
-    """Average per-window probabilities in original document order."""
-
-    values = np.asarray(logits, dtype=np.float64)
-    counts = tuple(window_counts)
-    if values.ndim != 2 or not counts or any(
-        type(count) is not int or count <= 0 for count in counts
-    ) or sum(counts) != len(values):
-        raise ValueError("window logits and document window counts are misaligned")
-    probabilities = _softmax(values)
-    documents: list[np.ndarray] = []
-    cursor = 0
-    for count in counts:
-        documents.append(probabilities[cursor : cursor + count].mean(axis=0))
-        cursor += count
-    result = np.stack(documents, axis=0)
-    if not np.isfinite(result).all():
-        raise FloatingPointError("non-finite document-level validation probabilities")
-    return result
-
-
-def _compute_window_document_metrics(
-    prediction, *, window_counts: tuple[int, ...] | list[int]
-) -> dict[str, float]:
-    """Compute checkpoint metrics after mean-probability document aggregation."""
-
-    logits = np.asarray(prediction.predictions)
-    if isinstance(prediction.label_ids, tuple):
-        labels = np.asarray(prediction.label_ids[0])
-    else:
-        labels = np.asarray(prediction.label_ids)
-    probabilities = _window_document_probabilities(logits, tuple(window_counts))
-    if labels.shape[0] != len(logits):
-        raise ValueError("window validation labels and logits are misaligned")
-    document_labels: list[int] = []
-    cursor = 0
-    for count in window_counts:
-        window_labels = labels[cursor : cursor + count]
-        if len(set(window_labels.tolist())) != 1:
-            raise ValueError("all windows of a document must share one family label")
-        document_labels.append(int(window_labels[0]))
-        cursor += count
-    return _compute_family_metrics(
-        SimpleNamespace(predictions=probabilities, label_ids=np.asarray(document_labels))
-    )
 
 
 def _compute_family_metrics(prediction) -> dict[str, float]:

@@ -37,9 +37,10 @@ detection:
     resource_sources:
       raid_adversarial:
         enabled: false
-    # Conservative product thresholds. If a calibrated high hugs the ceiling,
-    # use a valid domain/default high above the low threshold. That fallback
-    # has no measured FPR/recall until separately validated; old metrics are hidden.
+    # Product floors. Calibration may raise a group above these, but not past 0.99:
+    # English YuChuan human scores hug 1.0, so a 2% FPR cut becomes 0.9996 and AI recall collapses.
+    # artifacts/text_fp_controller/thresholds.json keeps calibrated_high_threshold and
+    # runtime-caps those groups to the floors below.
     domain_thresholds:
       literature:
         low_threshold: 0.35
@@ -57,11 +58,11 @@ detection:
     hive:
       enabled: true
       api_version: "v3_vlm"
-      api_key_env: "HIVE_API_KEY"
+      api_key_env: "LJ9NfOyoJrxKgomS9kfvPQ=="
     sightengine:
       enabled: true
-      api_user_env: "SIGHTENGINE_API_USER"
-      api_secret_env: "SIGHTENGINE_API_SECRET"
+      api_user_env: "1813021110"
+      api_secret_env: "YzYcSfvs93dSk7Quie7DgWpuvToZBmWJ"
   local_models:
     enabled: true
     text_yuchuan:
@@ -166,11 +167,11 @@ provenance:
           b1_model_path: "outputs/attribution/family-phase4/fast-track-v1/classical/closed-seed42/B1/model.joblib"
           b3_model_path: "outputs/attribution/family-phase1/final/models/B3.joblib"
           weights:
-            A0: 0.25
-            B0: 0.25
-            B1: 0.25
-            B3: 0.25
-          note: "Equal-weight baseline, not a validated deployment winner. Use a verified validation lock for tuned weights. Seed 62 is control-only; model artifacts must pass recipe identity checks."
+            A0: 0.30
+            B0: 0.10
+            B1: 0.05
+            B3: 0.55
+          note: "Official mix: window-split A0 seed42 + B0 + B1 + B3. Weights locked on frozen val (A0 0.30 / B0 0.10 / B1 0.05 / B3 0.55); test scored once. Seed 62 is control-only. Do not train A1–A4."
         trained_classifier:
           enabled: false
           provider: "trained_classifier"
@@ -280,7 +281,7 @@ provenance:
 report:
   provider: "llm"
   llm_provider: "deepseek"
-  api_key_env: "DEEPSEEK_API_KEY"
+  api_key_env: "sk-ccae2f2b91ea47f6944000b577d051a3"
   base_url: "https://api.deepseek.com"
   model: "deepseek-v4-flash"
   thinking: "disabled"

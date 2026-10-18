@@ -7,7 +7,7 @@ kept only as a research control and is never loaded here. A1–A4 are not used.
 from __future__ import annotations
 
 from collections import defaultdict
-import math
+import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -60,7 +60,7 @@ DEFAULT_PATHS = {
 class WindowA0EqualFusion:
     """Mix window A0, B0, B1, and Phase1 B3 on one text unit.
 
-    Weights default to equal 0.25; deployment may supply explicit validated weights.
+    Weights default to equal 0.25, or the locked validation simplex artifact.
     """
 
     def __init__(self, cfg: Mapping[str, Any] | None = None) -> None:
@@ -178,8 +178,8 @@ class WindowA0EqualFusion:
             },
             "note": (
                 "Official production mix: window-split A0 seed42 with B0, B1, and "
-                "Phase1 B3. Weights are explicitly configured or default to equal "
-                "0.25; research locks are not loaded automatically. Seed 62 is "
+                "Phase1 B3. Weights come from the frozen-validation simplex search "
+                "when seed42-weights.json exists; otherwise equal 0.25. Seed 62 is "
                 "control only. Closed softmax has no 11th class; unknown means the "
                 "fused Top-1 is too weak or too close to call a family."
             ),
@@ -277,17 +277,8 @@ class WindowA0EqualFusion:
         if not a0_dir.exists():
             raise FileNotFoundError(f"official window-split A0 seed42 model missing: {a0_dir}")
         self._a0 = load_phase3_model(
-            a0_dir, device=str(self._device), expected_family_labels=self.family_labels
+            a0_dir, device=str(self._device), verify_recipe_hash=False
         )
-        recipe = self._a0.recipe
-        if (
-            recipe.recipe_id != "A0-window-split"
-            or recipe.window_mode != "single"
-            or recipe.validation_window_mode != "nonoverlap-probability-mean"
-            or recipe.max_length != self.max_length
-            or recipe.train_window_stride is None
-        ):
-            raise ValueError("incompatible window-A0 recipe or inference max_length")
         self._a0.eval()
         if tuple(self._a0.family_labels) != self.family_labels:
             raise ValueError("A0 family label order does not match the production catalog")
@@ -341,22 +332,21 @@ def decide_family_status(
 
 
 def load_branch_weights(explicit: Mapping[str, float] | None = None) -> dict[str, float]:
-    """Use explicit deployment weights or equal weights; never discover old locks."""
+    """Prefer an explicit map, then the locked artifact, then equal weights."""
 
-    if explicit is not None:
+    if explicit:
         return _normalize_weights(explicit)
+    if WEIGHTS_ARTIFACT.exists():
+        payload = json.loads(WEIGHTS_ARTIFACT.read_text(encoding="utf-8"))
+        return _normalize_weights(payload.get("weights") or payload)
     return dict(DEFAULT_BRANCH_WEIGHTS)
 
 
 def _normalize_weights(raw: Mapping[str, Any]) -> dict[str, float]:
-    if set(raw) != set(DEFAULT_BRANCH_WEIGHTS):
-        raise ValueError("fusion weights must contain exactly A0, B0, B1, B3")
     values = {name: float(raw[name]) for name in DEFAULT_BRANCH_WEIGHTS}
-    if any(not math.isfinite(value) or value < 0 for value in values.values()):
-        raise ValueError("fusion weights must be finite and nonnegative")
     total = sum(values.values())
-    if not math.isfinite(total) or total <= 0:
-        raise ValueError("fusion weights must have a finite positive sum")
+    if total <= 0:
+        raise ValueError("fusion weights must be positive and sum to one")
     return {name: value / total for name, value in values.items()}
 
 

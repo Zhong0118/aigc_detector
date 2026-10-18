@@ -322,9 +322,8 @@ def test_train_neural_experiment_seeds_before_loading_model(
         raise RuntimeError("stop after model load boundary")
 
     with (
-        patch.object(
-            module.transformers,
-            "set_seed",
+        patch(
+            "transformers.set_seed",
             side_effect=lambda seed: events.append(f"seed:{seed}"),
         ),
         patch.object(

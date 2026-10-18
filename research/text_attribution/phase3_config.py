@@ -183,8 +183,6 @@ class ResolvedPhase3Recipe:
     bf16: bool
     gradient_checkpointing: bool
     recipe_hash: str
-    train_window_stride: int | None = None
-    validation_window_mode: str = "single"
 
     def to_dict(self, *, include_hash: bool = True) -> dict[str, object]:
         payload: dict[str, object] = {
@@ -211,10 +209,6 @@ class ResolvedPhase3Recipe:
             "bf16": self.bf16,
             "gradient_checkpointing": self.gradient_checkpointing,
         }
-        # Preserve the exact serialization/hash of existing canonical recipes.
-        if self.train_window_stride is not None:
-            payload["train_window_stride"] = self.train_window_stride
-            payload["validation_window_mode"] = self.validation_window_mode
         if include_hash:
             payload["recipe_hash"] = self.recipe_hash
         return payload
@@ -403,27 +397,6 @@ def apply_no_bf16_profile(recipe: ResolvedPhase3Recipe) -> ResolvedPhase3Recipe:
     return replace(provisional, recipe_hash=_recipe_hash(provisional))
 
 
-def apply_window_split_profile(
-    recipe: ResolvedPhase3Recipe, *, stride: int
-) -> ResolvedPhase3Recipe:
-    """Bind window training and document mean validation to a new recipe hash."""
-
-    if recipe.recipe_id != "A0" or recipe.window_mode != "single":
-        raise ValueError("window-split profile requires the A0 single-window recipe")
-    if type(stride) is not int or not 0 < stride <= recipe.max_length:
-        raise ValueError("window stride must be positive and no larger than max_length")
-    provisional = replace(
-        recipe,
-        recipe_id="A0-window-split",
-        stage_id="A0-window-split",
-        parent_recipe_id=recipe.recipe_id,
-        train_window_stride=stride,
-        validation_window_mode="nonoverlap-probability-mean",
-        recipe_hash="",
-    )
-    return replace(provisional, recipe_hash=_recipe_hash(provisional))
-
-
 def load_resolved_recipe(
     path: str | Path, *, verify_recipe_hash: bool = True
 ) -> ResolvedPhase3Recipe:
@@ -531,17 +504,8 @@ def _recipe_hash(recipe: ResolvedPhase3Recipe) -> str:
 def _recipe_from_mapping(
     values: Mapping[str, object], *, verify_recipe_hash: bool = True
 ) -> ResolvedPhase3Recipe:
-    if verify_recipe_hash is not True:
-        raise ValueError("recipe hash verification cannot be disabled")
     payload = dict(values)
-    window_fields = frozenset({"train_window_stride", "validation_window_mode"})
-    is_window_profile = bool(window_fields & payload.keys())
-    _require_exact_fields(
-        payload, _RECIPE_FIELDS | window_fields if is_window_profile else _RECIPE_FIELDS,
-        "resolved recipe",
-    )
-    if is_window_profile and payload["validation_window_mode"] != "nonoverlap-probability-mean":
-        raise ValueError("window profile requires nonoverlap-probability-mean validation")
+    _require_exact_fields(payload, _RECIPE_FIELDS, "resolved recipe")
     recipe = ResolvedPhase3Recipe(
         stage_id=_require_string(payload, "stage_id", "resolved recipe"),
         recipe_id=_require_string(payload, "recipe_id", "resolved recipe"),
@@ -594,32 +558,12 @@ def _recipe_from_mapping(
             payload, "gradient_checkpointing", "resolved recipe"
         ),
         recipe_hash=_require_hash(payload.get("recipe_hash")),
-        train_window_stride=(
-            _require_positive_int(payload, "train_window_stride", "resolved recipe")
-            if is_window_profile
-            else None
-        ),
-        validation_window_mode=(
-            str(payload["validation_window_mode"])
-            if is_window_profile
-            else "single"
-        ),
     )
     if recipe.backbone_model_id != _BACKBONE:
         raise ValueError(f"resolved recipe backbone must be exactly {_BACKBONE}")
-    if is_window_profile and (
-        recipe.recipe_id != "A0-window-split"
-        or recipe.stage_id != "A0-window-split"
-        or recipe.window_mode != "single"
-        or recipe.train_window_stride > recipe.max_length
-    ):
-        raise ValueError("resolved window profile must bind A0 single-window stride")
     expected_hash = _recipe_hash(replace(recipe, recipe_hash=""))
-    if recipe.recipe_hash != expected_hash:
-        raise ValueError(
-            "resolved recipe hash does not match recipe content; legacy window artifacts "
-            "require an explicit audited migration, not a verification bypass"
-        )
+    if verify_recipe_hash and recipe.recipe_hash != expected_hash:
+        raise ValueError("resolved recipe hash does not match recipe content")
     return recipe
 
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Train A0 on token windows; validate on all windows per source document.
+"""Train A0 on non-overlapping token windows; evaluate on whole documents.
 
-Training windows inherit source labels.  Validation predictions are averaged by
-source document before checkpoint selection, matching production window scoring.
+This is not A1–A4. It only changes how A0 consumes long rows: train windows
+inherit family_id and related ids, validation stays one row per document so
+metrics remain comparable to the truncated A0 baseline.
 """
 
 from __future__ import annotations
@@ -17,21 +18,14 @@ import sys
 from typing import Any, Sequence
 from uuid import uuid4
 
-from research.text_attribution.phase3_config import (
-    apply_window_split_profile,
-    load_phase3_config,
-    resolve_phase3_recipe,
-)
+from research.text_attribution.phase3_config import load_phase3_config, resolve_phase3_recipe
 from research.text_attribution.phase3_data import (
     build_phase3_data_view,
     load_variant_catalog,
 )
 from research.text_attribution.split_manifest import apply_split_manifest, load_split_manifest
 from research.text_attribution.training_data import load_training_dataset
-from research.text_attribution.window_split import (
-    expand_samples_to_windows,
-    expand_validation_windows,
-)
+from research.text_attribution.window_split import expand_samples_to_windows
 from scripts.run_family_attribution_phase3 import (
     _build_validation_only_audit,
     _sha256_file,
@@ -137,10 +131,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     else:
         data_view = replace(data_view, train_samples=train_windows)
-    recipe = apply_window_split_profile(recipe, stride=window_audit["stride"])
-    validation_windows, validation_window_counts = expand_validation_windows(
-        data_view.validation_samples, tokenizer, max_length=recipe.max_length
-    )
 
     validation_only_audit = _build_validation_only_audit(
         (*splits["train"], *splits["validation"])
@@ -148,7 +138,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     split_manifest_hash = _sha256_file(split_path)
     catalog_hash = _sha256_file(catalog_path)
     run_fingerprint = compute_phase3_run_fingerprint(
-        recipe_hash=recipe.recipe_hash,
+        recipe_hash=recipe.recipe_hash + ":window-split",
         dataset_fingerprint=manifest.dataset_fingerprint,
         split_manifest_hash=split_manifest_hash,
         catalog_hash=catalog_hash,
@@ -181,11 +171,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "backbone_model_id": recipe.backbone_model_id,
         "model_source": str(model_source),
         "max_length": recipe.max_length,
-        "window_mode": recipe.window_mode,
-        "train_window_stride": recipe.train_window_stride,
-        "validation_window_mode": recipe.validation_window_mode,
-        "validation_window_stride": window_audit["content_length"],
-        "validation_window_rows": len(validation_windows),
+        "window_mode": "train_nonoverlap_eval_document",
         "smoke_test": args.smoke_test,
         "device": args.device,
         "versions": {"python": platform.python_version()},
@@ -203,7 +189,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     staging = output_dir.with_name(f".{output_dir.name}.run-{uuid4().hex}")
     try:
         request = Phase3TrainingRequest(
-            recipe=recipe,
+            recipe=replace(recipe, recipe_id="A0-window-split", stage_id="A0-window-split"),
             data_view=data_view,
             output_dir=staging,
             seed=args.seed,
@@ -218,8 +204,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             smoke_test=args.smoke_test,
             require_cuda=not args.smoke_test,
             use_cpu=args.device == "cpu",
-            validation_evaluation_samples=validation_windows,
-            validation_window_counts=validation_window_counts,
         )
         result = train_phase3_experiment(request)
         from research.text_attribution.attribution_metrics import (
