@@ -375,6 +375,8 @@ def render_analysis(data: dict):
             if decision.get("threshold_warnings"):
                 warning_names = {
                     "calibrated_threshold_near_score_ceiling": "校准阈值接近模型分数上限",
+                    "calibrated_high_threshold_replaced_by_floor": "贴顶校准高阈值已回落到文体下限",
+                    "runtime_high_threshold_capped_to_floor": "贴顶校准高阈值已回落到文体下限（学术 88%）",
                     "holdout_fpr_above_target": "真人验证集误报率显著高于目标",
                     "insufficient_human_validation": "真人验证样本不足",
                     "insufficient_ai_validation": "AI 验证样本不足",
@@ -455,16 +457,29 @@ def render_analysis(data: dict):
         # 右侧主要展示溯源层和报告层。
         st.subheader("Provenance")
         pcols = st.columns(4)
-        pcols[0].metric("Deep Check", "YES" if provenance["deep_triggered"] else "NO")
+        pcols[0].metric("Deep Check", "YES" if provenance.get("deep_triggered") else "NO")
         pcols[1].metric("C2PA", provenance["c2pa"].get("status", "unknown"))
         pcols[2].metric("Watermark", provenance["watermark"].get("status", "unknown"))
         registry = provenance.get("fingerprint_registry", {})
         pcols[3].metric("Fingerprint Hits", registry.get("match_count", 0))
         attribution = provenance.get("attribution", {})
+        if provenance.get("attribution_triggered") and not provenance.get("deep_triggered"):
+            st.caption("整篇 AI 率未过 0.6，但高分检测块已触发家族溯源。")
+        family_status = attribution.get("family_status")
+        verdict = attribution.get("verdict")
+        if family_status == "family_only":
+            st.success(verdict or "AI-家族明确")
+        elif family_status == "unknown":
+            st.warning(verdict or "AI-家族不明")
         st.caption(
-            "Attribution: "
-            f"{attribution.get('status', 'unknown')} | "
+            "家族溯源: "
+            f"{family_status} | "
             f"confidence={float(attribution.get('confidence') or 0.0):.2%}"
+            + (
+                f" | {attribution.get('recipe')}"
+                if attribution.get("recipe")
+                else ""
+            )
         )
         if attribution.get("status") == "data_mismatch":
             st.warning("LLMDet data cache is incomplete or inconsistent; local text attribution was skipped.")
@@ -483,8 +498,29 @@ def render_analysis(data: dict):
 
         top_k = attribution.get("top_k") or []
         if top_k:
-            with st.expander("Attribution Candidates", expanded=True):
-                for item in top_k:
+            st.subheader("总加权家族结论")
+            if family_status == "unknown":
+                st.caption("首位家族概率低于 20%，结论为家族不明；下面仍列出闭集参考 Top-K，不再另报未知概率。")
+            for item in top_k:
+                st.write(
+                    f"- {item.get('model', 'unknown')}: "
+                    f"{float(item.get('probability') or 0.0):.2%}"
+                )
+            st.caption("按进入溯源的检测块长度×检测分加权，不相邻块不粘贴。生产头是切窗 A0+B0+B1+B3（validation 锁定权重）。")
+
+        blocks = attribution.get("blocks") or []
+        if blocks:
+            st.subheader("高分块家族 Top-K")
+            for block in blocks:
+                indices = block.get("block_indices") or []
+                title = "、".join(f"第 {int(idx) + 1} 块" for idx in indices) or "检测块"
+                score = float(block.get("detection_score") or 0.0)
+                block_verdict = block.get("verdict") or block.get("family_status") or ""
+                st.markdown(f"**{title}** · 检测 AI 率 {score:.1%} · {block_verdict}")
+                preview = str(block.get("preview") or "").strip()
+                if preview:
+                    st.caption(preview)
+                for item in block.get("top_k") or []:
                     st.write(
                         f"- {item.get('model', 'unknown')}: "
                         f"{float(item.get('probability') or 0.0):.2%}"

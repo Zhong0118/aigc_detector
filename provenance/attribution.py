@@ -60,14 +60,20 @@ class ProvenanceAttributionEngine:
         self.config = config or {}
         self._llmdet_probability_loaded = False
         self._clip_cache: dict[str, Any] = {}
+        self._window_fusion = None
 
-    def attribute(self, path: str | Path, modality: str) -> dict[str, Any]:
+    def attribute(
+        self,
+        path: str | Path,
+        modality: str,
+        detection: Any | None = None,
+    ) -> dict[str, Any]:
         """按模态执行候选来源归因。"""
         if not self.config.get("enabled", False):
             return self._disabled("attribution")
         path = Path(path)
         if modality == "text":
-            return self._attribute_text(path)
+            return self._attribute_text(path, detection=detection)
         if modality == "image":
             return self._attribute_image(path)
         if modality == "video":
@@ -81,7 +87,7 @@ class ProvenanceAttributionEngine:
             "note": f"Attribution is not configured for {modality}.",
         }
 
-    def _attribute_text(self, path: Path) -> dict[str, Any]:
+    def _attribute_text(self, path: Path, detection: Any | None = None) -> dict[str, Any]:
         """融合多个文本候选来源归因分支。"""
         cfg = self.config.get("text", {})
         if not cfg.get("enabled", False):
@@ -91,7 +97,11 @@ class ProvenanceAttributionEngine:
         providers = self._provider_configs(cfg, default_provider="llmdet")
         for name, provider_cfg in providers:
             provider = str(provider_cfg.get("provider", name)).lower()
-            if provider == "llmdet":
+            if provider in {"window_a0_equal_fusion", "window_a0_fusion"}:
+                branches.append(
+                    self._attribute_text_window_a0_fusion(path, provider_cfg, detection)
+                )
+            elif provider == "llmdet":
                 branches.append(self._attribute_text_llmdet(path, provider_cfg))
             elif provider in {"trained_classifier", "trained_text_classifier"}:
                 branches.append(self._attribute_text_trained_classifier(path, provider_cfg))
@@ -115,7 +125,73 @@ class ProvenanceAttributionEngine:
             else:
                 branches.append(self._not_configured(provider, "Unsupported text attribution provider."))
 
-        return self._fuse_branch_results(branches, modality="text", top_k=int(cfg.get("top_k", 5)))
+        fused = self._fuse_branch_results(branches, modality="text", top_k=int(cfg.get("top_k", 5)))
+        for branch in branches:
+            if branch.get("provider") == "window_a0_equal_fusion" and branch.get("blocks"):
+                fused["blocks"] = branch["blocks"]
+                fused["seed"] = branch.get("seed")
+                fused["recipe"] = branch.get("recipe")
+                fused["family_probabilities"] = branch.get("family_probabilities")
+                fused["family_status"] = branch.get("family_status")
+                fused["verdict"] = branch.get("verdict")
+                fused["predicted_family"] = branch.get("predicted_family")
+                if branch.get("status") == "ok":
+                    fused["top_k"] = branch.get("top_k") or fused.get("top_k") or []
+                    fused["confidence"] = branch.get("confidence", fused.get("confidence", 0.0))
+                break
+        return fused
+
+    def _attribute_text_window_a0_fusion(
+        self,
+        path: Path,
+        cfg: dict[str, Any],
+        detection: Any | None = None,
+    ) -> dict[str, Any]:
+        """Window-split A0 seed42 plus B0/B1/B3, scored on high-score detection blocks."""
+        if not cfg.get("enabled", True):
+            return self._disabled("window_a0_equal_fusion")
+        try:
+            from ingestion.document_text import extract_document_text, is_document_path
+            from provenance.high_score_blocks import (
+                collect_detection_segments,
+                select_attribution_units,
+                thresholds_from_detection,
+            )
+            from provenance.window_a0_fusion import WindowA0EqualFusion
+
+            if is_document_path(path):
+                text = extract_document_text(path)
+            else:
+                text = path.read_text(encoding=cfg.get("encoding", "utf-8"), errors="ignore")
+            segments = collect_detection_segments(detection)
+            low_threshold, high_threshold = thresholds_from_detection(detection)
+            low_threshold = float(cfg.get("low_threshold", low_threshold))
+            high_threshold = float(cfg.get("high_threshold", high_threshold))
+            if segments:
+                units = select_attribution_units(
+                    segments,
+                    full_text=text,
+                    low_threshold=low_threshold,
+                    high_threshold=high_threshold,
+                    min_blocks=int(cfg.get("min_blocks", 8)),
+                    max_blocks=int(cfg.get("max_blocks", 12)),
+                )
+            else:
+                units = [
+                    {
+                        "block_indices": [0],
+                        "start": 0,
+                        "end": len(text),
+                        "text": text,
+                        "char_len": max(1, len(text)),
+                        "detection_score": 1.0,
+                    }
+                ]
+            if self._window_fusion is None:
+                self._window_fusion = WindowA0EqualFusion(cfg)
+            return self._window_fusion.predict_units(units)
+        except Exception as exc:  # noqa: BLE001
+            return self._error("window_a0_equal_fusion", exc)
 
     def _attribute_text_llmdet(self, path: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         """调用 LLMDet 做文本候选来源归因。"""

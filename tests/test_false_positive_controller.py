@@ -544,6 +544,66 @@ class FalsePositiveControllerTests(unittest.TestCase):
                     )
                 )
 
+    def test_ceiling_hugging_english_academic_threshold_falls_back_to_floor(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "thresholds.json"
+            artifact.write_text(
+                json.dumps(
+                    {
+                        "artifact_schema_version": 2,
+                        "version": "ceiling-v2",
+                        "groups": {
+                            "en:academic_technical:long": {
+                                "low_threshold": 0.35,
+                                "high_threshold": 0.9996,
+                                "threshold_floor": 0.88,
+                                "ai_recall": 0.081,
+                                "warnings": [
+                                    "calibrated_threshold_near_score_ceiling",
+                                    "ai_recall_below_minimum",
+                                ],
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            controller = FalsePositiveController(
+                {
+                    "artifact_path": str(artifact),
+                    "min_effective_chars": 8,
+                    "short_text_chars": 20,
+                    "min_high_coverage": 0.3,
+                    "min_adjacent_high_segments": 2,
+                    "domain_thresholds": {
+                        "academic_technical": {
+                            "low_threshold": 0.35,
+                            "high_threshold": 0.88,
+                        }
+                    },
+                }
+            )
+            provider = FakeProviderResult(
+                score=0.77,
+                details={
+                    "segments": [
+                        {"index": 0, "start": 0, "end": 20, "score": 0.98},
+                        {"index": 1, "start": 20, "end": 40, "score": 0.91},
+                        {"index": 2, "start": 40, "end": 60, "score": 0.40},
+                    ]
+                },
+            )
+
+            decision = controller.evaluate(
+                "We propose a neural method and report experimental results. " * 4,
+                [provider],
+            )
+
+        self.assertEqual(decision.threshold_group, "en:academic_technical:long")
+        self.assertEqual(decision.high_threshold, 0.88)
+        self.assertIn("calibrated_high_threshold_replaced_by_floor", decision.threshold_warnings)
+        self.assertGreaterEqual(decision.adjacent_high_segments, 2)
+
     def test_long_document_requires_distributed_segment_evidence(self) -> None:
         controller = FalsePositiveController(
             {

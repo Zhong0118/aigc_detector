@@ -397,8 +397,13 @@ def apply_no_bf16_profile(recipe: ResolvedPhase3Recipe) -> ResolvedPhase3Recipe:
     return replace(provisional, recipe_hash=_recipe_hash(provisional))
 
 
-def load_resolved_recipe(path: str | Path) -> ResolvedPhase3Recipe:
-    return _recipe_from_mapping(_read_json_object(Path(path), "resolved recipe"))
+def load_resolved_recipe(
+    path: str | Path, *, verify_recipe_hash: bool = True
+) -> ResolvedPhase3Recipe:
+    return _recipe_from_mapping(
+        _read_json_object(Path(path), "resolved recipe"),
+        verify_recipe_hash=verify_recipe_hash,
+    )
 
 
 def _make_recipe(
@@ -496,7 +501,9 @@ def _recipe_hash(recipe: ResolvedPhase3Recipe) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _recipe_from_mapping(values: Mapping[str, object]) -> ResolvedPhase3Recipe:
+def _recipe_from_mapping(
+    values: Mapping[str, object], *, verify_recipe_hash: bool = True
+) -> ResolvedPhase3Recipe:
     payload = dict(values)
     _require_exact_fields(payload, _RECIPE_FIELDS, "resolved recipe")
     recipe = ResolvedPhase3Recipe(
@@ -555,7 +562,7 @@ def _recipe_from_mapping(values: Mapping[str, object]) -> ResolvedPhase3Recipe:
     if recipe.backbone_model_id != _BACKBONE:
         raise ValueError(f"resolved recipe backbone must be exactly {_BACKBONE}")
     expected_hash = _recipe_hash(replace(recipe, recipe_hash=""))
-    if recipe.recipe_hash != expected_hash:
+    if verify_recipe_hash and recipe.recipe_hash != expected_hash:
         raise ValueError("resolved recipe hash does not match recipe content")
     return recipe
 

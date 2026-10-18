@@ -39,4 +39,5 @@ AUDIT="outputs/attribution/v5-probe/audit.json"
   --output "$AUDIT" \
   --strict
 
-echo "V5 replacement probe passed: kimi-k2.5 and mimo-v2.5-pro"
+echo "V5 replacement probe passed: kimi-k2.5 and mimo-v2-pro"
+

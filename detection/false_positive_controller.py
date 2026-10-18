@@ -203,23 +203,27 @@ class FalsePositiveController:
     ) -> tuple[str, float, float, list[str]]:
         artifact_warnings = list(self.artifact_warnings)
         if language != "mixed":
-            return (
-                *self._language_thresholds(language, domain, length_bucket),
-                artifact_warnings,
+            group, low, high, extra = self._language_thresholds(
+                language, domain, length_bucket
             )
+            return group, low, high, [*artifact_warnings, *extra]
 
         mixed = self._calibrated_thresholds("mixed", domain, length_bucket)
         if mixed is not None:
-            return (*mixed, artifact_warnings)
+            group, low, high, extra = mixed
+            return group, low, high, [*artifact_warnings, *extra]
 
         candidates = (
             self._language_thresholds("zh", domain, length_bucket),
             self._language_thresholds("en", domain, length_bucket),
         )
         selected = max(candidates, key=lambda item: (item[2], -item[1], item[0]))
+        group, low, high, extra = selected
         return (
-            *selected,
-            [*artifact_warnings, "mixed_language_threshold_fallback"],
+            group,
+            low,
+            high,
+            [*artifact_warnings, "mixed_language_threshold_fallback", *extra],
         )
 
     def _language_thresholds(
@@ -227,7 +231,7 @@ class FalsePositiveController:
         language: str,
         domain: str,
         length_bucket: str,
-    ) -> tuple[str, float, float]:
+    ) -> tuple[str, float, float, list[str]]:
         calibrated = self._calibrated_thresholds(language, domain, length_bucket)
         if calibrated is not None:
             return calibrated
@@ -235,10 +239,12 @@ class FalsePositiveController:
         for candidate in (language, "global"):
             entry = groups.get(candidate)
             if isinstance(entry, dict):
+                high, extra = self._usable_high_threshold(entry, domain)
                 return (
                     candidate,
                     float(entry.get("low_threshold", self.default_low)),
-                    float(entry.get("high_threshold", self.default_high)),
+                    high,
+                    extra,
                 )
         entry = self.domain_thresholds.get(domain)
         if isinstance(entry, dict):
@@ -246,15 +252,21 @@ class FalsePositiveController:
                 f"built-in:{domain}:{length_bucket}",
                 float(entry.get("low_threshold", self.default_low)),
                 float(entry.get("high_threshold", self.default_high)),
+                [],
             )
-        return f"built-in:{domain}:{length_bucket}", self.default_low, self.default_high
+        return (
+            f"built-in:{domain}:{length_bucket}",
+            self.default_low,
+            self.default_high,
+            [],
+        )
 
     def _calibrated_thresholds(
         self,
         language: str,
         domain: str,
         length_bucket: str,
-    ) -> tuple[str, float, float] | None:
+    ) -> tuple[str, float, float, list[str]] | None:
         groups = self.artifact.get("groups", {})
         for candidate in (
             f"{language}:{domain}:{length_bucket}",
@@ -262,12 +274,31 @@ class FalsePositiveController:
         ):
             entry = groups.get(candidate)
             if isinstance(entry, dict):
+                high, extra = self._usable_high_threshold(entry, domain)
                 return (
                     candidate,
                     float(entry.get("low_threshold", self.default_low)),
-                    float(entry.get("high_threshold", self.default_high)),
+                    high,
+                    extra,
                 )
         return None
+
+    def _usable_high_threshold(
+        self, entry: dict[str, Any], domain: str
+    ) -> tuple[float, list[str]]:
+        """Replace unusable ceiling-hugging calibrated highs with the product floor."""
+
+        high = float(entry.get("high_threshold", self.default_high))
+        floor = entry.get("threshold_floor")
+        if floor is None:
+            domain_entry = self.domain_thresholds.get(domain) or {}
+            floor = domain_entry.get("high_threshold", self.default_high)
+        floor = float(floor)
+        # English academic calibration can sit at 0.9996 with ~8% AI recall.
+        # That is not a usable product high-threshold; keep 0.93-class floors intact.
+        if high >= 0.99 and high > floor:
+            return floor, ["calibrated_high_threshold_replaced_by_floor"]
+        return high, []
 
     def _threshold_diagnostics(
         self,

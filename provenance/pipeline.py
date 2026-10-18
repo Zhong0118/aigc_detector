@@ -76,15 +76,19 @@ class ProvenancePipeline:
         path = Path(path)
         fingerprint = fingerprint or compute_fingerprint(path, modality)
         deep_triggered = detection.score >= self.deep_threshold
+        attribution_triggered = self._attribution_triggered(modality, detection, deep_triggered)
         result: dict[str, Any] = {
             "deep_triggered": deep_triggered,
+            "attribution_triggered": attribution_triggered,
             "threshold": self.deep_threshold,
             "fingerprint": fingerprint,
             "c2pa": self._run_c2pa(path, modality),
             "watermark": self._skipped("watermark") if not deep_triggered else self._run_watermark(path, modality),
             "fingerprint_registry": self._run_fingerprint_registry(fingerprint, modality),
             "provider_hints": self._provider_hints_from_detection(detection),
-            "attribution": self._run_attribution(path, modality, detection, deep_triggered),
+            "attribution": self._run_attribution(
+                path, modality, detection, attribution_triggered
+            ),
         }
         return result
 
@@ -168,25 +172,26 @@ class ProvenancePipeline:
         path: Path,
         modality: str,
         detection: DetectionPackage,
-        deep_triggered: bool,
+        attribution_triggered: bool,
     ) -> dict[str, Any]:
         """生成模型来源提示。
 
-        当前优先复用 detection provider 返回的 model_scores。
-        如果真实 API 给出 Midjourney/SDXL/GPT family 等分数，就会转成 Top-K。
-        如果没有 provider 分数，并且达到深层阈值，则调用配置的本地/外部候选归因器。
+        文本家族溯源看文档分或高分检测块，不绑定 `high_risk_ai` 标签。
         """
-        if not deep_triggered:
+        if not attribution_triggered:
             return {
                 "status": "skipped",
                 "source": "local_attribution_model",
                 "top_k": [],
                 "confidence": 0.0,
-                "note": "Attribution skipped because the AI score did not reach the deep provenance threshold.",
+                "note": (
+                    "Attribution skipped because neither the document AI score nor "
+                    "high-score detection-block evidence reached the provenance gate."
+                ),
             }
 
         if self.attribution_config.get("enabled", False):
-            return self.attributor.attribute(path, modality)
+            return self.attributor.attribute(path, modality, detection=detection)
 
         return {
             "status": "reserved",
@@ -195,6 +200,30 @@ class ProvenancePipeline:
             "confidence": 0.0,
             "note": f"Local model attribution is reserved for {modality}.",
         }
+
+    def _attribution_triggered(
+        self,
+        modality: str,
+        detection: DetectionPackage,
+        deep_triggered: bool,
+    ) -> bool:
+        """Text family attribution may fire on high-score blocks, not only document score."""
+        if modality != "text":
+            return deep_triggered
+        from provenance.high_score_blocks import (
+            collect_detection_segments,
+            should_run_text_attribution,
+            thresholds_from_detection,
+        )
+
+        low_threshold, high_threshold = thresholds_from_detection(detection)
+        return should_run_text_attribution(
+            document_score=float(detection.score),
+            segments=collect_detection_segments(detection),
+            low_threshold=low_threshold,
+            high_threshold=high_threshold,
+            deep_threshold=self.deep_threshold,
+        )
 
     def _provider_hints_from_detection(self, detection: DetectionPackage) -> dict[str, Any]:
         """把 detection provider 给出的模型提示单独保存。

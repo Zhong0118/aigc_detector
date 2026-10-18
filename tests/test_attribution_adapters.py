@@ -135,7 +135,9 @@ class ProvenanceAttributionEngineTests(unittest.TestCase):
 
         self.assertEqual(low_result["attribution"]["status"], "skipped")
         self.assertEqual(high_result["attribution"]["status"], "ok")
-        pipeline.attributor.attribute.assert_called_once_with(text_path, "text")
+        pipeline.attributor.attribute.assert_called_once_with(
+            text_path, "text", detection=high_detection
+        )
 
     def test_pipeline_keeps_provider_hints_and_still_runs_llmdet_attribution(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

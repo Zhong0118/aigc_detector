@@ -208,6 +208,7 @@ def load_phase3_model(
     expected_family_labels: tuple[str, ...] | None = None,
     expected_model_labels: tuple[str, ...] | None = None,
     device: str = "cpu",
+    verify_recipe_hash: bool = True,
 ) -> HierarchicalAttributionModel:
     """Reload and validate a complete Phase3 model artifact."""
 
@@ -230,7 +231,10 @@ def load_phase3_model(
     if metadata["schema_version"] != 1:
         raise ValueError("unsupported Phase3 model schema_version")
 
-    recipe = load_resolved_recipe(source_path / "resolved_recipe.json")
+    recipe = load_resolved_recipe(
+        source_path / "resolved_recipe.json",
+        verify_recipe_hash=verify_recipe_hash,
+    )
     if metadata["recipe_hash"] != recipe.recipe_hash:
         raise ValueError("model metadata recipe hash does not match resolved recipe")
     if expected_recipe_hash is not None and recipe.recipe_hash != expected_recipe_hash:
