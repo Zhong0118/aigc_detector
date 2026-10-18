@@ -30,6 +30,7 @@ from provenance.pipeline import ProvenancePipeline
 from reports.generator import ReportGenerator
 from storage.database import get_session
 from storage.models import Content, DetectionResult, ProvenanceRecord
+from project_config import resolve_config_path
 
 
 class AnalysisService:
@@ -40,7 +41,7 @@ class AnalysisService:
     外部接口不用跟着大改。
     """
 
-    def __init__(self, config_path: str = "config.yaml") -> None:
+    def __init__(self, config_path: str | None = None) -> None:
         """初始化分析服务。
 
         config_path 指向项目配置文件。这里会加载：
@@ -67,7 +68,7 @@ class AnalysisService:
             attribution_config=provenance_cfg.get("attribution", {}),
         )
         # 报告生成器现在是模板版，后续可以在 reports/generator.py 内接 LLM。
-        self.reporter = ReportGenerator()
+        self.reporter = ReportGenerator(config_path=config_path)
 
     def analyze_file_path(self, path: str | Path, filename: str | None = None) -> dict[str, Any]:
         """分析一个已经存在于本地磁盘上的文件。
@@ -214,12 +215,12 @@ class AnalysisService:
             # 不管写入是否成功，都关闭 session。
             session.close()
 
-    def _load_config(self, config_path: str) -> dict[str, Any]:
+    def _load_config(self, config_path: str | None) -> dict[str, Any]:
         """读取 YAML 配置文件。
 
         如果配置文件不存在，就返回空字典，让各模块使用自己的默认值。
         """
-        path = Path(config_path)
+        path = resolve_config_path(config_path)
         if not path.exists():
             return {}
         with open(path, encoding="utf-8") as f:

@@ -13,6 +13,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from detection.providers import DetectionUnavailableError
 from storage.database import init_db
 from api.routes import router
 
@@ -27,6 +29,15 @@ app = FastAPI(
 # 把 api/routes.py 里的所有业务接口挂到 `/api/v1` 下面。
 # 例如 routes.py 里定义 `/analyze/text`，最终访问路径就是 `/api/v1/analyze/text`。
 app.include_router(router, prefix="/api/v1")
+
+
+@app.exception_handler(DetectionUnavailableError)
+async def detection_unavailable_handler(request, exc: DetectionUnavailableError):
+    """Report an unavailable detector without inventing a human verdict."""
+    return JSONResponse(
+        status_code=503,
+        content={"detail": str(exc), "providers": exc.providers},
+    )
 
 
 @app.on_event("startup")

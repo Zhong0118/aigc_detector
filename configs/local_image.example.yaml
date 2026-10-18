@@ -1,0 +1,46 @@
+database:
+  path: data/local_image_experiment.db
+detection:
+  mode: local_image_baseline
+  threshold: 0.8
+  deep_provenance_threshold: 0.6
+  demo_provider_enabled: false
+  text_false_positive_control:
+    enabled: false
+  api_providers:
+    hive:
+      enabled: false
+    sightengine:
+      enabled: false
+  local_models:
+    enabled: true
+    text_yuchuan:
+      enabled: false
+    image_source:
+      enabled: true
+      model_path: models/attribution/image_source_classifier.json
+      cache_dir: models/huggingface
+      clip_revision: 3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268
+      device: auto
+      top_k: 5
+      validated: false
+provenance:
+  watermark:
+    enabled: false
+  attribution:
+    enabled: true
+    image:
+      enabled: true
+    text:
+      enabled: false
+    audio:
+      enabled: false
+    video:
+      enabled: false
+report:
+  provider: template
+api:
+  host: 127.0.0.1
+  port: 8000
+dashboard:
+  port: 8501

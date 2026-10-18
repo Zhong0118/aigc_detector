@@ -1008,11 +1008,16 @@ class ProvenanceAttributionEngine:
         model_name = str(artifact.get("clip_model_name") or cfg.get("clip_model_name") or "openai/clip-vit-base-patch32")
         cache_dir = str(cfg.get("cache_dir") or artifact.get("cache_dir") or "models/huggingface")
         self._configure_huggingface_cache({"cache_dir": cache_dir})
-        device = str(cfg.get("device") or ("cuda" if torch.cuda.is_available() else "cpu"))
-        cache_key = f"{model_name}|{cache_dir}|{device}"
+        requested_device = str(cfg.get("device") or "auto")
+        device = ("cuda" if torch.cuda.is_available() else "cpu") if requested_device == "auto" else requested_device
+        revision = cfg.get("clip_revision") or artifact.get("clip_revision")
+        cache_key = f"{model_name}|{cache_dir}|{device}|{revision}"
         if cache_key not in self._clip_cache:
-            processor = CLIPImageProcessor.from_pretrained(model_name, cache_dir=cache_dir)
-            model = CLIPModel.from_pretrained(model_name, cache_dir=cache_dir).to(device)
+            load_kwargs = {"cache_dir": cache_dir}
+            if revision:
+                load_kwargs["revision"] = str(revision)
+            processor = CLIPImageProcessor.from_pretrained(model_name, **load_kwargs)
+            model = CLIPModel.from_pretrained(model_name, **load_kwargs).to(device)
             model.eval()
             self._clip_cache[cache_key] = (processor, model, device)
         processor, model, device = self._clip_cache[cache_key]

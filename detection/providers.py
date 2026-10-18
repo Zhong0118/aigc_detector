@@ -22,6 +22,7 @@ import yaml
 
 from detection.false_positive_controller import FalsePositiveController
 from detection.text_detector import RoutedTextAigcDetector
+from project_config import resolve_config_path
 
 
 @dataclass
@@ -39,6 +40,20 @@ class ProviderResult:
     label: str
     details: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
+
+
+class DetectionUnavailableError(RuntimeError):
+    """No detector returned a usable score; there is no content verdict."""
+
+    def __init__(self, results: list[ProviderResult]) -> None:
+        self.providers = [
+            {"provider": result.provider, "status": result.status}
+            for result in results
+        ]
+        super().__init__(
+            "检测未完成：没有检测分支成功返回结果，暂时无法判断内容来源。"
+            "请检查检测服务或模型是否可用后重试。"
+        )
 
 
 @dataclass
@@ -69,7 +84,7 @@ class ApiFirstDetectionEngine:
     - 输出统一 DetectionPackage
     """
 
-    def __init__(self, config_path: str = "config.yaml") -> None:
+    def __init__(self, config_path: str | None = None) -> None:
         """读取检测配置。
 
         关键配置项：
@@ -89,6 +104,7 @@ class ApiFirstDetectionEngine:
         self.local_enabled = bool(self.local_cfg.get("enabled", False))
         self._text_fp_controller = FalsePositiveController(self.text_fp_cfg)
         self._local_text_detector: RoutedTextAigcDetector | None = None
+        self._local_image_detector = None
         # 后续可以在这里初始化 provider registry，例如：
         # {"image": [SightengineProvider(), LocalImageProvider()], "text": [HiveProvider()]}
         # 当前为了 MVP 简化为 if/else 分发。
@@ -155,9 +171,13 @@ class ApiFirstDetectionEngine:
 
         # 只融合 status=ok 且有 score 的 provider。
         # reserved/not_configured provider 不参与最终分数。
-        usable_scores = [result.score for result in results if result.status == "ok" and result.score is not None]
-        final_score = sum(usable_scores) / len(usable_scores) if usable_scores else 0.0
-        label = "ai" if final_score >= self.threshold else "human"
+        successful = [result for result in results if result.status == "ok" and result.score is not None]
+        if not successful:
+            raise DetectionUnavailableError(results)
+        validated = [result for result in successful if not result.details.get("experimental", False)]
+        usable_scores = [result.score for result in (validated or successful)]
+        final_score = sum(usable_scores) / len(usable_scores)
+        label = ("ai" if final_score >= self.threshold else "human") if validated else "uncertain"
         model_scores = self._merge_model_scores(results)
 
         return DetectionPackage(
@@ -232,8 +252,11 @@ class ApiFirstDetectionEngine:
                 "name": "local_models",
                 "type": "local_model",
                 "enabled": self.local_enabled,
-                "configured": bool(self.local_cfg.get("text_yuchuan", {}).get("enabled", False)),
-                "purpose": "Local text detector branch with Hugging Face weights cached under models/huggingface.",
+                "configured": bool(self.local_cfg.get("text_yuchuan", {}).get("enabled", False)) or (
+                    bool(self.local_cfg.get("image_source", {}).get("enabled", False))
+                    and Path(self.local_cfg["image_source"].get("model_path", "")).is_file()
+                ),
+                "purpose": "Local text or image detector; model files are stored in the project.",
             }
         )
         fp_status = self._text_fp_controller.status()
@@ -257,8 +280,34 @@ class ApiFirstDetectionEngine:
     ) -> list[ProviderResult]:
         """运行本地模型 provider。
 
-        当前先接入文本 AIGC 检测分支；图片/音频/视频本地模型仍然预留。
+        文本和图片按各自配置运行；音频/视频本地检测仍然预留。
         """
+        image_cfg = self.local_cfg.get("image_source", {})
+        if modality == "image" and image_cfg.get("enabled", False):
+            try:
+                from detection.image_source_detector import ImageSourceDetector
+
+                if self._local_image_detector is None:
+                    self._local_image_detector = ImageSourceDetector(image_cfg)
+                result = self._local_image_detector.detect(path)
+                return [ProviderResult(
+                    provider="local_image_source_classifier",
+                    provider_type="local_model",
+                    status="ok",
+                    score=result["score"],
+                    label="uncertain" if result.get("experimental") else ("ai" if result["score"] >= self.threshold else "human"),
+                    details=result,
+                )]
+            except Exception as exc:
+                return [ProviderResult(
+                    provider="local_image_source_classifier",
+                    provider_type="local_model",
+                    status="error",
+                    score=None,
+                    label="not_run",
+                    details={"note": "Local image model could not run."},
+                    error=str(exc),
+                )]
         if modality != "text":
             return [
                 ProviderResult(
@@ -920,8 +969,7 @@ class ApiFirstDetectionEngine:
         """从配置里解析 API 凭据。
 
         推荐写法：
-        - `api_key: "真实密钥"` / `api_user: "真实 user"` / `api_secret: "真实 secret"`
-        - 或 `api_key_env: "HIVE_API_KEY"` 这种环境变量名
+        - Credentials may be supplied directly or through environment variables.
 
         为了兼容早期配置，如果 `_env` 字段里看起来不像环境变量名，
         也会把它当成真实凭据使用。
@@ -1015,12 +1063,12 @@ class ApiFirstDetectionEngine:
                     continue
         return dict(sorted(merged.items(), key=lambda item: item[1], reverse=True))
 
-    def _load_config(self, config_path: str) -> dict[str, Any]:
+    def _load_config(self, config_path: str | None) -> dict[str, Any]:
         """读取 YAML 配置。
 
         如果配置不存在，返回空字典，调用方使用默认配置。
         """
-        path = Path(config_path)
+        path = resolve_config_path(config_path)
         if not path.exists():
             return {}
         with open(path, encoding="utf-8") as f:

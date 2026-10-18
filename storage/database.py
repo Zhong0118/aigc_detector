@@ -21,6 +21,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from .models import Base
+from project_config import resolve_config_path
 
 _engine = None
 _SessionFactory = None
@@ -31,9 +32,9 @@ def _load_db_path() -> str:
 
     如果配置文件不存在或没有 database.path，就使用默认路径。
     """
-    config_path = Path(__file__).parent.parent / "config.yaml"
+    config_path = resolve_config_path()
     if config_path.exists():
-        with open(config_path) as f:
+        with open(config_path, encoding="utf-8") as f:
             cfg = yaml.safe_load(f)
         return cfg.get("database", {}).get("path", "data/aigc_detection.db")
     return "data/aigc_detection.db"

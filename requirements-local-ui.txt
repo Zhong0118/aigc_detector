@@ -1,0 +1,9 @@
+# Local web/API setup. The project .venv reuses the existing Miniconda
+# installation's PyTorch, torchvision, Streamlit and Uvicorn.
+fastapi>=0.100,<1
+sqlalchemy>=2,<3
+transformers>=4.50.3,<5
+huggingface-hub>=0.30,<1
+imagehash>=4.3,<5
+scikit-learn>=1.6,<2
+plotly>=5.15,<7

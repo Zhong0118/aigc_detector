@@ -9,6 +9,7 @@ from typing import Any
 
 import requests
 import yaml
+from project_config import resolve_config_path
 
 
 class ReportGenerator:
@@ -21,7 +22,7 @@ class ReportGenerator:
 
     def __init__(
         self,
-        config_path: str = "config.yaml",
+        config_path: str | None = None,
         config: dict[str, Any] | None = None,
     ) -> None:
         """初始化报告生成器。
@@ -37,6 +38,12 @@ class ReportGenerator:
         返回结构固定为 provider/status/summary/evidence/limitations/recommendation。
         前端可以不用关心报告来自模板还是 LLM。
         """
+        experimental_image = analysis.get("modality") == "image" and any(
+            p.get("details", {}).get("experimental", False)
+            for p in analysis.get("detection", {}).get("providers", [])
+        )
+        if experimental_image:
+            return self._generate_template_report(analysis)
         provider = str(self.report_cfg.get("provider", "template")).lower()
         if provider == "llm":
             cached = self._load_cached_report(analysis)
@@ -55,6 +62,10 @@ class ReportGenerator:
         modality = analysis["modality"]
         score = float(detection["score"])
         label = str(detection["label"])
+        experimental_image = modality == "image" and any(
+            p.get("details", {}).get("experimental", False)
+            for p in detection.get("providers", [])
+        )
         threshold = float(detection.get("threshold", self.config.get("detection", {}).get("threshold", 0.5)))
         modality_name = self._modality_name(modality)
 
@@ -163,7 +174,9 @@ class ReportGenerator:
             if top_k:
                 first = top_k[0]
                 top_text = f"，首位为“{first.get('model')}”"
-            if status == "unknown":
+            if status == "unvalidated":
+                evidence.append("来源模型尚未通过独立验证，本次不输出生成来源或来源置信度。")
+            elif status == "unknown":
                 evidence.append("家族溯源结论为“AI-家族不明”：首位家族概率低于 20%，不输出硬家族标签。")
             elif verdict:
                 evidence.append(f"家族溯源结论为“{verdict}”{top_text}。")
@@ -177,15 +190,15 @@ class ReportGenerator:
         return {
             "provider": "template",
             "status": "ok",
-            "summary": self._summary(label, score, modality),
+            "summary": "本次使用未经独立验证的图片实验模型，结论为不确定，暂不作真假或来源判断。" if experimental_image else self._summary(label, score, modality),
             "evidence": evidence,
-            "limitations": [
+            "limitations": (["当前图片模型尚未通过独立测试，实验分数和原始候选仅用于排查模型。"] if experimental_image else []) + [
                 "检测分数是模型风险输出，不是内容由 AI 生成的概率，不能单独作为最终结论；"
                 "需要结合来源凭证、水印、指纹库和人工复核。",
                 "未发现 C2PA 或水印并不等于内容一定由人类创作，只表示当前文件没有携带这些可验证信号。",
                 "模型归因、重建误差、PPL 等被动法证特征只能提供候选来源或风险线索，不能替代签名凭证。",
             ],
-            "recommendation": self._recommendation(label, score),
+            "recommendation": "先用真实图片和生成图片组成独立测试集，评估误报率与召回率后再确定模型和阈值。" if experimental_image else self._recommendation(label, score),
         }
 
     def _generate_llm_report(self, analysis: dict[str, Any]) -> dict[str, Any]:
@@ -603,9 +616,9 @@ class ReportGenerator:
             ),
         }.get(warning, warning)
 
-    def _load_config(self, config_path: str) -> dict[str, Any]:
+    def _load_config(self, config_path: str | None) -> dict[str, Any]:
         """读取 YAML 配置文件。"""
-        path = Path(config_path)
+        path = resolve_config_path(config_path)
         if not path.exists():
             return {}
         with open(path, encoding="utf-8") as f:

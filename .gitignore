@@ -60,11 +60,15 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+config.local.yaml
 
 # Logs
 *.log
 logs/
 *.pid
+
+# Local setup scratch files and package download caches
+work/
 
 # Data files (keep structure but ignore contents)
 data/

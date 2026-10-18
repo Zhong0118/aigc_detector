@@ -191,6 +191,12 @@ class ProvenancePipeline:
             }
 
         if self.attribution_config.get("enabled", False):
+            if modality == "image" and self.attribution_config.get("image", {}).get("enabled", True):
+                for provider in detection.provider_results:
+                    if provider.provider == "local_image_source_classifier" and provider.status == "ok":
+                        attribution = provider.details.get("attribution")
+                        if isinstance(attribution, dict):
+                            return attribution
             return self.attributor.attribute(path, modality, detection=detection)
 
         return {

@@ -104,7 +104,11 @@ def request_json(method: str, url: str, **kwargs):
         st.error(f"Backend unavailable: {exc}")
         return None
     if resp.status_code >= 400:
-        st.error(resp.text)
+        try:
+            detail = resp.json().get("detail", resp.text)
+        except (ValueError, AttributeError):
+            detail = resp.text
+        st.error(detail if isinstance(detail, str) else str(detail))
         return None
     return resp.json()
 
@@ -271,6 +275,10 @@ def render_analysis(data: dict):
     - 原始 JSON
     """
     detection = data["detection"]
+    experimental_image = data.get("modality") == "image" and any(
+        provider.get("details", {}).get("experimental")
+        for provider in detection.get("providers", [])
+    )
     decision = detection.get("decision") or {}
     provenance = data["provenance"]
     report = data["report"]
@@ -308,16 +316,18 @@ def render_analysis(data: dict):
         )
     else:
         top = st.columns([1.15, 1.15, 1, 0.8])
-        top[0].metric("AI 特征风险分数", f"{detection['score']:.2%}")
+        top[0].metric("实验分数（未验证）" if experimental_image else "AI 特征风险分数", f"{detection['score']:.2%}")
         top[1].metric("检测结论", label_names.get(detection["label"], detection["label"]))
-        top[2].metric("文本类型", domain_names.get(decision.get("domain"), data["modality"].upper()))
+        top[2].metric("内容类型", domain_names.get(decision.get("domain"), data["modality"].upper()))
         top[3].metric("记录 ID", data["content_id"])
         st.caption(
             "该数值是检测模块输出并用于阈值判定的风险分数，"
             "不是内容由 AI 生成的概率。"
         )
 
-    if detection["label"] == "uncertain":
+    if experimental_image:
+        st.warning("当前图片模型尚未通过独立验证，结论为不确定。即使实验分数很高，也不能据此判为 AI 或确定生成来源。")
+    elif detection["label"] == "uncertain":
         st.warning("当前分数位于不确定区间，不能直接判为 AI。")
     elif detection["label"] == "insufficient_evidence":
         st.info("当前没有足够的有效模型证据，系统没有把 0 分解释为人类文本。")
@@ -325,7 +335,8 @@ def render_analysis(data: dict):
     left, right = st.columns([0.92, 1.08])
     with left:
         # 左侧主要展示检测层证据。
-        render_score_gauge(detection["score"], low_threshold, high_threshold)
+        if not experimental_image:
+            render_score_gauge(detection["score"], low_threshold, high_threshold)
         if decision:
             threshold_cols = st.columns(3)
             threshold_cols[0].metric("低风险阈值", f"{low_threshold:.2%}")
@@ -471,16 +482,19 @@ def render_analysis(data: dict):
             st.success(verdict or "AI-家族明确")
         elif family_status == "unknown":
             st.warning(verdict or "AI-家族不明")
-        st.caption(
-            "家族溯源: "
-            f"{family_status} | "
-            f"confidence={float(attribution.get('confidence') or 0.0):.2%}"
-            + (
-                f" | {attribution.get('recipe')}"
-                if attribution.get("recipe")
-                else ""
+        if attribution.get("status") == "unvalidated":
+            st.info(attribution.get("note") or "来源模型尚未通过独立验证，暂不输出来源结论。")
+        else:
+            st.caption(
+                "家族溯源: "
+                f"{family_status} | "
+                f"confidence={float(attribution.get('confidence') or 0.0):.2%}"
+                + (
+                    f" | {attribution.get('recipe')}"
+                    if attribution.get("recipe")
+                    else ""
+                )
             )
-        )
         if attribution.get("status") == "data_mismatch":
             st.warning("LLMDet data cache is incomplete or inconsistent; local text attribution was skipped.")
             missing = attribution.get("missing_npz") or []
@@ -573,6 +587,8 @@ st.title("AIGC Detection Workbench")
 # 页面加载时先请求 provider 状态，让用户知道当前是 demo_api 还是已接真实 API。
 provider_payload = request_json("GET", f"{API_BASE}/providers")
 if provider_payload:
+    if provider_payload.get("mode") == "local_image_baseline":
+        st.info("当前是本地图片实验模式。模型尚未通过独立验证，结论保持不确定；实验分数用于排查。请在 File 上传图片。")
     status_cols = st.columns([1, 1, 1, 1])
     status_cols[0].metric("Mode", provider_payload["mode"])
     status_cols[1].metric("API Port", provider_payload["ports"]["api"])
