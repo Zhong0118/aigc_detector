@@ -16,13 +16,14 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np
 from PIL import Image
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, roc_auc_score, roc_curve
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, roc_auc_score, roc_curve, precision_recall_fscore_support
 import torch
 from torch.utils.data import DataLoader, Dataset
 
 from research.image_attribution.models import (ResNetClassifier, load_checkpoint, load_feature_cache, load_ofa,
     ofa_features, ofa_transform, reference_score, resnet_transform)
 from research.image_attribution.protocol import load_manifest, sha256, task_rows, write_json
+from research.image_attribution.iab_protocol import reference_indices as select_references
 
 
 class Images(Dataset):
@@ -73,6 +74,28 @@ def metrics(labels, probs, task):
     return result
 
 
+def stratified_metrics(rows, labels, classes, scores, task):
+    truth=np.asarray(labels);pred=scores.argmax(1)
+    result=dict(per_source={},per_semantic={})
+    for semantic in sorted({str(r.get('semantic_class')) for r in rows}):
+        ids=[i for i,r in enumerate(rows) if str(r.get('semantic_class'))==semantic]
+        if task=='detection' and len(set(truth[ids]))<2:
+            result['per_semantic'][semantic]=dict(n=len(ids),auroc=None,note='only one truth class present')
+        else:result['per_semantic'][semantic]=metrics(truth[ids],scores[ids],task)
+    if task=='attribution':
+        precision,recall,f1,support=precision_recall_fscore_support(truth,pred,labels=list(range(len(classes))),zero_division=0)
+        for i,name in enumerate(classes):
+            ids=np.flatnonzero(truth==i)
+            result['per_source'][name]=dict(n=int(support[i]),precision=float(precision[i]),
+                recall=float(recall[i]),f1=float(f1[i]),top3=float(np.mean([i in np.argsort(scores[j])[-min(3,len(classes)):] for j in ids])) if len(ids) else None)
+    else:
+        for name in sorted({r.get('source_label') or 'real' for r in rows}):
+            ids=[i for i,r in enumerate(rows) if (r.get('source_label') or 'real')==name]
+            positive=float((scores[ids,1]>=.5).mean())
+            result['per_source'][name]=dict(n=len(ids),**({'fpr_0_5':positive} if name=='real' else {'tpr_0_5':positive}))
+    return result
+
+
 def write_predictions(out, rows, labels, classes, probs, task):
     with (out / 'predictions.jsonl').open('w') as stream:
         for row, label, p in zip(rows, labels, probs):
@@ -101,7 +124,7 @@ def train(args, rows, out):
             raise ValueError(f'{split} lacks a class')
         partitions[split] = (rr, yy)
     datasets = {s: Images(r, y, args.manifest.parent, resnet_transform()) for s, (r, y) in partitions.items()}
-    loaders = {s: DataLoader(d, batch_size=args.batch_size, shuffle=s == 'train', num_workers=0)
+    loaders = {s: DataLoader(d, batch_size=args.batch_size, shuffle=s == 'train', num_workers=args.workers, pin_memory=args.device == 'cuda')
                for s, d in datasets.items()}
     model = ResNetClassifier(len(classes), args.weights).to(args.device)
     optimizer = torch.optim.Adam(model.parameters(), lr=.001)
@@ -154,6 +177,7 @@ def train(args, rows, out):
         train_counts=dict(Counter(classes[y] for y in partitions['train'][1])),
         classes=classes, failed_samples=0, reload_max_abs_error=reload_error,
         single_vs_batch_max_abs_error=single_error, holdout_evaluated=False)
+    write_json(out/'stratified_metrics.json', stratified_metrics(partitions['dev'][0], partitions['dev'][1], classes, p, args.task))
     write_predictions(out, partitions['dev'][0], partitions['dev'][1], classes, p, args.task)
     write_json(out / 'single_prediction.json', dict(sample_id=partitions['dev'][0][0]['sample_id'],
                task=args.task, classes=classes, scores=single[0].tolist()))
@@ -171,7 +195,7 @@ def verify_ofa(args, rows, out):
         sample_ids=[r['sample_id'] for r in rows], model_code_sha256=sha256(Path(__file__).resolve().parents[1]/'research/image_attribution/models.py'))
     values = []
     with torch.inference_mode():
-        for i, (inputs, _) in enumerate(DataLoader(dataset, batch_size=args.batch_size)):
+        for i, (inputs, _) in enumerate(DataLoader(dataset, batch_size=args.batch_size, num_workers=args.workers)):
             values.append(ofa_features(inputs.to(args.device), encoder, denoiser).cpu())
             print(json.dumps(dict(feature_batch=i, batch_size=len(inputs))), flush=True)
     features = torch.cat(values)
@@ -179,8 +203,13 @@ def verify_ofa(args, rows, out):
     reloaded = load_feature_cache(out/'features.pt', cache_identity)
     if not torch.equal(features, reloaded):
         raise ValueError('feature cache identity/contents mismatch')
-    reference_indices = {label:[i for i,(r,y) in enumerate(zip(rows,labels)) if y==label and r['split']=='train'][:100]
-                         for label in range(len(classes))}
+    reference_indices = select_references(rows, labels, len(classes), limit=100, seed=args.seed)
+    bank = dict(classes=classes, identity=cache_identity,
+                references={classes[k]: features[v] for k,v in reference_indices.items()})
+    torch.save(bank, out/'reference_bank.pt')
+    saved_bank = torch.load(out/'reference_bank.pt', map_location='cpu', weights_only=True)
+    if saved_bank['classes'] != classes or any(not torch.equal(bank['references'][c], saved_bank['references'][c]) for c in classes):
+        raise ValueError('OFA reference bank reload mismatch')
     queries = [i for i,r in enumerate(rows) if r['split']=='dev']
     if any(not ids for ids in reference_indices.values()) or not queries:
         raise ValueError('empty support or dev set')
@@ -200,6 +229,21 @@ def verify_ofa(args, rows, out):
         raise RuntimeError(f'OFA single/batch mismatch {feature_error}')
     scores = np.asarray(scores)
     truth = np.asarray([labels[i] for i in queries])
+    closed_set = metrics(truth, scores, 'attribution')
+    closed_set['score_note'] = 'Argmax of independently trained pair match scores; scores are not class probabilities'
+    closed_out = out/'closed_set'; closed_out.mkdir()
+    write_json(out/'stratified_metrics.json', stratified_metrics([rows[i] for i in queries], truth, classes, scores, 'attribution'))
+    write_predictions(closed_out, [rows[i] for i in queries], truth, classes, scores, 'source_attribution_from_match_scores')
+    # Reopen the persisted reference bank and author weights for a complete single-image check.
+    del encoder, pair, denoiser
+    encoder, pair, denoiser = load_ofa(args.weights, args.denoiser, args.device)
+    with torch.inference_mode():
+        one = ofa_features(dataset[queries[0]][0].unsqueeze(0).to(args.device), encoder, denoiser)[0]
+        single_scores = np.asarray([float(reference_score(pair, saved_bank['references'][c].to(args.device), one).cpu()) for c in classes])
+    score_error = float(np.abs(single_scores-scores[0]).max())
+    if score_error > 1e-4: raise RuntimeError(f'OFA saved-bank single/batch score mismatch {score_error}')
+    write_json(out/'single_prediction.json', dict(sample_id=rows[queries[0]]['sample_id'], classes=classes,
+        match_scores=single_scores.tolist(), predicted_label=classes[int(single_scores.argmax())]))
     aucs, pairwise = {}, {}
     for label,name in enumerate(classes):
         aucs[name] = float(roc_auc_score(truth==label, scores[:,label]))
@@ -216,6 +260,8 @@ def verify_ofa(args, rows, out):
                 status='ok',true_label=classes[labels[index]],classes=classes,match_scores=score.tolist()))+'\n')
     return dict(task='source_verification', evaluation_split='dev', query_n=len(queries),
         reference_counts={classes[k]:len(v) for k,v in reference_indices.items()},
+        reference_selection='seeded round-robin by semantic category, training partition only',
+        closed_set=closed_set, saved_bank_single_vs_batch_score_max_abs_error=score_error,
         per_source_auroc=aucs, macro_auroc=float(np.mean(list(aucs.values()))),
         ordered_pair_aurocs=pairwise, macro_ordered_pair_auroc=float(np.mean(list(pairwise.values()))),
         single_vs_batch_feature_max_abs_error=feature_error, failed_samples=0,
@@ -233,6 +279,7 @@ def main():
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--epochs', type=int, default=20)
     parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument('--workers', type=int, default=4)
     args = parser.parse_args()
     if args.device == 'cpu' and args.task != 'ofa':
         parser.error('CPU full-network training is outside this first-round resource policy')
@@ -246,15 +293,19 @@ def main():
         torch.cuda.manual_seed_all(args.seed)
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.allow_tf32 = False
+        torch.backends.cuda.matmul.allow_tf32 = False
     config = {key:str(value) if isinstance(value,Path) else value for key,value in vars(args).items()}
     config.update(code_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
         code_status=subprocess.check_output(['git','status','--porcelain'],text=True),
         source_hashes={str(p):sha256(p) for p in [Path(__file__),
             Path(__file__).resolve().parents[1]/'research/image_attribution/models.py',
-            Path(__file__).resolve().parents[1]/'research/image_attribution/protocol.py']},
+            Path(__file__).resolve().parents[1]/'research/image_attribution/protocol.py',
+            Path(__file__).resolve().parents[1]/'research/image_attribution/iab_protocol.py']},
         manifest_sha256=sha256(args.manifest), pretrained_sha256=sha256(args.weights),
         python=sys.version, torch=torch.__version__, platform=platform.platform(),
-        command=sys.argv, cpu_threads=4, workers=0, training_protocol='Adam lr=.001, CE, StepLR(1,.9), full backbone; OFA frozen',
+        command=sys.argv, cpu_threads=4, workers=args.workers, cudnn_tf32=False, matmul_tf32=False,
+        ofa_denoiser_microbatch=1, training_protocol='Adam lr=.001, CE, StepLR(1,.9), full backbone; OFA frozen',
         limitation='Fixed seed does not guarantee bitwise reproducibility across devices')
     write_json(args.output/'resolved_config.json',config)
     (args.output/'environment.txt').write_text(subprocess.check_output([sys.executable,'-m','pip','freeze'],text=True))
@@ -262,8 +313,8 @@ def main():
         rows = load_manifest(args.manifest)
         result = verify_ofa(args,rows,args.output) if args.task=='ofa' else train(args,rows,args.output)
         write_json(args.output/'metrics.json',result)
-        write_json(args.output/'asset_manifest.json',{p.name:dict(sha256=sha256(p),bytes=p.stat().st_size)
-            for p in sorted(args.output.iterdir()) if p.is_file()})
+        write_json(args.output/'asset_manifest.json',{str(p.relative_to(args.output)):dict(sha256=sha256(p),bytes=p.stat().st_size)
+            for p in sorted(args.output.rglob('*')) if p.is_file()})
         write_json(args.output/'status.json',dict(status='completed',elapsed_seconds=time.monotonic()-start,exit_code=0))
         print(json.dumps(result),flush=True)
     except Exception as exc:

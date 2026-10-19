@@ -80,6 +80,10 @@ def reference_score(pair, support, query):
 
 
 def load_ofa(fingerprint_path, denoiser_path, device):
+    if str(device).startswith('cuda'):
+        # Noise residuals amplify TF32 rounding; keep the fingerprint path FP32.
+        torch.backends.cudnn.allow_tf32 = False
+        torch.backends.cuda.matmul.allow_tf32 = False
     checkpoint = torch.load(fingerprint_path, map_location='cpu', weights_only=True)
     if 'pair_classifier' not in checkpoint:
         raise ValueError('complete OFA requires pair_classifier weights')
@@ -113,4 +117,6 @@ def ofa_transform(image):
 
 def ofa_features(tensor, encoder, denoiser):
     pixels = (tensor.clamp(-1, 1) + 1) / 2
-    return encoder(denoiser(pixels) / 256.)
+    # Fixed denoiser microbatch avoids batch-shape-dependent convolution rounding.
+    residual = torch.cat([denoiser(sample.unsqueeze(0)) / 256. for sample in pixels])
+    return encoder(residual)
