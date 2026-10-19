@@ -1,0 +1,278 @@
+{
+  "revision": "89c4fe9efd0ebc7ce5c7641ef57d578ccd639c69",
+  "method": "Only label/generator columns read via HTTP range; no images evaluated",
+  "files": [
+    {
+      "path": "data/train-00000-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 142
+      }
+    },
+    {
+      "path": "data/train-00001-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 142
+      }
+    },
+    {
+      "path": "data/train-00002-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 142
+      }
+    },
+    {
+      "path": "data/train-00003-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 142
+      }
+    },
+    {
+      "path": "data/train-00004-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 142
+      }
+    },
+    {
+      "path": "data/train-00005-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 142
+      }
+    },
+    {
+      "path": "data/train-00006-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 142
+      }
+    },
+    {
+      "path": "data/train-00007-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 142
+      }
+    },
+    {
+      "path": "data/train-00008-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 142
+      }
+    },
+    {
+      "path": "data/train-00009-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 142
+      }
+    },
+    {
+      "path": "data/train-00010-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 142
+      }
+    },
+    {
+      "path": "data/train-00011-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 143,
+        "GLIDE": 142
+      }
+    },
+    {
+      "path": "data/train-00012-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 143,
+        "BigGAN": 142
+      }
+    },
+    {
+      "path": "data/train-00013-of-00014.parquet",
+      "rows": 2000,
+      "counts": {
+        "Real": 1000,
+        "BigGAN": 143,
+        "GLIDE": 143,
+        "Midjourney": 143,
+        "SD15": 143,
+        "VQDM": 143,
+        "Wukong": 143,
+        "ADM": 142
+      }
+    },
+    {
+      "path": "data/validation-00000-of-00004.parquet",
+      "rows": 1750,
+      "counts": {
+        "Real": 875,
+        "ADM": 125,
+        "BigGAN": 125,
+        "GLIDE": 125,
+        "Midjourney": 125,
+        "SD15": 125,
+        "VQDM": 125,
+        "Wukong": 125
+      }
+    },
+    {
+      "path": "data/validation-00001-of-00004.parquet",
+      "rows": 1750,
+      "counts": {
+        "Real": 875,
+        "ADM": 125,
+        "BigGAN": 125,
+        "GLIDE": 125,
+        "Midjourney": 125,
+        "SD15": 125,
+        "VQDM": 125,
+        "Wukong": 125
+      }
+    },
+    {
+      "path": "data/validation-00002-of-00004.parquet",
+      "rows": 1750,
+      "counts": {
+        "Real": 875,
+        "ADM": 125,
+        "BigGAN": 125,
+        "GLIDE": 125,
+        "Midjourney": 125,
+        "SD15": 125,
+        "VQDM": 125,
+        "Wukong": 125
+      }
+    },
+    {
+      "path": "data/validation-00003-of-00004.parquet",
+      "rows": 1750,
+      "counts": {
+        "Real": 875,
+        "ADM": 125,
+        "BigGAN": 125,
+        "GLIDE": 125,
+        "Midjourney": 125,
+        "SD15": 125,
+        "VQDM": 125,
+        "Wukong": 125
+      }
+    }
+  ],
+  "train": {
+    "Real": 14000,
+    "ADM": 2000,
+    "BigGAN": 2000,
+    "GLIDE": 2000,
+    "Midjourney": 2000,
+    "SD15": 2000,
+    "VQDM": 2000,
+    "Wukong": 2000
+  },
+  "validation": {
+    "Real": 3500,
+    "ADM": 500,
+    "BigGAN": 500,
+    "GLIDE": 500,
+    "Midjourney": 500,
+    "SD15": 500,
+    "VQDM": 500,
+    "Wukong": 500
+  }
+}
