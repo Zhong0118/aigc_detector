@@ -13,9 +13,9 @@
 
 合计约94.47 GiB。明细与代码哈希在 `outputs/migration-20261019/server-cleanup.json`。其余ytt实验资产保留。
 
-原Mac实验资产共769文件、749,818,855 bytes，迁移到服务器 `outputs/image_experiments`；迁移清单 `outputs/migration-20261019/mac-assets-sha256.json`。清理Mac必须以后续 `migration-verified.json` 全部通过为前提；不能仅根据本说明认定迁移或本机清理已完成。本机清理凭据另存 `mac-cleanup.json`。
+原Mac实验资产共769文件、749,818,855 bytes，迁移到服务器 `outputs/image_experiments`；迁移清单 `outputs/migration-20261019/mac-assets-sha256.json`。删除Mac原始实验结果必须以后续 `migration-verified.json` 全部通过为前提；不再使用的虚拟环境和重复临时下载已先行删除；不能仅根据本说明认定迁移或本机清理已完成。本机清理凭据另存 `mac-cleanup.json`。
 
-独立服务器环境 `.venv-image` 从现有 Python 3.10/CUDA 包复制，包文件不依赖生产环境的site-packages软链接。仅在副本删除无关decord并将fsspec固定为2026.2.0；pip check通过，torch2.6.0+cu124、torchvision0.21.0+cu124，GPU0 RTX4090D。14项图片实验测试通过。新环境与Mac依赖版本不同，实际锁定清单存 `outputs/migration-20261019/server-environment.txt`，不宣称跨设备数值完全一致。
+独立服务器环境 `.venv-image` 从现有 Python 3.10/CUDA 包复制，包文件不依赖生产环境的site-packages软链接。仅在副本删除无关decord并将fsspec固定为2026.2.0；pip check通过，torch2.6.0+cu124、torchvision0.21.0+cu124，GPU0 RTX4090D。48项图片实验、归因接口、来源登记与报告测试通过。扩展回归发现torch先加载系统libstdc++，与Conda SQLite依赖的ICU版本不兼容；已将libstdc++.so.6和libgcc_s.so.1复制到图片环境lib中。运行包含SQLite的接口或完整回归时，进程级设置 `LD_LIBRARY_PATH="$PWD/.venv-image/lib"`；48项回归及CUDA/SQLite联合导入通过，生产运行库未修改。新环境与Mac依赖版本不同，实际锁定清单存 `outputs/migration-20261019/server-environment.txt`，不宣称跨设备数值完全一致。
 
 ## 三项实验分别定义
 
