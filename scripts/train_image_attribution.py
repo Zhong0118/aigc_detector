@@ -8,6 +8,9 @@
 
 示例：
 python scripts/train_image_attribution.py --dataset tiny-genimage --max-samples 10000
+
+固定清单的论文模型实验（与旧入口兼容，不覆盖生产模型）：
+python scripts/train_image_attribution.py paper --help
 """
 
 from __future__ import annotations
@@ -238,6 +241,11 @@ def decode_dataset_label(features: Any, column: str, value: Any) -> str | None:
             feature = features[column]
         except Exception:  # noqa: BLE001
             feature = None
+    if isinstance(feature, dict) and "names" in feature and isinstance(value, (int, np.integer)):
+        names = feature["names"]
+        if not isinstance(names, list) or not 0 <= int(value) < len(names):
+            raise ValueError(f"Invalid {column} label for declared schema: {value}")
+        return str(names[int(value)])
     if feature is not None and hasattr(feature, "int2str") and isinstance(value, (int, np.integer)):
         try:
             return str(feature.int2str(int(value)))
@@ -319,5 +327,14 @@ def parse_args() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True):
-        train(parse_args())
+    import sys
+
+    if len(sys.argv) > 1 and sys.argv[1] == "paper":
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from scripts.run_image_experiment import main
+
+        sys.argv.pop(1)
+        main()
+    else:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True):
+            train(parse_args())
