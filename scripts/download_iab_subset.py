@@ -15,6 +15,8 @@ import random
 import re
 import sys
 import time
+import threading
+import zipfile
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from research.image_attribution.iab_archives import archive_catalog, read_member
@@ -25,6 +27,64 @@ def write_json(path, value):
     temporary=path.with_name(path.name+".partial-json")
     write_plain_json(temporary,value)
     temporary.replace(path)
+
+
+class PublicLinks:
+    """Reload browser-resolved public URLs atomically when their file is refreshed."""
+    def __init__(self,path):
+        self.path=path;self.mtime=None;self.links={};self.lock=threading.Lock()
+    def __getitem__(self,key):
+        with self.lock:
+            stat=self.path.stat()
+            stamp=(stat.st_ino,stat.st_mtime_ns,stat.st_size)
+            if stamp!=self.mtime:
+                self.links={x['id']:x['url'] for x in json.loads(self.path.read_text())['results'] if x['status']==200}
+                self.mtime=stamp
+            return self.links[key]
+
+
+def real_archive(record,links,output):
+    """Real selection uses 55% of each archive; whole-file reuse avoids 11k GETs."""
+    if len(record['parts'])!=1:raise ValueError('unexpected real split archive')
+    part=record['parts'][0];folder=output/'full_real_archives';folder.mkdir(exist_ok=True)
+    path=folder/f"{part['id']}.zip"
+    if part['id']==11192177:
+        existing=output.parent/'iab-v3.2-access-audit/real_dog.zip'
+        if existing.exists() and not path.exists():path.hardlink_to(existing)
+    def verified():
+        if not path.exists() or path.stat().st_size!=part['size']:return False
+        digest=hashlib.md5()
+        with path.open('rb') as f:
+            for block in iter(lambda:f.read(1024*1024),b''):digest.update(block)
+        return part['checksum']['type']=='MD5' and digest.hexdigest()==part['checksum']['value']
+    if path.exists():
+        if not verified():raise ValueError('real archive MD5 mismatch')
+        return zipfile.ZipFile(path)
+    import requests
+    partial=path.with_suffix('.zip.partial')
+    for attempt in range(4):
+        start=partial.stat().st_size if partial.exists() else 0
+        try:
+            if start>part['size']:raise ValueError('oversize real partial archive')
+            if start<part['size']:
+                headers={'Range':f"bytes={start}-{part['size']-1}",'Accept-Encoding':'identity'}
+                with requests.get(links[part['id']],headers=headers,stream=True,timeout=(20,120)) as r:
+                    expected=f"bytes {start}-{part['size']-1}/{part['size']}"
+                    if r.status_code!=206 or r.headers.get('Content-Range')!=expected:raise ValueError('real archive range rejected')
+                    if r.headers.get('Content-Encoding','identity')!='identity':raise ValueError('encoded archive')
+                    remaining=part['size']-start
+                    with partial.open('ab') as f:
+                        while remaining:
+                            chunk=r.raw.read(min(1024*1024,remaining))
+                            if not chunk:raise ValueError('short real archive')
+                            f.write(chunk);remaining-=len(chunk)
+                        if r.raw.read(1):raise ValueError('oversize archive response')
+            partial.replace(path)
+            if not verified():raise ValueError('real archive MD5 mismatch')
+            return zipfile.ZipFile(path)
+        except Exception as exc:
+            if attempt==3:raise RuntimeError(f"real file {part['id']} failed ({type(exc).__name__})") from None
+            time.sleep(2**attempt)
 
 
 def prompt_id(name):
@@ -100,6 +160,7 @@ def acquire_cell(record, chosen, links, output):
     reader=Ranges(record['parts'],links)
     sizes=[p['size'] for p in record['parts']]
     rows=[]
+    full_real=real_archive(record,links,output) if source=='real' else None
     folder=output/'images'/source/semantic
     folder.mkdir(parents=True,exist_ok=True)
     for entry in chosen:
@@ -110,7 +171,7 @@ def acquire_cell(record, chosen, links, output):
             row=json.loads(sidecar.read_text())
             if sha256(target)!=row['sha256']: raise ValueError('resume hash mismatch')
         else:
-            data=read_member(entry,sizes,reader)
+            data=full_real.read(entry['filename']) if full_real else read_member(entry,sizes,reader)
             with Image.open(io.BytesIO(data)) as image:
                 image.load();rgb=image.convert('RGB');w,h=rgb.size
                 phash=str(imagehash.phash(rgb))
@@ -123,14 +184,18 @@ def acquire_cell(record, chosen, links, output):
                 source_label_level='publisher_directory',source_evidence=dict(
                     doi='10.7910/DVN/O4S4IV',version='3.2',directory=f'{source}/{semantic}',
                     file_ids=[p['id'] for p in record['parts']],zip_member=entry['filename'],
-                    zip_crc32=entry['crc32'],member_crc_verified=True,whole_volume_md5_verified=False),
+                    zip_crc32=entry['crc32'],member_crc_verified=True,whole_volume_md5_verified=source=='real'),
                 dataset_id='ImageAttributionBench',dataset_revision='3.2',original_split='unsplit_public_release',
                 split=None,group_id=None,semantic_class=semantic,prompt_id=prompt_id(entry['filename']) if source!='real' else None,
                 task_type='dataset_declared_generation' if source!='real' else 'real',
                 parent_sample_id=None,transform_id='original_bytes',format=fmt,width=w,height=h,
                 watermark_status='not_verified')
             write_json(sidecar,row)
+        if full_real and not row['source_evidence']['whole_volume_md5_verified']:
+            row['source_evidence']['whole_volume_md5_verified']=True
+            write_json(sidecar,row)
         rows.append(row)
+    if full_real:full_real.close()
     receipt=dict(source=source,semantic=semantic,selected=len(rows),range_bytes=reader.bytes,rows=rows)
     write_json(output/'receipts'/f'{source}__{semantic}.json',receipt)
     return dict(source=source,semantic=semantic,selected=len(rows),range_bytes=reader.bytes)
@@ -145,7 +210,7 @@ def main():
     args=p.parse_args()
     metadata=json.loads(args.metadata.read_text())
     if metadata['version']!=[3,2] or metadata['id']!=11127188: raise ValueError('unverified dataset revision')
-    links={x['id']:x['url'] for x in json.loads(args.links.read_text())['results'] if x['status']==200}
+    links=PublicLinks(args.links)
     groups=cells(metadata)
     for name in ('catalogs','receipts','images'): (args.output/name).mkdir(parents=True,exist_ok=True)
     records={}
@@ -186,7 +251,7 @@ def main():
     if dest.exists() and json.loads(dest.read_text())!=selection: raise ValueError('selection changed; use a new output directory')
     write_json(dest,selection)
     with ThreadPoolExecutor(args.workers) as pool:
-        jobs={pool.submit(acquire_cell,records[k],v,links,args.output):k for k,v in selections.items()}
+        jobs={pool.submit(acquire_cell,records[k],v,links,args.output):k for k,v in sorted(selections.items(),key=lambda item:item[0][0]!='real')}
         failures=[]
         for f in as_completed(jobs):
             try:print(json.dumps(dict(stage='download',**f.result())),flush=True)

@@ -36,4 +36,7 @@ for task in detection attribution ofa; do
     "$py" -u scripts/run_image_experiment.py --manifest "$data/manifest.jsonl" --output "$output" --task "$task" --weights "$assets/resnet50-0676ba61.pth" --device cuda --batch-size 32 --epochs 20 --workers 4 > "$logs/iab-$task.log" 2>&1
   fi
 done
+if [[ ! -f outputs/image_experiments/iab-m2-summary.json ]]; then
+  "$py" scripts/summarize_iab_m2.py --output outputs/image_experiments/iab-m2-summary.json
+fi
 echo "stage=completed time=$(date -Is)"

@@ -30,7 +30,9 @@ def main():
         split_counts=dict(Counter(r['split'] for r in rows)),
         source_semantic_split_counts={f'{s}/{c}/{split}':n for (s,c,split),n in sorted(Counter((r['source_label'] or 'real',r['semantic_class'],r['split']) for r in rows).items())},
         license='CC BY 4.0 (Dataverse V3.2 metadata); underlying dataset/model conditions retained',
-        official_test_used=False,whole_volume_md5_verified=False,
+        official_test_used=False,whole_volume_md5_verified_for_all_inputs=False,
+        rows_with_whole_archive_md5_verification=sum(bool(r['source_evidence']['whole_volume_md5_verified']) for r in rows),
+        unique_byte_hashes=len({r['sha256'] for r in rows}), unique_pixel_hashes=len({r['pixel_sha256'] for r in rows}),
         limitations=['Development subset, not full paper reproduction','Publisher prompt indices assumed aligned across generator folders; prompt text not in ZIP archives',
         'Real filenames do not establish correspondence to generator prompts','Member CRC32 plus downloaded SHA256, not full archive MD5 verification',
         'Grouped 70/15/15 custom split; holdout unopened by training/evaluation','No semantic-disjoint or unseen-generator generalization claim'])
