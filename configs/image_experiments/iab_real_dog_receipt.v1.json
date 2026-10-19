@@ -11,7 +11,7 @@
   "decoded": true,
   "trained_or_evaluated": false,
   "seconds": 373.5324225259974,
-  "note": "ZIP central-directory inventory only. No extrapolation to other source counts.",
+  "note": "Archive size and published MD5 verified; all 2000 JPEG images decoded successfully. No training or model evaluation, and no extrapolation to other source counts.",
   "decoded_images": 2000,
   "formats": {
     "JPEG": 2000
