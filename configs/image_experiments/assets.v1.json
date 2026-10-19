@@ -1,0 +1,210 @@
+{
+  "asset_root": "outputs/image_experiments",
+  "files": {
+    "a0-resnet50-v1/asset_manifest.json": {
+      "sha256": "6b5e5258835c92c4bf36023905c9118c89bb98bf3540c64fa30baa328bb96008",
+      "bytes": 1174
+    },
+    "a0-resnet50-v1/best_dev_probabilities.npy": {
+      "sha256": "e2d8da293938e86df05bf4db66c1b3972578c7c42a8c37f6badd6dafcb8c7cb1",
+      "bytes": 1500
+    },
+    "a0-resnet50-v1/confusion_matrix.csv": {
+      "sha256": "f6336895fa8ec01976afbda377088b85da37ff703f6d51bc241e4bbb1869e117",
+      "bytes": 211
+    },
+    "a0-resnet50-v1/environment.txt": {
+      "sha256": "a40930312988d080c7d834327522e2e777c82ae68858bab6707c2155e7dafef7",
+      "bytes": 535
+    },
+    "a0-resnet50-v1/history.json": {
+      "sha256": "e615823cbddbe5e1de1d58f4e56b97570c6dc4c077745f413d34ada0bdf40cbb",
+      "bytes": 5997
+    },
+    "a0-resnet50-v1/metrics.json": {
+      "sha256": "6d484e936e7da3140eda772db1c18adc68e98c49622c7fe3cb3fd81c17b1152a",
+      "bytes": 688
+    },
+    "a0-resnet50-v1/model.pth": {
+      "sha256": "fb4d070d1b190d00866af35547182e085b250443a474c3d37947aa00fd904403",
+      "bytes": 94382698
+    },
+    "a0-resnet50-v1/predictions.jsonl": {
+      "sha256": "4e52ac04a469b4d6e7f8d72d3773a5da3497fda1316cbff0a824572cedd41203",
+      "bytes": 19304
+    },
+    "a0-resnet50-v1/resolved_config.json": {
+      "sha256": "3d519db13bc4231ab71a1ae80b9adbdf4615efb5766695d23865e74c0d39cb1f",
+      "bytes": 1343
+    },
+    "a0-resnet50-v1/single_prediction.json": {
+      "sha256": "b1bb907f7a010fab0dac2bd62b7953d39cf7f7bd66f7c2aa04b1867dc9f013f0",
+      "bytes": 392
+    },
+    "a0-resnet50-v1/status.json": {
+      "sha256": "3bc4be4ffe5e47e275460f4508340984a6f944ea6f7ac13250d78eac9d6a5a83",
+      "bytes": 86
+    },
+    "d0-resnet50-v1/asset_manifest.json": {
+      "sha256": "112e4b59b8bff037dfe7945aeda6212318703a953f16d685cb326a6adc6af3cc",
+      "bytes": 1173
+    },
+    "d0-resnet50-v1/best_dev_probabilities.npy": {
+      "sha256": "d83bf79643a8a50e05989210b29a81cebf9ea8a8b61c7dad4f58e21583ff6abd",
+      "bytes": 936
+    },
+    "d0-resnet50-v1/confusion_matrix.csv": {
+      "sha256": "49a18378409152a15c5c8de0ec62b5db0b62dad17dccb54547814ef0fe01f523",
+      "bytes": 45
+    },
+    "d0-resnet50-v1/environment.txt": {
+      "sha256": "a0793085e115272b0ea5eab71a813c4298fc07d1780781321610e406d1d6e4d8",
+      "bytes": 763
+    },
+    "d0-resnet50-v1/history.json": {
+      "sha256": "d10752557926757cbf0e44791ba2e694afb6579584f08c8c50b6d3508e6491ad",
+      "bytes": 13181
+    },
+    "d0-resnet50-v1/metrics.json": {
+      "sha256": "9cdd2ce3bfdd1b28232781e13d3351549d4ad0f8bce479700c10c333570f3588",
+      "bytes": 849
+    },
+    "d0-resnet50-v1/model.pth": {
+      "sha256": "fedc2845023ad6eab98787c8fdddac26c70d219fb8e48d5c560de3bd9000d831",
+      "bytes": 94341610
+    },
+    "d0-resnet50-v1/predictions.jsonl": {
+      "sha256": "7ae5334cccdbfcabf2f5a764d20842a42a48f3c03ae8fa00ac55eda79573a607",
+      "bytes": 22606
+    },
+    "d0-resnet50-v1/resolved_config.json": {
+      "sha256": "f80954946b32ea9f5cfda590178ef776d67756572755b9077ac021eb79bcb98f",
+      "bytes": 1415
+    },
+    "d0-resnet50-v1/single_prediction.json": {
+      "sha256": "a7ca915d24602b02ad87c57918ebc2b69f9f19da930ffe4d7ee203e6263ebd6b",
+      "bytes": 178
+    },
+    "d0-resnet50-v1/status.json": {
+      "sha256": "0561577698ecf36dc924ca30cd06326af9df0ac22ebf621b46d5da0b6ebcd96d",
+      "bytes": 86
+    },
+    "ofa-v2/asset_manifest.json": {
+      "sha256": "d11a6b7e8ec5229e4ef7c6388a8b62463da013faca17ce3b900130fdecbe9b09",
+      "bytes": 781
+    },
+    "ofa-v2/environment.txt": {
+      "sha256": "a0793085e115272b0ea5eab71a813c4298fc07d1780781321610e406d1d6e4d8",
+      "bytes": 763
+    },
+    "ofa-v2/features.pt": {
+      "sha256": "89e45ace4fe86119662a908fd092dc5ae4ded2b721587a5f7d0927890cbc880b",
+      "bytes": 162081
+    },
+    "ofa-v2/metrics.json": {
+      "sha256": "adf40730ce3d13ead35f684432779b184c7b32ffae5dcdbee72f3ad719237873",
+      "bytes": 2416
+    },
+    "ofa-v2/predictions.jsonl": {
+      "sha256": "74b75ec19921e8aac34694e345ed9225aec4731b04fdcf26f42c3d23b5fb778a",
+      "bytes": 18175
+    },
+    "ofa-v2/reference_manifest.json": {
+      "sha256": "f7f16f939d795eca31fdabed83d4272ec33221c8aeba102c8f2c95feb1cd1a3b",
+      "bytes": 8455
+    },
+    "ofa-v2/resolved_config.json": {
+      "sha256": "8622c9141b87bfc4d062b02f911f2baf2e3af4e7997cc9d4e756a037b70cf20e",
+      "bytes": 1942
+    },
+    "ofa-v2/status.json": {
+      "sha256": "b7ba4a2777b8c4cdc120de99e15f5b0d92e2fa7e99a6a8cb02f443a2c807c292",
+      "bytes": 87
+    },
+    "assets/model_best.th": {
+      "sha256": "bf8e302573ca412c3d59d1271fb4b185242f582dee676e734a9995b7436fbfdf",
+      "bytes": 2272573
+    },
+    "assets/ofa_fingerprint.pth": {
+      "sha256": "396bc6c54af7c96d2f1cbb57bb38886f096b464472cb221ec38ee185be06521b",
+      "bytes": 286709636
+    },
+    "assets/resnet50-0676ba61.pth": {
+      "sha256": "0676ba61b6795bbe1773cffd859882e5e297624d384b6993f7c9e683e722fb8a",
+      "bytes": 102530333
+    },
+    "tiny-v1/manifest.jsonl": {
+      "sha256": "50fe1770600182182fd76c0ce595ddd615c0cd1335ce880b794a493f841d2106",
+      "bytes": 674008
+    },
+    "tiny-v1/audit.json": {
+      "sha256": "2b1d038d4357571040ab2d1d9a55fa891dddfa320fc83f31266ee09dc2a6e20e",
+      "bytes": 1810
+    },
+    "ofa-author-parity.json": {
+      "sha256": "99246f8bb0b23fde419d7d1e435686baccdd352df9b16d21e55ef4eb384210a8",
+      "bytes": 181
+    },
+    "standalone_commands.json": {
+      "sha256": "46ea4f0bf0779a296432e3d3d36c6661bdb6c632ad0c286efff786842a4b77ac",
+      "bytes": 1852
+    },
+    "runtime_source_receipt.json": {
+      "sha256": "4bbf4676cc1e31b51dd05d16f011957662fe5d5b5ea9af2635ba2ef47b168d19",
+      "bytes": 707
+    },
+    "d0-threshold-fix-verification.json": {
+      "sha256": "144422754d69874e3d196100c48dab01da6e44b19af6c6a17028b38b9fc229e5",
+      "bytes": 141
+    },
+    "install-regression-deps.log": {
+      "sha256": "df9880aa1fc56e2a3da6912b922f96f38ac0ed38cf573cdcd33fad7cf6b3c680",
+      "bytes": 5434
+    },
+    "baseline-regression.log": {
+      "sha256": "503cb3f3afb5eb7c62b360b618b756a2164f17cf167306e7f0975f798715e7ae",
+      "bytes": 2230
+    },
+    "ofa-v1.log": {
+      "sha256": "260bd28d15cadb76be835b3f4922423cc0970ef2175d26ae8020ea010133deb9",
+      "bytes": 3544
+    },
+    "ofa-v2.log": {
+      "sha256": "c20123b66b586969bc23603a412f1cbbd57759859ec23f809b967f42feb36d89",
+      "bytes": 3587
+    },
+    "a0-resnet50-v1.log": {
+      "sha256": "717ea989e987d0a378f423b91c1a1c3efb1a80580baf95658073d4b84eac2f89",
+      "bytes": 5322
+    },
+    "regression-v2.log": {
+      "sha256": "871b1cf9964bbdefbe4adbf5299013a1e302562645b57f38bf135bab9dcbd3e0",
+      "bytes": 1545
+    },
+    "regression-final.log": {
+      "sha256": "5b040f2df74adef1e89484403f791fed39851dee2882a2d201ed175aef66628f",
+      "bytes": 1544
+    },
+    "regression-v3.log": {
+      "sha256": "ff31ef4c89314eefbda21ff83d4794d1a6a7957b0b626712b472c1869f76541c",
+      "bytes": 1544
+    },
+    "prepare-tiny-v1.log": {
+      "sha256": "0f0c27505d6bc6395a7344eb92376f8ca704f44a3e5babeae8150b7767c7cc82",
+      "bytes": 1452
+    },
+    "review-regression-red.log": {
+      "sha256": "4d014acc9cd7709bdbe638d156cf74c498175b576e3bf3d25045f7c8d7f5a520",
+      "bytes": 21020
+    },
+    "d0-resnet50-v1.log": {
+      "sha256": "97a2179212049d35b8151b2b03b6e1dfd717eca46cf34c58e5152cbcf4ff6d1b",
+      "bytes": 11609
+    }
+  },
+  "weights_urls": {
+    "ofa_fingerprint.pth": "https://drive.google.com/file/d/1V7T5a7PAepzBtXBo6DDG6DkR2CoRoQRI/view",
+    "model_best.th": "https://github.com/jumpycat/OFAAttribution/blob/3780cbffeeac48c0bf5e72a025f4803e408b9dfa/model_best.th",
+    "resnet50-0676ba61.pth": "https://download.pytorch.org/models/resnet50-0676ba61.pth"
+  }
+}

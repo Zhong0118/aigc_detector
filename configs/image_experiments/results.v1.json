@@ -1,0 +1,194 @@
+{
+  "date": "2026-10-19",
+  "execution_host": "local macOS MPS; school audited read-only",
+  "split_protocol": "tiny-train-shard-v1",
+  "manifest_sha256": "50fe1770600182182fd76c0ce595ddd615c0cd1335ce880b794a493f841d2106",
+  "samples": {
+    "train": 489,
+    "dev": 101,
+    "holdout": 110
+  },
+  "holdout_evaluated": false,
+  "code_baseline": "2b37c811f7787beba8e570cf4d5bac9b1ef27b30",
+  "experiments": {
+    "a0-resnet50-v1": {
+      "metrics": {
+        "n": 49,
+        "accuracy": 0.5918367346938775,
+        "macro_f1": 0.5867989153703439,
+        "top1": 0.5918367346938775,
+        "top3": 0.8775510204081632,
+        "task": "attribution",
+        "evaluation_split": "dev",
+        "selected_epoch": 10,
+        "selection_metric": "macro_f1",
+        "tie_break": "earliest epoch",
+        "train_n": 245,
+        "train_counts": {
+          "SD15": 35,
+          "VQDM": 35,
+          "GLIDE": 35,
+          "BigGAN": 35,
+          "Midjourney": 35,
+          "ADM": 35,
+          "Wukong": 35
+        },
+        "classes": [
+          "ADM",
+          "BigGAN",
+          "GLIDE",
+          "Midjourney",
+          "SD15",
+          "VQDM",
+          "Wukong"
+        ],
+        "failed_samples": 0,
+        "reload_max_abs_error": 0.0,
+        "single_vs_batch_max_abs_error": 0.0,
+        "holdout_evaluated": false
+      },
+      "status": {
+        "status": "completed",
+        "elapsed_seconds": 170.5785162920074,
+        "exit_code": 0
+      },
+      "path": "/Users/zhongxu/.codex/worktrees/image-m0-m2-paper/aigc_detector/outputs/image_experiments/a0-resnet50-v1"
+    },
+    "d0-resnet50-v1": {
+      "metrics": {
+        "n": 101,
+        "accuracy": 0.7524752475247525,
+        "macro_f1": 0.7461035696329814,
+        "auroc": 0.8406593406593406,
+        "threshold_0_5": 0.5,
+        "fpr_0_5": 0.11538461538461539,
+        "tpr_0_5": 0.6122448979591837,
+        "dev_target_fpr": 0.02,
+        "dev_threshold": 0.7740306854248047,
+        "dev_fpr": 0.019230769230769232,
+        "dev_tpr": 0.42857142857142855,
+        "real_count": 52,
+        "ai_count": 49,
+        "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+        "task": "detection",
+        "evaluation_split": "dev",
+        "selected_epoch": 12,
+        "selection_metric": "auroc",
+        "tie_break": "earliest epoch",
+        "train_n": 489,
+        "train_counts": {
+          "real": 244,
+          "ai": 245
+        },
+        "classes": [
+          "real",
+          "ai"
+        ],
+        "failed_samples": 0,
+        "reload_max_abs_error": 0.0,
+        "single_vs_batch_max_abs_error": 0.0,
+        "holdout_evaluated": false
+      },
+      "status": {
+        "status": "completed",
+        "elapsed_seconds": 386.3653860829945,
+        "exit_code": 0
+      },
+      "path": "/Users/zhongxu/.codex/worktrees/image-m0-m2-paper/aigc_detector/outputs/image_experiments/d0-resnet50-v1"
+    },
+    "ofa-v2": {
+      "metrics": {
+        "task": "source_verification",
+        "evaluation_split": "dev",
+        "query_n": 49,
+        "reference_counts": {
+          "ADM": 35,
+          "BigGAN": 35,
+          "GLIDE": 35,
+          "Midjourney": 35,
+          "SD15": 35,
+          "VQDM": 35,
+          "Wukong": 35
+        },
+        "per_source_auroc": {
+          "ADM": 0.9081632653061225,
+          "BigGAN": 0.9659863945578231,
+          "GLIDE": 0.8231292517006803,
+          "Midjourney": 0.9829931972789115,
+          "SD15": 0.8741496598639455,
+          "VQDM": 0.7482993197278911,
+          "Wukong": 0.8673469387755102
+        },
+        "macro_auroc": 0.881438289601555,
+        "ordered_pair_aurocs": {
+          "ADM vs BigGAN": 1.0,
+          "ADM vs GLIDE": 0.7346938775510203,
+          "ADM vs Midjourney": 1.0,
+          "ADM vs SD15": 0.8979591836734694,
+          "ADM vs VQDM": 0.9183673469387755,
+          "ADM vs Wukong": 0.8979591836734693,
+          "BigGAN vs ADM": 0.9591836734693878,
+          "BigGAN vs GLIDE": 0.9183673469387754,
+          "BigGAN vs Midjourney": 0.9387755102040816,
+          "BigGAN vs SD15": 0.979591836734694,
+          "BigGAN vs VQDM": 1.0,
+          "BigGAN vs Wukong": 1.0,
+          "GLIDE vs ADM": 0.5306122448979592,
+          "GLIDE vs BigGAN": 0.8775510204081632,
+          "GLIDE vs Midjourney": 0.8571428571428571,
+          "GLIDE vs SD15": 0.8571428571428572,
+          "GLIDE vs VQDM": 0.8163265306122449,
+          "GLIDE vs Wukong": 1.0,
+          "Midjourney vs ADM": 1.0,
+          "Midjourney vs BigGAN": 1.0,
+          "Midjourney vs GLIDE": 1.0,
+          "Midjourney vs SD15": 0.979591836734694,
+          "Midjourney vs VQDM": 0.9591836734693877,
+          "Midjourney vs Wukong": 0.9591836734693878,
+          "SD15 vs ADM": 0.8979591836734695,
+          "SD15 vs BigGAN": 1.0,
+          "SD15 vs GLIDE": 1.0,
+          "SD15 vs Midjourney": 1.0,
+          "SD15 vs VQDM": 0.7755102040816326,
+          "SD15 vs Wukong": 0.5714285714285714,
+          "VQDM vs ADM": 0.836734693877551,
+          "VQDM vs BigGAN": 1.0,
+          "VQDM vs GLIDE": 0.9183673469387755,
+          "VQDM vs Midjourney": 0.8571428571428571,
+          "VQDM vs SD15": 0.3877551020408163,
+          "VQDM vs Wukong": 0.4897959183673469,
+          "Wukong vs ADM": 0.9183673469387755,
+          "Wukong vs BigGAN": 1.0,
+          "Wukong vs GLIDE": 1.0,
+          "Wukong vs Midjourney": 1.0,
+          "Wukong vs SD15": 0.5510204081632653,
+          "Wukong vs VQDM": 0.7346938775510203
+        },
+        "macro_ordered_pair_auroc": 0.8814382896015548,
+        "single_vs_batch_feature_max_abs_error": 0.0,
+        "failed_samples": 0,
+        "holdout_evaluated": false,
+        "note": "Complete pretrained OFA inference on custom development subset; no claim of full paper reproduction or truth detection"
+      },
+      "status": {
+        "status": "completed",
+        "elapsed_seconds": 13.446853417000966,
+        "exit_code": 0
+      },
+      "path": "/Users/zhongxu/.codex/worktrees/image-m0-m2-paper/aigc_detector/outputs/image_experiments/ofa-v2"
+    }
+  },
+  "invalidated_runs": {
+    "ofa-v1": "asymmetric pair argument order; superseded by ofa-v2"
+  },
+  "limitations": [
+    "Small development subset, selected checkpoints evaluated on selection data, no independent test claim",
+    "No prompt/semantic metadata or new commercial generator version coverage",
+    "ImageAttributionBench Dataverse HTTP403; exact release unverified",
+    "Server disk below20% free; resource exception unanswered; no server training or deployment"
+  ],
+  "validation": {
+    "related_pytest": "48 passed, 4 pre-existing deprecation warnings",
+    "ofa_author_architecture_parity": "exact equality on synthetic code-check fixture, not experiment data"
+  }
+}
