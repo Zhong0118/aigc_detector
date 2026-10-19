@@ -1,0 +1,23 @@
+{
+  "dataset": "ImageAttributionBench",
+  "version": "3.2",
+  "file_id": 11192177,
+  "directory_label": "real/dog",
+  "bytes": 79542874,
+  "md5": "02be1c2439b3c9e528be53ee23d0f867",
+  "sha256": "bed4f240492a595e4f2e34cca911d8b62372b8462da2936245450e5f024645e2",
+  "file_entries": 2000,
+  "image_entries": 2000,
+  "decoded": true,
+  "trained_or_evaluated": false,
+  "seconds": 373.5324225259974,
+  "note": "ZIP central-directory inventory only. No extrapolation to other source counts.",
+  "decoded_images": 2000,
+  "formats": {
+    "JPEG": 2000
+  },
+  "size_counts": {
+    "(512, 512)": 2000
+  },
+  "decode_failures": []
+}

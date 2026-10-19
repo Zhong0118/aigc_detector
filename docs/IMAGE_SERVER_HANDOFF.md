@@ -69,7 +69,7 @@ A0/D0：RGB短边256、中心裁剪224、ImageNet归一化；交叉熵、Adam lr
 
 普通GET已验证公开示例759,874 bytes，SHA-256为5cf71d11a8032129d468fe361d580442d7c191d5ae5567f2b0ab9a7fd6962072；只用于传输验证，不参与训练/评测。HEAD访问下载重定向曾返回403，而GET成功，不能将HEAD失败作为文件下载权限的结论。未使用下载器嵌入凭据、关闭TLS或调用付费API。
 
-服务器正在尝试取得real/dog包（file ID11192177，79,542,874 bytes），比对发布MD5并清点ZIP内图像条目；其状态以 `outputs/migration-20261019/iab-real-download.log` 和成功时的 `iab-real-dog-audit.json` 为准。仅验证传输与文件清单，没有开展IAB训练。
+服务器已取得real/dog包（file ID11192177，79,542,874 bytes），发布MD5校验通过；ZIP内2,000张图片全部解码成功，失败0。逐图片SHA-256与尺寸在 `outputs/image_experiments/iab-v3.2-access-audit/image-audit.jsonl`；摘要在 `configs/image_experiments/iab_real_dog_receipt.v1.json`。这是IAB目前实际落盘的审计子集，全部标签为real，AI来源图像尚未下载，不用于来源分类训练。不能把发布设计的46万张写成已下载规模。
 
 完整压缩包已大于当前剩余空间，解压还需要额外空间；不能直接启动全量。后续IAB作为现代生成器来源研究的主数据候选，先依据实际22类公开版本按语义与来源分包建立平衡子集，再比较OFA与端到端来源分类器。真假检测另设real/AI平衡协议，不沿用23类自然分布；未确认的新9类保持覆盖缺口。
 
