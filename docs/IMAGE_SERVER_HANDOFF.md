@@ -13,7 +13,7 @@
 
 合计约94.47 GiB。明细与代码哈希在 `outputs/migration-20261019/server-cleanup.json`。其余ytt实验资产保留。
 
-原Mac实验资产共769文件、749,818,855 bytes，迁移到服务器 `outputs/image_experiments`；迁移清单 `outputs/migration-20261019/mac-assets-sha256.json`。删除Mac原始实验结果必须以后续 `migration-verified.json` 全部通过为前提；不再使用的虚拟环境和重复临时下载已先行删除；不能仅根据本说明认定迁移或本机清理已完成。本机清理凭据另存 `mac-cleanup.json`。
+原Mac实验资产共769文件、749,818,855 bytes，已全部迁移到服务器 `outputs/image_experiments` 并逐文件SHA-256验证通过。迁移清单和成功凭据分别为 `outputs/migration-20261019/mac-assets-sha256.json`、`migration-verified.json`。Mac独立虚拟环境、临时下载和托管图片工作树均已移除，约2.59GiB文件；原有本地项目未清理或覆盖。本机清理凭据为 `mac-cleanup.json`，代码可从GitHub功能分支或服务器继续工作，不需要本机重跑。
 
 独立服务器环境 `.venv-image` 从现有 Python 3.10/CUDA 包复制，包文件不依赖生产环境的site-packages软链接。仅在副本删除无关decord并将fsspec固定为2026.2.0；pip check通过，torch2.6.0+cu124、torchvision0.21.0+cu124，GPU0 RTX4090D。48项图片实验、归因接口、来源登记与报告测试通过。扩展回归发现torch先加载系统libstdc++，与Conda SQLite依赖的ICU版本不兼容；已将libstdc++.so.6和libgcc_s.so.1复制到图片环境lib中。运行包含SQLite的接口或完整回归时，进程级设置 `LD_LIBRARY_PATH="$PWD/.venv-image/lib"`；48项回归及CUDA/SQLite联合导入通过，生产运行库未修改。新环境与Mac依赖版本不同，实际锁定清单存 `outputs/migration-20261019/server-environment.txt`，不宣称跨设备数值完全一致。
 
@@ -53,17 +53,25 @@ A0/D0：RGB短边256、中心裁剪224、ImageNet归一化；交叉熵、Adam lr
 
 更大检测数据来源：[GenImage官方仓库](https://github.com/GenImage-Dataset/GenImage)、[官方下载目录](https://drive.google.com/drive/folders/1jGt10bwTbhEZuGXLyvrCuxOI0cBqQ1FS)。正式GenImage包含SD1.4/1.5、Midjourney、ADM、GLIDE、Wukong、VQDM、BigGAN八个来源，论文规模约270万图。本轮未取得全量，不把Tiny当成全量GenImage，也不推断全量实际占比。
 
-## ImageAttributionBench为何未取得
+## ImageAttributionBench实际发布版本与访问核验
 
-[论文](https://arxiv.org/html/2605.12967v1)；[作者代码](https://github.com/mttry/ImageAttributionBench)；[数据发布页](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/O4S4IV)。
+[论文](https://arxiv.org/html/2605.12967v1)；[作者代码](https://github.com/mttry/ImageAttributionBench)；[公开数据发布页](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/O4S4IV)。
 
-2026-10-19服务器普通匿名HTTPS请求：Dataverse dataset API返回403 Forbidden；站点HEAD返回202，响应头 `x-amzn-waf-action: challenge`。因此存在访问层/WAF阻碍，未取得发布版本及文件清单；无法仅凭这些响应判断文件是否需要账户授权。README要求下载脚本填写自己的Dataverse API token；未使用脚本嵌入的凭据、关闭TLS或调用付费API。不能宣称数据不存在、已经下载、或者31类全部可取。
+本轮先用普通脚本访问Dataverse API返回403，站点HEAD有AWS WAF challenge；随后通过未登录的普通浏览器成功打开网页和读取同一个公开API（HTTP200）。因此应将此前“实际发布版本未核验/主数据访问受阻”的判断更新为：**元数据已取得，公开下载GET可用，服务器脚本直连仍受访问层限制；不能据先前403推断数据不存在或一定需要授权。**
 
-公开代码/下载器仍列22个AI来源＋real：GPT-4o、CogView3-Plus、FLUX.1-schnell、Kandinsky-3、PixArt-XL-2-1024-MS、Playground2.5、SD1.5、SD2.1、SD3-medium、SD3.5-medium、SDXL-base1.0、DALL-E3、Gemini2.0-flash-exp-image-generation、Grok3-image、HiDream-I1-fast、Hunyuan-DiT、Ideogram-V1-TURBO、Infinity-2B、Janus-Pro、Kling-image-V1、Midjourney5.2、Midjourney6.0。
+已核验公开版本 **3.2，RELEASED**，API releaseTime字段为2025-05-16T08:00:13Z，许可 **CC BY 4.0**。完整清单350文件、528,670,084,577 bytes（528.67GB十进制，约492.36GiB），所有文件restricted=false。其中一个_test_imgs示例没有核验来源标签，排除训练；其余为22个AI来源及real目录的ZIP/分卷文件。原始清单保存在 `outputs/migration-20261019/iab-public-v3.2-metadata.json`；Git版本的摘要在 `configs/image_experiments/iab_public_v3_2_inventory.json`。
 
-论文另列9个来源：FLUX.2-Klein、GLM-Image、Z-Image、Doubao-Seedream3.0-t2i、Doubao-Seedream5.0-lite、Gemini2.5-flash-image、Gemini3-pro-image、GPT-image1、GPT-image1.5，共31个AI来源＋real。按论文设计每类20,000张，总约640,000张：每类占总数3.125%，每个AI来源占AI子集约3.2258%。这些是论文设计数量，实际发布/下载比例未知。公开旧脚本的22类也不能直接假定每类20,000张已可取得。
+公开22个来源为：GPT-4o、CogView3-Plus、FLUX.1-schnell、Kandinsky-3、PixArt-XL-2-1024-MS、Playground2.5、SD1.5、SD2.1、SD3-medium、SD3.5-medium、SDXL-base1.0、DALL-E3、Gemini2.0-flash-exp-image-generation、Grok3-image、HiDream-I1-fast、Hunyuan-DiT、Ideogram-V1-TURBO、Infinity-2B、Janus-Pro、Kling-image-V1、Midjourney5.2、Midjourney6.0。目录名与论文名称的对照保留原始版本证据，不将gemini替换为新模型名称。
 
-作者README标注全量下载需要>500GB可用空间；本次清理后服务器剩余空间不足以按这一要求完整展开。后续需要合法可访问入口、核对具体版本与文件大小，并按来源/语义分包取得可审计子集。不能把旧gemini标签替换为新模型名称。IAB的real仅占论文自然分布3.125%，若用于真假检测需另建真实/生成平衡协议，不能直接沿用多来源分类分布。
+发布页描述为22生成器＋real、共约460,000张。按该版本均衡设计，每个来源及real各20,000张，占全数据约4.3478%；AI子集中22来源各约4.5455%。这是发布设计数量；尚未逐包清点全部图像，不能把压缩分卷文件数当作图片数或样本占比。
+
+新论文另列9个来源：FLUX.2-Klein、GLM-Image、Z-Image、Doubao-Seedream3.0-t2i、Doubao-Seedream5.0-lite、Gemini2.5-flash-image、Gemini3-pro-image、GPT-image1、GPT-image1.5，共31个AI来源＋real，约640,000张。论文设计每类20,000张，分别占总量3.125%、AI子集约3.2258%。**这9个新增来源没有出现在本次V3.2清单中，不能声称已取得论文的31类版本。**
+
+普通GET已验证公开示例759,874 bytes，SHA-256为5cf71d11a8032129d468fe361d580442d7c191d5ae5567f2b0ab9a7fd6962072；只用于传输验证，不参与训练/评测。HEAD访问下载重定向曾返回403，而GET成功，不能将HEAD失败作为文件下载权限的结论。未使用下载器嵌入凭据、关闭TLS或调用付费API。
+
+服务器正在尝试取得real/dog包（file ID11192177，79,542,874 bytes），比对发布MD5并清点ZIP内图像条目；其状态以 `outputs/migration-20261019/iab-real-download.log` 和成功时的 `iab-real-dog-audit.json` 为准。仅验证传输与文件清单，没有开展IAB训练。
+
+完整压缩包已大于当前剩余空间，解压还需要额外空间；不能直接启动全量。后续IAB作为现代生成器来源研究的主数据候选，先依据实际22类公开版本按语义与来源分包建立平衡子集，再比较OFA与端到端来源分类器。真假检测另设real/AI平衡协议，不沿用23类自然分布；未确认的新9类保持覆盖缺口。
 
 ## 服务器执行与状态凭据
 
@@ -71,4 +79,4 @@ A0/D0：RGB短边256、中心裁剪224、ImageNet归一化；交叉熵、Adam lr
 
 顺序：可续传下载并验证14个分片→完整manifest→D0 20epoch→A0 20epoch→冻结OFA验证。三个新结果目录分别为 `d0-resnet50-server-full-v2`、`a0-resnet50-server-full-v2`、`ofa-server-full-v2`，位于 `outputs/image_experiments`。训练开始前检查GPU0占用；若其他任务已使用超过1GiB则退出并记录，而不抢占他人任务。
 
-截至本交接文档创建，服务器已通过独立环境测试、实际重载A0并完成CUDA单图推理，且已启动全量下载，尚无全量训练指标。完整数据采用新v2划分，仅在v2内部比较方法，不把v1小样本结果当成相同协议的对照。此前Mac结果只保留为历史工程实验，不能冒充服务器新结果，也不能冒充原论文结果。
+截至本交接文档创建，服务器已通过独立环境测试、实际重载A0并完成CUDA单图推理，OFA完整GPU链路和D0批量推理也通过，且已启动全量下载，尚无全量训练指标。完整数据采用新v2划分，仅在v2内部比较方法，不把v1小样本结果当成相同协议的对照。此前Mac结果只保留为历史工程实验，不能冒充服务器新结果，也不能冒充原论文结果。

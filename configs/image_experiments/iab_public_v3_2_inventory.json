@@ -1,0 +1,143 @@
+{
+  "status": 200,
+  "id": 11127188,
+  "version": [
+    3,
+    2
+  ],
+  "state": "RELEASED",
+  "releaseTime": "2025-05-16T08:00:13Z",
+  "license": {
+    "name": "CC BY 4.0",
+    "uri": "http://creativecommons.org/licenses/by/4.0",
+    "iconUri": "https://licensebuttons.net/l/by/4.0/88x31.png"
+  },
+  "groups": {
+    "4o": {
+      "files": 19,
+      "bytes": 30824813599,
+      "restricted": 0
+    },
+    "_test_imgs": {
+      "files": 1,
+      "bytes": 759874,
+      "restricted": 0
+    },
+    "CogView3_PLUS": {
+      "files": 14,
+      "bytes": 24869387732,
+      "restricted": 0
+    },
+    "dalle3": {
+      "files": 19,
+      "bytes": 30488443703,
+      "restricted": 0
+    },
+    "FLUX": {
+      "files": 10,
+      "bytes": 7649268625,
+      "restricted": 0
+    },
+    "gemini": {
+      "files": 10,
+      "bytes": 20276206404,
+      "restricted": 0
+    },
+    "grok3": {
+      "files": 10,
+      "bytes": 14336698680,
+      "restricted": 0
+    },
+    "hidream": {
+      "files": 16,
+      "bytes": 27795248642,
+      "restricted": 0
+    },
+    "hunyuan": {
+      "files": 20,
+      "bytes": 33156705185,
+      "restricted": 0
+    },
+    "ideogram": {
+      "files": 20,
+      "bytes": 32741362258,
+      "restricted": 0
+    },
+    "infinity": {
+      "files": 16,
+      "bytes": 26102870563,
+      "restricted": 0
+    },
+    "janus-pro": {
+      "files": 10,
+      "bytes": 4513841972,
+      "restricted": 0
+    },
+    "KANDINSKY": {
+      "files": 10,
+      "bytes": 18477302937,
+      "restricted": 0
+    },
+    "kling": {
+      "files": 20,
+      "bytes": 31483503242,
+      "restricted": 0
+    },
+    "mid-5.2": {
+      "files": 12,
+      "bytes": 21086647143,
+      "restricted": 0
+    },
+    "mid-6.0": {
+      "files": 15,
+      "bytes": 25888216805,
+      "restricted": 0
+    },
+    "PIXART": {
+      "files": 20,
+      "bytes": 29587000536,
+      "restricted": 0
+    },
+    "PLAYGROUND_2_5": {
+      "files": 20,
+      "bytes": 29738721557,
+      "restricted": 0
+    },
+    "real": {
+      "files": 10,
+      "bytes": 2080166318,
+      "restricted": 0
+    },
+    "SD1_5": {
+      "files": 10,
+      "bytes": 8654771403,
+      "restricted": 0
+    },
+    "SD2_1": {
+      "files": 10,
+      "bytes": 19910686198,
+      "restricted": 0
+    },
+    "SD3_5": {
+      "files": 20,
+      "bytes": 30917049427,
+      "restricted": 0
+    },
+    "SD3": {
+      "files": 19,
+      "bytes": 28954498139,
+      "restricted": 0
+    },
+    "SDXL": {
+      "files": 19,
+      "bytes": 29135913635,
+      "restricted": 0
+    }
+  },
+  "totalFiles": 350,
+  "totalBytes": 528670084577,
+  "source": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/O4S4IV",
+  "image_counts_status": "Publication design only; full archive contents not enumerated",
+  "declared_images": 460000,
+  "declared_ai_sources": 22
+}
