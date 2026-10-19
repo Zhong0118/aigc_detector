@@ -20,8 +20,8 @@ from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, roc_auc_
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from research.image_attribution.models import (ResNetClassifier, load_checkpoint, load_ofa,
-    ofa_features, ofa_transform, resnet_transform)
+from research.image_attribution.models import (ResNetClassifier, load_checkpoint, load_feature_cache, load_ofa,
+    ofa_features, ofa_transform, reference_score, resnet_transform)
 from research.image_attribution.protocol import load_manifest, sha256, task_rows, write_json
 
 
@@ -57,7 +57,8 @@ def metrics(labels, probs, task):
         finite = np.isfinite(thresholds)
         eligible = np.flatnonzero((fpr <= .02) & finite)
         # No finite point qualifies: threshold above maximum score, explicitly all-negative.
-        threshold = float(thresholds[eligible[-1]]) if len(eligible) else float(np.nextafter(probs[:,1].max(), np.inf, dtype=np.float64))
+        threshold = float(thresholds[eligible[-1]]) if len(eligible) else float(
+            np.nextafter(probs[:,1].max(), np.inf, dtype=probs.dtype))
         result.update(auroc=float(roc_auc_score(truth, probs[:, 1])), threshold_0_5=.5,
             fpr_0_5=float((probs[truth == 0, 1] >= .5).mean()),
             tpr_0_5=float((probs[truth == 1, 1] >= .5).mean()),
@@ -175,8 +176,8 @@ def verify_ofa(args, rows, out):
             print(json.dumps(dict(feature_batch=i, batch_size=len(inputs))), flush=True)
     features = torch.cat(values)
     torch.save(dict(identity=cache_identity, features=features), out/'features.pt')
-    reloaded = torch.load(out/'features.pt', weights_only=True)
-    if reloaded['identity'] != cache_identity or not torch.equal(features, reloaded['features']):
+    reloaded = load_feature_cache(out/'features.pt', cache_identity)
+    if not torch.equal(features, reloaded):
         raise ValueError('feature cache identity/contents mismatch')
     reference_indices = {label:[i for i,(r,y) in enumerate(zip(rows,labels)) if y==label and r['split']=='train'][:100]
                          for label in range(len(classes))}
@@ -191,8 +192,7 @@ def verify_ofa(args, rows, out):
             values = []
             for label in range(len(classes)):
                 support = features[reference_indices[label]].to(args.device)
-                repeated = features[query].to(args.device).expand(len(support), -1)
-                values.append(float(pair(repeated, support).sigmoid().mean().cpu()))
+                values.append(float(reference_score(pair, support, features[query].to(args.device)).cpu()))
             scores.append(values)
         one = ofa_features(dataset[queries[0]][0].unsqueeze(0).to(args.device), encoder, denoiser).cpu()
     feature_error = float((one[0] - features[queries[0]]).abs().max())
@@ -249,6 +249,9 @@ def main():
     config = {key:str(value) if isinstance(value,Path) else value for key,value in vars(args).items()}
     config.update(code_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
         code_status=subprocess.check_output(['git','status','--porcelain'],text=True),
+        source_hashes={str(p):sha256(p) for p in [Path(__file__),
+            Path(__file__).resolve().parents[1]/'research/image_attribution/models.py',
+            Path(__file__).resolve().parents[1]/'research/image_attribution/protocol.py']},
         manifest_sha256=sha256(args.manifest), pretrained_sha256=sha256(args.weights),
         python=sys.version, torch=torch.__version__, platform=platform.platform(),
         command=sys.argv, cpu_threads=4, workers=0, training_protocol='Adam lr=.001, CE, StepLR(1,.9), full backbone; OFA frozen',

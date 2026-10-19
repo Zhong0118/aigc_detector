@@ -1,0 +1,40 @@
+{
+  "protocol_id": "tiny-train-shard-v1",
+  "seed": 42,
+  "dataset_id": "TheKernel01/Tiny-GenImage",
+  "dataset_revision": "89c4fe9efd0ebc7ce5c7641ef57d578ccd639c69",
+  "train_shard": "train-00010-of-00014.parquet",
+  "samples_per_observed_ai_source": 50,
+  "real_samples": 350,
+  "manifest_sha256": "50fe1770600182182fd76c0ce595ddd615c0cd1335ce880b794a493f841d2106",
+  "split_rule": "seeded source-stratified groups; int(.7*n) train, int(.15*n) dev, remainder holdout",
+  "grouping": "transitive pHash Hamming <=4 or identical decoded RGB+dimensions",
+  "official_validation": "not_downloaded",
+  "holdout": "not_used_for_inference_or_selection",
+  "resnet": {
+    "architecture": "torchvision ResNet50, Identity backbone.fc, Linear(2048,K)",
+    "initialization": "IMAGENET1K_V1 resnet50-0676ba61.pth",
+    "preprocessing": "RGB, Resize256, CenterCrop224, ImageNet normalization",
+    "trainable": "all backbone and head parameters",
+    "epochs": 20,
+    "batch_size": 32,
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "loss": "CrossEntropyLoss",
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "selection": {"detection": "dev AUROC", "attribution": "dev Macro-F1"},
+    "tie_break": "earliest epoch"
+  },
+  "ofa": {
+    "upstream_commit": "3780cbffeeac48c0bf5e72a025f4803e408b9dfa",
+    "checkpoint": "250713063611-2k.pth",
+    "complete_pair_head_required": true,
+    "reference_rule": "first at most 100 train sample IDs per source in frozen manifest order",
+    "actual_references_per_source": 35,
+    "queries": "49 dev AI samples, same as A0",
+    "score": "mean sigmoid of learned pair head with support first and query second (author order)",
+    "task": "source_verification",
+    "batch_size": 8
+  },
+  "scope": "engineering development baseline; no full benchmark reproduction, no deployment"
+}

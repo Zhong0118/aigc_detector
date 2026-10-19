@@ -58,3 +58,65 @@ def test_schema_labels_override_historical_fallback():
     features = {'generator': {'names': ['new-source', 'another-source']}}
     assert decode_dataset_label(features, 'generator', 0) == 'new-source'
     with pytest.raises(ValueError): decode_dataset_label(features, 'generator', 3)
+
+
+def test_unavailable_model_never_returns_real_or_zero(tmp_path):
+    from scripts.predict_image_experiment import predict
+    results = predict(tmp_path/'missing.pth', [tmp_path/'image.png'])
+    assert results[0]['status'] == 'unavailable'
+    assert results[0]['score'] is None
+    assert 'label' not in results[0]
+
+
+def test_cache_rejects_changed_encoder_or_sample_order(tmp_path):
+    import torch
+    from research.image_attribution.models import load_feature_cache
+    identity = {'encoder': 'revision-a', 'sample_ids': ['a', 'b']}
+    path = tmp_path / 'features.pt'
+    torch.save({'identity': identity, 'features': torch.zeros(2, 128)}, path)
+    assert load_feature_cache(path, identity).shape == (2, 128)
+    with pytest.raises(ValueError, match='identity'):
+        load_feature_cache(path, dict(identity, encoder='revision-b'))
+    with pytest.raises(ValueError, match='identity'):
+        load_feature_cache(path, dict(identity, sample_ids=['b', 'a']))
+
+
+def test_checkpoint_rejects_changed_preprocessing(tmp_path):
+    import torch
+    from research.image_attribution.models import load_checkpoint
+    path = tmp_path / 'model.pth'
+    torch.save({'task': 'detection', 'classes': ['real', 'ai'], 'preprocessing': 'unknown'}, path)
+    with pytest.raises(ValueError, match='preprocessing'):
+        load_checkpoint(path, 'cpu')
+
+
+def test_ofa_pair_order_matches_author_support_then_query():
+    import torch
+    from research.image_attribution.models import reference_score
+    # Asymmetric head makes reversal observable; symmetric cosine cannot catch this bug.
+    class OrderedHead(torch.nn.Module):
+        def forward(self, first, second):
+            return first[:, 0] - 2 * second[:, 0]
+    reference = torch.tensor([[1.], [2.]])
+    query = torch.tensor([3.])
+    expected = torch.sigmoid(torch.tensor([-5., -4.])).mean()
+    assert torch.allclose(reference_score(OrderedHead(), reference, query), expected)
+
+
+def test_low_fpr_fallback_threshold_rejects_all_float32_scores():
+    import numpy as np
+    from scripts.run_image_experiment import metrics
+    scores = np.array([.9, .8, .7, .6], dtype=np.float32)
+    result = metrics([0, 0, 1, 1], np.stack([1-scores, scores], axis=1), 'detection')
+    assert result['dev_fpr'] == 0
+    assert result['dev_tpr'] == 0
+
+
+@pytest.mark.parametrize('content', [b'not a checkpoint', b''])
+def test_corrupt_checkpoint_returns_unavailable(tmp_path, content):
+    from scripts.predict_image_experiment import predict
+    path = tmp_path / 'corrupt.pth'
+    path.write_bytes(content)
+    result = predict(path, [tmp_path/'image.png'])[0]
+    assert result['status'] == 'unavailable'
+    assert result['score'] is None

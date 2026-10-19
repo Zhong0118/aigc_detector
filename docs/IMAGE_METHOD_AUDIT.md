@@ -12,7 +12,7 @@
 | 去噪网络 | 17层3×3 valid卷积，前16层64通道，末层3通道；中间15层BN；除末层外ReLU；输入256输出222，不做补边 |
 | 骨干 | ResNet50，2048→128输出层；FFTWrapper 的 state keys 为 base.* |
 | 预训练 | 作者 Drive 文件250713063611-2k.pth，实际取得286,709,636 bytes；weights_only=True加载包含 step/model/pair_classifier/cls_classifier/optimizer。DnCNN model_best.th 随作者仓库提供 |
-| 成对头 | 拼接两个128维指纹；Linear256→128→128→1；两层LeakyReLU(0.2)，推理 sigmoid。已确认权重包含全部6个张量，缺失时本实现直接失败，绝不使用随机头 |
+| 成对头 | 严格按作者代码顺序拼接参考指纹S在前、查询指纹D在后；Linear256→128→128→1；两层LeakyReLU(0.2)，推理 sigmoid。该头不对称，顺序不能交换。已确认权重包含全部6个张量，缺失时本实现直接失败，绝不使用随机头 |
 | 损失 | 原论文：监督对比损失＋来源配对BCE＋真实/重建BCE；三项权重均1，温度0.02。模拟器为MSE＋0.25 LPIPS；模拟器重建图不等于目标商业生成器数据 |
 | 原训练 | COCO train；裁剪256；随机重建网络产生指纹监督。论文memory bank 1024，公开训练脚本默认65536；脚本batch16、label_size8、Adam lr1e-4、100000 steps，参数需区分论文与脚本，不能说完全一致 |
 | 验证协议 | 查询与每张同一来源参考图经学习的成对头打分再平均；原论文默认100参考；本轮训练侧最多100，样本不足实报，dev为独立查询，holdout不参与 |

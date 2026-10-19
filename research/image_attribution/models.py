@@ -36,9 +36,22 @@ def load_checkpoint(path, device):
     if (checkpoint['task'] == 'detection' and classes != ['real', 'ai']) or (
             checkpoint['task'] == 'attribution' and classes != sorted(set(classes))):
         raise ValueError('invalid class order')
+    if checkpoint['task'] not in {'detection', 'attribution'}:
+        raise ValueError('unsupported checkpoint task')
+    if checkpoint.get('preprocessing') != 'iab-resnet50-v1':
+        raise ValueError('unsupported preprocessing identity')
     model = ResNetClassifier(len(classes))
     model.load_state_dict(checkpoint['state_dict'], strict=True)
     return model.to(device).eval(), checkpoint
+
+
+def load_feature_cache(path, identity):
+    cache = torch.load(path, map_location='cpu', weights_only=True)
+    if cache['identity'] != identity:
+        raise ValueError('feature cache identity mismatch')
+    if len(cache['features']) != len(identity['sample_ids']):
+        raise ValueError('feature cache sample count mismatch')
+    return cache['features']
 
 
 class PairHead(nn.Module):
@@ -59,6 +72,11 @@ class FrequencyEncoder(nn.Module):
 
     def forward(self, residual):
         return self.base(torch.log1p(torch.abs(torch.fft.fft2(residual))))
+
+
+def reference_score(pair, support, query):
+    """Author uses S_features first, D_features second; concatenation is asymmetric."""
+    return pair(support, query.expand(len(support), -1)).sigmoid().mean()
 
 
 def load_ofa(fingerprint_path, denoiser_path, device):
