@@ -1,0 +1,48 @@
+{
+  "experiment": "A2",
+  "requires_training": false,
+  "evaluation_scope": "all AI parent dev; paired clean/corruptions; no split changes",
+  "dataset": "outputs/image_experiments/iab-balanced-v5-50",
+  "manifest_sha256": "0dd207abf3fb477a89d8c767144a4869b425722415258a3e031ff2bedbf26553",
+  "selection_sha256": "375dd7978721324db4b6891746a1d99ab09a62a1ba57afe21bd83e98ed485c5c",
+  "parent_manifest": "outputs/image_experiments/iab-balanced-v4-20/manifest.jsonl",
+  "parent_manifest_sha256": "c4adf2e0c25c4cbaba75e98bca4e29c3ae8287430ee026ab6118e7e7eab69b3e",
+  "checkpoint": "outputs/image_experiments/a0-resnet50-iab-v5-50/model.pth",
+  "checkpoint_sha256": "2862dfb49c3621d7ddc95126761a07e64cc317e6a1f0825a2967075b3f0f9808",
+  "batch_size": 32,
+  "workers": 4,
+  "seed": 42,
+  "device": "cuda:0",
+  "conditions": [
+    {
+      "name": "clean"
+    },
+    {
+      "name": "jpeg95",
+      "jpeg_quality": 95
+    },
+    {
+      "name": "jpeg75",
+      "jpeg_quality": 75
+    },
+    {
+      "name": "jpeg50",
+      "jpeg_quality": 50
+    },
+    {
+      "name": "resize075",
+      "scale": 0.75
+    },
+    {
+      "name": "resize050",
+      "scale": 0.5
+    }
+  ],
+  "postprocess": "Reuse Postprocess: RGB, JPEG in memory; bicubic downsample then restore original dimensions, before Resize256/CenterCrop224/ImageNet normalization",
+  "primary_dev_n": 1496,
+  "old_dev_ai_subset_n": 616,
+  "holdout_evaluated": false,
+  "automatic_followups": false,
+  "inference_only": true,
+  "limitation": "Exploratory parent-dev robustness; A0 checkpoint already selected on this dev; not paper-exact degradation protocol"
+}

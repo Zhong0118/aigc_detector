@@ -1,0 +1,11 @@
+{
+  "dataset": "outputs/image_experiments/iab-balanced-v5-50",
+  "suffix": "v5-50",
+  "per_cell": 50,
+  "workers": 4,
+  "reuse_from": "outputs/image_experiments/iab-balanced-v3-100",
+  "prefix_selection": true,
+  "route": "direct",
+  "parent_manifest": "outputs/image_experiments/iab-balanced-v4-20/manifest.jsonl",
+  "epochs": 20
+}

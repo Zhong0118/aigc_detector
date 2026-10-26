@@ -1,0 +1,7 @@
+{
+  "status": "needs_evidence_review",
+  "note": "Fill each exact IAB source label with family and primary-source evidence. Vendor equality is not model-family equality. Do not infer undocumented versions. A3 is blocked until reviewed=true and all source mappings are present.",
+  "reviewed": false,
+  "sources": {},
+  "cross_version": {"status":"blocked_missing_verified_version_protocol", "note":"A2 cross-version training requires a verified family/version map and version-disjoint split. It is not implemented as ordinary 22-class evaluation because unseen versions are absent from the training label vocabulary."}
+}

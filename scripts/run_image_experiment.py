@@ -39,6 +39,17 @@ class Images(Dataset):
         return tensor, self.labels[index]
 
 
+
+def image_datasets(partitions, root, train_transform=None):
+    """Keep development and train-metric inputs clean when training augmentation is enabled."""
+    datasets = {s: Images(r, y, root, resnet_transform()) for s, (r, y) in partitions.items()}
+    clean_train = datasets['train']
+    if train_transform is not None:
+        rows, labels = partitions['train']
+        datasets['train'] = Images(rows, labels, root, train_transform)
+    return datasets, clean_train
+
+
 def probabilities(model, loader, device):
     model.eval()
     values = []
@@ -48,26 +59,55 @@ def probabilities(model, loader, device):
     return np.concatenate(values)
 
 
-def metrics(labels, probs, task):
+
+def evaluate_epoch(model, loader, device, task, classes, criterion, calibrate=False):
+    model.eval()
+    labels, probabilities = [], []
+    loss_sum = 0.0
+    count = 0
+    with torch.inference_mode():
+        for inputs, target in loader:
+            logits = model(inputs.to(device))
+            loss = criterion(logits, target.to(device))
+            loss_sum += float(loss.cpu()) * len(target)
+            count += len(target)
+            labels.extend(target.numpy().tolist())
+            probabilities.append(logits.softmax(1).cpu().numpy())
+    scores = np.concatenate(probabilities)
+    result = metrics(labels, scores, task, calibrate_detection=calibrate)
+    result.update(loss=loss_sum / count,
+                  class_counts=dict(Counter(classes[label] for label in labels)))
+    return result
+
+
+def score_distribution(values):
+    values = np.asarray(values, dtype=np.float64)
+    return dict(n=int(values.size), mean=float(values.mean()), std=float(values.std()),
+                min=float(values.min()), p05=float(np.quantile(values, .05)),
+                median=float(np.quantile(values, .50)), p95=float(np.quantile(values, .95)),
+                max=float(values.max()))
+
+
+def metrics(labels, probs, task, calibrate_detection=True):
     pred = probs.argmax(1)
     result = dict(n=len(labels), accuracy=float(accuracy_score(labels, pred)),
                   macro_f1=float(f1_score(labels, pred, average='macro', zero_division=0)))
     if task == 'detection':
         truth = np.asarray(labels)
-        fpr, tpr, thresholds = roc_curve(truth, probs[:, 1])
-        finite = np.isfinite(thresholds)
-        eligible = np.flatnonzero((fpr <= .02) & finite)
-        # No finite point qualifies: threshold above maximum score, explicitly all-negative.
-        threshold = float(thresholds[eligible[-1]]) if len(eligible) else float(
-            np.nextafter(probs[:,1].max(), np.inf, dtype=probs.dtype))
         result.update(auroc=float(roc_auc_score(truth, probs[:, 1])), threshold_0_5=.5,
             fpr_0_5=float((probs[truth == 0, 1] >= .5).mean()),
             tpr_0_5=float((probs[truth == 1, 1] >= .5).mean()),
-            dev_target_fpr=.02, dev_threshold=threshold,
-            dev_fpr=float((probs[truth == 0, 1] >= threshold).mean()),
-            dev_tpr=float((probs[truth == 1, 1] >= threshold).mean()),
-            real_count=int((truth == 0).sum()), ai_count=int((truth == 1).sum()),
-            threshold_note='Exploratory development calibration, not an independent low-FPR claim')
+            real_count=int((truth == 0).sum()), ai_count=int((truth == 1).sum()))
+        if calibrate_detection:
+            fpr, tpr, thresholds = roc_curve(truth, probs[:, 1])
+            finite = np.isfinite(thresholds)
+            eligible = np.flatnonzero((fpr <= .02) & finite)
+            threshold = float(thresholds[eligible[-1]]) if len(eligible) else float(
+                np.nextafter(probs[:,1].max(), np.inf, dtype=probs.dtype))
+            result.update(dev_target_fpr=.02, dev_threshold=threshold,
+                dev_fpr=float((probs[truth == 0, 1] >= threshold).mean()),
+                dev_tpr=float((probs[truth == 1, 1] >= threshold).mean()),
+                threshold_note='Exploratory development calibration, not an independent low-FPR claim')
     else:
         result['top1'] = result['accuracy']
         result['top3'] = float(np.mean([y in np.argsort(p)[-min(3, len(p)):] for y, p in zip(labels, probs)]))
@@ -123,13 +163,19 @@ def train(args, rows, out):
         if set(yy) != set(range(len(classes))):
             raise ValueError(f'{split} lacks a class')
         partitions[split] = (rr, yy)
-    datasets = {s: Images(r, y, args.manifest.parent, resnet_transform()) for s, (r, y) in partitions.items()}
+    datasets, clean_train = image_datasets(partitions, args.manifest.parent, getattr(args, 'train_transform', None))
     loaders = {s: DataLoader(d, batch_size=args.batch_size, shuffle=s == 'train', num_workers=args.workers, pin_memory=args.device == 'cuda')
                for s, d in datasets.items()}
+    train_eval_loader = DataLoader(clean_train, batch_size=args.batch_size, shuffle=False,
+                                   num_workers=args.workers, pin_memory=args.device == 'cuda')
     model = ResNetClassifier(len(classes), args.weights).to(args.device)
     optimizer = torch.optim.Adam(model.parameters(), lr=.001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=.9)
-    criterion = torch.nn.CrossEntropyLoss()
+    train_counts = np.bincount(partitions['train'][1], minlength=len(classes))
+    class_weights = (len(partitions['train'][1]) / (len(classes) * train_counts)
+                     if args.task == 'detection' else None)
+    weight_tensor = torch.tensor(class_weights, dtype=torch.float32, device=args.device) if class_weights is not None else None
+    criterion = torch.nn.CrossEntropyLoss(weight=weight_tensor)
     best, history = -1., []
     key = 'auroc' if args.task == 'detection' else 'macro_f1'
     for epoch in range(1, args.epochs + 1):
@@ -144,10 +190,19 @@ def train(args, rows, out):
             optimizer.step()
             total_loss += float(loss.detach().cpu()) * len(y)
             count += len(y)
+        train_result = evaluate_epoch(model, train_eval_loader, args.device, args.task, classes,
+                                      criterion, calibrate=False)
+        dev_result = evaluate_epoch(model, loaders['dev'], args.device, args.task, classes,
+                                    criterion, calibrate=args.task == 'detection')
         p = probabilities(model, loaders['dev'], args.device)
-        result = metrics(partitions['dev'][1], p, args.task)
-        record = dict(epoch=epoch, loss=total_loss/count, lr=optimizer.param_groups[0]['lr'],
-                      seconds=time.monotonic()-start, dev=result)
+        result = {key: value for key, value in dev_result.items()
+                  if key not in {'loss', 'class_counts'}}
+        record = dict(epoch=epoch, train_loss=train_result['loss'], train=train_result,
+                      dev_loss=dev_result['loss'], dev=dev_result,
+                      train_class_counts=train_result['class_counts'],
+                      dev_class_counts=dev_result['class_counts'],
+                      lr=optimizer.param_groups[0]['lr'], scheduler='StepLR(step_size=1,gamma=0.9)',
+                      optimizer='Adam(lr=0.001)', seconds=time.monotonic()-start)
         print(json.dumps(record), flush=True)
         history.append(record)
         write_json(out / 'history.json', history)
@@ -157,7 +212,8 @@ def train(args, rows, out):
             checkpoint = dict(state_dict={k:v.detach().cpu() for k,v in model.state_dict().items()},
                               task=args.task, classes=classes, epoch=epoch,
                               manifest_sha256=sha256(args.manifest),
-                              preprocessing='iab-resnet50-v1', pretrained_sha256=sha256(args.weights))
+                              preprocessing='iab-resnet50-v1', pretrained_sha256=sha256(args.weights),
+                              class_weights=class_weights.tolist() if class_weights is not None else None)
             torch.save(checkpoint, out / 'model.pth')
             np.save(out / 'best_dev_probabilities.npy', p)
         scheduler.step()
@@ -175,6 +231,8 @@ def train(args, rows, out):
     result.update(task=args.task, evaluation_split='dev', selected_epoch=checkpoint['epoch'],
         selection_metric=key, tie_break='earliest epoch', train_n=len(datasets['train']),
         train_counts=dict(Counter(classes[y] for y in partitions['train'][1])),
+        dev_counts=dict(Counter(classes[y] for y in partitions['dev'][1])),
+        class_weights=class_weights.tolist() if class_weights is not None else None,
         classes=classes, failed_samples=0, reload_max_abs_error=reload_error,
         single_vs_batch_max_abs_error=single_error, holdout_evaluated=False)
     write_json(out/'stratified_metrics.json', stratified_metrics(partitions['dev'][0], partitions['dev'][1], classes, p, args.task))
@@ -185,6 +243,7 @@ def train(args, rows, out):
 
 
 def verify_ofa(args, rows, out):
+    ofa_start=time.monotonic()
     rows, labels, classes = task_rows(rows, 'attribution')
     rows_labels = [(r,y) for r,y in zip(rows,labels) if r['split'] in {'train','dev'}]
     rows, labels = [r for r,y in rows_labels], [y for r,y in rows_labels]
@@ -254,16 +313,23 @@ def verify_ofa(args, rows, out):
             pairwise[f'{name} vs {other_name}'] = float(roc_auc_score(truth[mask]==label, scores[mask,label]))
     write_json(out/'reference_manifest.json', {name:[rows[i]['sample_id'] for i in reference_indices[label]]
                                              for label,name in enumerate(classes)})
+    score_distributions={}
+    for label,name in enumerate(classes):
+        positive=scores[truth==label,label]
+        negative=scores[truth!=label,label]
+        score_distributions[name]=dict(matching=score_distribution(positive),
+                                       nonmatching=score_distribution(negative))
     with (out/'predictions.jsonl').open('w') as stream:
         for index,score in zip(queries,scores):
             stream.write(json.dumps(dict(sample_id=rows[index]['sample_id'],split='dev',task='source_verification',
                 status='ok',true_label=classes[labels[index]],classes=classes,match_scores=score.tolist()))+'\n')
-    return dict(task='source_verification', evaluation_split='dev', query_n=len(queries),
+    return dict(task='source_verification', epoch=None, evaluation_split='dev', query_n=len(queries),
         reference_counts={classes[k]:len(v) for k,v in reference_indices.items()},
         reference_selection='seeded round-robin by semantic category, training partition only',
         closed_set=closed_set, saved_bank_single_vs_batch_score_max_abs_error=score_error,
         per_source_auroc=aucs, macro_auroc=float(np.mean(list(aucs.values()))),
         ordered_pair_aurocs=pairwise, macro_ordered_pair_auroc=float(np.mean(list(pairwise.values()))),
+        score_distributions=score_distributions, inference_seconds=time.monotonic()-ofa_start,
         single_vs_batch_feature_max_abs_error=feature_error, failed_samples=0,
         holdout_evaluated=False, note='Complete pretrained OFA inference on custom development subset; no claim of full paper reproduction or truth detection')
 
@@ -305,7 +371,9 @@ def main():
         manifest_sha256=sha256(args.manifest), pretrained_sha256=sha256(args.weights),
         python=sys.version, torch=torch.__version__, platform=platform.platform(),
         command=sys.argv, cpu_threads=4, workers=args.workers, cudnn_tf32=False, matmul_tf32=False,
-        ofa_denoiser_microbatch=1, training_protocol='Adam lr=.001, CE, StepLR(1,.9), full backbone; OFA frozen',
+        ofa_denoiser_microbatch=1, class_weight_rule='binary detection: N/(K*class_count); attribution: unweighted',
+        per_epoch_metrics='train/dev loss, accuracy, macro_f1, task metrics and class counts',
+        training_protocol='Adam lr=.001, CE, StepLR(1,.9), full backbone; OFA frozen',
         limitation='Fixed seed does not guarantee bitwise reproducibility across devices')
     write_json(args.output/'resolved_config.json',config)
     (args.output/'environment.txt').write_text(subprocess.check_output([sys.executable,'-m','pip','freeze'],text=True))

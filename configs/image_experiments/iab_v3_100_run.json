@@ -1,0 +1,10 @@
+{
+  "dataset": "outputs/image_experiments/iab-balanced-v3-100",
+  "suffix": "v3-100",
+  "per_cell": 100,
+  "workers": 4,
+  "reuse_from": "outputs/image_experiments/iab-balanced-v2-200",
+  "prefix_selection": true,
+  "route": "direct",
+  "epochs": 20
+}

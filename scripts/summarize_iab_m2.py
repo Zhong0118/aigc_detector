@@ -34,11 +34,14 @@ def joined_cascade(rows,detection,attribution,ofa):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--root',type=Path,default=Path('outputs/image_experiments'))
-    p.add_argument('--output',type=Path,required=True);args=p.parse_args();root=args.root
-    manifest=root/'iab-balanced-v1/manifest.jsonl';digest=sha256(manifest)
+    p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--dataset',type=Path)
+    p.add_argument('--run-suffix',default='v1')
+    args=p.parse_args();root=args.root
+    manifest=(args.dataset or root/'iab-balanced-v1')/'manifest.jsonl';digest=sha256(manifest)
     rows=[json.loads(line) for line in manifest.read_text().splitlines()]
     runs={};predictions={}
-    for key,name in [('detection','d0-resnet50-iab-v1'),('attribution','a0-resnet50-iab-v1'),('ofa','ofa-iab-v1')]:
+    for key,name in [('detection',f'd0-resnet50-iab-{args.run_suffix}'),('attribution',f'a0-resnet50-iab-{args.run_suffix}'),('ofa',f'ofa-iab-{args.run_suffix}')]:
         folder=root/name;status=json.loads((folder/'status.json').read_text());config=json.loads((folder/'resolved_config.json').read_text())
         if status['status']!='completed' or config['manifest_sha256']!=digest:raise ValueError('incomplete or mismatched run')
         predictions[key]=[json.loads(line) for line in (folder/'predictions.jsonl').read_text().splitlines()]

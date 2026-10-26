@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "automatic_execution": false,
+  "dataset": "outputs/image_experiments/iab-balanced-v5-50",
+  "selection_sha256": "375dd7978721324db4b6891746a1d99ab09a62a1ba57afe21bd83e98ed485c5c",
+  "output_root": "outputs/image_experiments/a1-open-set-iab-v5-50",
+  "weights": "outputs/image_experiments/assets/resnet50-0676ba61.pth",
+  "seed": 42,
+  "epochs": 20,
+  "batch_size": 32,
+  "workers": 4,
+  "optimizer": "Adam(lr=0.001)",
+  "scheduler": "StepLR(step_size=1,gamma=0.9)",
+  "development_roles": "sha256(seed:group_id) modulo 3: selection, calibration, evaluation; original holdout excluded",
+  "experiments": {
+    "A1": {
+      "task": "attribution",
+      "mode": "open_set",
+      "requires_training": true,
+      "unknown_calibration": [
+        "kling"
+      ],
+      "unknown_evaluation": [
+        "grok3"
+      ],
+      "unknown_false_acceptance_target": 0.05,
+      "description": "20 known sources retrained from ImageNet; kling unknown calibration only, grok3 unknown evaluation only; no A0 warm start; parent train/dev/holdout and grouped development role rule unchanged"
+    }
+  },
+  "manifest_sha256": "0dd207abf3fb477a89d8c767144a4869b425722415258a3e031ff2bedbf26553",
+  "reporting": {
+    "unknown_positive": true,
+    "score": "1 - maximum softmax probability",
+    "bootstrap_repeats": 2000,
+    "bootstrap_seed": 42,
+    "interval": "group bootstrap percentile 95%; also report image-level Wilson as descriptive",
+    "automatic_followups": false,
+    "limitations": [
+      "one unknown calibration source and one unknown evaluation source",
+      "27 unknown calibration and 21 unknown evaluation images",
+      "no unseen-source generalization or independent holdout claims"
+    ]
+  }
+}
