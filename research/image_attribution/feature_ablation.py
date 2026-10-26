@@ -1,4 +1,4 @@
-"""Frozen RGB/OFA source classification. This is not OFA pair verification."""
+"""Independent frozen-feature detection/source heads; not OFA pair verification."""
 from collections import Counter
 import hashlib
 import json
@@ -19,6 +19,15 @@ from scripts.run_image_experiment import evaluate_epoch, metrics, stratified_met
 
 DIMENSIONS = {'rgb': 2048, 'fingerprint': 128, 'fusion': 2176}
 EXTRACT_ROLES = ('train', 'selection', 'evaluation')
+DETECTION_EXTRACT_ROLES = ('train', 'selection', 'calibration', 'evaluation')
+
+
+def extract_roles(task='attribution'):
+    if task == 'detection':
+        return DETECTION_EXTRACT_ROLES
+    if task == 'attribution':
+        return EXTRACT_ROLES
+    raise ValueError(f'unsupported feature-head task: {task}')
 
 
 def digest(value):
@@ -35,13 +44,14 @@ def checked_features(features, dimensions):
     return features
 
 
-def combine_features(variant, rgb=None, fingerprint=None):
+def combine_features(variant, rgb=None, fingerprint=None, dimensions=None):
+    dimensions = DIMENSIONS if dimensions is None else dimensions
     branches = {'rgb': rgb, 'fingerprint': fingerprint}
     names = ('rgb', 'fingerprint') if variant == 'fusion' else (variant,)
-    normalized = [F.normalize(checked_features(branches[name], DIMENSIONS[name]), dim=1) for name in names]
+    normalized = [F.normalize(checked_features(branches[name], dimensions[name]), dim=1) for name in names]
     if len({len(x) for x in normalized}) != 1:
         raise ValueError('branch sample count mismatch')
-    return F.normalize(torch.cat(normalized, dim=1), dim=1)
+    return checked_features(F.normalize(torch.cat(normalized, dim=1), dim=1), dimensions[variant])
 
 
 def freeze_encoder(model):
@@ -129,8 +139,24 @@ def code_identity(root):
 def fit_head(features, parts, classes, config, out, device, variant, provenance):
     """Train only a linear head; selection picks epoch, evaluation is scored once."""
     out = Path(out)
-    expected_n = sum(len(parts[role]) for role in EXTRACT_ROLES)
-    checked_features(features, DIMENSIONS[variant])
+    task = config.get('task', 'attribution')
+    roles = extract_roles(task)
+    dimensions = config.get('dimensions', DIMENSIONS)
+    if task == 'detection' and classes != ['real', 'ai']:
+        raise ValueError('detection classes must be [real, ai] in that order')
+    for role in roles:
+        if role not in parts or not parts[role]:
+            raise ValueError(f'missing or empty feature role: {role}')
+        if any(row.get('split') == 'holdout' for row in parts[role]):
+            raise ValueError('holdout rows must not enter feature-head roles')
+        if task == 'detection':
+            truth = {row.get('is_ai') for row in parts[role]}
+            if not truth <= {False, True} or (role != 'calibration' and truth != {False, True}):
+                raise ValueError(f'both binary labels required for detection role: {role}')
+            if role == 'calibration' and False not in truth:
+                raise ValueError('real calibration samples are required')
+    expected_n = sum(len(parts[role]) for role in roles)
+    checked_features(features, dimensions[variant])
     if len(features) != expected_n:
         raise ValueError('features do not match registered role IDs')
     started = time.monotonic()
@@ -140,10 +166,11 @@ def fit_head(features, parts, classes, config, out, device, variant, provenance)
     labels = {name: i for i, name in enumerate(classes)}
     loaders, tensors = {}, {}
     offset = 0
-    for role in EXTRACT_ROLES:
+    for role in roles:
         rows = parts[role]
         x = features[offset:offset + len(rows)]
-        y = torch.tensor([labels[row['source_label']] for row in rows], dtype=torch.long)
+        y = torch.tensor([int(row['is_ai']) if task == 'detection' else labels[row['source_label']]
+                          for row in rows], dtype=torch.long)
         offset += len(rows)
         tensors[role] = (x, y)
         loaders[role] = DataLoader(TensorDataset(x, y), batch_size=config['training']['batch_size'],
@@ -151,12 +178,13 @@ def fit_head(features, parts, classes, config, out, device, variant, provenance)
     # A separate seeded loader controls training order and does not affect evaluation order.
     train_loader = DataLoader(TensorDataset(*tensors['train']), batch_size=config['training']['batch_size'],
                               shuffle=True, generator=torch.Generator().manual_seed(seed), num_workers=0)
-    head = nn.Linear(DIMENSIONS[variant], len(classes)).to(device)
+    head = nn.Linear(dimensions[variant], len(classes)).to(device)
     training = config['training']
     optimizer = torch.optim.Adam(head.parameters(), lr=training['learning_rate'])
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=training['scheduler_step'],
                                                gamma=training['scheduler_gamma'])
     criterion = nn.CrossEntropyLoss()
+    selection_metric = 'auroc' if task == 'detection' else 'macro_f1'
     best_score, best_state, best_epoch = -1.0, None, None
     write_json(out / 'status.json', dict(status='running', epoch=0))
     with (out / 'history.jsonl').open('x') as history:
@@ -168,10 +196,10 @@ def fit_head(features, parts, classes, config, out, device, variant, provenance)
                 loss = criterion(head(x.to(device)), y.to(device))
                 loss.backward()
                 optimizer.step()
-            train = evaluate_epoch(head, loaders['train'], device, 'attribution', classes, criterion)
-            selection = evaluate_epoch(head, loaders['selection'], device, 'attribution', classes, criterion)
-            if selection['macro_f1'] > best_score:
-                best_score, best_epoch = selection['macro_f1'], epoch
+            train = evaluate_epoch(head, loaders['train'], device, task, classes, criterion, calibrate=False)
+            selection = evaluate_epoch(head, loaders['selection'], device, task, classes, criterion, calibrate=False)
+            if selection[selection_metric] > best_score:
+                best_score, best_epoch = selection[selection_metric], epoch
                 best_state = {key: value.detach().cpu().clone() for key, value in head.state_dict().items()}
             record = dict(epoch=epoch, learning_rate=optimizer.param_groups[0]['lr'], train=train,
                           selection=selection, elapsed_seconds=time.monotonic() - tick)
@@ -181,8 +209,11 @@ def fit_head(features, parts, classes, config, out, device, variant, provenance)
             scheduler.step()
     head.load_state_dict(best_state)
     head.eval()
-    checkpoint = dict(schema='frozen-source-linear-v1', variant=variant, classes=classes,
-                      input_dimensions=DIMENSIONS[variant], state_dict=best_state, best_epoch=best_epoch,
+    score_semantics = ('softmax probabilities ordered [real, ai]; column 1 is p_ai'
+                       if task == 'detection' else 'softmax source probabilities conditional on known AI input')
+    checkpoint = dict(schema='frozen-detection-linear-v1' if task == 'detection' else 'frozen-source-linear-v1',
+                      task=task, score_semantics=score_semantics, variant=variant, classes=classes,
+                      input_dimensions=dimensions[variant], state_dict=best_state, best_epoch=best_epoch,
                       preprocessing='per-branch-l2-concat-l2-v1', provenance=provenance)
     torch.save(checkpoint, out / 'head.pth')
     saved = torch.load(out / 'head.pth', map_location='cpu', weights_only=True)
@@ -190,8 +221,9 @@ def fit_head(features, parts, classes, config, out, device, variant, provenance)
     reloaded.load_state_dict(saved['state_dict'], strict=True)
     reloaded.eval()
     x, y = tensors['evaluation']
-    # Same batch with original/reloaded head, plus single-vs-batch numerical check.
-    probe = x[:min(8, len(x))].to(device)
+    # Consistency probes use selection; evaluation is visited only for the final report.
+    selection_x = tensors['selection'][0]
+    probe = selection_x[:min(8, len(selection_x))].to(device)
     with torch.inference_mode():
         original = head(probe).softmax(1)
         reload_error = float((original - reloaded(probe).softmax(1)).abs().max().cpu())
@@ -199,19 +231,34 @@ def fit_head(features, parts, classes, config, out, device, variant, provenance)
             reloaded(item.unsqueeze(0)).softmax(1) for item in probe])).abs().max().cpu())
     if reload_error > 1e-6 or single_error > 1e-5:
         raise ValueError('head reload or single/batch consistency failed')
-    scores = []
-    with torch.inference_mode():
-        for batch, _ in loaders['evaluation']:
-            scores.append(reloaded(batch.to(device)).softmax(1).cpu().numpy())
-    scores = np.concatenate(scores)
-    result = metrics(y.numpy(), scores, 'attribution')
-    result.update(best_epoch=best_epoch, selection_macro_f1=best_score,
-                  stratified=stratified_metrics(parts['evaluation'], y.numpy(), classes, scores, 'attribution'),
+    final_scores = {}
+    for role in (('calibration', 'evaluation') if task == 'detection' else ('evaluation',)):
+        batches = []
+        with torch.inference_mode():
+            for batch, _ in loaders[role]:
+                batches.append(reloaded(batch.to(device)).softmax(1).cpu().numpy())
+        final_scores[role] = np.concatenate(batches)
+    scores = final_scores['evaluation']
+    result = metrics(y.numpy(), scores, task, calibrate_detection=False)
+    if task == 'detection':
+        from scripts.run_image_followup import evaluate_scores
+        protocol = dict(task='detection', mode='calibration', target_fprs=config.get('target_fprs', [.01, .05]),
+                        seed=seed, bootstrap_repeats=config.get('bootstrap_repeats', 200))
+        result.update(evaluate_scores(protocol, parts, classes, final_scores))
+        result['calibration_protocol'] = protocol
+        calibration_out = out / 'calibration'
+        calibration_out.mkdir()
+        write_predictions(calibration_out, parts['calibration'], tensors['calibration'][1].tolist(),
+                          classes, final_scores['calibration'], task)
+    else:
+        result['stratified'] = stratified_metrics(parts['evaluation'], y.numpy(), classes, scores, task)
+    result.update(task=task, score_semantics=score_semantics, best_epoch=best_epoch,
                   head_parameters=sum(p.numel() for p in head.parameters()),
                   reload_max_error=reload_error, single_batch_max_error=single_error,
-                  holdout_scored=False, calibration_used=False,
+                  holdout_scored=False, calibration_used=(task == 'detection'),
                   note='Exploratory parent-dev evaluation; parent dev informed earlier experiments')
-    write_predictions(out, parts['evaluation'], y.tolist(), classes, scores, 'attribution')
+    result[f'selection_{selection_metric}'] = best_score
+    write_predictions(out, parts['evaluation'], y.tolist(), classes, scores, task)
     write_json(out / 'metrics.json', result)
     write_json(out / 'provenance.json', dict(**provenance, head_sha256=sha256(out / 'head.pth'),
                encoder_training=False, head_training=True))

@@ -1,0 +1,89 @@
+{
+  "schema": "omniaid-v2-pretrained-evaluation-v1",
+  "status": "assets_pending",
+  "execution_enabled": false,
+  "automatic_execution": false,
+  "task": "detection",
+  "epoch": null,
+  "seed": 42,
+  "default_device": "cpu",
+  "gpu_index": 1,
+  "batch_size": 4,
+  "classes": ["real", "ai"],
+  "target_fprs": [0.01, 0.05],
+  "bootstrap_repeats": 200,
+  "dataset": {
+    "path": "outputs/image_experiments/iab-balanced-v6-100",
+    "per_cell": 100,
+    "manifest_sha256": null,
+    "selection_sha256": "286a3c34f5291a355259cfed7170e9b5a6d9d17ddf483f6d32c535cecc4f64b6"
+  },
+  "assets": {
+    "source": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/reward_omniaid.py",
+      "bytes": 12908,
+      "sha256": "0280750b22d1d60815b89d6d35cff8ee6a474a5615a3f8d95a3db9998d028596",
+      "git_blob": "49ce4fb957ecab491b8a9d183f1a448a4b789ebd",
+      "source_url": "https://api.github.com/repos/yunncheng/OmniAID/git/blobs/49ce4fb957ecab491b8a9d183f1a448a4b789ebd",
+      "download_note": "GitHub blob API content is base64; decode to exact source bytes, not the API JSON body",
+      "patched_sha256": "e70258fdb053424add1a2d0eeff6573a209a56c003a3958f66d04ef868b1f212",
+      "patch": "Exactly one CLIPModel.from_pretrained call gains local_files_only=True, trust_remote_code=False, use_safetensors=True. Applied in memory only after both source hashes match reviewed constants."
+    },
+    "checkpoint": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/checkpoint_omniaid_v2.pth",
+      "bytes": 3241518989,
+      "sha256": "919338928cab88cef1e6e4b85777749c74bdff6a1796fcd7e43a91422327f906",
+      "repo_id": "Yunncheng/OmniAID",
+      "revision": "279cae7398ac6636f46fc4668f755f11210b36bf",
+      "filename": "ckpt/checkpoint_omniaid_v2.pth",
+      "source_url": "https://huggingface.co/Yunncheng/OmniAID/resolve/279cae7398ac6636f46fc4668f755f11210b36bf/ckpt/checkpoint_omniaid_v2.pth"
+    },
+    "model_config": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/config_omniaid_v2.json",
+      "bytes": 680,
+      "sha256": "333cfb2b53ff306210343e6991c2370893a893c776b765181c1d6025b0968b72",
+      "source_url": "https://huggingface.co/Yunncheng/OmniAID/resolve/279cae7398ac6636f46fc4668f755f11210b36bf/config/config_omniaid_v2.json"
+    },
+    "clip_config": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/clip-vit-large-patch14-336/config.json",
+      "bytes": 4757,
+      "sha256": "51b1c14aabcdf639c4a0370eeda1010b773bbe1df78319c7d0f5882c22ac0ac0",
+      "source_url": "https://huggingface.co/openai/clip-vit-large-patch14-336/resolve/ce19dc912ca5cd21c8a653c79e251e808ccabcd1/config.json"
+    },
+    "clip_weights": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/clip-vit-large-patch14-336/model.safetensors",
+      "bytes": null,
+      "sha256": null,
+      "status": "offline_safe_conversion_and_hash_registration_required",
+      "derived_from": {
+        "repo_id": "openai/clip-vit-large-patch14-336",
+        "revision": "ce19dc912ca5cd21c8a653c79e251e808ccabcd1",
+        "filename": "pytorch_model.bin",
+        "bytes": 1711974081,
+        "sha256": "c6032c2e0caae3dc2d4fba35535fa6307dbb49df59c7e182b1bc4b3329b81801",
+        "source_url": "https://huggingface.co/openai/clip-vit-large-patch14-336/resolve/ce19dc912ca5cd21c8a653c79e251e808ccabcd1/pytorch_model.bin"
+      }
+    }
+  },
+  "verification_receipt": {
+    "path": "outputs/image_experiments/assets/omniaid_v2/full_reload_verification.json",
+    "sha256": null
+  },
+  "output": "outputs/image_experiments/omniaid-v2-iab-v6-100-pretrained",
+  "preprocessing": "RGB; torchvision Resize((336,336)) default bilinear; ToTensor; CLIP mean [.48145466,.4578275,.40821073], std [.26862954,.26130258,.27577711]",
+  "protocol": {
+    "model": "Author CLIP v2: six experts, rank one, top two, router hidden 256, hybrid true; all parameters frozen",
+    "roles": "Existing partition_rows, seed42; only development calibration/evaluation image files are SHA256-verified and read; no train, selection or holdout image reads",
+    "resource_guard": "Both --verify-load and --execute take outputs/image_experiments/gpu0-research.lock nonblocking and fail when busy. Default device is CPU. Explicit --device cuda uses physical gpu_index=1 through CUDA_VISIBLE_DEVICES=1 and logical cuda:0.",
+    "run_status": "Evaluation creates an exclusive output directory, writes running status and resolved_config.json, then completed/exit0 or failed/exit1. Existing run directories and their status are never overwritten.",
+    "scores": "Author output is softmax[:,1]=p_ai, converted to [1-p_ai,p_ai] without a second sigmoid",
+    "activation": "Download and hash assets; safely convert the pinned CLIP bin to safetensors and register its size/hash; explicit --verify-load writes a full-reload/single-batch receipt without enabling evaluation. Bind receipt hash and completed 100-per-cell manifest hash, then separately set status=ready and execution_enabled=true. Invoke --execute manually; never insert this experiment into the four-job queue."
+  },
+  "blockers": [
+    "No full model weights were downloaded or loaded in this preparation task.",
+    "The pinned official OpenAI CLIP repository currently has pytorch_model.bin but no model.safetensors. Safe local conversion, tensor equality checks and derived SHA256 registration are required; no pickle/network fallback is implemented.",
+    "The author detector pth has not been tested with torch.load(weights_only=True). If its metadata requires unsupported pickle globals, stop for a separately reviewed safe conversion; never retry weights_only=False.",
+    "Exact strict key compatibility between the author self-contained inference source and v2 checkpoint is unverified until full reload succeeds; mismatches are errors.",
+    "The completed 100-per-cell manifest and full reload receipt remain unbound. The configuration stays disabled."
+  ]
+}

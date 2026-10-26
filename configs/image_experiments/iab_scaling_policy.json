@@ -1,0 +1,31 @@
+{
+  "schema": "image-scaling-evidence-policy-v1",
+  "automatic_download": false,
+  "stages": [
+    200,
+    500
+  ],
+  "parent_manifest": {
+    "path": "outputs/image_experiments/iab-balanced-v6-100/manifest.jsonl",
+    "sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e"
+  },
+  "seed": 42,
+  "epochs": 20,
+  "sources": 22,
+  "semantics": 10,
+  "current_real_available": 20000,
+  "future_splitter": "research.image_attribution.extension_split.group_and_split_extension_v2",
+  "activation": "Authorized conditional expansion after analysis; register an independent next-version selection, manifest, capacity estimate and matched controls before execution. No blanket accuracy cutoff.",
+  "requires": [
+    "100/cell baseline and representative route results",
+    "same-dev training-size curves with actual train counts",
+    "error analysis distinguishes data limitation from labeling/preprocessing bugs",
+    "official per-cell availability and source labels",
+    "disk budget including archives/cache/checkpoints",
+    "all current sample split/group/label/hash anchors preserved",
+    "new-group hash allocation, no old singleton-floor bias",
+    "matched 100/cell control if introducing class weights"
+  ],
+  "sequence": "Analyze 100; expand to 200 only with documented data-limitation rationale; evaluate 200 before deciding 500.",
+  "holdout": "Never move, score, or tune existing holdout; metadata/integrity only."
+}
