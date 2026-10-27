@@ -154,8 +154,8 @@
     ]
   },
   "baseline_predictions": {
-    "detection": "outputs/image_experiments/d0-resnet50-iab-v6-100-e20/predictions.jsonl",
-    "attribution": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/predictions.jsonl"
+    "detection": "outputs/image_experiments/d0-resnet50-iab-v6-100-e30/predictions.jsonl",
+    "attribution": "outputs/image_experiments/a0-resnet50-iab-v6-100-e30/predictions.jsonl"
   },
   "reuse_feature_run": "outputs/image_experiments/independent-image-tasks-v6-100",
   "gpu_memory_preflight_mib": 1024,
