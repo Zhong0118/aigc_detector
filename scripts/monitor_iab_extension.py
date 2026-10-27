@@ -35,9 +35,9 @@ def read_state(path):
 
 def settings(root):
     cfg = old.settings(root)
-    required = dict(route="direct", workers=4, per_cell=200, epochs=30, gpu_index=1)
-    if any(cfg.get(k) != value for k, value in required.items()) or not cfg.get("parent_manifest") or not cfg.get("research_config"):
-        raise ValueError("extension requires direct route, 4 workers, 200/cell, 30 epochs, physical GPU 1 and parent/research config")
+    required = dict(route="direct", workers=4, per_cell=200, epochs=30)
+    if any(cfg.get(k) != value for k, value in required.items()) or cfg.get("gpu_index") not in (0, 1) or not cfg.get("parent_manifest") or not cfg.get("research_config"):
+        raise ValueError("extension requires direct route, 4 workers, 200/cell, 30 epochs, registered physical GPU 0/1 and parent/research config")
     return cfg
 
 
@@ -69,8 +69,8 @@ def verify_registration(root):
         dataset.get("selection_sha256") != registry[str(Path(cfg["dataset"]) / "selection.json")] or
         parent.get("path") != cfg["parent_manifest"] or parent.get("sha256") != registry[cfg["parent_manifest"]]):
         raise ValueError("research dataset/parent registration mismatch")
-    if research.get("gpu_index") != 1:
-        raise ValueError("research must use physical GPU 1")
+    if research.get("gpu_index") != cfg["gpu_index"]:
+        raise ValueError("research GPU index must match registered baseline GPU index")
     return cfg
 
 
@@ -79,7 +79,7 @@ def command(root, kind):
     if kind == "download":
         return _old_command(root, kind)
     return ["bash", "scripts/run_iab_extension_m2.sh", str(root / cfg["dataset"]),
-            cfg["suffix"], cfg["summary"], str(root / cfg["parent_manifest"]), "30", "1"]
+            cfg["suffix"], cfg["summary"], str(root / cfg["parent_manifest"]), "30", str(cfg["gpu_index"])]
 
 
 def verify_download(root):
@@ -132,11 +132,11 @@ def blocked(state, label, report):
     return True
 
 
-def gpu_idle(report):
-    card = old.gpu(1)
+def gpu_idle(report, index):
+    card = old.gpu(index)
     report["gpu"] = card
     if card.get("unavailable") or card.get("used_mib", 999999) > 1024:
-        report["waiting"] = "physical GPU 1 unavailable or busy"
+        report["waiting"] = f"physical GPU {index} unavailable or busy"
         return False
     return True
 
@@ -194,7 +194,7 @@ def advance(root, report):
         if pipeline:
             report["needs_attention"] = "completed pipeline lacks baseline certificate"
             return
-        if not gpu_idle(report):
+        if not gpu_idle(report, cfg["gpu_index"]):
             return
         if old.required_assets(root):
             raise ValueError("required image model assets missing")
@@ -221,7 +221,7 @@ def advance(root, report):
         else:
             report["needs_attention"] = "feature launch ambiguous; preserve outputs"
         return
-    if not gpu_idle(report):
+    if not gpu_idle(report, cfg["gpu_index"]):
         return
     result = subprocess.run([str(root / ".venv-image/bin/python"), "scripts/run_image_research_queue.py",
         "--config", cfg["research_config"], "--advance"], cwd=root, env=old.worker_environment(),
@@ -264,7 +264,7 @@ def snapshot(root):
     cfg = settings(root)
     folder, data = old.monitor_directory(root), root / cfg["dataset"]
     workers = {kind: read_state(folder / (kind + ".json")) for kind in ("download", "pipeline")}
-    return dict(time=time.time(), dataset=cfg["dataset"], gpu=old.gpu(1),
+    return dict(time=time.time(), dataset=cfg["dataset"], gpu=old.gpu(cfg["gpu_index"]),
         disk_free_bytes=shutil.disk_usage(root).free, download=old.read(data / "download_status.json"),
         receipts=len(list((data / "receipts").glob("*.json"))),
         workers={k: dict(v, alive=old.alive(v)) if v else None for k,v in workers.items()},

@@ -8,6 +8,6 @@
   "route": "direct",
   "parent_manifest": "outputs/image_experiments/iab-balanced-v6-100/manifest.jsonl",
   "epochs": 30,
-  "gpu_index": 1,
+  "gpu_index": 0,
   "research_config": "configs/image_experiments/iab_research_v7_200_e30.json"
 }

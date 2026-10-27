@@ -3,7 +3,7 @@
   "execution_enabled": true,
   "automatic_execution": true,
   "seed": 42,
-  "gpu_index": 1,
+  "gpu_index": 0,
   "dataset": {
     "path": "outputs/image_experiments/iab-balanced-v7-200",
     "manifest_sha256": null,
@@ -117,10 +117,10 @@
     "research/image_attribution/iab_protocol.py": "16d6a70f408f7e6ea77bbae123b20e743b8c119bfbc3378f568b624375a7ce60",
     "research/image_attribution/iab_selection.py": "a3247eea1cd42011f1657b44bc35badadb1f00c533d24c1ac1d0de1bad0e4d68",
     "scripts/download_iab_subset.py": "4eafbf8c71d14b2d44e735db96a57a359f940c06e17cfee0d52c752d83083d39",
-    "scripts/monitor_iab_extension.py": "6c03bd82a99affcdc9d2ad7a79b823c672ce2daf5c4091a57521b57a84dde6e9",
+    "scripts/monitor_iab_extension.py": "45ac2ffe4925d4b1dec64e830dfab10bd8c5805c71d0dd8c2569b99433a220c0",
     "scripts/prepare_iab_extension_manifest.py": "88fc6a333c0dfe3c1f1e64f8e2cc7610c7b5219d285482d884264e33bdac667c",
     "scripts/prepare_iab_manifest.py": "c14aa7d370a36d57aa07b70e3f1b529acbd196dc0896287b3a39e702cd40e19a",
-    "scripts/run_iab_extension_m2.sh": "992aa7df2832098435c2335a0ecd7cc14e19566a5e2cc41e9a5f4dac5e5278e5",
+    "scripts/run_iab_extension_m2.sh": "d13b8836bee181a569284afaf47f59c8b5881043fed6106adb97e9dcad9d6e72",
     "scripts/summarize_iab_m2.py": "1d35e5bfc0f9e9c548d7a8d03ea6863acab1fcaa218be54395c99214eb0989b8"
   },
   "preprocessing": {

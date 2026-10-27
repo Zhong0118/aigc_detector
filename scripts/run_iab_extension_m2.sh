@@ -11,7 +11,7 @@ summary=${3:-outputs/image_experiments/iab-m2-summary.json}
 parent_manifest=${4:?Frozen parent manifest required}
 epochs=${5:-30}
 gpu_index=${6:-1}
-[[ -f "$parent_manifest" && "$epochs" == 30 && "$gpu_index" == 1 ]] || { echo 'Extension requires a frozen parent, 30 epochs and physical GPU 1'; exit 2; }
+[[ -f "$parent_manifest" && "$epochs" == 30 && "$gpu_index" =~ ^[01]$ ]] || { echo 'Extension requires a frozen parent, 30 epochs and registered physical GPU 0/1'; exit 2; }
 [[ "$epochs" =~ ^[1-9][0-9]*$ && "$gpu_index" =~ ^[0-9]+$ ]] || { echo "Invalid epochs or GPU index"; exit 2; }
 export CUDA_VISIBLE_DEVICES="$gpu_index"
 assets=outputs/image_experiments/assets

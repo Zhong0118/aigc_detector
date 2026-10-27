@@ -232,11 +232,65 @@ class ExtensionExecutionTests(unittest.TestCase):
 
     def test_runtime_settings_are_exact(self):
         original = self.m.old.read(self.folder / "config.json")
-        for key, value in (("route", "auto"), ("workers", 8), ("epochs", 20), ("gpu_index", 0), ("per_cell", 100), ("parent_manifest", "")):
+        for key, value in (("route", "auto"), ("workers", 8), ("epochs", 20), ("gpu_index", 2), ("per_cell", 100), ("parent_manifest", "")):
             with self.subTest(key=key):
                 self.m.old.write(self.folder / "config.json", dict(original, **{key: value}))
                 with self.assertRaises(ValueError):
                     self.m.settings(self.root)
+
+    def select_gpu(self, index):
+        for path in (self.folder / "config.json", self.root / "research.json"):
+            value = self.m.old.read(path); value["gpu_index"] = index
+            self.m.old.write(path, value)
+        self.register()
+
+    def test_registered_gpu0_settings_and_pipeline_command(self):
+        self.select_gpu(0)
+        self.assertEqual(self.m.verify_registration(self.root)["gpu_index"], 0)
+        self.assertEqual(self.m.command(self.root, "pipeline")[-2:], ["30", "0"])
+
+    def test_research_gpu_must_match_registered_baseline_gpu(self):
+        for baseline_index in (0, 1):
+            with self.subTest(baseline_index=baseline_index):
+                self.select_gpu(baseline_index)
+                path = self.root / "research.json"
+                value = self.m.old.read(path); value["gpu_index"] = 1 - baseline_index
+                self.m.old.write(path, value); self.register()
+                with self.assertRaisesRegex(ValueError, "GPU index"):
+                    self.m.verify_registration(self.root)
+
+    def test_gpu0_snapshot_reads_selected_physical_device(self):
+        self.select_gpu(0)
+        with patch.object(self.m.old, "gpu", return_value=dict(index=0, used_mib=18)) as query:
+            self.assertEqual(self.m.snapshot(self.root)["gpu"]["index"], 0)
+            query.assert_called_once_with(0)
+
+    def test_busy_selected_gpu_blocks_baseline_and_feature(self):
+        self.m.old.write(self.folder / "download.json", dict(status="completed", exit_code=0))
+        for index in (0, 1):
+            self.select_gpu(index)
+            for feature in (False, True):
+                with self.subTest(index=index, feature=feature), patch.object(self.m, "verify_download"), patch.object(
+                    self.m, "certify_baseline", return_value=feature), patch.object(
+                    self.m.old, "gpu", return_value=dict(index=index, used_mib=2048)) as query, patch.object(
+                    self.m, "launch", side_effect=AssertionError("busy GPU pipeline launch")), patch.object(
+                    self.m.subprocess, "run", side_effect=AssertionError("busy GPU feature launch")):
+                    report = {}; self.m.advance(self.root, report)
+                    query.assert_called_once_with(index)
+                    self.assertIn("waiting", report)
+                    self.assertEqual(report["gpu"]["index"], index)
+
+    def test_idle_gpu0_allows_baseline_while_gpu1_is_busy(self):
+        self.select_gpu(0)
+        self.m.old.write(self.folder / "download.json", dict(status="completed", exit_code=0))
+        with patch.object(self.m, "verify_download"), patch.object(self.m, "certify_baseline", return_value=False), patch.object(
+            self.m.old, "required_assets", return_value=[]), patch.object(self.m.old, "gpu",
+            side_effect=lambda index: dict(index=index, used_mib=18 if index == 0 else 19000)) as query, patch.object(
+            self.m, "launch") as launch:
+            report = {}; self.m.advance(self.root, report)
+            query.assert_called_once_with(0)
+            launch.assert_called_once_with(self.root, "pipeline")
+            self.assertEqual(report["launched"], "pipeline")
 
     def test_pipeline_command_never_uses_old_shell(self):
         args = self.m.command(self.root, "pipeline")
