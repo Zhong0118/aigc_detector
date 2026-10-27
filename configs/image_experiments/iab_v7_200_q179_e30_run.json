@@ -1,0 +1,13 @@
+{
+  "dataset": "outputs/image_experiments/iab-balanced-v7-200-q179",
+  "suffix": "v7-200-q179-e30",
+  "per_cell": 200,
+  "workers": 4,
+  "reuse_from": "outputs/image_experiments/iab-balanced-v7-200",
+  "prefix_selection": true,
+  "route": "direct",
+  "parent_manifest": "outputs/image_experiments/iab-balanced-v6-100/manifest.jsonl",
+  "epochs": 30,
+  "gpu_index": 0,
+  "research_config": "configs/image_experiments/iab_research_v7_200_q179_e30.json"
+}

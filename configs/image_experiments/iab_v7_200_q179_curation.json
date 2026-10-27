@@ -1,0 +1,27 @@
+{
+  "schema": "iab-approved-quarantine-v1",
+  "source": {
+    "path": "outputs/image_experiments/iab-balanced-v7-200",
+    "selection_sha256": "8a1e4d67464d66c3afe566100e152dd2db59d15bb0afc145fbb69c358d398b67",
+    "status_sha256": "b3bfea6783fb994c2ab92a70cb5dc08549dc842bed9e011cbc7a75beda22b41f"
+  },
+  "parent_manifest": {
+    "path": "outputs/image_experiments/iab-balanced-v6-100/manifest.jsonl",
+    "sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e"
+  },
+  "quarantine": {
+    "path": "outputs/iab-v7-200-e30-monitor/diagnostics/frozen-bridge-20261027T095059Z/quarantine-candidate-ids.json",
+    "sha256": "b3f994a5a8b0a7e01a2d033c88b6b6a2679739a2039efa74aa51e312bf7eab2c",
+    "count": 179
+  },
+  "expected_source_samples": 64000,
+  "expected_output_samples": 63821,
+  "expected_cells": 230,
+  "seed": 42,
+  "output": "outputs/image_experiments/iab-balanced-v7-200-q179",
+  "authorization": "2026-10-27 explicit human reply: 隔离179张新增图后继续（推荐）. Preserve all64000 raw files and all42000 parent IDs/splits/groups; no holdout scoring.",
+  "diagnostic": {
+    "path": "outputs/iab-v7-200-e30-monitor/diagnostics/frozen-bridge-20261027T095059Z/diagnosis.json",
+    "sha256": "5ee31be1bb11f2b75f32d22eae69f087ac522c6d8c3e005c9e45e8206f448f82"
+  }
+}
