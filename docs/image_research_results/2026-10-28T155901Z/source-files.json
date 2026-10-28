@@ -1,0 +1,86 @@
+[
+  {
+    "file": "A1/train/status.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/status.json",
+    "bytes": 75,
+    "sha256": "37995ccd155fe0cdc95a79354bcab0b6040f9e0583f21292e9e90fd9cd9424b0"
+  },
+  {
+    "file": "A1/train/metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/metrics.json",
+    "bytes": 1694,
+    "sha256": "6d084970288c4fdb71609d7734d3059b9fec55162e42ac214cca2f3e7c65bb35"
+  },
+  {
+    "file": "A1/train/history.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/history.json",
+    "bytes": 78804,
+    "sha256": "7e3557ac331f16f5184415c8d400eb8c040480562d79cf564665517e630a82ce"
+  },
+  {
+    "file": "A1/train/resolved_config.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/resolved_config.json",
+    "bytes": 6486,
+    "sha256": "1e02a1f77b6e0fbcf87f0caa1efd2d260a95b26159263612524dfaceb83a7444"
+  },
+  {
+    "file": "A1/train/stratified_metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/stratified_metrics.json",
+    "bytes": 5285,
+    "sha256": "2eace09ad61786e5570ad77be045569531273c1b2de2501e016bb7cbea61b783"
+  },
+  {
+    "file": "A1/train/confusion_matrix.csv",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/confusion_matrix.csv",
+    "bytes": 1168,
+    "sha256": "d8cd7f1230a3246e166fa86c39898b45472603a535e05a91c0125bcc2b185887"
+  },
+  {
+    "file": "A1/train/asset_manifest.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/asset_manifest.json",
+    "bytes": 1834,
+    "sha256": "927718f4816947ce3b2078c8dbcd99bc9d0d6b8758c64efd1f1beab075ba9b43"
+  },
+  {
+    "file": "A1/train/launcher.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/launcher.json",
+    "bytes": 454,
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb"
+  },
+  {
+    "file": "A1/train/training-log.txt",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/run.log",
+    "bytes": 56751,
+    "sha256": "779c09205bd6f30ae163022e98cfea631787c7ada8541e8f307658799cb8ac3e"
+  },
+  {
+    "file": "A1/evaluate/status.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/status.json",
+    "bytes": 79,
+    "sha256": "2c943db113a1577713000155ba442b4d4ea5ff47e81260ab3cca856f4a36db5e"
+  },
+  {
+    "file": "A1/evaluate/metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/metrics.json",
+    "bytes": 16818,
+    "sha256": "03f478636749d0003a4c4edc4afae2f1eb5ad889efa58d864bc557bf0547d039"
+  },
+  {
+    "file": "A1/evaluate/resolved_config.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/resolved_config.json",
+    "bytes": 6492,
+    "sha256": "522664d1a7e8d21921f766e5c8a02d375fc175d74ffd9886251aedc0f87ba8ee"
+  },
+  {
+    "file": "A1/evaluate/asset_manifest.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/asset_manifest.json",
+    "bytes": 890,
+    "sha256": "d8f3a7f8d4a562a5b112fea94a2341851101c7c79782d8f048861137daa78192"
+  },
+  {
+    "file": "A1/evaluate/launcher.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/launcher.json",
+    "bytes": 454,
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb"
+  }
+]

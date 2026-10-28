@@ -1,0 +1,99 @@
+{
+  "checked_at": "2026-10-28T23:59:01.898196+08:00",
+  "source_commit": "b1af0ade5fe4111dca373abb4b573692232fcfc6",
+  "config_sha256": "3cd648391e4f60c04c64e38f057e6f9e6c703e34adba602deb8a90f46d1e3888",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "A1_completed_epochs": 30,
+  "A1_selected_epoch": 27,
+  "A1_train_n": 21236,
+  "classes": [
+    "4o",
+    "CogView3_PLUS",
+    "FLUX",
+    "KANDINSKY",
+    "PIXART",
+    "PLAYGROUND_2_5",
+    "SD1_5",
+    "SD2_1",
+    "SD3",
+    "SD3_5",
+    "SDXL",
+    "dalle3",
+    "gemini",
+    "hidream",
+    "hunyuan",
+    "ideogram",
+    "infinity",
+    "janus-pro",
+    "mid-5.2",
+    "mid-6.0"
+  ],
+  "roles_counts": {
+    "train": 21236,
+    "selection": 1179,
+    "calibration": 1482,
+    "evaluation": 1275
+  },
+  "asset_checks": {
+    "train": {
+      "status_verified": true,
+      "assets_verified": 14,
+      "roles_sha256": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164"
+    },
+    "evaluate": {
+      "status_verified": true,
+      "assets_verified": 7,
+      "roles_sha256": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164"
+    }
+  },
+  "unknown_calibration_evaluation_sources_disjoint": true,
+  "all_role_ids_and_groups_disjoint": true,
+  "effective_train_and_selection_ids_verified": true,
+  "prediction_ids_labels_classes_verified": true,
+  "threshold_recomputed_only_from_64_kling_calibration_unknowns": true,
+  "evaluation_metrics_recomputed_from_saved_scores": true,
+  "evaluation_metrics": {
+    "n": 1275,
+    "known_n": 1212,
+    "unknown_n": 63,
+    "unknown_auroc": 0.7403020063911152,
+    "acceptance_threshold": 0.9986448884010316,
+    "known_acceptance": 0.4752475247524752,
+    "known_closed_set_accuracy": 0.7376237623762376,
+    "known_correct_and_accepted_rate": 0.44471947194719474,
+    "unknown_rejection_rate": 0.9365079365079365,
+    "unknown_false_acceptance": 0.06349206349206349,
+    "accepted_known_accuracy": 0.9357638888888888,
+    "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability",
+    "calibration_unknown_n": 64,
+    "calibration_unknown_false_acceptance": 0.046875
+  },
+  "counts_and_image_independence_intervals": {
+    "unknown_calibration_n": 64,
+    "unknown_calibration_false_accepted": 3,
+    "unknown_evaluation_n": 63,
+    "unknown_false_accepted": 4,
+    "unknown_rejected": 59,
+    "known_evaluation_n": 1212,
+    "known_accepted": 576,
+    "known_rejected": 636,
+    "known_closed_set_correct": 894,
+    "known_correct_and_accepted": 539,
+    "unknown_false_acceptance_wilson95": [
+      0.024965618013394072,
+      0.15219177845306375
+    ],
+    "known_acceptance_wilson95": [
+      0.44725533806001233,
+      0.5033961226508297
+    ]
+  },
+  "A2_semantic_completed_epochs_at_snapshot": 5,
+  "A2_semantic_status": "training; unsealed",
+  "A3": "blocked: mapping unreviewed",
+  "queue_identity_verified": true,
+  "holdout_evaluated": false,
+  "training_executed_by_analysis": false,
+  "image_inference_executed_by_analysis": false,
+  "new_group_bootstrap_performed": false
+}
