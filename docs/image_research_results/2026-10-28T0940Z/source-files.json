@@ -1,0 +1,62 @@
+[
+  {
+    "file": "D1-control/evaluate/status.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/status.json",
+    "bytes": 79,
+    "sha256": "b897eca0b1fbe5f883c271c7296b194357fd5f1ac41a4ed18c7e85e27e0bcb17"
+  },
+  {
+    "file": "D1-control/evaluate/metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/metrics.json",
+    "bytes": 9206,
+    "sha256": "8660bcef2bb1a212a85b7c9c14a7138f476e35cbce9197dce27079d7c7f0c77f"
+  },
+  {
+    "file": "D1-control/evaluate/resolved_config.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/resolved_config.json",
+    "bytes": 6323,
+    "sha256": "74cc656db55d8333a6b2c360d5e7d99e3fbd3e7a59db32cf0c87c268d7a205eb"
+  },
+  {
+    "file": "D1-control/evaluate/launcher.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/launcher.json",
+    "bytes": 454,
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb"
+  },
+  {
+    "file": "D1-control/evaluate/asset_manifest.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/asset_manifest.json",
+    "bytes": 890,
+    "sha256": "5c149ffb3185af92801dd63839cdfcfc28a0ff8ee28e729555214d6b0c4ca924"
+  },
+  {
+    "file": "D1/evaluate/status.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/evaluate/status.json",
+    "bytes": 79,
+    "sha256": "48c3c0863deeffb55552c5d9543733b2cd242036a58a7e88a0b39face4cbf553"
+  },
+  {
+    "file": "D1/evaluate/metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/evaluate/metrics.json",
+    "bytes": 9080,
+    "sha256": "fe445ee357674eee7ae616b4f9a89529c2b839fe93d96fda4ca35d947a10397e"
+  },
+  {
+    "file": "D1/evaluate/resolved_config.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/evaluate/resolved_config.json",
+    "bytes": 6423,
+    "sha256": "919169e4998293c67539c0c7a0b8656704a6f7e2ae61101d02a5c0eb679d9c75"
+  },
+  {
+    "file": "D1/evaluate/launcher.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/evaluate/launcher.json",
+    "bytes": 454,
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb"
+  },
+  {
+    "file": "D1/evaluate/asset_manifest.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/evaluate/asset_manifest.json",
+    "bytes": 890,
+    "sha256": "e89a79c6001fa6067b2abd1da6613fdfe4d39f4d0549f6c4da073bec22557ff6"
+  }
+]

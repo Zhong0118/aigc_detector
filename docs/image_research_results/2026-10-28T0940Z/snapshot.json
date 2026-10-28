@@ -1,0 +1,66 @@
+{
+  "checked_at": "2026-10-28T17:41:59.458528+08:00",
+  "source_commit": "05b9a47afd79292759c0bba20b39d2c1343f9af6",
+  "previous_snapshot": "../2026-10-28/README.md",
+  "followup_config_sha256": "3cd648391e4f60c04c64e38f057e6f9e6c703e34adba602deb8a90f46d1e3888",
+  "evaluation_n": 2310,
+  "real_n": 979,
+  "ai_n": 1331,
+  "same_evaluation_ids_groups_labels_verified": true,
+  "same_role_hash_verified": true,
+  "D1_control": {
+    "n": 2310,
+    "accuracy": 0.964935064935065,
+    "macro_f1": 0.9641909197542453,
+    "auroc": 0.9961467297085528,
+    "threshold": 0.5,
+    "negative_count": 979,
+    "positive_count": 1331,
+    "fpr": 0.031664964249233915,
+    "tpr": 0.9624342599549212,
+    "fpr_resolution": 0.0010214504596527069,
+    "fpr_wilson95": [
+      0.022396137542724587,
+      0.04459478782961056
+    ],
+    "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+  },
+  "D1_augmentation": {
+    "n": 2310,
+    "accuracy": 0.9675324675324676,
+    "macro_f1": 0.9666343056343825,
+    "auroc": 0.9954614139606416,
+    "threshold": 0.5,
+    "negative_count": 979,
+    "positive_count": 1331,
+    "fpr": 0.05209397344228805,
+    "tpr": 0.9819684447783621,
+    "fpr_resolution": 0.0010214504596527069,
+    "fpr_wilson95": [
+      0.03984218154527204,
+      0.06784706769304628
+    ],
+    "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+  },
+  "delta_D1_minus_control": {
+    "accuracy": 0.0025974025974025983,
+    "macro_f1": 0.00244338588013715,
+    "auroc": -0.0006853157479111971,
+    "fpr": 0.020429009193054133,
+    "tpr": 0.019534184823440937
+  },
+  "evaluation_scope": "clean only; no matched corruption-condition evaluation of augmented detector is present",
+  "new_paired_bootstrap_performed": false,
+  "holdout_evaluated": false,
+  "queue_pid": 2747094,
+  "queue_identity_verified": true,
+  "D2_completed_epochs_at_snapshot": 14,
+  "D2_status": "training; no completed status yet",
+  "remaining": [
+    "D2:evaluate",
+    "D2-semantic:train/evaluate",
+    "A1:train/evaluate",
+    "A2-semantic:train/evaluate"
+  ],
+  "A3": "blocked: family mapping unreviewed"
+}
