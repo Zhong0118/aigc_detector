@@ -1,0 +1,141 @@
+{
+ "schema_version": 1,
+ "automatic_execution": false,
+ "dataset": "outputs/image_experiments/iab-balanced-v7-200-q179",
+ "selection_sha256": "1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b",
+ "output_root": "outputs/image_experiments/followups-v7-200-q179-e30",
+ "weights": "outputs/image_experiments/assets/resnet50-0676ba61.pth",
+ "seed": 42,
+ "epochs": 30,
+ "batch_size": 32,
+ "workers": 4,
+ "optimizer": "Adam(lr=0.001)",
+ "scheduler": "StepLR(step_size=1,gamma=0.9)",
+ "development_roles": "sha256(seed:group_id) modulo 3: selection, calibration, evaluation; original holdout excluded",
+ "experiments": {
+  "D1": {
+   "task": "detection",
+   "mode": "augmentation",
+   "requires_training": true,
+   "augmentation": "jpeg-resize-v1",
+   "description": "JPEG quality {50,75,95}, resize {.5,.75}, independently p=.5; compare matched clean D1-control",
+   "training_epochs": 30
+  },
+  "D1-control": {
+   "task": "detection",
+   "mode": "clean",
+   "requires_training": true,
+   "description": "Clean control with the same development-role split as D1",
+   "training_epochs": 30
+  },
+  "D2": {
+   "task": "detection",
+   "mode": "cross_source",
+   "requires_training": true,
+   "held_sources": [
+    "4o"
+   ],
+   "description": "One preregistered source holdout; no all-source generalization claim",
+   "training_epochs": 30
+  },
+  "D2-semantic": {
+   "task": "detection",
+   "mode": "cross_semantic",
+   "requires_training": true,
+   "held_semantics": [
+    "FFHQ"
+   ],
+   "training_epochs": 30
+  },
+  "D3": {
+   "task": "detection",
+   "mode": "calibration",
+   "requires_training": false,
+   "baseline": "d0-resnet50-iab-v7-200-q179-e30",
+   "target_fprs": [
+    0.01,
+    0.02,
+    0.05
+   ],
+   "bootstrap_repeats": 200,
+   "description": "Exploratory: D0 checkpoint selection already used the parent dev partition",
+   "training_epochs": null
+  },
+  "A1": {
+   "task": "attribution",
+   "mode": "open_set",
+   "requires_training": true,
+   "unknown_calibration": [
+    "kling"
+   ],
+   "unknown_evaluation": [
+    "grok3"
+   ],
+   "unknown_false_acceptance_target": 0.05,
+   "description": "20 known sources; source-disjoint unknown calibration/evaluation; maximum softmax confidence",
+   "training_epochs": 30
+  },
+  "A2": {
+   "task": "attribution",
+   "mode": "postprocess",
+   "requires_training": false,
+   "baseline": "a0-resnet50-iab-v7-200-q179-e30",
+   "conditions": [
+    {
+     "name": "clean"
+    },
+    {
+     "name": "jpeg95",
+     "jpeg_quality": 95
+    },
+    {
+     "name": "jpeg75",
+     "jpeg_quality": 75
+    },
+    {
+     "name": "jpeg50",
+     "jpeg_quality": 50
+    },
+    {
+     "name": "resize075",
+     "scale": 0.75
+    },
+    {
+     "name": "resize050",
+     "scale": 0.5
+    }
+   ],
+   "description": "Paired examples, one corruption factor per condition; exploratory parent-dev evaluation",
+   "training_epochs": null
+  },
+  "A2-semantic": {
+   "task": "attribution",
+   "mode": "cross_semantic",
+   "requires_training": true,
+   "held_semantics": [
+    "FFHQ"
+   ],
+   "training_epochs": 30
+  },
+  "A3": {
+   "task": "attribution",
+   "mode": "hierarchy",
+   "requires_training": false,
+   "baseline": "a0-resnet50-iab-v7-200-q179-e30",
+   "family_mapping": "configs/image_experiments/iab_family_mapping_review.json",
+   "description": "Sum A0 source probabilities per verified family; report source/family accuracy; not a newly trained hierarchical network",
+   "training_epochs": null
+  }
+ },
+ "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+ "baseline_runs": [
+  "d0-resnet50-iab-v7-200-q179-e30",
+  "a0-resnet50-iab-v7-200-q179-e30",
+  "ofa-iab-v7-200-q179-e30"
+ ],
+ "launcher": "scripts/run_image_followup_registered.py",
+ "authorization": "User asked on 2026-10-28 to run the template follow-ups on 200-q179; A3 skipped (family mapping unreviewed)",
+ "not_run": {
+  "A3": "family mapping reviewed=false; blocked by design"
+ }
+}
