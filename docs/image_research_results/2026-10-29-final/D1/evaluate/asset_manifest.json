@@ -1,0 +1,30 @@
+{
+  "environment.txt": {
+    "sha256": "03e10d3fdeb729f8b0a27b5be323f6fae42b1e32a5697905d04a9a31849570a1",
+    "bytes": 4919
+  },
+  "launcher.json": {
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb",
+    "bytes": 454
+  },
+  "metrics.json": {
+    "sha256": "fe445ee357674eee7ae616b4f9a89529c2b839fe93d96fda4ca35d947a10397e",
+    "bytes": 9080
+  },
+  "predictions.jsonl": {
+    "sha256": "b658eae548088cefd5de3a803bbecbe41b0f3dc241b16e7d77f1fc89ad817bdd",
+    "bytes": 1316882
+  },
+  "resolved_config.json": {
+    "sha256": "919169e4998293c67539c0c7a0b8656704a6f7e2ae61101d02a5c0eb679d9c75",
+    "bytes": 6423
+  },
+  "roles.json": {
+    "sha256": "82d3a0bd55628a154060fd0fe9458bf3584399366422ce58ea7cd6eba662e4a5",
+    "bytes": 1603058
+  },
+  "run.log": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  }
+}

@@ -1,0 +1,440 @@
+{
+  "D1_vs_clean_control": {
+    "n": 2310,
+    "same_ids_labels_groups_verified": true,
+    "before": {
+      "n": 2310,
+      "accuracy": 0.964935064935065,
+      "macro_f1": 0.9641909197542453,
+      "auroc": 0.9961467297085528,
+      "fpr_0_5": 0.031664964249233915,
+      "tpr_0_5": 0.9624342599549212
+    },
+    "after": {
+      "n": 2310,
+      "accuracy": 0.9675324675324676,
+      "macro_f1": 0.9666343056343825,
+      "auroc": 0.9954614139606416,
+      "fpr_0_5": 0.05209397344228805,
+      "tpr_0_5": 0.9819684447783621
+    },
+    "delta_after_minus_before": {
+      "accuracy": 0.0025974025974025983,
+      "macro_f1": 0.00244338588013715,
+      "auroc": -0.0006853157479111971,
+      "fpr_0_5": 0.020429009193054133,
+      "tpr_0_5": 0.019534184823440937
+    },
+    "group_bootstrap": {
+      "group_n": 1280,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "accuracy": [
+          -0.0064496223815345005,
+          0.011369200157190035
+        ],
+        "macro_f1": [
+          -0.0067701223790468225,
+          0.011496878083844864
+        ],
+        "auroc": [
+          -0.0024536240140001302,
+          0.0011276137395100996
+        ],
+        "fpr_0_5": [
+          0.007171399297423882,
+          0.03388388090349075
+        ],
+        "tpr_0_5": [
+          0.007878813115933478,
+          0.03163798122102456
+        ]
+      }
+    },
+    "scope": "conditional on frozen checkpoints; no retraining uncertainty"
+  },
+  "D2_vs_in_domain_control_same_held_source_subset": {
+    "n": 1038,
+    "same_ids_labels_groups_verified": true,
+    "before": {
+      "n": 1038,
+      "accuracy": 0.9691714836223507,
+      "macro_f1": 0.8835931367051699,
+      "auroc": 0.9985803569882793,
+      "fpr_0_5": 0.031664964249233915,
+      "tpr_0_5": 0.9830508474576272
+    },
+    "after": {
+      "n": 1038,
+      "accuracy": 0.953757225433526,
+      "macro_f1": 0.8411062353301357,
+      "auroc": 0.9968490850227663,
+      "fpr_0_5": 0.04800817160367722,
+      "tpr_0_5": 0.9830508474576272
+    },
+    "delta_after_minus_before": {
+      "accuracy": -0.015414258188824692,
+      "macro_f1": -0.04248690137503419,
+      "auroc": -0.001731271965513037,
+      "fpr_0_5": 0.016343207354443307,
+      "tpr_0_5": 0.0
+    },
+    "group_bootstrap": {
+      "group_n": 1033,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "accuracy": [
+          -0.02687204647826824,
+          -0.00576923076923086
+        ],
+        "macro_f1": [
+          -0.07263883141630255,
+          -0.015000076894553436
+        ],
+        "auroc": [
+          -0.006717333370454395,
+          0.0010530454344577526
+        ],
+        "fpr_0_5": [
+          0.0060909081567644165,
+          0.02840045773207801
+        ],
+        "tpr_0_5": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "scope": "conditional on frozen checkpoints; no retraining uncertainty"
+  },
+  "D2_semantic_vs_in_domain_control_same_FFHQ_subset": {
+    "n": 225,
+    "same_ids_labels_groups_verified": true,
+    "before": {
+      "n": 225,
+      "accuracy": 0.9822222222222222,
+      "macro_f1": 0.9817281143414001,
+      "auroc": 0.998615184099055,
+      "fpr_0_5": 0.010752688172043012,
+      "tpr_0_5": 0.9772727272727273
+    },
+    "after": {
+      "n": 225,
+      "accuracy": 0.7422222222222222,
+      "macro_f1": 0.6891080617495712,
+      "auroc": 0.8865265558813946,
+      "fpr_0_5": 0.6021505376344086,
+      "tpr_0_5": 0.9848484848484849
+    },
+    "delta_after_minus_before": {
+      "accuracy": -0.24,
+      "macro_f1": -0.2926200525918289,
+      "auroc": -0.11208862821766041,
+      "fpr_0_5": 0.5913978494623656,
+      "tpr_0_5": 0.007575757575757569
+    },
+    "group_bootstrap": {
+      "group_n": 133,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "accuracy": [
+          -0.3333783783783784,
+          -0.16666666666666663
+        ],
+        "macro_f1": [
+          -0.3748324118733151,
+          -0.22212504855431117
+        ],
+        "auroc": [
+          -0.16154398400581604,
+          -0.06841356643486192
+        ],
+        "fpr_0_5": [
+          0.4882915035689615,
+          0.6875347222222222
+        ],
+        "tpr_0_5": [
+          -0.018018018018017945,
+          0.03759398496240596
+        ]
+      }
+    },
+    "scope": "conditional on frozen checkpoints; no retraining uncertainty"
+  },
+  "A2_semantic_vs_in_domain_A0_same_FFHQ_subset": {
+    "n": 132,
+    "same_ids_labels_groups_verified": true,
+    "before": {
+      "n": 132,
+      "accuracy": 0.8712121212121212,
+      "macro_f1": 0.8663662169678212,
+      "top1": 0.8712121212121212,
+      "top3": 0.9545454545454546
+    },
+    "after": {
+      "n": 132,
+      "accuracy": 0.803030303030303,
+      "macro_f1": 0.7784582325920631,
+      "top1": 0.803030303030303,
+      "top3": 0.9393939393939394
+    },
+    "delta_after_minus_before": {
+      "accuracy": -0.06818181818181823,
+      "macro_f1": -0.08790798437575809,
+      "top1": -0.06818181818181823,
+      "top3": -0.015151515151515138
+    },
+    "group_bootstrap": {
+      "group_n": 40,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "top1": [
+          -0.11767198404785645,
+          -0.01923076923076927
+        ],
+        "top3": [
+          -0.04878475183353226,
+          0.024395241903238614
+        ],
+        "macro_f1": [
+          -0.1526734472996436,
+          -0.037790792909557856
+        ]
+      }
+    },
+    "scope": "conditional on frozen checkpoints; no retraining uncertainty"
+  },
+  "A2_jpeg95_vs_clean": {
+    "n": 1331,
+    "same_ids_labels_groups_verified": true,
+    "before": {
+      "n": 1331,
+      "accuracy": 0.7716003005259203,
+      "macro_f1": 0.7704056889465573,
+      "top1": 0.7716003005259203,
+      "top3": 0.9293764087152517
+    },
+    "after": {
+      "n": 1331,
+      "accuracy": 0.7625845229151015,
+      "macro_f1": 0.7603995683805688,
+      "top1": 0.7625845229151015,
+      "top3": 0.927122464312547
+    },
+    "delta_after_minus_before": {
+      "accuracy": -0.009015777610818843,
+      "macro_f1": -0.010006120565988486,
+      "top1": -0.009015777610818843,
+      "top3": -0.002253944402704766
+    },
+    "group_bootstrap": {
+      "group_n": 303,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "top1": [
+          -0.018271878060784535,
+          0.0
+        ],
+        "top3": [
+          -0.007740238078095355,
+          0.00296785767313841
+        ],
+        "macro_f1": [
+          -0.019503478509286572,
+          -0.001070910075208355
+        ]
+      }
+    },
+    "scope": "conditional on frozen checkpoints; no retraining uncertainty"
+  },
+  "A2_jpeg75_vs_clean": {
+    "n": 1331,
+    "same_ids_labels_groups_verified": true,
+    "before": {
+      "n": 1331,
+      "accuracy": 0.7716003005259203,
+      "macro_f1": 0.7704056889465573,
+      "top1": 0.7716003005259203,
+      "top3": 0.9293764087152517
+    },
+    "after": {
+      "n": 1331,
+      "accuracy": 0.7588279489105936,
+      "macro_f1": 0.755747119207788,
+      "top1": 0.7588279489105936,
+      "top3": 0.9233658903080391
+    },
+    "delta_after_minus_before": {
+      "accuracy": -0.012772351615326749,
+      "macro_f1": -0.014658569738769223,
+      "top1": -0.012772351615326749,
+      "top3": -0.006010518407212673
+    },
+    "group_bootstrap": {
+      "group_n": 303,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "top1": [
+          -0.02617978374879747,
+          0.0007193034258757138
+        ],
+        "top3": [
+          -0.013326321633083237,
+          0.0007912335734841347
+        ],
+        "macro_f1": [
+          -0.028730392401056213,
+          -0.0012698885760151991
+        ]
+      }
+    },
+    "scope": "conditional on frozen checkpoints; no retraining uncertainty"
+  },
+  "A2_jpeg50_vs_clean": {
+    "n": 1331,
+    "same_ids_labels_groups_verified": true,
+    "before": {
+      "n": 1331,
+      "accuracy": 0.7716003005259203,
+      "macro_f1": 0.7704056889465573,
+      "top1": 0.7716003005259203,
+      "top3": 0.9293764087152517
+    },
+    "after": {
+      "n": 1331,
+      "accuracy": 0.7325319308790383,
+      "macro_f1": 0.7293763738565112,
+      "top1": 0.7325319308790383,
+      "top3": 0.9203606311044328
+    },
+    "delta_after_minus_before": {
+      "accuracy": -0.039068369646881984,
+      "macro_f1": -0.04102931509004604,
+      "top1": -0.039068369646881984,
+      "top3": -0.009015777610818954
+    },
+    "group_bootstrap": {
+      "group_n": 303,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "top1": [
+          -0.055090605627086245,
+          -0.02378757720340721
+        ],
+        "top3": [
+          -0.01758769549368538,
+          -0.0007051320119763423
+        ],
+        "macro_f1": [
+          -0.05778056214902466,
+          -0.026341573343049332
+        ]
+      }
+    },
+    "scope": "conditional on frozen checkpoints; no retraining uncertainty"
+  },
+  "A2_resize075_vs_clean": {
+    "n": 1331,
+    "same_ids_labels_groups_verified": true,
+    "before": {
+      "n": 1331,
+      "accuracy": 0.7716003005259203,
+      "macro_f1": 0.7704056889465573,
+      "top1": 0.7716003005259203,
+      "top3": 0.9293764087152517
+    },
+    "after": {
+      "n": 1331,
+      "accuracy": 0.7670924117205109,
+      "macro_f1": 0.7648889280513539,
+      "top1": 0.7670924117205109,
+      "top3": 0.9241172051089407
+    },
+    "delta_after_minus_before": {
+      "accuracy": -0.004507888805409421,
+      "macro_f1": -0.005516760895203365,
+      "top1": -0.004507888805409421,
+      "top3": -0.005259203606311047
+    },
+    "group_bootstrap": {
+      "group_n": 303,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "top1": [
+          -0.012248059378045257,
+          0.002696541398877554
+        ],
+        "top3": [
+          -0.00976429580868359,
+          -0.0013710056066507138
+        ],
+        "macro_f1": [
+          -0.013402297590086964,
+          0.0020607207451785263
+        ]
+      }
+    },
+    "scope": "conditional on frozen checkpoints; no retraining uncertainty"
+  },
+  "A2_resize050_vs_clean": {
+    "n": 1331,
+    "same_ids_labels_groups_verified": true,
+    "before": {
+      "n": 1331,
+      "accuracy": 0.7716003005259203,
+      "macro_f1": 0.7704056889465573,
+      "top1": 0.7716003005259203,
+      "top3": 0.9293764087152517
+    },
+    "after": {
+      "n": 1331,
+      "accuracy": 0.740045078888054,
+      "macro_f1": 0.7384718158271795,
+      "top1": 0.740045078888054,
+      "top3": 0.9158527422990232
+    },
+    "delta_after_minus_before": {
+      "accuracy": -0.03155522163786628,
+      "macro_f1": -0.03193387311937779,
+      "top1": -0.03155522163786628,
+      "top3": -0.013523666416228486
+    },
+    "group_bootstrap": {
+      "group_n": 303,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "top1": [
+          -0.04545948616600787,
+          -0.01620292377957474
+        ],
+        "top3": [
+          -0.022559001670843827,
+          -0.005190933617673661
+        ],
+        "macro_f1": [
+          -0.04618677300694371,
+          -0.0165990991672122
+        ]
+      }
+    },
+    "scope": "conditional on frozen checkpoints; no retraining uncertainty"
+  }
+}

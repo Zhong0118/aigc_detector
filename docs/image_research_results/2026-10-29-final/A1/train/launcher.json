@@ -1,0 +1,11 @@
+{
+  "launcher": "scripts/run_image_followup_registered.py",
+  "launcher_sha256": "3e7531c27a20254b6d60c13dfed110f45e4c0ac51d1eef99f97b08b875c70b02",
+  "runner_sha256": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+  "baselines": [
+    "d0-resnet50-iab-v7-200-q179-e30",
+    "a0-resnet50-iab-v7-200-q179-e30",
+    "ofa-iab-v7-200-q179-e30"
+  ],
+  "config_sha256": "3cd648391e4f60c04c64e38f057e6f9e6c703e34adba602deb8a90f46d1e3888"
+}

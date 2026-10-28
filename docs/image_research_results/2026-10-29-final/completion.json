@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "scope": "registered_followups_only",
+  "registered_actions_verified": 14,
+  "training_runs_30_epochs_verified": 6,
+  "A3_not_run": true,
+  "config_sha256": "3cd648391e4f60c04c64e38f057e6f9e6c703e34adba602deb8a90f46d1e3888",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "summary_sha256": "010cf93a0a941d05c00178b0b6b7199085c9909c28d52813bd6b8e02ae12c0d0",
+  "provenance_sha256": "1a522ac891e9f10290e009b12daa377bbf615907967e8ea2af9c16b62fb36e95",
+  "holdout_scored": false,
+  "training_executed_by_analysis": false,
+  "image_inference_executed_by_analysis": false
+}
