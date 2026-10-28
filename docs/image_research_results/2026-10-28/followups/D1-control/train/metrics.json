@@ -1,0 +1,43 @@
+{
+  "n": 2311,
+  "accuracy": 0.9636520986585894,
+  "macro_f1": 0.9630907600271965,
+  "auroc": 0.9945936790448985,
+  "threshold_0_5": 0.5,
+  "fpr_0_5": 0.028028028028028028,
+  "tpr_0_5": 0.9573170731707317,
+  "real_count": 999,
+  "ai_count": 1312,
+  "dev_target_fpr": 0.02,
+  "dev_threshold": 0.7327198386192322,
+  "dev_fpr": 0.01901901901901902,
+  "dev_tpr": 0.926829268292683,
+  "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+  "task": "detection",
+  "evaluation_split": "dev",
+  "selected_epoch": 11,
+  "selection_metric": "auroc",
+  "tie_break": "earliest epoch",
+  "train_n": 37338,
+  "train_counts": {
+    "real": 13990,
+    "ai": 23348
+  },
+  "dev_counts": {
+    "ai": 1312,
+    "real": 999
+  },
+  "class_weights": [
+    1.3344531808434597,
+    0.799597395922563
+  ],
+  "classes": [
+    "real",
+    "ai"
+  ],
+  "failed_samples": 0,
+  "reload_max_abs_error": 0.0,
+  "single_vs_batch_max_abs_error": 3.092281986027956e-11,
+  "holdout_evaluated": false,
+  "evaluation_role": "selection_only; run explicit evaluate later"
+}

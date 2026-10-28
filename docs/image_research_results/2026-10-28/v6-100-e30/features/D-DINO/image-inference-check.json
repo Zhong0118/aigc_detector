@@ -1,0 +1,50 @@
+{
+  "sample_ids": [
+    "iab-0030eb0c8e2e097c20d35b57",
+    "iab-004be1c1a405329c87b8041c"
+  ],
+  "role": "selection",
+  "cached_vs_image_max_error": 4.76837158203125e-07,
+  "image_single_batch_max_error": 2.682209014892578e-07,
+  "batch": [
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v6-100/images/real/FFHQ/0030eb0c8e2e097c20d35b57.png",
+      "task": "detection",
+      "score_ai": 0.2419520914554596,
+      "threshold": 0.5,
+      "label": "real",
+      "score_type": "binary_softmax_uncalibrated",
+      "source_scores_used": false
+    },
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v6-100/images/KANDINSKY/celebahq/004be1c1a405329c87b8041c.png",
+      "task": "detection",
+      "score_ai": 0.9860694408416748,
+      "threshold": 0.5,
+      "label": "ai",
+      "score_type": "binary_softmax_uncalibrated",
+      "source_scores_used": false
+    }
+  ],
+  "single": [
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v6-100/images/real/FFHQ/0030eb0c8e2e097c20d35b57.png",
+      "task": "detection",
+      "score_ai": 0.24195235967636108,
+      "threshold": 0.5,
+      "label": "real",
+      "score_type": "binary_softmax_uncalibrated",
+      "source_scores_used": false
+    },
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v6-100/images/KANDINSKY/celebahq/004be1c1a405329c87b8041c.png",
+      "task": "detection",
+      "score_ai": 0.9860693216323853,
+      "threshold": 0.5,
+      "label": "ai",
+      "score_type": "binary_softmax_uncalibrated",
+      "source_scores_used": false
+    }
+  ],
+  "holdout_scored": false
+}

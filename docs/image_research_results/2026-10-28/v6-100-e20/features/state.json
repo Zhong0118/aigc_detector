@@ -1,0 +1,12 @@
+{
+  "status": "completed",
+  "pid": 1492542,
+  "identity": [
+    "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "1919164"
+  ],
+  "started": 1793007761.359021,
+  "config_sha256": "02bcc2673614b99a5c254e943bd0891b67147746a9d31acad71c1105a2941b71",
+  "exit_code": 0,
+  "finished": 1793008612.3106534
+}

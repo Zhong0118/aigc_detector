@@ -1,0 +1,258 @@
+{
+  "per_source": {
+    "4o": {
+      "n": 93,
+      "tpr_0_5": 0.978494623655914
+    },
+    "CogView3_PLUS": {
+      "n": 88,
+      "tpr_0_5": 0.9659090909090909
+    },
+    "FLUX": {
+      "n": 88,
+      "tpr_0_5": 0.9659090909090909
+    },
+    "KANDINSKY": {
+      "n": 93,
+      "tpr_0_5": 0.956989247311828
+    },
+    "PIXART": {
+      "n": 93,
+      "tpr_0_5": 1.0
+    },
+    "PLAYGROUND_2_5": {
+      "n": 90,
+      "tpr_0_5": 0.9777777777777777
+    },
+    "SD1_5": {
+      "n": 86,
+      "tpr_0_5": 0.9767441860465116
+    },
+    "SD2_1": {
+      "n": 89,
+      "tpr_0_5": 0.9101123595505618
+    },
+    "SD3": {
+      "n": 89,
+      "tpr_0_5": 0.9550561797752809
+    },
+    "SD3_5": {
+      "n": 86,
+      "tpr_0_5": 0.9418604651162791
+    },
+    "SDXL": {
+      "n": 90,
+      "tpr_0_5": 0.9555555555555556
+    },
+    "dalle3": {
+      "n": 92,
+      "tpr_0_5": 0.9891304347826086
+    },
+    "gemini": {
+      "n": 90,
+      "tpr_0_5": 0.9888888888888889
+    },
+    "grok3": {
+      "n": 87,
+      "tpr_0_5": 0.9310344827586207
+    },
+    "hidream": {
+      "n": 88,
+      "tpr_0_5": 0.9772727272727273
+    },
+    "hunyuan": {
+      "n": 88,
+      "tpr_0_5": 1.0
+    },
+    "ideogram": {
+      "n": 90,
+      "tpr_0_5": 1.0
+    },
+    "infinity": {
+      "n": 93,
+      "tpr_0_5": 0.989247311827957
+    },
+    "janus-pro": {
+      "n": 88,
+      "tpr_0_5": 0.9886363636363636
+    },
+    "kling": {
+      "n": 94,
+      "tpr_0_5": 0.9893617021276596
+    },
+    "mid-5.2": {
+      "n": 86,
+      "tpr_0_5": 0.9534883720930233
+    },
+    "mid-6.0": {
+      "n": 87,
+      "tpr_0_5": 0.9080459770114943
+    },
+    "real": {
+      "n": 2992,
+      "fpr_0_5": 0.03977272727272727
+    }
+  },
+  "per_semantic": {
+    "COCO": {
+      "n": 500,
+      "accuracy": 0.864,
+      "macro_f1": 0.8626262626262626,
+      "auroc": 0.9540916666666667,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.19666666666666666,
+      "tpr_0_5": 0.955,
+      "real_count": 300,
+      "ai_count": 200,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9999995231628418,
+      "dev_fpr": 0.013333333333333334,
+      "dev_tpr": 0.615,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    },
+    "FFHQ": {
+      "n": 502,
+      "accuracy": 0.9721115537848606,
+      "macro_f1": 0.9711423174837809,
+      "auroc": 0.9957920792079207,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.03333333333333333,
+      "tpr_0_5": 0.9801980198019802,
+      "real_count": 300,
+      "ai_count": 202,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9822121262550354,
+      "dev_fpr": 0.016666666666666666,
+      "dev_tpr": 0.9603960396039604,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    },
+    "ImageNet": {
+      "n": 499,
+      "accuracy": 0.8496993987975952,
+      "macro_f1": 0.8448749673584601,
+      "auroc": 0.9230904522613066,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.14666666666666667,
+      "tpr_0_5": 0.8442211055276382,
+      "real_count": 300,
+      "ai_count": 199,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9999796152114868,
+      "dev_fpr": 0.016666666666666666,
+      "dev_tpr": 0.4321608040201005,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    },
+    "bedroom": {
+      "n": 502,
+      "accuracy": 0.9940239043824701,
+      "macro_f1": 0.9937820753665314,
+      "auroc": 0.9997359735973598,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0033333333333333335,
+      "tpr_0_5": 0.9900990099009901,
+      "real_count": 300,
+      "ai_count": 202,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.010387835092842579,
+      "dev_fpr": 0.0033333333333333335,
+      "dev_tpr": 1.0,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    },
+    "cat": {
+      "n": 481,
+      "accuracy": 0.9937629937629938,
+      "macro_f1": 0.9933778481448338,
+      "auroc": 0.9980521151089713,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.006688963210702341,
+      "tpr_0_5": 0.9945054945054945,
+      "real_count": 299,
+      "ai_count": 182,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.005928472150117159,
+      "dev_fpr": 0.006688963210702341,
+      "dev_tpr": 1.0,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    },
+    "celebahq": {
+      "n": 509,
+      "accuracy": 0.9921414538310412,
+      "macro_f1": 0.9918819776714514,
+      "auroc": 1.0,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0,
+      "tpr_0_5": 0.981042654028436,
+      "real_count": 298,
+      "ai_count": 211,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 1.1754662409657612e-05,
+      "dev_fpr": 0.0,
+      "dev_tpr": 1.0,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    },
+    "church": {
+      "n": 497,
+      "accuracy": 0.9839034205231388,
+      "macro_f1": 0.9830900615834779,
+      "auroc": 0.999678510998308,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0033333333333333335,
+      "tpr_0_5": 0.9644670050761421,
+      "real_count": 300,
+      "ai_count": 197,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.0007712792721576989,
+      "dev_fpr": 0.006666666666666667,
+      "dev_tpr": 1.0,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    },
+    "classroom": {
+      "n": 500,
+      "accuracy": 0.99,
+      "macro_f1": 0.9896254798215582,
+      "auroc": 0.9999006359300476,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0033783783783783786,
+      "tpr_0_5": 0.9803921568627451,
+      "real_count": 296,
+      "ai_count": 204,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.04557614400982857,
+      "dev_fpr": 0.0033783783783783786,
+      "dev_tpr": 1.0,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    },
+    "dog": {
+      "n": 496,
+      "accuracy": 0.9979838709677419,
+      "macro_f1": 0.9978966562771664,
+      "auroc": 0.9999660458720269,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0033444816053511705,
+      "tpr_0_5": 1.0,
+      "real_count": 299,
+      "ai_count": 197,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.5686566829681396,
+      "dev_fpr": 0.0033444816053511705,
+      "dev_tpr": 1.0,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    },
+    "wild": {
+      "n": 474,
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "auroc": 1.0,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0,
+      "tpr_0_5": 1.0,
+      "real_count": 300,
+      "ai_count": 174,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.6790125966072083,
+      "dev_fpr": 0.0,
+      "dev_tpr": 1.0,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim"
+    }
+  }
+}

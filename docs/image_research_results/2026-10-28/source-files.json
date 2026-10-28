@@ -1,0 +1,1179 @@
+[
+  {
+    "file": "100-e20-vs-e30/completion.json",
+    "source": "outputs/image-followups-20261027/epochs20-30-comparison/completion.json",
+    "bytes": 534,
+    "sha256": "eaf21f4dc0151a911b9bd81fbe5e2c8f8046181986d49b64e042ddd3c94905ce"
+  },
+  {
+    "file": "100-e20-vs-e30/provenance.json",
+    "source": "outputs/image-followups-20261027/epochs20-30-comparison/provenance.json",
+    "bytes": 42882,
+    "sha256": "cc74c125abc590f9ffe3cab8a0247e33da2806c9504017f6a455b1d0bd06ae55"
+  },
+  {
+    "file": "100-e20-vs-e30/report.md",
+    "source": "outputs/image-followups-20261027/epochs20-30-comparison/report.md",
+    "bytes": 8539,
+    "sha256": "27dbd781b6e8a2e51d4529672f70ce5fafac8392128d4aa427a5525601bcbc3d"
+  },
+  {
+    "file": "100-e20-vs-e30/summary.json",
+    "source": "outputs/image-followups-20261027/epochs20-30-comparison/summary.json",
+    "bytes": 102438,
+    "sha256": "47a37e21d1f045f066ac9cae28290ce35995fadf5c323ba4159ee229e7fdd53a"
+  },
+  {
+    "file": "100-e20-vs-e30/epochs.csv",
+    "source": "outputs/image-followups-20261027/epochs20-30-comparison/epochs.csv",
+    "bytes": 90784,
+    "sha256": "4ae8f0b3683e13eb6fc223863cdd52a0d2f9ea2465aefcd889de8b792bed0b12"
+  },
+  {
+    "file": "100-e20-vs-e30/per-source.csv",
+    "source": "outputs/image-followups-20261027/epochs20-30-comparison/per-source.csv",
+    "bytes": 35498,
+    "sha256": "c920afffcbfc98f82a1d8d4a4c1ad501d8e5a9791665a43e151f46d454e36304"
+  },
+  {
+    "file": "100-e20-vs-e30/source-distribution.csv",
+    "source": "outputs/image-followups-20261027/epochs20-30-comparison/source-distribution.csv",
+    "bytes": 2319,
+    "sha256": "6e6ea5b2d11448f08b1ae91b2d3d655a4999da0be2793fe073a2ac75ced0963e"
+  },
+  {
+    "file": "100-e30-vs-200-q179-e30/completion.json",
+    "source": "outputs/image-followups-20261028/v6-100-e30-vs-v7-200-q179-e30/completion.json",
+    "bytes": 551,
+    "sha256": "bdd97cc1d09059a11d276e973b771fa87caf195ee8530209e5e30e69e0bceeec"
+  },
+  {
+    "file": "100-e30-vs-200-q179-e30/provenance.json",
+    "source": "outputs/image-followups-20261028/v6-100-e30-vs-v7-200-q179-e30/provenance.json",
+    "bytes": 44517,
+    "sha256": "e12844dcbf4455bb3341ca3076e2b3090d8a080a3ef21c6981f642c30a76da74"
+  },
+  {
+    "file": "100-e30-vs-200-q179-e30/report.md",
+    "source": "outputs/image-followups-20261028/v6-100-e30-vs-v7-200-q179-e30/report.md",
+    "bytes": 13246,
+    "sha256": "d3faff26415349ce8ea1cc423806c46a604918e876ee9514d7d221c5ddf6e7b3"
+  },
+  {
+    "file": "100-e30-vs-200-q179-e30/summary.json",
+    "source": "outputs/image-followups-20261028/v6-100-e30-vs-v7-200-q179-e30/summary.json",
+    "bytes": 62906,
+    "sha256": "fdc0fe496b09435d9a3d0e876d2623997ab70afc8c5bdb5e85e71f6d2a2445c9"
+  },
+  {
+    "file": "100-e30-vs-200-q179-e30/epochs.csv",
+    "source": "outputs/image-followups-20261028/v6-100-e30-vs-v7-200-q179-e30/epochs.csv",
+    "bytes": 105936,
+    "sha256": "97804a679813ef9c905472e77b181b9252c7904cee5f75072389a0e696219f63"
+  },
+  {
+    "file": "100-e30-vs-200-q179-e30/per-source.csv",
+    "source": "outputs/image-followups-20261028/v6-100-e30-vs-v7-200-q179-e30/per-source.csv",
+    "bytes": 44029,
+    "sha256": "927c3b654783bd1ec0e47bf97d00c48f4e654fbf6eb3ae20feef09033c7aedb8"
+  },
+  {
+    "file": "100-e30-vs-200-q179-e30/source-distribution.csv",
+    "source": "outputs/image-followups-20261028/v6-100-e30-vs-v7-200-q179-e30/source-distribution.csv",
+    "bytes": 6399,
+    "sha256": "7e20b68b3f6cf095bd22486319526881f1087573309dbf669951ea8e856e8ced"
+  },
+  {
+    "file": "100-e30-vs-200-q179-e30/ofa-reference-diff.csv",
+    "source": "outputs/image-followups-20261028/v6-100-e30-vs-v7-200-q179-e30/ofa-reference-diff.csv",
+    "bytes": 597,
+    "sha256": "fc39e32183e3eb79e55f5fc68b0b34bf61d326ab280fde4298c5216d013204d1"
+  },
+  {
+    "file": "v6-100-e20/baselines/d0-resnet50/status.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e20/status.json",
+    "bytes": 87,
+    "sha256": "3b6351992ab2095df7b6ff4c5b2b7ec14946506216733cce7756a718388bf019"
+  },
+  {
+    "file": "v6-100-e20/baselines/d0-resnet50/metrics.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e20/metrics.json",
+    "bytes": 1005,
+    "sha256": "5e6704797f9ae8a150884dda1020c7f3c4d2d8c7682ba0d145db35db2b070387"
+  },
+  {
+    "file": "v6-100-e20/baselines/d0-resnet50/resolved_config.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e20/resolved_config.json",
+    "bytes": 3382,
+    "sha256": "5038baea98d89fb561c8bc22da2aeffe25c3ed1f9aa2fc0cb8616284c43e599e"
+  },
+  {
+    "file": "v6-100-e20/baselines/d0-resnet50/history.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e20/history.json",
+    "bytes": 29180,
+    "sha256": "76c64511855cb25bf44ce0d7ae748a40f5dfcf9478faf72224096f4ecdc04448"
+  },
+  {
+    "file": "v6-100-e20/baselines/d0-resnet50/stratified_metrics.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e20/stratified_metrics.json",
+    "bytes": 6904,
+    "sha256": "3eb5e26413829bb650272d07b6b723fc258419a1599599d2e0db745a8928a021"
+  },
+  {
+    "file": "v6-100-e20/baselines/d0-resnet50/confusion_matrix.csv",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e20/confusion_matrix.csv",
+    "bytes": 50,
+    "sha256": "acd981a6d90b8fec4001f149bd6a1a305769c079dc5a19b296c3fea9820d6444"
+  },
+  {
+    "file": "v6-100-e20/baselines/d0-resnet50/asset_manifest.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e20/asset_manifest.json",
+    "bytes": 1315,
+    "sha256": "aa6ca188beba9a85ce88fdf0ca12c328ac4bf93c697a77be9651c0b643044f83"
+  },
+  {
+    "file": "v6-100-e20/baselines/a0-resnet50/status.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/status.json",
+    "bytes": 83,
+    "sha256": "b518d1e8c55d5fd1f2ddc74aaf8f45643c8213ccca633ef5742330b6094afacf"
+  },
+  {
+    "file": "v6-100-e20/baselines/a0-resnet50/metrics.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/metrics.json",
+    "bytes": 1701,
+    "sha256": "45bbaaad46a05580d4243b687da808098dc22bd198ae0fbae937ffd5e50a0e62"
+  },
+  {
+    "file": "v6-100-e20/baselines/a0-resnet50/resolved_config.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/resolved_config.json",
+    "bytes": 2614,
+    "sha256": "f7cb202432ec26253aef8bc0a4c027b5362dc2d19dbd6215dccec06f53c04bb3"
+  },
+  {
+    "file": "v6-100-e20/baselines/a0-resnet50/history.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/history.json",
+    "bytes": 54983,
+    "sha256": "9e73b6e4f15dfe87694800404519e89eaf3fd9caa2748608afabd2332606d34e"
+  },
+  {
+    "file": "v6-100-e20/baselines/a0-resnet50/stratified_metrics.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/stratified_metrics.json",
+    "bytes": 5659,
+    "sha256": "f775c9d77c49bbf91acd4adab3622b60894717480cf7970162b7628337259737"
+  },
+  {
+    "file": "v6-100-e20/baselines/a0-resnet50/confusion_matrix.csv",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/confusion_matrix.csv",
+    "bytes": 1367,
+    "sha256": "ee7f626708cb8b0871ba67128a2b058aeb5db968daa3a561d7aa7ccdded2dbfd"
+  },
+  {
+    "file": "v6-100-e20/baselines/a0-resnet50/asset_manifest.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/asset_manifest.json",
+    "bytes": 1319,
+    "sha256": "445f445510143c7693a72020141ed28f5037788cdab196ef6ddc3c30b940c901"
+  },
+  {
+    "file": "v6-100-e20/baselines/ofa/status.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e20/status.json",
+    "bytes": 87,
+    "sha256": "6a3f9a9bad07e82f09698ca23f394490ff84f88694d1a1d6cc3e3e1cbfea8993"
+  },
+  {
+    "file": "v6-100-e20/baselines/ofa/metrics.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e20/metrics.json",
+    "bytes": 36262,
+    "sha256": "4970b21085683e7a76c301f28bf303be40a250aa48fabcb796deb6908e09ae75"
+  },
+  {
+    "file": "v6-100-e20/baselines/ofa/resolved_config.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e20/resolved_config.json",
+    "bytes": 2668,
+    "sha256": "343e74a9380fbea2413dc284260ea98e1be17a84740e9953dff96735c76a66bf"
+  },
+  {
+    "file": "v6-100-e20/baselines/ofa/stratified_metrics.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e20/stratified_metrics.json",
+    "bytes": 5612,
+    "sha256": "3cec78c87cc009f9381da6cd9350af98de854821507d37bd796dc616d317013e"
+  },
+  {
+    "file": "v6-100-e20/baselines/ofa/asset_manifest.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e20/asset_manifest.json",
+    "bytes": 1478,
+    "sha256": "a372c9d9314bd8a51bae4b023abf4968a1f3ebd61ea38faec77491bc60fe7bbb"
+  },
+  {
+    "file": "v6-100-e20/features/D-DINO/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/D-DINO/status.json",
+    "bytes": 107,
+    "sha256": "c883d21be822928efc2e11f7b828b75a8ed3e37f2ff72381ef1c574defe5edb3"
+  },
+  {
+    "file": "v6-100-e20/features/D-DINO/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/D-DINO/metrics.json",
+    "bytes": 10775,
+    "sha256": "3b9263660f7d3fcfe9c6160b2567eb6d029ed774d0261f05023dc5d08aa774bb"
+  },
+  {
+    "file": "v6-100-e20/features/D-DINO/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/D-DINO/resolved_config.json",
+    "bytes": 7242,
+    "sha256": "9bad4c89c88dd811278abc52f3b8f197701570970a1d97c5549220f7bd9f2c96"
+  },
+  {
+    "file": "v6-100-e20/features/D-DINO/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/D-DINO/history.jsonl",
+    "bytes": 14269,
+    "sha256": "63002c470ac2c54c8582390711a938b2703fd0821efc93a58ccdde0419bbf7e2"
+  },
+  {
+    "file": "v6-100-e20/features/D-DINO/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/D-DINO/image-inference-check.json",
+    "bytes": 1888,
+    "sha256": "cf86b7b8b341db0c055fef48af8b93f6469dcfe371846dccd43fb4e729055530"
+  },
+  {
+    "file": "v6-100-e20/features/A-RGB/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-RGB/status.json",
+    "bytes": 106,
+    "sha256": "ce0bc8a75d565ad1ad544dc1eeb7e5c44fae69612e1b06888ef50094bc403d23"
+  },
+  {
+    "file": "v6-100-e20/features/A-RGB/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-RGB/metrics.json",
+    "bytes": 6586,
+    "sha256": "835001415e541e29a80d36ec507c1ab3ad795c0d2e5d1f4c44791a01252f6816"
+  },
+  {
+    "file": "v6-100-e20/features/A-RGB/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-RGB/resolved_config.json",
+    "bytes": 7245,
+    "sha256": "762f99d901b2b6604ab6a4ca8d2a7fb4e80c0edfd25b4d59e831e4111906130d"
+  },
+  {
+    "file": "v6-100-e20/features/A-RGB/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-RGB/history.jsonl",
+    "bytes": 22680,
+    "sha256": "b06dc61e504d5a7097abecc9712f5085cca3c3e59392eb21fc5617ce46cc566f"
+  },
+  {
+    "file": "v6-100-e20/features/A-RGB/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-RGB/image-inference-check.json",
+    "bytes": 10718,
+    "sha256": "28f7eba22df894652c16a25f58a05d4914b3adb1f1b0cd53ced2318d78f20b99"
+  },
+  {
+    "file": "v6-100-e20/features/A-FP/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-FP/status.json",
+    "bytes": 107,
+    "sha256": "028b9fab4038aa3620266d0d7c5fb9ce3139899c7651ce35cfc1b370080884ed"
+  },
+  {
+    "file": "v6-100-e20/features/A-FP/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-FP/metrics.json",
+    "bytes": 6573,
+    "sha256": "403e2933a991135ceeae3b4a174da45124dc541469cd9f972aed60c3bc59e361"
+  },
+  {
+    "file": "v6-100-e20/features/A-FP/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-FP/resolved_config.json",
+    "bytes": 7252,
+    "sha256": "02725da1b32b737985dcab2a5a9031512b4e99c5a0b45c35a603407516597150"
+  },
+  {
+    "file": "v6-100-e20/features/A-FP/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-FP/history.jsonl",
+    "bytes": 22675,
+    "sha256": "9bda61b0c31d88d1a1c4b407d4226d6b1566fe844ebedb129c734b62c7cc6511"
+  },
+  {
+    "file": "v6-100-e20/features/A-FP/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-FP/image-inference-check.json",
+    "bytes": 10750,
+    "sha256": "46113e08618dbc7a009707533e519569cd587bbf8cb3549a30ec44e56b1cfb93"
+  },
+  {
+    "file": "v6-100-e20/features/A-Fusion/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion/status.json",
+    "bytes": 107,
+    "sha256": "763c412e1f8f8004cdc6e0d82b1960df5042b10f82a231191950c5fe487bc3db"
+  },
+  {
+    "file": "v6-100-e20/features/A-Fusion/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion/metrics.json",
+    "bytes": 6600,
+    "sha256": "bc7c47dcf4bea46abe64869fbe55505f0bf2c395126226b43222c9521c34802b"
+  },
+  {
+    "file": "v6-100-e20/features/A-Fusion/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion/resolved_config.json",
+    "bytes": 7251,
+    "sha256": "fd165c94d93738c772ee8bb47ca8c8629442f502b17e8656b25f43855f1d0404"
+  },
+  {
+    "file": "v6-100-e20/features/A-Fusion/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion/history.jsonl",
+    "bytes": 22623,
+    "sha256": "dc6d727aa0c4be156461778a5025c835cf125d11f887eb6997a07b09949d1f6f"
+  },
+  {
+    "file": "v6-100-e20/features/A-Fusion/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion/image-inference-check.json",
+    "bytes": 10753,
+    "sha256": "d7afb037dc2c9f436310a6753f4e3d0e035ba1d3e9f5071ad6b449e90276a2ca"
+  },
+  {
+    "file": "v6-100-e20/features/state.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/state.json",
+    "bytes": 296,
+    "sha256": "fc25f8fd86178bd97442005cbde7588fc6cd99f8f4e3f2454171411b83f93071"
+  },
+  {
+    "file": "v6-100-e20/features/bound-protocol.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/bound-protocol.json",
+    "bytes": 496,
+    "sha256": "dacb3370ae1ad0220ae59ff3441b4aa46a1178562b0f18e030b91c2c1a5ca6d8"
+  },
+  {
+    "file": "v6-100-e20/features/paired-comparison.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100/paired-comparison.json",
+    "bytes": 145945,
+    "sha256": "0910303ecd5c427787cc5f80920b5ded76d904dd7b77bb60af110f34ae3fa591"
+  },
+  {
+    "file": "v6-100-e20/score-fusion/status.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e20/status.json",
+    "bytes": 45,
+    "sha256": "56215e66475ac8e1378d52d5e3345f88ee026e1b45c93025bcbc0e00a0eaab88"
+  },
+  {
+    "file": "v6-100-e20/score-fusion/summary.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e20/summary.json",
+    "bytes": 2592,
+    "sha256": "bbe9c5157d19fc89c86c38b4eb58b4de6363f88f8c6f2b846226a9a6c836db73"
+  },
+  {
+    "file": "v6-100-e20/score-fusion/calibration.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e20/calibration.json",
+    "bytes": 1981,
+    "sha256": "40ce88795af53eb2ffba2b76e4e506d0551c149f80e7a6122196ebdf46801883"
+  },
+  {
+    "file": "v6-100-e20/score-fusion/resolved_config.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e20/resolved_config.json",
+    "bytes": 3364,
+    "sha256": "893756d48ef35148aa53ff060a2356132ebcc4adc6d6c68ee0dc11dbfca63d47"
+  },
+  {
+    "file": "v6-100-e20/score-fusion/provenance.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e20/provenance.json",
+    "bytes": 2135,
+    "sha256": "9afcb5f02f9f16d8584441cb0017ab2faa66404c21b0972d21918814a829a6ff"
+  },
+  {
+    "file": "v6-100-e30/baselines/d0-resnet50/status.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e30/status.json",
+    "bytes": 85,
+    "sha256": "c97db5a4612c88fbc80055d5d0570bf434efb26719e0e3e500fc4becb86cda5b"
+  },
+  {
+    "file": "v6-100-e30/baselines/d0-resnet50/metrics.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e30/metrics.json",
+    "bytes": 1004,
+    "sha256": "90202c696dc92afb2d6d537fb75476c9ffe631daa164af15657e2034831b8a05"
+  },
+  {
+    "file": "v6-100-e30/baselines/d0-resnet50/resolved_config.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e30/resolved_config.json",
+    "bytes": 2610,
+    "sha256": "60fea67baf21c4c8012aa441f60e3c4ca2f23a41479f7d6113ff32dc22df0459"
+  },
+  {
+    "file": "v6-100-e30/baselines/d0-resnet50/history.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e30/history.json",
+    "bytes": 43473,
+    "sha256": "481c67e138560f69b3e0e0b4f746798bf2ced31120ef334d3a4486232afb8e86"
+  },
+  {
+    "file": "v6-100-e30/baselines/d0-resnet50/stratified_metrics.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e30/stratified_metrics.json",
+    "bytes": 6881,
+    "sha256": "47647e9b51372833d694085f6d1eabf5ebc02fa64e6aa48044bb7d8accf36fc7"
+  },
+  {
+    "file": "v6-100-e30/baselines/d0-resnet50/confusion_matrix.csv",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e30/confusion_matrix.csv",
+    "bytes": 51,
+    "sha256": "0b39a8170eb66ffe278459ef1974d45cde72bb729210c81c6edad19de4bacfd6"
+  },
+  {
+    "file": "v6-100-e30/baselines/d0-resnet50/asset_manifest.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v6-100-e30/asset_manifest.json",
+    "bytes": 1315,
+    "sha256": "886e121d89a61875d69aa55be7db39cb11190fcbf37c1139801fee7197eefed3"
+  },
+  {
+    "file": "v6-100-e30/baselines/a0-resnet50/status.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e30/status.json",
+    "bytes": 83,
+    "sha256": "357309327fb1a7b942f7b2d8e36708bcb3f0fd7410379461caccb0946d83411b"
+  },
+  {
+    "file": "v6-100-e30/baselines/a0-resnet50/metrics.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e30/metrics.json",
+    "bytes": 1703,
+    "sha256": "d2a1fd86f86299e6d514dbcc223238ce8eddf8b6657fee8394540219b49dd2f6"
+  },
+  {
+    "file": "v6-100-e30/baselines/a0-resnet50/resolved_config.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e30/resolved_config.json",
+    "bytes": 2614,
+    "sha256": "cbbc9e2f6c97e04a7fffac73fecb01e8f8250ce61670c1069f71f7f457e8b692"
+  },
+  {
+    "file": "v6-100-e30/baselines/a0-resnet50/history.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e30/history.json",
+    "bytes": 82099,
+    "sha256": "3abf03166a754c2de53a66df26d3c6267b72bba23bd179db2e78a938849fe108"
+  },
+  {
+    "file": "v6-100-e30/baselines/a0-resnet50/stratified_metrics.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e30/stratified_metrics.json",
+    "bytes": 5641,
+    "sha256": "fab127421ea7cb7253a01863298f2b51d8ce99024d28a44c7d49070357267e40"
+  },
+  {
+    "file": "v6-100-e30/baselines/a0-resnet50/confusion_matrix.csv",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e30/confusion_matrix.csv",
+    "bytes": 1364,
+    "sha256": "d6d4f658640659ff8fcd3e7886b032624ed159d7d5d6f34d55a056215398a4bb"
+  },
+  {
+    "file": "v6-100-e30/baselines/a0-resnet50/asset_manifest.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v6-100-e30/asset_manifest.json",
+    "bytes": 1319,
+    "sha256": "cc04634e92e312bcf5b1a833e663b058dffaeb2dfce156dec9a4041220e1ce96"
+  },
+  {
+    "file": "v6-100-e30/baselines/ofa/status.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e30/status.json",
+    "bytes": 86,
+    "sha256": "ef38c6f27727ee982368e6950a5130ed2ca174b36004fa6208635ea3ced40a63"
+  },
+  {
+    "file": "v6-100-e30/baselines/ofa/metrics.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e30/metrics.json",
+    "bytes": 36261,
+    "sha256": "59708e7df34f75c813bace4c50d457f3b0c280c955f3d7ba313995686a4207d1"
+  },
+  {
+    "file": "v6-100-e30/baselines/ofa/resolved_config.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e30/resolved_config.json",
+    "bytes": 2668,
+    "sha256": "c2b8bb9cce752418284e9a79328f7c58a2994b2ae0e84387b9ab284a9227855a"
+  },
+  {
+    "file": "v6-100-e30/baselines/ofa/stratified_metrics.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e30/stratified_metrics.json",
+    "bytes": 5612,
+    "sha256": "3cec78c87cc009f9381da6cd9350af98de854821507d37bd796dc616d317013e"
+  },
+  {
+    "file": "v6-100-e30/baselines/ofa/asset_manifest.json",
+    "source": "outputs/image_experiments/ofa-iab-v6-100-e30/asset_manifest.json",
+    "bytes": 1478,
+    "sha256": "74b3b807d566d3c3524b078550c9b18f2a1e6680ef14702974e3f9ef4d1f6744"
+  },
+  {
+    "file": "v6-100-e30/features/D-DINO/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/D-DINO/status.json",
+    "bytes": 107,
+    "sha256": "80236badb25e1dabafe34df6b50f28f76c8984164f978500a7af4cd88af041f1"
+  },
+  {
+    "file": "v6-100-e30/features/D-DINO/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/D-DINO/metrics.json",
+    "bytes": 10773,
+    "sha256": "01d96b85384e9244834fc8f3e8aab440c09e97c538a2f4d2f8616036712c21cf"
+  },
+  {
+    "file": "v6-100-e30/features/D-DINO/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/D-DINO/resolved_config.json",
+    "bytes": 7562,
+    "sha256": "2c00f219629c12786bba9b9bcca3504f2074b446aff1c5c72c6764e645eb68d4"
+  },
+  {
+    "file": "v6-100-e30/features/D-DINO/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/D-DINO/history.jsonl",
+    "bytes": 21472,
+    "sha256": "97ac06bce0737b5234be57a0fe4416bddba2d50a9e25a595b7b8a166f81d491d"
+  },
+  {
+    "file": "v6-100-e30/features/D-DINO/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/D-DINO/image-inference-check.json",
+    "bytes": 1887,
+    "sha256": "c2622eee5bb8c2ef85f6a53a9f95b3189b34489fa67ffc7f079d8ecda9d8da6f"
+  },
+  {
+    "file": "v6-100-e30/features/A-RGB/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-RGB/status.json",
+    "bytes": 106,
+    "sha256": "b77fc638dcaa8faadcd88473013c255ba219390d55f7f9fbec58e0528a278f7c"
+  },
+  {
+    "file": "v6-100-e30/features/A-RGB/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-RGB/metrics.json",
+    "bytes": 6514,
+    "sha256": "11cbdd75bd2cc4aa3bdf81b97fd330338c31e55a7a3f16e5798da4934346d089"
+  },
+  {
+    "file": "v6-100-e30/features/A-RGB/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-RGB/resolved_config.json",
+    "bytes": 7565,
+    "sha256": "ce2d1eb620c0c1e7744ddab56291c30fea901706d0a4d6a37216f2c1e69ef6d4"
+  },
+  {
+    "file": "v6-100-e30/features/A-RGB/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-RGB/history.jsonl",
+    "bytes": 34062,
+    "sha256": "7a456fcd10c95c949a7b3f60df7bcab80d1bc6ff90838eb6abdb74a32dd41aaa"
+  },
+  {
+    "file": "v6-100-e30/features/A-RGB/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-RGB/image-inference-check.json",
+    "bytes": 10723,
+    "sha256": "863cfe390c71c81ea31f4b22e74f89d03f7c0f442f13efe57cf0aef66a4f9ce4"
+  },
+  {
+    "file": "v6-100-e30/features/A-FP/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-FP/status.json",
+    "bytes": 106,
+    "sha256": "c8e1a0421cadf780d3571c977c08f18b247cf6da2ac826d69a76c8d875765545"
+  },
+  {
+    "file": "v6-100-e30/features/A-FP/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-FP/metrics.json",
+    "bytes": 6586,
+    "sha256": "eb8345264093b68ba0668372602593d562dfe281911a8dd056a468d589e4a6e9"
+  },
+  {
+    "file": "v6-100-e30/features/A-FP/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-FP/resolved_config.json",
+    "bytes": 7572,
+    "sha256": "c372122f8eed60e36253eb935fcdde1bf9f33fc5cbbb71fd794413746e3dd662"
+  },
+  {
+    "file": "v6-100-e30/features/A-FP/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-FP/history.jsonl",
+    "bytes": 34072,
+    "sha256": "de23496274e0c876b700d50aadeab8d6c698d87c08210112aaf348b87ac4fdf0"
+  },
+  {
+    "file": "v6-100-e30/features/A-FP/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-FP/image-inference-check.json",
+    "bytes": 10769,
+    "sha256": "0caae5b9e9b91be8ffbd633771488d6b467b474e0d6dcc9d84e2be3f832f8af5"
+  },
+  {
+    "file": "v6-100-e30/features/A-Fusion/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-Fusion/status.json",
+    "bytes": 106,
+    "sha256": "1ec05adbd16fd556b189877f2f16e811c387f52c8f94400ebaa104a16ab33491"
+  },
+  {
+    "file": "v6-100-e30/features/A-Fusion/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-Fusion/metrics.json",
+    "bytes": 6544,
+    "sha256": "b91ce8ac71222a478449a2107226c6a912d9a92372efd334cdfbd8904104d6f5"
+  },
+  {
+    "file": "v6-100-e30/features/A-Fusion/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-Fusion/resolved_config.json",
+    "bytes": 7571,
+    "sha256": "3cdfa2460553ca5eb50370980fe1e7305194dc2f63e788bafb82c13a55b913b9"
+  },
+  {
+    "file": "v6-100-e30/features/A-Fusion/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-Fusion/history.jsonl",
+    "bytes": 34001,
+    "sha256": "a729fb3fcc09adf56ed39951de328242e6b43db9ac506d4941cc180fca4afb54"
+  },
+  {
+    "file": "v6-100-e30/features/A-Fusion/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-Fusion/image-inference-check.json",
+    "bytes": 10751,
+    "sha256": "fd47b381fe038831f0064ec68b6737fca30fb9a19de586e04661cef694e60181"
+  },
+  {
+    "file": "v6-100-e30/features/state.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/state.json",
+    "bytes": 296,
+    "sha256": "d01f93da2bd23561e2a48b3b57147b64c2385f6cae5ca22d8f15721be1b2a64b"
+  },
+  {
+    "file": "v6-100-e30/features/bound-protocol.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/bound-protocol.json",
+    "bytes": 496,
+    "sha256": "dacb3370ae1ad0220ae59ff3441b4aa46a1178562b0f18e030b91c2c1a5ca6d8"
+  },
+  {
+    "file": "v6-100-e30/features/paired-comparison.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/paired-comparison.json",
+    "bytes": 145995,
+    "sha256": "73214e71dcd731f1ad4db1cda8f85163c7380932e8f4c5c3bc794365a618c268"
+  },
+  {
+    "file": "v6-100-e30/score-fusion/status.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e30/status.json",
+    "bytes": 45,
+    "sha256": "56215e66475ac8e1378d52d5e3345f88ee026e1b45c93025bcbc0e00a0eaab88"
+  },
+  {
+    "file": "v6-100-e30/score-fusion/summary.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e30/summary.json",
+    "bytes": 2540,
+    "sha256": "c2c28eb1878cefd537a4e6d68784b732accb274f2461687b20f792900b59d332"
+  },
+  {
+    "file": "v6-100-e30/score-fusion/calibration.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e30/calibration.json",
+    "bytes": 1982,
+    "sha256": "29001d6d74808a93ff097c4fb221041c1c763f609904b0b536b85298f0ddc5b3"
+  },
+  {
+    "file": "v6-100-e30/score-fusion/resolved_config.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e30/resolved_config.json",
+    "bytes": 4214,
+    "sha256": "e3635da2763f0e5576fc5b8e034ec15cb644a702bc35ef7d3ca8ace767f9113e"
+  },
+  {
+    "file": "v6-100-e30/score-fusion/provenance.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e30/provenance.json",
+    "bytes": 2963,
+    "sha256": "1ffb9867fa34f22bff4e082ff105132ae5f67ef2f3a340254bc42340dcfff86c"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/d0-resnet50/status.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v7-200-q179-e30/status.json",
+    "bytes": 84,
+    "sha256": "766d9f18571e735ab7b551d89ec68e5c4f4e9a7242b052ebe3433b664b80b06f"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/d0-resnet50/metrics.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v7-200-q179-e30/metrics.json",
+    "bytes": 987,
+    "sha256": "a96ae5035f9174dd4ccc5e5ee1e8d17bfd0040fecfbcad1bf6dfdeef152d9b20"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/d0-resnet50/resolved_config.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v7-200-q179-e30/resolved_config.json",
+    "bytes": 2630,
+    "sha256": "dc7257bc113d5c8027f1ef36754ea58257e12a8594d294807332dad917a37622"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/d0-resnet50/history.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v7-200-q179-e30/history.json",
+    "bytes": 43681,
+    "sha256": "be8d7bdb37aa3881f348ae10a5bc6ee80663acc3f3e05e1a9db8259377c5d526"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/d0-resnet50/stratified_metrics.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v7-200-q179-e30/stratified_metrics.json",
+    "bytes": 6793,
+    "sha256": "8c4abf939bd430ba7303fb77c35192c5bc831f014d4837b6c958fb1fd2bc1f10"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/d0-resnet50/confusion_matrix.csv",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v7-200-q179-e30/confusion_matrix.csv",
+    "bytes": 51,
+    "sha256": "24b7579aa906e10c4e77f49107d70b844f229731f58b406941479be7508610ad"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/d0-resnet50/asset_manifest.json",
+    "source": "outputs/image_experiments/d0-resnet50-iab-v7-200-q179-e30/asset_manifest.json",
+    "bytes": 1314,
+    "sha256": "2f4667119b5ced9284c13cf02f9ab73b1c80d50d008907d684ffa17b2315029d"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/a0-resnet50/status.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/status.json",
+    "bytes": 86,
+    "sha256": "6729bb5e9caee80a581da3c8e77aca9296bb48399a51ff51f312d3c6d3593d6d"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/a0-resnet50/metrics.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/metrics.json",
+    "bytes": 1747,
+    "sha256": "99f34a24e4d9e666439539d4e0ac6cf6e88869c661a101f5303ddbb4abd543a1"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/a0-resnet50/resolved_config.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/resolved_config.json",
+    "bytes": 2634,
+    "sha256": "4576ce83c7e80b99255860bbdf32c0ee408c9f967c68d0affd1ff7982dbd7dab"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/a0-resnet50/history.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/history.json",
+    "bytes": 84867,
+    "sha256": "5ab904e75095382ed4e76d4455420b7e4ba0990bdc5abff12a1791a71bdfe35b"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/a0-resnet50/stratified_metrics.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/stratified_metrics.json",
+    "bytes": 5796,
+    "sha256": "4319d0de93cf7fe3ecc178828e9d3675a37729666f054a13e8c172b15d1f7660"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/a0-resnet50/confusion_matrix.csv",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/confusion_matrix.csv",
+    "bytes": 1394,
+    "sha256": "8f5436e58b8273d951264438a17adffe59a093c0befe58100d45f1538eb6d877"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/a0-resnet50/asset_manifest.json",
+    "source": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/asset_manifest.json",
+    "bytes": 1319,
+    "sha256": "16101f1d80a7b74e4fcac0d6883d3db745e7feaf8936a0c30a275dcf1291f4c2"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/ofa/status.json",
+    "source": "outputs/image_experiments/ofa-iab-v7-200-q179-e30/status.json",
+    "bytes": 87,
+    "sha256": "fb63fdf2c94450570fd7feac466a4b4fbc576b9bf290aba2fecd5d1caa9c88c2"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/ofa/metrics.json",
+    "source": "outputs/image_experiments/ofa-iab-v7-200-q179-e30/metrics.json",
+    "bytes": 36611,
+    "sha256": "8243f947adbcb08669a8883dd82534da0e446cc258451fec18b908041f4bcc07"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/ofa/resolved_config.json",
+    "source": "outputs/image_experiments/ofa-iab-v7-200-q179-e30/resolved_config.json",
+    "bytes": 2688,
+    "sha256": "fb4ddf0ef98732423ff0fa2dda1046170a43039c3f706dd5aceeecb1e1c78678"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/ofa/stratified_metrics.json",
+    "source": "outputs/image_experiments/ofa-iab-v7-200-q179-e30/stratified_metrics.json",
+    "bytes": 5737,
+    "sha256": "3694a3f0d72ef70147554e8c9ad428b5d4f50565b9dd602bdf4310af4f602030"
+  },
+  {
+    "file": "v7-200-q179-e30/baselines/ofa/asset_manifest.json",
+    "source": "outputs/image_experiments/ofa-iab-v7-200-q179-e30/asset_manifest.json",
+    "bytes": 1479,
+    "sha256": "63ef126db023a41c24837d4908fbde2f7a9d0f58e41ac8e453695fede805c1bc"
+  },
+  {
+    "file": "v7-200-q179-e30/features/D-DINO/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/D-DINO/status.json",
+    "bytes": 106,
+    "sha256": "9ba63e54127f8ee6791ae04bb0d649b8a18d216ef8bf3fd8858e39df45a5841f"
+  },
+  {
+    "file": "v7-200-q179-e30/features/D-DINO/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/D-DINO/metrics.json",
+    "bytes": 10795,
+    "sha256": "a40dee5ff629d908e511ed67b9a83c0ebfff2b4f5c084d7c17ab52d68721458d"
+  },
+  {
+    "file": "v7-200-q179-e30/features/D-DINO/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/D-DINO/resolved_config.json",
+    "bytes": 9344,
+    "sha256": "d0561710a89f07929fb670086dc734acdf43083374eed98283799864b951ab8a"
+  },
+  {
+    "file": "v7-200-q179-e30/features/D-DINO/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/D-DINO/history.jsonl",
+    "bytes": 21403,
+    "sha256": "4705949438ddeda6763fb359f487834ee7977cf462509ec85e9e40961faf9e19"
+  },
+  {
+    "file": "v7-200-q179-e30/features/D-DINO/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/D-DINO/image-inference-check.json",
+    "bytes": 1897,
+    "sha256": "3b8dfdd1adc0613ef5bdf47a105d56ea8e8719922f34101351fae06901715bba"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-RGB/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-RGB/status.json",
+    "bytes": 107,
+    "sha256": "8979b1ea2411030e1a7e639f28511508b86e9588f6bdef0ea761f5a875f81d0d"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-RGB/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-RGB/metrics.json",
+    "bytes": 6745,
+    "sha256": "10a70d056221ca83157b01eb5160b8552f3eabf605a02de9da1d5b7363e7fdfb"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-RGB/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-RGB/resolved_config.json",
+    "bytes": 9347,
+    "sha256": "ac20224603f00afa55be577b9eeeec98b4d946dfdb948ef7841b578eb6c42a86"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-RGB/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-RGB/history.jsonl",
+    "bytes": 34721,
+    "sha256": "7391262e96b86d111f4ea10519cc789940ab489f3783d08c3c2c29ecf91d3a0f"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-RGB/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-RGB/image-inference-check.json",
+    "bytes": 10747,
+    "sha256": "422d0e901f6aae71d8916bfdda11cf00087651efd2f3ac1c0f3882a4b5210363"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-FP/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-FP/status.json",
+    "bytes": 106,
+    "sha256": "1b05e4f38446854c89721273d26fc05de4f9b28857eab3b8cf9cbe470b3f44cf"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-FP/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-FP/metrics.json",
+    "bytes": 6790,
+    "sha256": "abc69c106ed23736570628b170b84a06436c86c84ead494766fb8dd08cdeadb7"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-FP/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-FP/resolved_config.json",
+    "bytes": 9354,
+    "sha256": "916f2b6b30426d320182ba9adbc330e0a295d415d802d8f1957daad56906aee1"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-FP/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-FP/history.jsonl",
+    "bytes": 34702,
+    "sha256": "534c8d7ce553f5e7ef5edb144b7cac96fcfab9b736ce3dd0802f5b70fae17edb"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-FP/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-FP/image-inference-check.json",
+    "bytes": 10815,
+    "sha256": "530be2784be103301aaa1573f8a39dfba93d9291cf8f88dcdd93df1d6c36b45e"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-Fusion/status.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-Fusion/status.json",
+    "bytes": 107,
+    "sha256": "20b8b4e5f79248c9a364042a2eca570a3f9449ef059ee8800fef192cabba6f95"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-Fusion/metrics.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-Fusion/metrics.json",
+    "bytes": 6711,
+    "sha256": "457450415d461beeedbca3e84941ab239aac83e0c5b53307b08d156293c71d82"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-Fusion/resolved_config.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-Fusion/resolved_config.json",
+    "bytes": 9353,
+    "sha256": "d60042533a1aed2c18cc2188d993b3d28e625714ccea61dc207fb9747a4a1e51"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-Fusion/history.jsonl",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-Fusion/history.jsonl",
+    "bytes": 34674,
+    "sha256": "69b42f737c06d460f60f0009bf8e9e810e50f475313af8b868b3c2451b17fb14"
+  },
+  {
+    "file": "v7-200-q179-e30/features/A-Fusion/image-inference-check.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-Fusion/image-inference-check.json",
+    "bytes": 10828,
+    "sha256": "db26ea635fdca9474737418cc0f35087311380ad8938dd6551ee28ffcd45caac"
+  },
+  {
+    "file": "v7-200-q179-e30/features/state.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/state.json",
+    "bytes": 297,
+    "sha256": "2147b5b4c5717425c425cca96fae5185d5486f253ee56869da32a9089d3fa6b3"
+  },
+  {
+    "file": "v7-200-q179-e30/features/bound-protocol.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/bound-protocol.json",
+    "bytes": 499,
+    "sha256": "4c117712634ded6f5fa6fde5af8d5a7c4b6c1dda1572f7af9741dc6b57590073"
+  },
+  {
+    "file": "v7-200-q179-e30/features/paired-comparison.json",
+    "source": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/paired-comparison.json",
+    "bytes": 256333,
+    "sha256": "3e2bef2b70275e1a8f22f11601f9ff098ca0c1af4452fb20a63382839e62d9e2"
+  },
+  {
+    "file": "v7-200-q179-e30/score-fusion/status.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/status.json",
+    "bytes": 45,
+    "sha256": "56215e66475ac8e1378d52d5e3345f88ee026e1b45c93025bcbc0e00a0eaab88"
+  },
+  {
+    "file": "v7-200-q179-e30/score-fusion/summary.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/summary.json",
+    "bytes": 2582,
+    "sha256": "7f9c605edfc680caedb82bfaed37326ddbe0f5e278e94c81b713bfc12f94e5fb"
+  },
+  {
+    "file": "v7-200-q179-e30/score-fusion/calibration.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/calibration.json",
+    "bytes": 1957,
+    "sha256": "c932ddb9c380b6d0261ed108cdf429f00dda91ffa4f611d74c84872bceb54cda"
+  },
+  {
+    "file": "v7-200-q179-e30/score-fusion/resolved_config.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/resolved_config.json",
+    "bytes": 6542,
+    "sha256": "ead70695326c2016f80f5d1c9c83819c687e2d8cb7478b9fe1556250df608367"
+  },
+  {
+    "file": "v7-200-q179-e30/score-fusion/provenance.json",
+    "source": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/provenance.json",
+    "bytes": 4546,
+    "sha256": "a3304100f229664b80786087e4e21c7726015239085774d04db6a313c1880ddc"
+  },
+  {
+    "file": "followups/D3/evaluate/status.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D3/evaluate/status.json",
+    "bytes": 79,
+    "sha256": "dedc3fa0886e6fdde8346f4c409e7dd7ed6d303e02b28bc0c0070e03cbfd6ba9"
+  },
+  {
+    "file": "followups/D3/evaluate/metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D3/evaluate/metrics.json",
+    "bytes": 12584,
+    "sha256": "c981cd5f2e4bf9dd601ebacc557d98cea9be783246fd311e09e2a958bd5debaa"
+  },
+  {
+    "file": "followups/D3/evaluate/resolved_config.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D3/evaluate/resolved_config.json",
+    "bytes": 6478,
+    "sha256": "388c18f32584cbb44762220f3233d2594b53d233f9a50f970a5a7273d40c13b1"
+  },
+  {
+    "file": "followups/D3/evaluate/launcher.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D3/evaluate/launcher.json",
+    "bytes": 454,
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb"
+  },
+  {
+    "file": "followups/D3/evaluate/asset_manifest.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D3/evaluate/asset_manifest.json",
+    "bytes": 891,
+    "sha256": "7b6f002d69647991a2ec8adc2f0bdd40da9184b42ead62a49051236a46595666"
+  },
+  {
+    "file": "followups/D3/evaluate/training-log.txt",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D3/evaluate/run.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "followups/A2/evaluate/status.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate/status.json",
+    "bytes": 78,
+    "sha256": "283d3581e9a33ac362b15d4649af503a3e209eb0a1801495cc16e966f89316c2"
+  },
+  {
+    "file": "followups/A2/evaluate/metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate/metrics.json",
+    "bytes": 79978,
+    "sha256": "f106060f7c8e1f6b90b16b429c15522706a5af561a53147986e5022d686a7a9f"
+  },
+  {
+    "file": "followups/A2/evaluate/resolved_config.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate/resolved_config.json",
+    "bytes": 6812,
+    "sha256": "3a5d8d11b540694a5b11e0a9a9da66312b497a3d5918bfa6afc71ddf20cefdac"
+  },
+  {
+    "file": "followups/A2/evaluate/launcher.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate/launcher.json",
+    "bytes": 454,
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb"
+  },
+  {
+    "file": "followups/A2/evaluate/asset_manifest.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate/asset_manifest.json",
+    "bytes": 891,
+    "sha256": "01dfc822cedf40191c8c6651bee6bbc60289ebb988ace4f2abebc6baaa896c20"
+  },
+  {
+    "file": "followups/A2/evaluate/training-log.txt",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate/run.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "followups/D1-control/train/status.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/status.json",
+    "bytes": 78,
+    "sha256": "f5e06fe4888069df0b06f6b4954d939dd4f4f924fc45ce6c1eefd268f9460bcc"
+  },
+  {
+    "file": "followups/D1-control/train/metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/metrics.json",
+    "bytes": 1070,
+    "sha256": "03c9b84ad96a7a6f756878de6289ccd84d9a878f4fc9f8ba903c3e721cd59165"
+  },
+  {
+    "file": "followups/D1-control/train/resolved_config.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/resolved_config.json",
+    "bytes": 6317,
+    "sha256": "67feb898b968859aa7fed8877819cb935011e3053cd36ec505dec6504e96992e"
+  },
+  {
+    "file": "followups/D1-control/train/launcher.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/launcher.json",
+    "bytes": 454,
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb"
+  },
+  {
+    "file": "followups/D1-control/train/asset_manifest.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/asset_manifest.json",
+    "bytes": 1832,
+    "sha256": "5a3089b6dad71668e68256081fe22b6b1b8e46f357b5c1ef91c9e32721ba203f"
+  },
+  {
+    "file": "followups/D1-control/train/history.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/history.json",
+    "bytes": 43572,
+    "sha256": "d745732c5600a846a600572d9132ee905c6c69a1a99b3581b713f4dbc8d2256a"
+  },
+  {
+    "file": "followups/D1-control/train/stratified_metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/stratified_metrics.json",
+    "bytes": 6584,
+    "sha256": "9656cc359affaa7153f1422454d17a250d0ec871b4e922d6a3b7526729b3c638"
+  },
+  {
+    "file": "followups/D1-control/train/confusion_matrix.csv",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/confusion_matrix.csv",
+    "bytes": 49,
+    "sha256": "b4c59fa57fa7ead999d997436030b6163fac1cb40d1e084c761f7088eae82eff"
+  },
+  {
+    "file": "followups/D1-control/train/training-log.txt",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/run.log",
+    "bytes": 34299,
+    "sha256": "574241fdc3997c0c41f72df81aeb0b81a27c5eddcd4f1f0cc9705430b9cb1495"
+  },
+  {
+    "file": "followups/D1-control/evaluate/status.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/status.json",
+    "bytes": 79,
+    "sha256": "b897eca0b1fbe5f883c271c7296b194357fd5f1ac41a4ed18c7e85e27e0bcb17"
+  },
+  {
+    "file": "followups/D1-control/evaluate/metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/metrics.json",
+    "bytes": 9206,
+    "sha256": "8660bcef2bb1a212a85b7c9c14a7138f476e35cbce9197dce27079d7c7f0c77f"
+  },
+  {
+    "file": "followups/D1-control/evaluate/resolved_config.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/resolved_config.json",
+    "bytes": 6323,
+    "sha256": "74cc656db55d8333a6b2c360d5e7d99e3fbd3e7a59db32cf0c87c268d7a205eb"
+  },
+  {
+    "file": "followups/D1-control/evaluate/launcher.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/launcher.json",
+    "bytes": 454,
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb"
+  },
+  {
+    "file": "followups/D1-control/evaluate/asset_manifest.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/asset_manifest.json",
+    "bytes": 890,
+    "sha256": "5c149ffb3185af92801dd63839cdfcfc28a0ff8ee28e729555214d6b0c4ca924"
+  },
+  {
+    "file": "followups/D1-control/evaluate/training-log.txt",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/run.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "followups/D1/train/status.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/train/status.json",
+    "bytes": 79,
+    "sha256": "071c85acd7ece5ecf14bf9fffd0a4b9a746b6e68b56d78e06e7669d3cb0fc36f"
+  },
+  {
+    "file": "followups/D1/train/metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/train/metrics.json",
+    "bytes": 1051,
+    "sha256": "614a0a2c192c6fa5340162c842f3132ee2de886eebd74f06fb16b3e93512fd4f"
+  },
+  {
+    "file": "followups/D1/train/resolved_config.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/train/resolved_config.json",
+    "bytes": 6384,
+    "sha256": "d01b9b2248abfe7ee7f4869f4eb1ecf1411b80e8b8da5cfd17d3db39abb12529"
+  },
+  {
+    "file": "followups/D1/train/launcher.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/train/launcher.json",
+    "bytes": 454,
+    "sha256": "8fc03ea345f511312ecb9d5ade5722ca0cce59b4d78261fc9a844bc855ca8beb"
+  },
+  {
+    "file": "followups/D1/train/asset_manifest.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/train/asset_manifest.json",
+    "bytes": 1832,
+    "sha256": "1db7d03df67e9dc1ad5db0b14c55c802738047af63294173244080baf0359d8b"
+  },
+  {
+    "file": "followups/D1/train/history.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/train/history.json",
+    "bytes": 43725,
+    "sha256": "ff7941261c7b1e620089720b88519bd24cde92bab46c43be9842ecc6891b0789"
+  },
+  {
+    "file": "followups/D1/train/stratified_metrics.json",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/train/stratified_metrics.json",
+    "bytes": 6610,
+    "sha256": "652841a4e11e280a16dc7fd3dec214c408e7dc764a2dee35089dd85abef4950c"
+  },
+  {
+    "file": "followups/D1/train/confusion_matrix.csv",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/train/confusion_matrix.csv",
+    "bytes": 49,
+    "sha256": "5fab285ff9730c7e1decafbe1dce593176151ba05b3218ad3e0a6476132917fa"
+  },
+  {
+    "file": "followups/D1/train/training-log.txt",
+    "source": "outputs/image_experiments/followups-v7-200-q179-e30/D1/train/run.log",
+    "bytes": 34452,
+    "sha256": "76b32006b066f0a1d2541a3fa514e76f86b3e3b30b994fe171b182effcff32bf"
+  },
+  {
+    "file": "followups/queue.json",
+    "source": "outputs/image-followups-20261028/followups-q179-queue/queue.json",
+    "bytes": 748,
+    "sha256": "e770afe9b164c9d0d92854a2537e85677cb636ff631071ecfafe71e93ba9d8d4"
+  },
+  {
+    "file": "followups/queue-log.txt",
+    "source": "outputs/image-followups-20261028/followups-q179-queue/queue.log",
+    "bytes": 1138,
+    "sha256": "573ac71e66b4c3e3cd7df4b47cb0800b6c33d3759bb97e23c2345aa6b53c5b5b",
+    "source_mode": "append_only_prefix_snapshot"
+  },
+  {
+    "file": "certificates/completion.json",
+    "source": "outputs/iab-v7-200-q179-e30-monitor/completion.json",
+    "bytes": 495,
+    "sha256": "cfb372a4f8b1004fd86c0f1136d18f32c979835352f52cf941ecf2c283311bc6"
+  },
+  {
+    "file": "certificates/d0-completion-verification.json",
+    "source": "outputs/iab-v7-200-q179-e30-monitor/d0-completion-verification.json",
+    "bytes": 1841,
+    "sha256": "9f08fdd3727f4c46f3f620be36fd7b35ff91ca33e5e554be856ddd8cd4017d5c"
+  }
+]

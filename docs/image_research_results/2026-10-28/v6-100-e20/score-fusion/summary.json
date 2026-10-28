@@ -1,0 +1,102 @@
+{
+  "status": "completed",
+  "metrics": {
+    "ResNet50": {
+      "n": 606,
+      "accuracy": 0.641914191419142,
+      "macro_f1": 0.6356703291216159,
+      "top1": 0.641914191419142,
+      "top3": 0.8481848184818482
+    },
+    "FeatureFusion": {
+      "n": 606,
+      "accuracy": 0.6303630363036303,
+      "macro_f1": 0.6221255471534404,
+      "top1": 0.6303630363036303,
+      "top3": 0.8729372937293729
+    },
+    "Uniform": {
+      "n": 606,
+      "accuracy": 0.6600660066006601,
+      "macro_f1": 0.6541922431707768,
+      "top1": 0.6600660066006601,
+      "top3": 0.9306930693069307
+    },
+    "Calibrated": {
+      "n": 606,
+      "accuracy": 0.6518151815181518,
+      "macro_f1": 0.6454490838995014,
+      "top1": 0.6518151815181518,
+      "top3": 0.9191419141914191
+    }
+  },
+  "alpha_resnet": 0.7000000000000001,
+  "paired_group_bootstrap": {
+    "ResNet50": {
+      "group_n": 151,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "top1": [
+          0.0017035050817601344,
+          0.016725932986289303
+        ],
+        "top3": [
+          0.0416634615384615,
+          0.10000472589792057
+        ],
+        "macro_f1": [
+          0.0015247976376418864,
+          0.01627911590968707
+        ]
+      }
+    },
+    "FeatureFusion": {
+      "group_n": 151,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "top1": [
+          -0.038670208382926494,
+          0.07539999999999998
+        ],
+        "top3": [
+          0.009178432593440186,
+          0.0810356477166823
+        ],
+        "macro_f1": [
+          -0.04206988485914006,
+          0.08214268545688665
+        ]
+      }
+    },
+    "Uniform": {
+      "group_n": 151,
+      "repeats": 1000,
+      "seed": 42,
+      "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+      "delta_95_ci": {
+        "top1": [
+          -0.016980659541139226,
+          -0.0018399850838542522
+        ],
+        "top3": [
+          -0.02230010028551225,
+          -0.0017064846416382506
+        ],
+        "macro_f1": [
+          -0.018341654889272765,
+          -0.0014600710930045336
+        ]
+      }
+    }
+  },
+  "evaluation_n": 606,
+  "calibration_n": 757,
+  "cache_score_max_error": 7.748603820800781e-07,
+  "holdout_scored": false,
+  "backbone_trained": false,
+  "limitation": "Exploratory parent-dev comparison; ResNet used parent dev for checkpoint selection; single seed; no unknown rejection claim"
+}

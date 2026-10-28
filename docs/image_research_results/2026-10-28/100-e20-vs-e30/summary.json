@@ -1,0 +1,3647 @@
+{
+  "status": "completed",
+  "manifest_sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e",
+  "selection_sha256": "286a3c34f5291a355259cfed7170e9b5a6d9d17ddf483f6d32c535cecc4f64b6",
+  "data_path": "outputs/image_experiments/iab-balanced-v6-100",
+  "seed": 42,
+  "bootstrap_repeats": 1000,
+  "holdout_scored": false,
+  "training_executed": false,
+  "image_inference_executed": false,
+  "gpu_used": false,
+  "roles": {
+    "detection": {
+      "train": 25446,
+      "selection": 1604,
+      "calibration": 1771,
+      "evaluation": 1585
+    },
+    "attribution": {
+      "train": 11456,
+      "selection": 605,
+      "calibration": 757,
+      "evaluation": 606
+    }
+  },
+  "certifications": {
+    "outputs/iab-v5-50-e20-monitor": {
+      "status": "verified",
+      "manifest_sha256": "0dd207abf3fb477a89d8c767144a4869b425722415258a3e031ff2bedbf26553",
+      "pipeline_exit_code": 0
+    },
+    "outputs/iab-v6-100-monitor": {
+      "status": "verified",
+      "manifest_sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e",
+      "pipeline_exit_code": 0
+    },
+    "outputs/iab-v6-100-e30-monitor": {
+      "status": "verified",
+      "manifest_sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e",
+      "pipeline_exit_code": 0
+    }
+  },
+  "baseline": {
+    "20": {
+      "D0": {
+        "status": "verified",
+        "path": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/d0-resnet50-iab-v6-100-e20",
+        "selected_epoch": 20,
+        "metrics": {
+          "n": 4960,
+          "accuracy": 0.9629032258064516,
+          "macro_f1": 0.9612851839301613,
+          "auroc": 0.9944826617592714,
+          "fpr_0_5": 0.03241978609625668,
+          "tpr_0_5": 0.9557926829268293
+        },
+        "classes": [
+          "real",
+          "ai"
+        ],
+        "reference_counts": null,
+        "elapsed_seconds": 3901.5972615910014,
+        "declared_model_assets": {
+          "model.pth": {
+            "sha256": "8947baa863435a029f8aec54be4be29ee399b0aaca3bbe68d8752a24b71ecfab",
+            "bytes": 94341674
+          }
+        }
+      },
+      "A0": {
+        "status": "verified",
+        "path": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/a0-resnet50-iab-v6-100-e20",
+        "selected_epoch": 19,
+        "metrics": {
+          "n": 1968,
+          "accuracy": 0.6620934959349594,
+          "macro_f1": 0.6613513125935554,
+          "top1": 0.6620934959349594,
+          "top3": 0.866869918699187
+        },
+        "classes": [
+          "4o",
+          "CogView3_PLUS",
+          "FLUX",
+          "KANDINSKY",
+          "PIXART",
+          "PLAYGROUND_2_5",
+          "SD1_5",
+          "SD2_1",
+          "SD3",
+          "SD3_5",
+          "SDXL",
+          "dalle3",
+          "gemini",
+          "grok3",
+          "hidream",
+          "hunyuan",
+          "ideogram",
+          "infinity",
+          "janus-pro",
+          "kling",
+          "mid-5.2",
+          "mid-6.0"
+        ],
+        "reference_counts": null,
+        "elapsed_seconds": 3167.774296234,
+        "declared_model_assets": {
+          "model.pth": {
+            "sha256": "940932b9aa66543ed08207be4ba6c72050892f27eaf76887365e407d18c3165a",
+            "bytes": 94505898
+          }
+        }
+      },
+      "OFA": {
+        "status": "verified",
+        "path": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/ofa-iab-v6-100-e20",
+        "selected_epoch": null,
+        "metrics": {
+          "n": 1968,
+          "macro_auroc": 0.8956019744087417
+        },
+        "classes": [
+          "4o",
+          "CogView3_PLUS",
+          "FLUX",
+          "KANDINSKY",
+          "PIXART",
+          "PLAYGROUND_2_5",
+          "SD1_5",
+          "SD2_1",
+          "SD3",
+          "SD3_5",
+          "SDXL",
+          "dalle3",
+          "gemini",
+          "grok3",
+          "hidream",
+          "hunyuan",
+          "ideogram",
+          "infinity",
+          "janus-pro",
+          "kling",
+          "mid-5.2",
+          "mid-6.0"
+        ],
+        "reference_counts": {
+          "4o": 100,
+          "CogView3_PLUS": 100,
+          "FLUX": 100,
+          "KANDINSKY": 100,
+          "PIXART": 100,
+          "PLAYGROUND_2_5": 100,
+          "SD1_5": 100,
+          "SD2_1": 100,
+          "SD3": 100,
+          "SD3_5": 100,
+          "SDXL": 100,
+          "dalle3": 100,
+          "gemini": 100,
+          "grok3": 100,
+          "hidream": 100,
+          "hunyuan": 100,
+          "ideogram": 100,
+          "infinity": 100,
+          "janus-pro": 100,
+          "kling": 100,
+          "mid-5.2": 100,
+          "mid-6.0": 100
+        },
+        "elapsed_seconds": 124.23251685300056,
+        "declared_model_assets": {
+          "features.pt": {
+            "sha256": "193b9a06052919e5225d5805b5d786c22d56f154394eaf6225dc54764b0880f1",
+            "bytes": 7384225
+          },
+          "reference_bank.pt": {
+            "sha256": "5e43ba51e17cedc74ac1a69c3784931ae18cf73bf551983201e57cd69e111199",
+            "bytes": 1643978
+          }
+        }
+      }
+    },
+    "30": {
+      "D0": {
+        "status": "verified",
+        "path": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/d0-resnet50-iab-v6-100-e30",
+        "selected_epoch": 30,
+        "metrics": {
+          "n": 4960,
+          "accuracy": 0.963508064516129,
+          "macro_f1": 0.9620662293651987,
+          "auroc": 0.9945250342376418,
+          "fpr_0_5": 0.03977272727272727,
+          "tpr_0_5": 0.9684959349593496
+        },
+        "classes": [
+          "real",
+          "ai"
+        ],
+        "reference_counts": null,
+        "elapsed_seconds": 5917.73997681601,
+        "declared_model_assets": {
+          "model.pth": {
+            "sha256": "8e2f6144d9b3487b3b2292f05a269218c29ee1f3846feeb7d76467b31e990ae3",
+            "bytes": 94341674
+          }
+        }
+      },
+      "A0": {
+        "status": "verified",
+        "path": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/a0-resnet50-iab-v6-100-e30",
+        "selected_epoch": 24,
+        "metrics": {
+          "n": 1968,
+          "accuracy": 0.6727642276422764,
+          "macro_f1": 0.6718633545132079,
+          "top1": 0.6727642276422764,
+          "top3": 0.8770325203252033
+        },
+        "classes": [
+          "4o",
+          "CogView3_PLUS",
+          "FLUX",
+          "KANDINSKY",
+          "PIXART",
+          "PLAYGROUND_2_5",
+          "SD1_5",
+          "SD2_1",
+          "SD3",
+          "SD3_5",
+          "SDXL",
+          "dalle3",
+          "gemini",
+          "grok3",
+          "hidream",
+          "hunyuan",
+          "ideogram",
+          "infinity",
+          "janus-pro",
+          "kling",
+          "mid-5.2",
+          "mid-6.0"
+        ],
+        "reference_counts": null,
+        "elapsed_seconds": 4818.126668261,
+        "declared_model_assets": {
+          "model.pth": {
+            "sha256": "e02878e9c9fabb943ffeeeebd865062f22bfee3f60e620908debfa38d0d9fa0b",
+            "bytes": 94505898
+          }
+        }
+      },
+      "OFA": {
+        "status": "verified",
+        "path": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/ofa-iab-v6-100-e30",
+        "selected_epoch": null,
+        "metrics": {
+          "n": 1968,
+          "macro_auroc": 0.8956019744087417
+        },
+        "classes": [
+          "4o",
+          "CogView3_PLUS",
+          "FLUX",
+          "KANDINSKY",
+          "PIXART",
+          "PLAYGROUND_2_5",
+          "SD1_5",
+          "SD2_1",
+          "SD3",
+          "SD3_5",
+          "SDXL",
+          "dalle3",
+          "gemini",
+          "grok3",
+          "hidream",
+          "hunyuan",
+          "ideogram",
+          "infinity",
+          "janus-pro",
+          "kling",
+          "mid-5.2",
+          "mid-6.0"
+        ],
+        "reference_counts": {
+          "4o": 100,
+          "CogView3_PLUS": 100,
+          "FLUX": 100,
+          "KANDINSKY": 100,
+          "PIXART": 100,
+          "PLAYGROUND_2_5": 100,
+          "SD1_5": 100,
+          "SD2_1": 100,
+          "SD3": 100,
+          "SD3_5": 100,
+          "SDXL": 100,
+          "dalle3": 100,
+          "gemini": 100,
+          "grok3": 100,
+          "hidream": 100,
+          "hunyuan": 100,
+          "ideogram": 100,
+          "infinity": 100,
+          "janus-pro": 100,
+          "kling": 100,
+          "mid-5.2": 100,
+          "mid-6.0": 100
+        },
+        "elapsed_seconds": 99.00765546198818,
+        "declared_model_assets": {
+          "features.pt": {
+            "sha256": "193b9a06052919e5225d5805b5d786c22d56f154394eaf6225dc54764b0880f1",
+            "bytes": 7384225
+          },
+          "reference_bank.pt": {
+            "sha256": "5e43ba51e17cedc74ac1a69c3784931ae18cf73bf551983201e57cd69e111199",
+            "bytes": 1643978
+          }
+        }
+      }
+    }
+  },
+  "features": {
+    "20": {
+      "root_state": {
+        "status": "completed",
+        "exit_code": 0,
+        "worker_pid": 1492542,
+        "worker_exists": false
+      },
+      "D-DINO": {
+        "status": "verified",
+        "path": "outputs/image_experiments/independent-image-tasks-v6-100/D-DINO",
+        "selected_epoch": 20,
+        "metrics": {
+          "n": 1585,
+          "accuracy": 0.9331230283911672,
+          "macro_f1": 0.9291575307809075,
+          "auroc": 0.9791647704096252,
+          "fpr_0_5": 0.05311542390194075,
+          "tpr_0_5": 0.9108910891089109
+        },
+        "image_check": {
+          "role": "selection",
+          "sample_ids": [
+            "iab-0030eb0c8e2e097c20d35b57",
+            "iab-004be1c1a405329c87b8041c"
+          ],
+          "cached_vs_image_max_error": 4.76837158203125e-07,
+          "image_single_batch_max_error": 2.682209014892578e-07,
+          "holdout_scored": false
+        },
+        "head_sha256": "e7685bfb629dbb4e2609b48d6de598e12a9157dc6d335aefa3b87e3cd6ba6920"
+      },
+      "A-RGB": {
+        "status": "verified",
+        "path": "outputs/image_experiments/independent-image-tasks-v6-100/A-RGB",
+        "selected_epoch": 20,
+        "metrics": {
+          "n": 606,
+          "accuracy": 0.39603960396039606,
+          "macro_f1": 0.3846605107625775,
+          "top1": 0.39603960396039606,
+          "top3": 0.6435643564356436
+        },
+        "image_check": {
+          "role": "selection",
+          "sample_ids": [
+            "iab-004be1c1a405329c87b8041c",
+            "iab-01b4314bd3a52552a3ef1ef1"
+          ],
+          "cached_vs_image_max_error": 1.7136335372924805e-07,
+          "image_single_batch_max_error": 7.450580596923828e-08,
+          "holdout_scored": false
+        },
+        "head_sha256": "592f0167b9f61a65783d20164b7a6d52f4b57718b63a66ae59be903878f5fcb1"
+      },
+      "A-FP": {
+        "status": "verified",
+        "path": "outputs/image_experiments/independent-image-tasks-v6-100/A-FP",
+        "selected_epoch": 19,
+        "metrics": {
+          "n": 606,
+          "accuracy": 0.43564356435643564,
+          "macro_f1": 0.40563998361490333,
+          "top1": 0.43564356435643564,
+          "top3": 0.7887788778877888
+        },
+        "image_check": {
+          "role": "selection",
+          "sample_ids": [
+            "iab-004be1c1a405329c87b8041c",
+            "iab-01b4314bd3a52552a3ef1ef1"
+          ],
+          "cached_vs_image_max_error": 4.470348358154297e-08,
+          "image_single_batch_max_error": 2.9802322387695312e-08,
+          "holdout_scored": false
+        },
+        "head_sha256": "eb418654023f93503a3b3dfe34a62493942183cde5acfc38ffbb9f345591238e"
+      },
+      "A-Fusion": {
+        "status": "verified",
+        "path": "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion",
+        "selected_epoch": 19,
+        "metrics": {
+          "n": 606,
+          "accuracy": 0.6303630363036303,
+          "macro_f1": 0.6221255471534404,
+          "top1": 0.6303630363036303,
+          "top3": 0.8729372937293729
+        },
+        "image_check": {
+          "role": "selection",
+          "sample_ids": [
+            "iab-004be1c1a405329c87b8041c",
+            "iab-01b4314bd3a52552a3ef1ef1"
+          ],
+          "cached_vs_image_max_error": 1.341104507446289e-07,
+          "image_single_batch_max_error": 1.4901161193847656e-07,
+          "holdout_scored": false
+        },
+        "head_sha256": "716921764c1a7d20ea7375ba361d4b4464d695b17181c1b259d0711908a4bfb5"
+      }
+    },
+    "30": {
+      "root_state": {
+        "status": "completed",
+        "exit_code": 0,
+        "worker_pid": 3512760,
+        "worker_exists": false
+      },
+      "D-DINO": {
+        "status": "verified",
+        "path": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/D-DINO",
+        "selected_epoch": 30,
+        "metrics": {
+          "n": 1585,
+          "accuracy": 0.9337539432176656,
+          "macro_f1": 0.9298036273081921,
+          "auroc": 0.9796552688976763,
+          "fpr_0_5": 0.05209397344228805,
+          "tpr_0_5": 0.9108910891089109
+        },
+        "image_check": {
+          "role": "selection",
+          "sample_ids": [
+            "iab-0030eb0c8e2e097c20d35b57",
+            "iab-004be1c1a405329c87b8041c"
+          ],
+          "cached_vs_image_max_error": 4.76837158203125e-07,
+          "image_single_batch_max_error": 2.682209014892578e-07,
+          "holdout_scored": false
+        },
+        "head_sha256": "80b643091e9ac46e28515847f15374c7841d95eaee67025a0c4b6e63a92877a9"
+      },
+      "A-RGB": {
+        "status": "verified",
+        "path": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-RGB",
+        "selected_epoch": 26,
+        "metrics": {
+          "n": 606,
+          "accuracy": 0.39603960396039606,
+          "macro_f1": 0.3849123766939536,
+          "top1": 0.39603960396039606,
+          "top3": 0.6485148514851485
+        },
+        "image_check": {
+          "role": "selection",
+          "sample_ids": [
+            "iab-004be1c1a405329c87b8041c",
+            "iab-01b4314bd3a52552a3ef1ef1"
+          ],
+          "cached_vs_image_max_error": 1.862645149230957e-07,
+          "image_single_batch_max_error": 8.195638656616211e-08,
+          "holdout_scored": false
+        },
+        "head_sha256": "687bd78d8b456a0efe187182893429f98e4757df5cfdd21b9c3bdc2a79b43669"
+      },
+      "A-FP": {
+        "status": "verified",
+        "path": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-FP",
+        "selected_epoch": 27,
+        "metrics": {
+          "n": 606,
+          "accuracy": 0.4405940594059406,
+          "macro_f1": 0.4151316968856731,
+          "top1": 0.4405940594059406,
+          "top3": 0.7904290429042904
+        },
+        "image_check": {
+          "role": "selection",
+          "sample_ids": [
+            "iab-004be1c1a405329c87b8041c",
+            "iab-01b4314bd3a52552a3ef1ef1"
+          ],
+          "cached_vs_image_max_error": 2.9802322387695312e-08,
+          "image_single_batch_max_error": 2.9802322387695312e-08,
+          "holdout_scored": false
+        },
+        "head_sha256": "c460c0f03be502bf0f974ff58b5f2a7b52bd805ef95ab9494ce0d94050794b55"
+      },
+      "A-Fusion": {
+        "status": "verified",
+        "path": "outputs/image_experiments/independent-image-tasks-v6-100-e30-gpu/A-Fusion",
+        "selected_epoch": 29,
+        "metrics": {
+          "n": 606,
+          "accuracy": 0.6353135313531353,
+          "macro_f1": 0.6273710012950277,
+          "top1": 0.6353135313531353,
+          "top3": 0.8795379537953796
+        },
+        "image_check": {
+          "role": "selection",
+          "sample_ids": [
+            "iab-004be1c1a405329c87b8041c",
+            "iab-01b4314bd3a52552a3ef1ef1"
+          ],
+          "cached_vs_image_max_error": 1.1920928955078125e-07,
+          "image_single_batch_max_error": 8.940696716308594e-08,
+          "holdout_scored": false
+        },
+        "head_sha256": "be11089b07716ad536e30630e4f45b85f05af95ea5e57875e0e40f63734b60b6"
+      }
+    }
+  },
+  "paired": {
+    "D0/full_dev": {
+      "n": 4960,
+      "before": {
+        "n": 4960,
+        "accuracy": 0.9629032258064516,
+        "macro_f1": 0.9612851839301613,
+        "auroc": 0.9944826617592714,
+        "fpr_0_5": 0.03241978609625668,
+        "tpr_0_5": 0.9557926829268293
+      },
+      "after": {
+        "n": 4960,
+        "accuracy": 0.963508064516129,
+        "macro_f1": 0.9620662293651987,
+        "auroc": 0.9945250342376418,
+        "fpr_0_5": 0.03977272727272727,
+        "tpr_0_5": 0.9684959349593496
+      },
+      "delta": {
+        "accuracy": 0.0006048387096774244,
+        "macro_f1": 0.0007810454350374307,
+        "auroc": 4.237247837046709e-05,
+        "fpr_0_5": 0.00735294117647059,
+        "tpr_0_5": 0.012703252032520318
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 3476,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "accuracy": [
+            -0.003555647558708977,
+            0.005427379616529215
+          ],
+          "macro_f1": [
+            -0.0035721171736529723,
+            0.005885640740907354
+          ],
+          "auroc": [
+            -0.00085463178626628,
+            0.001022283065737417
+          ],
+          "fpr_0_5": [
+            0.0029877021984764224,
+            0.011997205347743456
+          ],
+          "tpr_0_5": [
+            0.005197090269731888,
+            0.02202522878879769
+          ]
+        },
+        "note": "Same original-group draws for both models; weighted Mann-Whitney AUROC including ties; fixed threshold 0.5"
+      }
+    },
+    "D0/evaluation": {
+      "n": 1585,
+      "before": {
+        "n": 1585,
+        "accuracy": 0.967192429022082,
+        "macro_f1": 0.9654802112232452,
+        "auroc": 0.995464995937796,
+        "fpr_0_5": 0.03677221654749745,
+        "tpr_0_5": 0.9735973597359736
+      },
+      "after": {
+        "n": 1585,
+        "accuracy": 0.9640378548895899,
+        "macro_f1": 0.962281772216055,
+        "auroc": 0.9948801059881269,
+        "fpr_0_5": 0.0449438202247191,
+        "tpr_0_5": 0.9785478547854786
+      },
+      "delta": {
+        "accuracy": -0.003154574132492094,
+        "macro_f1": -0.0031984390071901903,
+        "auroc": -0.0005848899496690985,
+        "fpr_0_5": 0.008171603677221653,
+        "tpr_0_5": 0.004950495049504955
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 1128,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "accuracy": [
+            -0.008687422334492531,
+            0.002751164335468059
+          ],
+          "macro_f1": [
+            -0.00933854111644922,
+            0.002884026456206304
+          ],
+          "auroc": [
+            -0.002369655774865528,
+            0.0008186780112686697
+          ],
+          "fpr_0_5": [
+            0.0010141987829614604,
+            0.01634404375195377
+          ],
+          "tpr_0_5": [
+            -0.002749493414387022,
+            0.014816345270890636
+          ]
+        },
+        "note": "Same original-group draws for both models; weighted Mann-Whitney AUROC including ties; fixed threshold 0.5"
+      }
+    },
+    "A0/full_dev": {
+      "n": 1968,
+      "before": {
+        "n": 1968,
+        "accuracy": 0.6620934959349594,
+        "macro_f1": 0.6613513125935554,
+        "top1": 0.6620934959349594,
+        "top3": 0.866869918699187
+      },
+      "after": {
+        "n": 1968,
+        "accuracy": 0.6727642276422764,
+        "macro_f1": 0.6718633545132079,
+        "top1": 0.6727642276422764,
+        "top3": 0.8770325203252033
+      },
+      "delta": {
+        "accuracy": 0.010670731707317027,
+        "macro_f1": 0.010512041919652493,
+        "top1": 0.010670731707317027,
+        "top3": 0.010162601626016343
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 489,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "top1": [
+            -0.004475227224353226,
+            0.026122429360829348
+          ],
+          "top3": [
+            -0.0010038500885579116,
+            0.021483591889048703
+          ],
+          "macro_f1": [
+            -0.004910536849586497,
+            0.026369519783785364
+          ]
+        }
+      }
+    },
+    "A0/evaluation": {
+      "n": 606,
+      "before": {
+        "n": 606,
+        "accuracy": 0.641914191419142,
+        "macro_f1": 0.6356703291216159,
+        "top1": 0.641914191419142,
+        "top3": 0.8481848184818482
+      },
+      "after": {
+        "n": 606,
+        "accuracy": 0.6518151815181518,
+        "macro_f1": 0.6472057222927492,
+        "top1": 0.6518151815181518,
+        "top3": 0.8745874587458746
+      },
+      "delta": {
+        "accuracy": 0.009900990099009799,
+        "macro_f1": 0.011535393171133279,
+        "top1": 0.009900990099009799,
+        "top3": 0.02640264026402639
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 151,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "top1": [
+            -0.01805316914853002,
+            0.03633467945262645
+          ],
+          "top3": [
+            0.0023128909136259927,
+            0.05144285714285708
+          ],
+          "macro_f1": [
+            -0.017867892950612786,
+            0.04038661903212836
+          ]
+        }
+      }
+    },
+    "OFA/full_dev": {
+      "n": 1968,
+      "before": {
+        "n": 1968,
+        "macro_auroc": 0.8956019744087417
+      },
+      "after": {
+        "n": 1968,
+        "macro_auroc": 0.8956019744087417
+      },
+      "delta": {
+        "macro_auroc": 0.0
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true
+    },
+    "OFA/evaluation": {
+      "n": 606,
+      "before": {
+        "n": 606,
+        "macro_auroc": 0.8927237605153526
+      },
+      "after": {
+        "n": 606,
+        "macro_auroc": 0.8927237605153526
+      },
+      "delta": {
+        "macro_auroc": 0.0
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true
+    },
+    "D-DINO/evaluation": {
+      "n": 1585,
+      "before": {
+        "n": 1585,
+        "accuracy": 0.9331230283911672,
+        "macro_f1": 0.9291575307809075,
+        "auroc": 0.9791647704096252,
+        "fpr_0_5": 0.05311542390194075,
+        "tpr_0_5": 0.9108910891089109
+      },
+      "after": {
+        "n": 1585,
+        "accuracy": 0.9337539432176656,
+        "macro_f1": 0.9298036273081921,
+        "auroc": 0.9796552688976763,
+        "fpr_0_5": 0.05209397344228805,
+        "tpr_0_5": 0.9108910891089109
+      },
+      "delta": {
+        "accuracy": 0.0006309148264983522,
+        "macro_f1": 0.0006460965272846453,
+        "auroc": 0.0004904984880510499,
+        "fpr_0_5": -0.001021450459652705,
+        "tpr_0_5": 0.0
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 1128,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "accuracy": [
+            0.0,
+            0.0022640459264083837
+          ],
+          "macro_f1": [
+            0.0,
+            0.002372439293685901
+          ],
+          "auroc": [
+            0.00027669128612290426,
+            0.000773804961174701
+          ],
+          "fpr_0_5": [
+            -0.0040242461820267006,
+            0.0
+          ],
+          "tpr_0_5": [
+            0.0,
+            0.0
+          ]
+        },
+        "note": "Same original-group draws for both models; weighted Mann-Whitney AUROC including ties; fixed threshold 0.5"
+      }
+    },
+    "A-RGB/evaluation": {
+      "n": 606,
+      "before": {
+        "n": 606,
+        "accuracy": 0.39603960396039606,
+        "macro_f1": 0.3846605107625775,
+        "top1": 0.39603960396039606,
+        "top3": 0.6435643564356436
+      },
+      "after": {
+        "n": 606,
+        "accuracy": 0.39603960396039606,
+        "macro_f1": 0.3849123766939536,
+        "top1": 0.39603960396039606,
+        "top3": 0.6485148514851485
+      },
+      "delta": {
+        "accuracy": 0.0,
+        "macro_f1": 0.00025186593137610513,
+        "top1": 0.0,
+        "top3": 0.004950495049504955
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 151,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "top1": [
+            -0.0048090559157212154,
+            0.004869996061874355
+          ],
+          "top3": [
+            -0.0018488599056473848,
+            0.012527409041372891
+          ],
+          "macro_f1": [
+            -0.005085809553887949,
+            0.005972692233665938
+          ]
+        }
+      }
+    },
+    "A-FP/evaluation": {
+      "n": 606,
+      "before": {
+        "n": 606,
+        "accuracy": 0.43564356435643564,
+        "macro_f1": 0.40563998361490333,
+        "top1": 0.43564356435643564,
+        "top3": 0.7887788778877888
+      },
+      "after": {
+        "n": 606,
+        "accuracy": 0.4405940594059406,
+        "macro_f1": 0.4151316968856731,
+        "top1": 0.4405940594059406,
+        "top3": 0.7904290429042904
+      },
+      "delta": {
+        "accuracy": 0.004950495049504955,
+        "macro_f1": 0.009491713270769753,
+        "top1": 0.004950495049504955,
+        "top3": 0.0016501650165016146
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 151,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "top1": [
+            -0.005192479754590047,
+            0.016211834251606987
+          ],
+          "top3": [
+            -0.0054813546423135235,
+            0.009701665710331797
+          ],
+          "macro_f1": [
+            -0.003020046678558511,
+            0.02282272038853081
+          ]
+        }
+      }
+    },
+    "A-Fusion/evaluation": {
+      "n": 606,
+      "before": {
+        "n": 606,
+        "accuracy": 0.6303630363036303,
+        "macro_f1": 0.6221255471534404,
+        "top1": 0.6303630363036303,
+        "top3": 0.8729372937293729
+      },
+      "after": {
+        "n": 606,
+        "accuracy": 0.6353135313531353,
+        "macro_f1": 0.6273710012950277,
+        "top1": 0.6353135313531353,
+        "top3": 0.8795379537953796
+      },
+      "delta": {
+        "accuracy": 0.004950495049504955,
+        "macro_f1": 0.00524545414158728,
+        "top1": 0.004950495049504955,
+        "top3": 0.0066006600660066805
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 151,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "top1": [
+            -0.0017104495037945089,
+            0.012723051490251321
+          ],
+          "top3": [
+            0.001538284839203627,
+            0.01377235131000192
+          ],
+          "macro_f1": [
+            -0.0023150156305859677,
+            0.013301661496115688
+          ]
+        }
+      }
+    },
+    "score-fusion/ResNet50/evaluation": {
+      "n": 606,
+      "before": {
+        "n": 606,
+        "accuracy": 0.641914191419142,
+        "macro_f1": 0.6356703291216159,
+        "top1": 0.641914191419142,
+        "top3": 0.8481848184818482
+      },
+      "after": {
+        "n": 606,
+        "accuracy": 0.6518151815181518,
+        "macro_f1": 0.6472057222927492,
+        "top1": 0.6518151815181518,
+        "top3": 0.8745874587458746
+      },
+      "delta": {
+        "accuracy": 0.009900990099009799,
+        "macro_f1": 0.011535393171133279,
+        "top1": 0.009900990099009799,
+        "top3": 0.02640264026402639
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 151,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "top1": [
+            -0.01805316914853002,
+            0.03633467945262645
+          ],
+          "top3": [
+            0.0023128909136259927,
+            0.05144285714285708
+          ],
+          "macro_f1": [
+            -0.017867892950612786,
+            0.04038661903212836
+          ]
+        }
+      }
+    },
+    "score-fusion/FeatureFusion/evaluation": {
+      "n": 606,
+      "before": {
+        "n": 606,
+        "accuracy": 0.6303630363036303,
+        "macro_f1": 0.6221255471534404,
+        "top1": 0.6303630363036303,
+        "top3": 0.8729372937293729
+      },
+      "after": {
+        "n": 606,
+        "accuracy": 0.6353135313531353,
+        "macro_f1": 0.6273710012950277,
+        "top1": 0.6353135313531353,
+        "top3": 0.8795379537953796
+      },
+      "delta": {
+        "accuracy": 0.004950495049504955,
+        "macro_f1": 0.00524545414158728,
+        "top1": 0.004950495049504955,
+        "top3": 0.0066006600660066805
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 151,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "top1": [
+            -0.0017104495037945089,
+            0.012723051490251321
+          ],
+          "top3": [
+            0.001538284839203627,
+            0.01377235131000192
+          ],
+          "macro_f1": [
+            -0.0023150156305859677,
+            0.013301661496115688
+          ]
+        }
+      }
+    },
+    "score-fusion/Uniform/evaluation": {
+      "n": 606,
+      "before": {
+        "n": 606,
+        "accuracy": 0.6600660066006601,
+        "macro_f1": 0.6541922431707768,
+        "top1": 0.6600660066006601,
+        "top3": 0.9306930693069307
+      },
+      "after": {
+        "n": 606,
+        "accuracy": 0.665016501650165,
+        "macro_f1": 0.6604970099489946,
+        "top1": 0.665016501650165,
+        "top3": 0.9405940594059405
+      },
+      "delta": {
+        "accuracy": 0.004950495049504955,
+        "macro_f1": 0.006304766778217785,
+        "top1": 0.004950495049504955,
+        "top3": 0.009900990099009799
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 151,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "top1": [
+            -0.01876687040781782,
+            0.03090254828523171
+          ],
+          "top3": [
+            -0.011051258440761177,
+            0.03175746569814365
+          ],
+          "macro_f1": [
+            -0.01754508498003487,
+            0.03373504247849742
+          ]
+        }
+      }
+    },
+    "score-fusion/Calibrated/evaluation": {
+      "n": 606,
+      "before": {
+        "n": 606,
+        "accuracy": 0.6518151815181518,
+        "macro_f1": 0.6454490838995014,
+        "top1": 0.6518151815181518,
+        "top3": 0.9191419141914191
+      },
+      "after": {
+        "n": 606,
+        "accuracy": 0.6600660066006601,
+        "macro_f1": 0.6555622431468865,
+        "top1": 0.6600660066006601,
+        "top3": 0.9306930693069307
+      },
+      "delta": {
+        "accuracy": 0.008250825082508295,
+        "macro_f1": 0.010113159247385095,
+        "top1": 0.008250825082508295,
+        "top3": 0.011551155115511635
+      },
+      "same_sample_ids": true,
+      "same_labels": true,
+      "same_class_vocabulary": true,
+      "paired_group_bootstrap": {
+        "group_n": 151,
+        "repeats": 1000,
+        "seed": 42,
+        "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+        "delta_95_ci": {
+          "top1": [
+            -0.015491619738315246,
+            0.03249600805331854
+          ],
+          "top3": [
+            -0.012371525898481813,
+            0.035187389770723124
+          ],
+          "macro_f1": [
+            -0.014254840530993096,
+            0.03775058614138554
+          ]
+        }
+      }
+    }
+  },
+  "first20_curves": {
+    "D0": {
+      "epochs_compared": 20,
+      "exact_numeric_match": true,
+      "max_abs_numeric_difference": 0.0,
+      "fields": {
+        "epoch": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.auroc": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.threshold_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.fpr_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.tpr_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.real_count": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.ai_count": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.real": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.ai": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.auroc": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.threshold_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.fpr_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.tpr_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.real_count": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.ai_count": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.dev_target_fpr": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.dev_threshold": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.dev_fpr": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.dev_tpr": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.real": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.ai": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.real": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.ai": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.real": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.ai": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "lr": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        }
+      },
+      "excluded_fields": [
+        "seconds",
+        "elapsed_seconds"
+      ],
+      "note": "Numeric histories only; timing excluded; no new training or checkpoint inference"
+    },
+    "A0": {
+      "epochs_compared": 20,
+      "exact_numeric_match": true,
+      "max_abs_numeric_difference": 0.0,
+      "fields": {
+        "epoch": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.top1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.top3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.top1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.top3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev.class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train_class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "dev_class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "lr": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        }
+      },
+      "excluded_fields": [
+        "seconds",
+        "elapsed_seconds"
+      ],
+      "note": "Numeric histories only; timing excluded; no new training or checkpoint inference"
+    },
+    "D-DINO": {
+      "epochs_compared": 20,
+      "exact_numeric_match": true,
+      "max_abs_numeric_difference": 0.0,
+      "fields": {
+        "epoch": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "learning_rate": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.auroc": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.threshold_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.fpr_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.tpr_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.real_count": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.ai_count": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.real": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.ai": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.auroc": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.threshold_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.fpr_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.tpr_0_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.real_count": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.ai_count": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.real": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.ai": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        }
+      },
+      "excluded_fields": [
+        "seconds",
+        "elapsed_seconds"
+      ],
+      "note": "Numeric histories only; timing excluded; no new training or checkpoint inference"
+    },
+    "A-RGB": {
+      "epochs_compared": 20,
+      "exact_numeric_match": true,
+      "max_abs_numeric_difference": 0.0,
+      "fields": {
+        "epoch": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "learning_rate": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.top1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.top3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.top1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.top3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        }
+      },
+      "excluded_fields": [
+        "seconds",
+        "elapsed_seconds"
+      ],
+      "note": "Numeric histories only; timing excluded; no new training or checkpoint inference"
+    },
+    "A-FP": {
+      "epochs_compared": 20,
+      "exact_numeric_match": true,
+      "max_abs_numeric_difference": 0.0,
+      "fields": {
+        "epoch": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "learning_rate": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.top1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.top3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.top1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.top3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        }
+      },
+      "excluded_fields": [
+        "seconds",
+        "elapsed_seconds"
+      ],
+      "note": "Numeric histories only; timing excluded; no new training or checkpoint inference"
+    },
+    "A-Fusion": {
+      "epochs_compared": 20,
+      "exact_numeric_match": true,
+      "max_abs_numeric_difference": 0.0,
+      "fields": {
+        "epoch": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "learning_rate": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.top1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.top3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "train.class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.n": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.accuracy": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.macro_f1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.top1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.top3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.loss": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.KANDINSKY": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.gemini": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD2_1": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.FLUX": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.mid-6.0": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.dalle3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.hunyuan": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SDXL": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.PLAYGROUND_2_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.mid-5.2": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.hidream": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.kling": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.ideogram": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.PIXART": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.janus-pro": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.infinity": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD1_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.CogView3_PLUS": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.4o": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.grok3": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        },
+        "selection.class_counts.SD3_5": {
+          "max_abs_difference": 0.0,
+          "differing_epochs": []
+        }
+      },
+      "excluded_fields": [
+        "seconds",
+        "elapsed_seconds"
+      ],
+      "note": "Numeric histories only; timing excluded; no new training or checkpoint inference"
+    }
+  },
+  "limitations": [
+    "Single seed; exploratory development roles; original ResNet checkpoints used parent dev for selection",
+    "Evaluation roles share earlier development history and are not an independent test",
+    "OFA is frozen reference verification with epoch=null; macro AUROC is not a classification probability",
+    "Calibrated score fusion uses only 757 AI calibration cases; 50/50 is a fixed separate control",
+    "Bootstrap intervals are paired original-group percentiles conditional on selected checkpoints and fitted alpha/thresholds"
+  ],
+  "detection_thresholds": {
+    "ResNet50/e20": {
+      "fixed_0.5": {
+        "n": 1585,
+        "accuracy": 0.967192429022082,
+        "macro_f1": 0.9654802112232452,
+        "auroc": 0.995464995937796,
+        "threshold": 0.5,
+        "negative_count": 979,
+        "positive_count": 606,
+        "fpr": 0.03677221654749745,
+        "tpr": 0.9735973597359736,
+        "fpr_resolution": 0.0010214504596527069,
+        "fpr_wilson95": [
+          0.026678215310097543,
+          0.05048729102873339
+        ],
+        "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+      },
+      "calibration_n": 1771,
+      "calibration_real_n": 1014,
+      "evaluation_n": 1585,
+      "calibrated": {
+        "0.01": {
+          "threshold": 0.9842690229415895,
+          "calibration_fpr": 0.009861932938856016,
+          "evaluation": {
+            "n": 1585,
+            "accuracy": 0.9583596214511041,
+            "macro_f1": 0.9554509837322205,
+            "auroc": 0.995464995937796,
+            "threshold": 0.9842690229415895,
+            "negative_count": 979,
+            "positive_count": 606,
+            "fpr": 0.017364657814096015,
+            "tpr": 0.9191419141914191,
+            "fpr_resolution": 0.0010214504596527069,
+            "fpr_wilson95": [
+              0.010869515957854797,
+              0.0276325827082921
+            ],
+            "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+          }
+        },
+        "0.05": {
+          "threshold": 0.05186795443296433,
+          "calibration_fpr": 0.04930966469428008,
+          "evaluation": {
+            "n": 1585,
+            "accuracy": 0.9615141955835962,
+            "macro_f1": 0.9598358956634732,
+            "auroc": 0.995464995937796,
+            "threshold": 0.05186795443296433,
+            "negative_count": 979,
+            "positive_count": 606,
+            "fpr": 0.056179775280898875,
+            "tpr": 0.9900990099009901,
+            "fpr_resolution": 0.0010214504596527069,
+            "fpr_wilson95": [
+              0.043414348979987964,
+              0.07241456503152702
+            ],
+            "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+          }
+        }
+      }
+    },
+    "D-DINO/e20": {
+      "fixed_0.5": {
+        "n": 1585,
+        "accuracy": 0.9331230283911672,
+        "macro_f1": 0.9291575307809075,
+        "auroc": 0.9791647704096252,
+        "threshold": 0.5,
+        "negative_count": 979,
+        "positive_count": 606,
+        "fpr": 0.05311542390194075,
+        "tpr": 0.9108910891089109,
+        "fpr_resolution": 0.0010214504596527069,
+        "fpr_wilson95": [
+          0.04073314862989765,
+          0.06899101680171985
+        ],
+        "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+      },
+      "calibration_n": 1771,
+      "calibration_real_n": 1014,
+      "evaluation_n": 1585,
+      "calibrated": {
+        "0.01": {
+          "threshold": 0.7624824643135072,
+          "calibration_fpr": 0.009861932938856016,
+          "evaluation": {
+            "n": 1585,
+            "accuracy": 0.9198738170347003,
+            "macro_f1": 0.9118573428422925,
+            "auroc": 0.9791647704096252,
+            "threshold": 0.7624824643135072,
+            "negative_count": 979,
+            "positive_count": 606,
+            "fpr": 0.011235955056179775,
+            "tpr": 0.8085808580858086,
+            "fpr_resolution": 0.0010214504596527069,
+            "fpr_wilson95": [
+              0.006285398801359049,
+              0.020007202704992892
+            ],
+            "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+          }
+        },
+        "0.05": {
+          "threshold": 0.48306593298912054,
+          "calibration_fpr": 0.04930966469428008,
+          "evaluation": {
+            "n": 1585,
+            "accuracy": 0.9331230283911672,
+            "macro_f1": 0.9292021898819096,
+            "auroc": 0.9791647704096252,
+            "threshold": 0.48306593298912054,
+            "negative_count": 979,
+            "positive_count": 606,
+            "fpr": 0.054136874361593465,
+            "tpr": 0.9125412541254125,
+            "fpr_resolution": 0.0010214504596527069,
+            "fpr_wilson95": [
+              0.04162552311054471,
+              0.07013355851437195
+            ],
+            "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+          }
+        }
+      }
+    },
+    "ResNet50/e30": {
+      "fixed_0.5": {
+        "n": 1585,
+        "accuracy": 0.9640378548895899,
+        "macro_f1": 0.962281772216055,
+        "auroc": 0.9948801059881269,
+        "threshold": 0.5,
+        "negative_count": 979,
+        "positive_count": 606,
+        "fpr": 0.0449438202247191,
+        "tpr": 0.9785478547854786,
+        "fpr_resolution": 0.0010214504596527069,
+        "fpr_wilson95": [
+          0.033648307189066994,
+          0.059796528696157224
+        ],
+        "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+      },
+      "calibration_n": 1771,
+      "calibration_real_n": 1014,
+      "evaluation_n": 1585,
+      "calibrated": {
+        "0.01": {
+          "threshold": 0.9993656277656556,
+          "calibration_fpr": 0.009861932938856016,
+          "evaluation": {
+            "n": 1585,
+            "accuracy": 0.9577287066246056,
+            "macro_f1": 0.9545690033929397,
+            "auroc": 0.9948801059881269,
+            "threshold": 0.9993656277656556,
+            "negative_count": 979,
+            "positive_count": 606,
+            "fpr": 0.011235955056179775,
+            "tpr": 0.9075907590759076,
+            "fpr_resolution": 0.0010214504596527069,
+            "fpr_wilson95": [
+              0.006285398801359049,
+              0.020007202704992892
+            ],
+            "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+          }
+        },
+        "0.05": {
+          "threshold": 0.11892634630203248,
+          "calibration_fpr": 0.04930966469428008,
+          "evaluation": {
+            "n": 1585,
+            "accuracy": 0.9589905362776026,
+            "macro_f1": 0.9572021839037008,
+            "auroc": 0.9948801059881269,
+            "threshold": 0.11892634630203248,
+            "negative_count": 979,
+            "positive_count": 606,
+            "fpr": 0.05822267620020429,
+            "tpr": 0.9867986798679867,
+            "fpr_resolution": 0.0010214504596527069,
+            "fpr_wilson95": [
+              0.045208384481368595,
+              0.0746903619167447
+            ],
+            "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+          }
+        }
+      }
+    },
+    "D-DINO/e30": {
+      "fixed_0.5": {
+        "n": 1585,
+        "accuracy": 0.9337539432176656,
+        "macro_f1": 0.9298036273081921,
+        "auroc": 0.9796552688976763,
+        "threshold": 0.5,
+        "negative_count": 979,
+        "positive_count": 606,
+        "fpr": 0.05209397344228805,
+        "tpr": 0.9108910891089109,
+        "fpr_resolution": 0.0010214504596527069,
+        "fpr_wilson95": [
+          0.03984218154527204,
+          0.06784706769304628
+        ],
+        "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+      },
+      "calibration_n": 1771,
+      "calibration_real_n": 1014,
+      "evaluation_n": 1585,
+      "calibrated": {
+        "0.01": {
+          "threshold": 0.7709340453147889,
+          "calibration_fpr": 0.009861932938856016,
+          "evaluation": {
+            "n": 1585,
+            "accuracy": 0.9205047318611987,
+            "macro_f1": 0.9125879329241178,
+            "auroc": 0.9796552688976763,
+            "threshold": 0.7709340453147889,
+            "negative_count": 979,
+            "positive_count": 606,
+            "fpr": 0.011235955056179775,
+            "tpr": 0.8102310231023102,
+            "fpr_resolution": 0.0010214504596527069,
+            "fpr_wilson95": [
+              0.006285398801359049,
+              0.020007202704992892
+            ],
+            "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+          }
+        },
+        "0.05": {
+          "threshold": 0.48436820507049566,
+          "calibration_fpr": 0.04930966469428008,
+          "evaluation": {
+            "n": 1585,
+            "accuracy": 0.9331230283911672,
+            "macro_f1": 0.9292021898819096,
+            "auroc": 0.9796552688976763,
+            "threshold": 0.48436820507049566,
+            "negative_count": 979,
+            "positive_count": 606,
+            "fpr": 0.054136874361593465,
+            "tpr": 0.9125412541254125,
+            "fpr_resolution": 0.0010214504596527069,
+            "fpr_wilson95": [
+              0.04162552311054471,
+              0.07013355851437195
+            ],
+            "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+          }
+        }
+      }
+    }
+  },
+  "feature_cache_sha256": {
+    "20": {
+      "rgb": "59f12baab1a5610549d806b54787c3b33bcea67a93bcfd756f2acb9628b814b5",
+      "fingerprint": "d619774af285701cbf2f907446e28e5091e9fc28b6fa3e3665121807a8c773e7"
+    },
+    "30": {
+      "rgb": "59f12baab1a5610549d806b54787c3b33bcea67a93bcfd756f2acb9628b814b5",
+      "fingerprint": "d619774af285701cbf2f907446e28e5091e9fc28b6fa3e3665121807a8c773e7"
+    }
+  },
+  "failed_cpu_diagnostic": {
+    "path": "outputs/image_experiments/independent-image-tasks-v6-100-e30",
+    "used": false,
+    "status": "failed"
+  },
+  "stale_progress_note": {
+    "observed": {
+      "status": "running",
+      "job": "A-Fusion",
+      "phase": "training_head"
+    },
+    "authority": "completed state.json, all four status.json files, full histories and saved image-inference-checks"
+  },
+  "source_distribution": [
+    {
+      "role": "train",
+      "source": "4o",
+      "n": 520,
+      "original_group_n": 510
+    },
+    {
+      "role": "train",
+      "source": "CogView3_PLUS",
+      "n": 520,
+      "original_group_n": 508
+    },
+    {
+      "role": "train",
+      "source": "FLUX",
+      "n": 517,
+      "original_group_n": 506
+    },
+    {
+      "role": "train",
+      "source": "KANDINSKY",
+      "n": 529,
+      "original_group_n": 511
+    },
+    {
+      "role": "train",
+      "source": "PIXART",
+      "n": 528,
+      "original_group_n": 512
+    },
+    {
+      "role": "train",
+      "source": "PLAYGROUND_2_5",
+      "n": 528,
+      "original_group_n": 515
+    },
+    {
+      "role": "train",
+      "source": "SD1_5",
+      "n": 517,
+      "original_group_n": 505
+    },
+    {
+      "role": "train",
+      "source": "SD2_1",
+      "n": 520,
+      "original_group_n": 509
+    },
+    {
+      "role": "train",
+      "source": "SD3",
+      "n": 521,
+      "original_group_n": 503
+    },
+    {
+      "role": "train",
+      "source": "SD3_5",
+      "n": 519,
+      "original_group_n": 504
+    },
+    {
+      "role": "train",
+      "source": "SDXL",
+      "n": 522,
+      "original_group_n": 503
+    },
+    {
+      "role": "train",
+      "source": "dalle3",
+      "n": 514,
+      "original_group_n": 497
+    },
+    {
+      "role": "train",
+      "source": "gemini",
+      "n": 517,
+      "original_group_n": 506
+    },
+    {
+      "role": "train",
+      "source": "grok3",
+      "n": 528,
+      "original_group_n": 514
+    },
+    {
+      "role": "train",
+      "source": "hidream",
+      "n": 532,
+      "original_group_n": 520
+    },
+    {
+      "role": "train",
+      "source": "hunyuan",
+      "n": 514,
+      "original_group_n": 496
+    },
+    {
+      "role": "train",
+      "source": "ideogram",
+      "n": 504,
+      "original_group_n": 488
+    },
+    {
+      "role": "train",
+      "source": "infinity",
+      "n": 530,
+      "original_group_n": 509
+    },
+    {
+      "role": "train",
+      "source": "janus-pro",
+      "n": 518,
+      "original_group_n": 502
+    },
+    {
+      "role": "train",
+      "source": "kling",
+      "n": 521,
+      "original_group_n": 505
+    },
+    {
+      "role": "train",
+      "source": "mid-5.2",
+      "n": 534,
+      "original_group_n": 518
+    },
+    {
+      "role": "train",
+      "source": "mid-6.0",
+      "n": 503,
+      "original_group_n": 492
+    },
+    {
+      "role": "train",
+      "source": "real",
+      "n": 13990,
+      "original_group_n": 13958
+    },
+    {
+      "role": "selection",
+      "source": "4o",
+      "n": 27,
+      "original_group_n": 27
+    },
+    {
+      "role": "selection",
+      "source": "CogView3_PLUS",
+      "n": 26,
+      "original_group_n": 26
+    },
+    {
+      "role": "selection",
+      "source": "FLUX",
+      "n": 22,
+      "original_group_n": 22
+    },
+    {
+      "role": "selection",
+      "source": "KANDINSKY",
+      "n": 29,
+      "original_group_n": 27
+    },
+    {
+      "role": "selection",
+      "source": "PIXART",
+      "n": 30,
+      "original_group_n": 28
+    },
+    {
+      "role": "selection",
+      "source": "PLAYGROUND_2_5",
+      "n": 32,
+      "original_group_n": 32
+    },
+    {
+      "role": "selection",
+      "source": "SD1_5",
+      "n": 25,
+      "original_group_n": 25
+    },
+    {
+      "role": "selection",
+      "source": "SD2_1",
+      "n": 25,
+      "original_group_n": 25
+    },
+    {
+      "role": "selection",
+      "source": "SD3",
+      "n": 24,
+      "original_group_n": 23
+    },
+    {
+      "role": "selection",
+      "source": "SD3_5",
+      "n": 31,
+      "original_group_n": 30
+    },
+    {
+      "role": "selection",
+      "source": "SDXL",
+      "n": 30,
+      "original_group_n": 27
+    },
+    {
+      "role": "selection",
+      "source": "dalle3",
+      "n": 22,
+      "original_group_n": 22
+    },
+    {
+      "role": "selection",
+      "source": "gemini",
+      "n": 27,
+      "original_group_n": 27
+    },
+    {
+      "role": "selection",
+      "source": "grok3",
+      "n": 26,
+      "original_group_n": 26
+    },
+    {
+      "role": "selection",
+      "source": "hidream",
+      "n": 26,
+      "original_group_n": 25
+    },
+    {
+      "role": "selection",
+      "source": "hunyuan",
+      "n": 29,
+      "original_group_n": 28
+    },
+    {
+      "role": "selection",
+      "source": "ideogram",
+      "n": 31,
+      "original_group_n": 29
+    },
+    {
+      "role": "selection",
+      "source": "infinity",
+      "n": 30,
+      "original_group_n": 27
+    },
+    {
+      "role": "selection",
+      "source": "janus-pro",
+      "n": 27,
+      "original_group_n": 27
+    },
+    {
+      "role": "selection",
+      "source": "kling",
+      "n": 33,
+      "original_group_n": 31
+    },
+    {
+      "role": "selection",
+      "source": "mid-5.2",
+      "n": 27,
+      "original_group_n": 27
+    },
+    {
+      "role": "selection",
+      "source": "mid-6.0",
+      "n": 26,
+      "original_group_n": 25
+    },
+    {
+      "role": "selection",
+      "source": "real",
+      "n": 999,
+      "original_group_n": 996
+    },
+    {
+      "role": "calibration",
+      "source": "4o",
+      "n": 34,
+      "original_group_n": 32
+    },
+    {
+      "role": "calibration",
+      "source": "CogView3_PLUS",
+      "n": 34,
+      "original_group_n": 34
+    },
+    {
+      "role": "calibration",
+      "source": "FLUX",
+      "n": 34,
+      "original_group_n": 31
+    },
+    {
+      "role": "calibration",
+      "source": "KANDINSKY",
+      "n": 32,
+      "original_group_n": 32
+    },
+    {
+      "role": "calibration",
+      "source": "PIXART",
+      "n": 37,
+      "original_group_n": 35
+    },
+    {
+      "role": "calibration",
+      "source": "PLAYGROUND_2_5",
+      "n": 34,
+      "original_group_n": 34
+    },
+    {
+      "role": "calibration",
+      "source": "SD1_5",
+      "n": 31,
+      "original_group_n": 31
+    },
+    {
+      "role": "calibration",
+      "source": "SD2_1",
+      "n": 35,
+      "original_group_n": 35
+    },
+    {
+      "role": "calibration",
+      "source": "SD3",
+      "n": 36,
+      "original_group_n": 36
+    },
+    {
+      "role": "calibration",
+      "source": "SD3_5",
+      "n": 32,
+      "original_group_n": 31
+    },
+    {
+      "role": "calibration",
+      "source": "SDXL",
+      "n": 32,
+      "original_group_n": 31
+    },
+    {
+      "role": "calibration",
+      "source": "dalle3",
+      "n": 43,
+      "original_group_n": 40
+    },
+    {
+      "role": "calibration",
+      "source": "gemini",
+      "n": 36,
+      "original_group_n": 34
+    },
+    {
+      "role": "calibration",
+      "source": "grok3",
+      "n": 35,
+      "original_group_n": 35
+    },
+    {
+      "role": "calibration",
+      "source": "hidream",
+      "n": 34,
+      "original_group_n": 34
+    },
+    {
+      "role": "calibration",
+      "source": "hunyuan",
+      "n": 35,
+      "original_group_n": 35
+    },
+    {
+      "role": "calibration",
+      "source": "ideogram",
+      "n": 32,
+      "original_group_n": 31
+    },
+    {
+      "role": "calibration",
+      "source": "infinity",
+      "n": 37,
+      "original_group_n": 37
+    },
+    {
+      "role": "calibration",
+      "source": "janus-pro",
+      "n": 34,
+      "original_group_n": 33
+    },
+    {
+      "role": "calibration",
+      "source": "kling",
+      "n": 34,
+      "original_group_n": 33
+    },
+    {
+      "role": "calibration",
+      "source": "mid-5.2",
+      "n": 33,
+      "original_group_n": 33
+    },
+    {
+      "role": "calibration",
+      "source": "mid-6.0",
+      "n": 33,
+      "original_group_n": 32
+    },
+    {
+      "role": "calibration",
+      "source": "real",
+      "n": 1014,
+      "original_group_n": 1014
+    },
+    {
+      "role": "evaluation",
+      "source": "4o",
+      "n": 32,
+      "original_group_n": 31
+    },
+    {
+      "role": "evaluation",
+      "source": "CogView3_PLUS",
+      "n": 28,
+      "original_group_n": 27
+    },
+    {
+      "role": "evaluation",
+      "source": "FLUX",
+      "n": 32,
+      "original_group_n": 31
+    },
+    {
+      "role": "evaluation",
+      "source": "KANDINSKY",
+      "n": 32,
+      "original_group_n": 31
+    },
+    {
+      "role": "evaluation",
+      "source": "PIXART",
+      "n": 26,
+      "original_group_n": 25
+    },
+    {
+      "role": "evaluation",
+      "source": "PLAYGROUND_2_5",
+      "n": 24,
+      "original_group_n": 24
+    },
+    {
+      "role": "evaluation",
+      "source": "SD1_5",
+      "n": 30,
+      "original_group_n": 30
+    },
+    {
+      "role": "evaluation",
+      "source": "SD2_1",
+      "n": 29,
+      "original_group_n": 29
+    },
+    {
+      "role": "evaluation",
+      "source": "SD3",
+      "n": 29,
+      "original_group_n": 28
+    },
+    {
+      "role": "evaluation",
+      "source": "SD3_5",
+      "n": 23,
+      "original_group_n": 23
+    },
+    {
+      "role": "evaluation",
+      "source": "SDXL",
+      "n": 28,
+      "original_group_n": 27
+    },
+    {
+      "role": "evaluation",
+      "source": "dalle3",
+      "n": 27,
+      "original_group_n": 26
+    },
+    {
+      "role": "evaluation",
+      "source": "gemini",
+      "n": 27,
+      "original_group_n": 26
+    },
+    {
+      "role": "evaluation",
+      "source": "grok3",
+      "n": 26,
+      "original_group_n": 26
+    },
+    {
+      "role": "evaluation",
+      "source": "hidream",
+      "n": 28,
+      "original_group_n": 28
+    },
+    {
+      "role": "evaluation",
+      "source": "hunyuan",
+      "n": 24,
+      "original_group_n": 24
+    },
+    {
+      "role": "evaluation",
+      "source": "ideogram",
+      "n": 27,
+      "original_group_n": 26
+    },
+    {
+      "role": "evaluation",
+      "source": "infinity",
+      "n": 26,
+      "original_group_n": 25
+    },
+    {
+      "role": "evaluation",
+      "source": "janus-pro",
+      "n": 27,
+      "original_group_n": 27
+    },
+    {
+      "role": "evaluation",
+      "source": "kling",
+      "n": 27,
+      "original_group_n": 26
+    },
+    {
+      "role": "evaluation",
+      "source": "mid-5.2",
+      "n": 26,
+      "original_group_n": 25
+    },
+    {
+      "role": "evaluation",
+      "source": "mid-6.0",
+      "n": 28,
+      "original_group_n": 27
+    },
+    {
+      "role": "evaluation",
+      "source": "real",
+      "n": 979,
+      "original_group_n": 977
+    }
+  ],
+  "score_fusion": {
+    "20": {
+      "status": "completed",
+      "metrics": {
+        "ResNet50": {
+          "n": 606,
+          "accuracy": 0.641914191419142,
+          "macro_f1": 0.6356703291216159,
+          "top1": 0.641914191419142,
+          "top3": 0.8481848184818482
+        },
+        "FeatureFusion": {
+          "n": 606,
+          "accuracy": 0.6303630363036303,
+          "macro_f1": 0.6221255471534404,
+          "top1": 0.6303630363036303,
+          "top3": 0.8729372937293729
+        },
+        "Uniform": {
+          "n": 606,
+          "accuracy": 0.6600660066006601,
+          "macro_f1": 0.6541922431707768,
+          "top1": 0.6600660066006601,
+          "top3": 0.9306930693069307
+        },
+        "Calibrated": {
+          "n": 606,
+          "accuracy": 0.6518151815181518,
+          "macro_f1": 0.6454490838995014,
+          "top1": 0.6518151815181518,
+          "top3": 0.9191419141914191
+        }
+      },
+      "alpha_resnet": 0.7000000000000001,
+      "paired_group_bootstrap": {
+        "ResNet50": {
+          "group_n": 151,
+          "repeats": 1000,
+          "seed": 42,
+          "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+          "delta_95_ci": {
+            "top1": [
+              0.0017035050817601344,
+              0.016725932986289303
+            ],
+            "top3": [
+              0.0416634615384615,
+              0.10000472589792057
+            ],
+            "macro_f1": [
+              0.0015247976376418864,
+              0.01627911590968707
+            ]
+          }
+        },
+        "FeatureFusion": {
+          "group_n": 151,
+          "repeats": 1000,
+          "seed": 42,
+          "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+          "delta_95_ci": {
+            "top1": [
+              -0.038670208382926494,
+              0.07539999999999998
+            ],
+            "top3": [
+              0.009178432593440186,
+              0.0810356477166823
+            ],
+            "macro_f1": [
+              -0.04206988485914006,
+              0.08214268545688665
+            ]
+          }
+        },
+        "Uniform": {
+          "group_n": 151,
+          "repeats": 1000,
+          "seed": 42,
+          "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+          "delta_95_ci": {
+            "top1": [
+              -0.016980659541139226,
+              -0.0018399850838542522
+            ],
+            "top3": [
+              -0.02230010028551225,
+              -0.0017064846416382506
+            ],
+            "macro_f1": [
+              -0.018341654889272765,
+              -0.0014600710930045336
+            ]
+          }
+        }
+      },
+      "evaluation_n": 606,
+      "calibration_n": 757,
+      "cache_score_max_error": 7.748603820800781e-07,
+      "holdout_scored": false,
+      "backbone_trained": false,
+      "limitation": "Exploratory parent-dev comparison; ResNet used parent dev for checkpoint selection; single seed; no unknown rejection claim",
+      "calibration_nll": 0.9461886096422086,
+      "config": "configs/image_experiments/iab_score_fusion_v6_100.json",
+      "config_sha256": "8d8395ebcbf7f92f2527b35b1fb785b84aa690bf1067ca87a32a4db93a59d46e"
+    },
+    "30": {
+      "status": "completed",
+      "metrics": {
+        "ResNet50": {
+          "n": 606,
+          "accuracy": 0.6518151815181518,
+          "macro_f1": 0.6472057222927492,
+          "top1": 0.6518151815181518,
+          "top3": 0.8745874587458746
+        },
+        "FeatureFusion": {
+          "n": 606,
+          "accuracy": 0.6353135313531353,
+          "macro_f1": 0.6273710012950277,
+          "top1": 0.6353135313531353,
+          "top3": 0.8795379537953796
+        },
+        "Uniform": {
+          "n": 606,
+          "accuracy": 0.665016501650165,
+          "macro_f1": 0.6604970099489946,
+          "top1": 0.665016501650165,
+          "top3": 0.9405940594059405
+        },
+        "Calibrated": {
+          "n": 606,
+          "accuracy": 0.6600660066006601,
+          "macro_f1": 0.6555622431468865,
+          "top1": 0.6600660066006601,
+          "top3": 0.9306930693069307
+        }
+      },
+      "alpha_resnet": 0.7000000000000001,
+      "paired_group_bootstrap": {
+        "ResNet50": {
+          "group_n": 151,
+          "repeats": 1000,
+          "seed": 42,
+          "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+          "delta_95_ci": {
+            "top1": [
+              0.0,
+              0.018034269844693696
+            ],
+            "top3": [
+              0.030111324989479302,
+              0.08393119747899162
+            ],
+            "macro_f1": [
+              -5.059547077403115e-05,
+              0.018113383516416965
+            ]
+          }
+        },
+        "FeatureFusion": {
+          "group_n": 151,
+          "repeats": 1000,
+          "seed": 42,
+          "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+          "delta_95_ci": {
+            "top1": [
+              -0.03375154288466748,
+              0.08142012420718817
+            ],
+            "top3": [
+              0.020631665915577625,
+              0.08380279121154013
+            ],
+            "macro_f1": [
+              -0.03399242175822469,
+              0.08864560278698026
+            ]
+          }
+        },
+        "Uniform": {
+          "group_n": 151,
+          "repeats": 1000,
+          "seed": 42,
+          "method": "paired percentile cluster bootstrap; fixed class vocabulary",
+          "delta_95_ci": {
+            "top1": [
+              -0.01072566960813046,
+              0.0
+            ],
+            "top3": [
+              -0.02249044650607036,
+              -0.0015873015873015817
+            ],
+            "macro_f1": [
+              -0.010988363073552193,
+              0.0
+            ]
+          }
+        }
+      },
+      "evaluation_n": 606,
+      "calibration_n": 757,
+      "cache_score_max_error": 1.0132789611816406e-06,
+      "holdout_scored": false,
+      "backbone_trained": false,
+      "limitation": "Exploratory parent-dev comparison; ResNet used parent dev for checkpoint selection; single seed; no unknown rejection claim",
+      "calibration_nll": 0.9152830358237124,
+      "config": "configs/image_experiments/iab_score_fusion_v6_100_e30.json",
+      "config_sha256": "68aa45bb25ac2ee33e14e585df8209d7a2d6244ed43bab85251ab2349f23cb22"
+    }
+  }
+}

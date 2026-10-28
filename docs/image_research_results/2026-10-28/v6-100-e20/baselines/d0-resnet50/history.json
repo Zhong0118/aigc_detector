@@ -1,0 +1,1082 @@
+[
+  {
+    "epoch": 1,
+    "train_loss": 0.20492219245865745,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9152715554507584,
+      "macro_f1": 0.9134975869105899,
+      "auroc": 0.9820256750132776,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.03738384560400286,
+      "tpr_0_5": 0.8574546089385475,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.20492219245865745,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.21179702045215715,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9106854838709677,
+      "macro_f1": 0.9051424583466784,
+      "auroc": 0.9782942521520803,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.04478609625668449,
+      "tpr_0_5": 0.8429878048780488,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.713563859462738,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.7489837398373984,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.21179702045215715,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.001,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 183.83409256599953
+  },
+  {
+    "epoch": 2,
+    "train_loss": 0.218435311405518,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9126385286489036,
+      "macro_f1": 0.9123789500079704,
+      "auroc": 0.9734376216701075,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.12051465332380272,
+      "tpr_0_5": 0.953125,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.218435311405518,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.24390975037409413,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9040322580645161,
+      "macro_f1": 0.9018232819074334,
+      "auroc": 0.9707107673307684,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.12633689839572193,
+      "tpr_0_5": 0.9502032520325203,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9824895858764648,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.6199186991869918,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.24390975037409413,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.0009000000000000001,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 185.3813896110005
+  },
+  {
+    "epoch": 3,
+    "train_loss": 0.1963709468385207,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.91648982158296,
+      "macro_f1": 0.9164425873695856,
+      "auroc": 0.9877340839276658,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.1448892065761258,
+      "tpr_0_5": 0.991445530726257,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.1963709468385207,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.24465781275423304,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9022177419354839,
+      "macro_f1": 0.9008287535271733,
+      "auroc": 0.9826967441632973,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.15407754010695188,
+      "tpr_0_5": 0.9878048780487805,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9865016341209412,
+      "dev_fpr": 0.019050802139037433,
+      "dev_tpr": 0.7566056910569106,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.24465781275423304,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.0008100000000000001,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 195.112371094001
+  },
+  {
+    "epoch": 4,
+    "train_loss": 0.2084530345403969,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.920183918887055,
+      "macro_f1": 0.9189963773950183,
+      "auroc": 0.9799407828466862,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.05303788420300214,
+      "tpr_0_5": 0.8874825418994413,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.2084530345403969,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.22318360896841172,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9179435483870968,
+      "macro_f1": 0.9136745444973658,
+      "auroc": 0.9770343714675448,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.05481283422459893,
+      "tpr_0_5": 0.8765243902439024,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9422992467880249,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.6885162601626016,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.22318360896841172,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.000729,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 199.32048374700025
+  },
+  {
+    "epoch": 5,
+    "train_loss": 0.07535379857009632,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9684036783777411,
+      "macro_f1": 0.9681882505200321,
+      "auroc": 0.996875898486948,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.04446032880629021,
+      "tpr_0_5": 0.9841131284916201,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.07535379857009632,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.12178396400544912,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.947983870967742,
+      "macro_f1": 0.946317022547958,
+      "auroc": 0.9918441046041478,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.06818181818181818,
+      "tpr_0_5": 0.9725609756097561,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.8921090960502625,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.8790650406504065,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.12178396400544912,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.0006561000000000001,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 200.3015240019995
+  },
+  {
+    "epoch": 6,
+    "train_loss": 0.08154363721708081,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9646702821661558,
+      "macro_f1": 0.9644698908628129,
+      "auroc": 0.9969164239919974,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.05439599714081487,
+      "tpr_0_5": 0.9879539106145251,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.08154363721708081,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.1445990142021929,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.938508064516129,
+      "macro_f1": 0.93669678130667,
+      "auroc": 0.9910570294498064,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.08188502673796791,
+      "tpr_0_5": 0.9695121951219512,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9452882409095764,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.8775406504065041,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.1445990142021929,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.00059049,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 198.71083910499874
+  },
+  {
+    "epoch": 7,
+    "train_loss": 0.0667026297580988,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9728051560166627,
+      "macro_f1": 0.9725827151259562,
+      "auroc": 0.9972921412840776,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.03338098641887062,
+      "tpr_0_5": 0.9803596368715084,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.0667026297580988,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.12496218800379504,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9508064516129032,
+      "macro_f1": 0.9490059737978077,
+      "auroc": 0.9918692393808964,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.05614973262032086,
+      "tpr_0_5": 0.9613821138211383,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9114508628845215,
+      "dev_fpr": 0.01871657754010695,
+      "dev_tpr": 0.8821138211382114,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.12496218800379504,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.000531441,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 189.7675548440002
+  },
+  {
+    "epoch": 8,
+    "train_loss": 0.07177916298540102,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9716261887919516,
+      "macro_f1": 0.9713985740669715,
+      "auroc": 0.9969943427767639,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.03523945675482487,
+      "tpr_0_5": 0.9800104748603352,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.07177916298540102,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.1308708971907054,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9455645161290323,
+      "macro_f1": 0.9435633094758518,
+      "auroc": 0.99023276161906,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.06016042780748663,
+      "tpr_0_5": 0.9542682926829268,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.8958521485328674,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.8628048780487805,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.1308708971907054,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.0004782969,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 185.4265421680011
+  },
+  {
+    "epoch": 9,
+    "train_loss": 0.06560866007310001,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9736304330739606,
+      "macro_f1": 0.9734767425623224,
+      "auroc": 0.9988401313438172,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0453180843459614,
+      "tpr_0_5": 0.9967702513966481,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.06560866007310001,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.18538142178628234,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9389112903225807,
+      "macro_f1": 0.9371904171252905,
+      "auroc": 0.9909142876940134,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.08455882352941177,
+      "tpr_0_5": 0.9745934959349594,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9875838160514832,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.8765243902439024,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.18538142178628234,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.00043046721,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 184.92184572000042
+  },
+  {
+    "epoch": 10,
+    "train_loss": 0.07726592803069467,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9709974062721056,
+      "macro_f1": 0.9708309924582859,
+      "auroc": 0.998078660535658,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.048248749106504646,
+      "tpr_0_5": 0.9945006983240223,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.07726592803069467,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.21383382831099293,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9399193548387097,
+      "macro_f1": 0.938145296283897,
+      "auroc": 0.9892508919449153,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.08054812834224599,
+      "tpr_0_5": 0.9710365853658537,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9940173625946045,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.858739837398374,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.21383382831099293,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.000387420489,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 184.2115256039997
+  },
+  {
+    "epoch": 11,
+    "train_loss": 0.029528677883416527,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9878566375854752,
+      "macro_f1": 0.9877554669571077,
+      "auroc": 0.9996579322920202,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.018942101501072194,
+      "tpr_0_5": 0.9961592178770949,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.029528677883416527,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.14850530030220868,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9522177419354839,
+      "macro_f1": 0.9506465071609629,
+      "auroc": 0.9927711193263337,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.06283422459893048,
+      "tpr_0_5": 0.9751016260162602,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9703617095947266,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.9009146341463414,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.14850530030220868,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.0003486784401,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 184.26526796300095
+  },
+  {
+    "epoch": 12,
+    "train_loss": 0.03844607594543419,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9841232413738898,
+      "macro_f1": 0.9839687467766529,
+      "auroc": 0.9990816496270281,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.015725518227305217,
+      "tpr_0_5": 0.9839385474860335,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.03844607594543419,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.17226992018526466,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.946975806451613,
+      "macro_f1": 0.9447803602509182,
+      "auroc": 0.9903927410764749,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.04979946524064171,
+      "tpr_0_5": 0.9420731707317073,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9225001931190491,
+      "dev_fpr": 0.019385026737967916,
+      "dev_tpr": 0.891260162601626,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.17226992018526466,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.00031381059609000004,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 198.64289738500156
+  },
+  {
+    "epoch": 13,
+    "train_loss": 0.12624061209485066,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9689145641751159,
+      "macro_f1": 0.9687509937652152,
+      "auroc": 0.9955716386105796,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.05303788420300214,
+      "tpr_0_5": 0.9957227653631285,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.12624061209485066,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.30042607010128125,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.933266129032258,
+      "macro_f1": 0.9313388263889327,
+      "auroc": 0.9853097419677407,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0875668449197861,
+      "tpr_0_5": 0.9649390243902439,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9996737241744995,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.7840447154471545,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.30042607010128125,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.00028242953648100003,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 213.29730100300003
+  },
+  {
+    "epoch": 14,
+    "train_loss": 0.019745747420886077,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9926118053918102,
+      "macro_f1": 0.9925431287711394,
+      "auroc": 0.9997958562780278,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.010007147962830594,
+      "tpr_0_5": 0.9958100558659218,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.019745747420886077,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.20390605879430598,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9516129032258065,
+      "macro_f1": 0.9498733020760133,
+      "auroc": 0.9921001226848833,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.056818181818181816,
+      "tpr_0_5": 0.9644308943089431,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.996589183807373,
+      "dev_fpr": 0.019050802139037433,
+      "dev_tpr": 0.8846544715447154,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.20390605879430598,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.00025418658283290005,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 213.19409239699962
+  },
+  {
+    "epoch": 15,
+    "train_loss": 0.007037987347483878,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9974455710131258,
+      "macro_f1": 0.9974208145797624,
+      "auroc": 0.9999824732650218,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.003788420300214439,
+      "tpr_0_5": 0.9989525139664804,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.007037987347483878,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.15832386549793168,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9558467741935484,
+      "macro_f1": 0.9540871945143024,
+      "auroc": 0.9931371020553454,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.045454545454545456,
+      "tpr_0_5": 0.9578252032520326,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9579606056213379,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.9120934959349594,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.15832386549793168,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.00022876792454961005,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 213.1919440820002
+  },
+  {
+    "epoch": 16,
+    "train_loss": 0.010025589719039406,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9960308103434724,
+      "macro_f1": 0.995994188884738,
+      "auroc": 0.9999965682790182,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.007219442458899213,
+      "tpr_0_5": 1.0,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.010025589719039406,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.21332992683590477,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9522177419354839,
+      "macro_f1": 0.9507473682133238,
+      "auroc": 0.9936071053975915,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.06751336898395723,
+      "tpr_0_5": 0.9822154471544715,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9970056414604187,
+      "dev_fpr": 0.019385026737967916,
+      "dev_tpr": 0.9202235772357723,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.21332992683590477,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.00020589113209464906,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 190.14206460599962
+  },
+  {
+    "epoch": 17,
+    "train_loss": 0.00415334321142318,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9988603316827792,
+      "macro_f1": 0.9988491608837897,
+      "auroc": 0.9999963873337301,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0020014295925661185,
+      "tpr_0_5": 0.9999127094972067,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.00415334321142318,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.18784306967108053,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9546370967741935,
+      "macro_f1": 0.9529133771956195,
+      "auroc": 0.9929617530216077,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.05013368983957219,
+      "tpr_0_5": 0.961890243902439,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9840958118438721,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.9115853658536586,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.18784306967108053,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.00018530201888518417,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 186.4767893370008
+  },
+  {
+    "epoch": 18,
+    "train_loss": 0.0025815499817591135,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9990961251277215,
+      "macro_f1": 0.9990872083365006,
+      "auroc": 0.9999987458619685,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.001501072194424589,
+      "tpr_0_5": 0.9998254189944135,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.0025815499817591135,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.1832034742039175,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9574596774193549,
+      "macro_f1": 0.9557057218789465,
+      "auroc": 0.9933281603245512,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.04144385026737968,
+      "tpr_0_5": 0.9557926829268293,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9645012617111206,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.9161585365853658,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.1832034742039175,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.00016677181699666576,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 185.9089644960004
+  },
+  {
+    "epoch": 19,
+    "train_loss": 0.0013575131298337517,
+    "train": {
+      "n": 25446,
+      "accuracy": 0.9997249076475674,
+      "macro_f1": 0.9997221500736178,
+      "auroc": 0.9999998627311608,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.00021443888491779842,
+      "tpr_0_5": 0.9996508379888268,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.0013575131298337517,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.167005032913522,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9590725806451613,
+      "macro_f1": 0.9572911307538767,
+      "auroc": 0.9937874644037216,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.035762032085561495,
+      "tpr_0_5": 0.9512195121951219,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.9238603115081787,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.9202235772357723,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.167005032913522,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.0001500946352969992,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 185.9276142990002
+  },
+  {
+    "epoch": 20,
+    "train_loss": 0.00037261369559961425,
+    "train": {
+      "n": 25446,
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "auroc": 1.0,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.0,
+      "tpr_0_5": 1.0,
+      "real_count": 13990,
+      "ai_count": 11456,
+      "loss": 0.00037261369559961425,
+      "class_counts": {
+        "real": 13990,
+        "ai": 11456
+      }
+    },
+    "dev_loss": 0.16763036784695354,
+    "dev": {
+      "n": 4960,
+      "accuracy": 0.9629032258064516,
+      "macro_f1": 0.9612851839301613,
+      "auroc": 0.9944826617592712,
+      "threshold_0_5": 0.5,
+      "fpr_0_5": 0.03241978609625668,
+      "tpr_0_5": 0.9557926829268293,
+      "real_count": 2992,
+      "ai_count": 1968,
+      "dev_target_fpr": 0.02,
+      "dev_threshold": 0.8851691484451294,
+      "dev_fpr": 0.019719251336898395,
+      "dev_tpr": 0.9303861788617886,
+      "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+      "loss": 0.16763036784695354,
+      "class_counts": {
+        "real": 2992,
+        "ai": 1968
+      }
+    },
+    "train_class_counts": {
+      "real": 13990,
+      "ai": 11456
+    },
+    "dev_class_counts": {
+      "real": 2992,
+      "ai": 1968
+    },
+    "lr": 0.0001350851717672993,
+    "scheduler": "StepLR(step_size=1,gamma=0.9)",
+    "optimizer": "Adam(lr=0.001)",
+    "seconds": 185.07443983200028
+  }
+]

@@ -1,0 +1,189 @@
+{
+  "config": {
+    "schema": "independent-image-tasks-v1",
+    "execution_enabled": true,
+    "automatic_execution": true,
+    "seed": 42,
+    "gpu_index": 1,
+    "dataset": {
+      "path": "outputs/image_experiments/iab-balanced-v6-100",
+      "manifest_sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e",
+      "selection_sha256": "286a3c34f5291a355259cfed7170e9b5a6d9d17ddf483f6d32c535cecc4f64b6"
+    },
+    "parent_manifest": {
+      "path": "outputs/image_experiments/iab-balanced-v5-50/manifest.jsonl",
+      "sha256": "0dd207abf3fb477a89d8c767144a4869b425722415258a3e031ff2bedbf26553"
+    },
+    "prerequisites": [
+      "outputs/iab-v5-50-e20-monitor/completion.json",
+      "outputs/iab-v6-100-monitor/completion.json"
+    ],
+    "classes": [
+      "4o",
+      "CogView3_PLUS",
+      "FLUX",
+      "KANDINSKY",
+      "PIXART",
+      "PLAYGROUND_2_5",
+      "SD1_5",
+      "SD2_1",
+      "SD3",
+      "SD3_5",
+      "SDXL",
+      "dalle3",
+      "gemini",
+      "grok3",
+      "hidream",
+      "hunyuan",
+      "ideogram",
+      "infinity",
+      "janus-pro",
+      "kling",
+      "mid-5.2",
+      "mid-6.0"
+    ],
+    "dimensions": {
+      "rgb": 384,
+      "fingerprint": 128,
+      "fusion": 512
+    },
+    "training": {
+      "epochs": 20,
+      "batch_size": 32,
+      "optimizer": "Adam",
+      "learning_rate": 0.001,
+      "weight_decay": 0,
+      "scheduler": "StepLR",
+      "scheduler_step": 1,
+      "scheduler_gamma": 0.9,
+      "loss": "unweighted_cross_entropy",
+      "encoder_frozen": true,
+      "head": "linear",
+      "augmentation": "none",
+      "selection_metric": {
+        "detection": "auroc",
+        "attribution": "macro_f1"
+      },
+      "tie_break": "earliest_epoch"
+    },
+    "target_fprs": [
+      0.01,
+      0.05
+    ],
+    "bootstrap_repeats": 200,
+    "extraction_batch_size": {
+      "rgb": 32,
+      "fingerprint": 8
+    },
+    "dinov2_directory": "outputs/image_experiments/assets/dinov2-small",
+    "assets": {
+      "fingerprint": {
+        "path": "outputs/image_experiments/assets/ofa_fingerprint.pth",
+        "sha256": "396bc6c54af7c96d2f1cbb57bb38886f096b464472cb221ec38ee185be06521b"
+      },
+      "denoiser": {
+        "path": "outputs/image_experiments/assets/model_best.th",
+        "sha256": "bf8e302573ca412c3d59d1271fb4b185242f582dee676e734a9995b7436fbfdf"
+      },
+      "dinov2_model": {
+        "path": "outputs/image_experiments/assets/dinov2-small/model.safetensors",
+        "sha256": "ae1e99fcefd534ed978cdeb8326f08030c96e28b7a81ffcbc98a857c84d14be1",
+        "bytes": 88249960
+      },
+      "dinov2_config": {
+        "path": "outputs/image_experiments/assets/dinov2-small/config.json",
+        "sha256": "1809f83e3bdb1609a501a610ad4a742f4fd8ae44d72ca4aa0df52d1f2ac8628d",
+        "bytes": 547
+      },
+      "dinov2_processor": {
+        "path": "outputs/image_experiments/assets/dinov2-small/preprocessor_config.json",
+        "sha256": "14e780d86fa1861f8751f868d7f45425b5feb55c38ca26f152ca5097ab30f828",
+        "bytes": 436
+      }
+    },
+    "implementation_sha256": {
+      "scripts/run_image_research_queue.py": "631104a83a697633d52e5fd5a116005bcb46dcc08448539b1628a5ff189108a2",
+      "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+      "research/image_attribution/vision_backbones.py": "d34c0df611ddf8f4fd05d3d3ef91db33b00fd9a41bf3a44e915daa92d3c38e20",
+      "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+      "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+      "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+      "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3",
+      "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+      "scripts/monitor_iab_v2.py": "3e6c867af478f34b9aa77e80fa663af3b4e18ec288afca42614daf508865c347",
+      "scripts/compare_image_scale_epochs.py": "752764997b36a0b664170251df9ac0494de45fb692b7d1b0b705b7e5a6e53e4e",
+      "scripts/predict_image_research.py": "e750ed71196e52b835c870fd51e41643dcb2fa10836bb8731bd0826184450620"
+    },
+    "preprocessing": {
+      "rgb": "facebook/dinov2-small@ed25f3a31f01632728cabb09d1542f84ab7b0056; official slow processor RGB bicubic Resize256 CenterCrop224 ImageNet normalization; CLS384; L2 per branch",
+      "fingerprint": "Author OFA: short-edge >=256, center crop256, [-1,1] to pixels [0,1], DnCNN per-image microbatch1 /256, log1p(abs(fft2)), encoder128; float32 TF32 off"
+    },
+    "jobs": [
+      {
+        "id": "D-DINO",
+        "task": "detection",
+        "variant": "rgb"
+      },
+      {
+        "id": "A-RGB",
+        "task": "attribution",
+        "variant": "rgb"
+      },
+      {
+        "id": "A-FP",
+        "task": "attribution",
+        "variant": "fingerprint"
+      },
+      {
+        "id": "A-Fusion",
+        "task": "attribution",
+        "variant": "fusion"
+      }
+    ],
+    "output": "outputs/image_experiments/independent-image-tasks-v6-100",
+    "minimum_free_bytes": 10737418240,
+    "protocol": {
+      "activation": "Authorized 2026-10-26; after certified 50/20 and 100/20 baselines, bind their manifest metadata, never regenerate a split.",
+      "detection": "Real=0 AI=1, frozen DINOv2 + separate Linear(384,2), CE; select AUROC only on selection role; fit low-FPR thresholds only on calibration real scores.",
+      "attribution": "AI-only 22-way CE; same role IDs and 20-epoch head protocol; select macro-F1 only on selection; calibration reserved.",
+      "score_types": "Detection softmax, attribution softmax and original OFA pair scores remain separate. Closed-set probes do not implement unknown rejection.",
+      "holdout": "metadata only; no image loading/scoring/tuning",
+      "limits": [
+        "Exploratory dev roles; earlier baseline selection used parent dev.",
+        "Single seed; larger fusion head is a capacity confound.",
+        "Frozen DINOv2 probes and OFA classification head are project adaptations, not OmniAID or original OFA pair-head reproduction."
+      ]
+    },
+    "baseline_predictions": {
+      "detection": "outputs/image_experiments/d0-resnet50-iab-v6-100-e20/predictions.jsonl",
+      "attribution": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/predictions.jsonl"
+    },
+    "task": "attribution"
+  },
+  "job": {
+    "id": "A-RGB",
+    "task": "attribution",
+    "variant": "rgb"
+  },
+  "plan": {
+    "status": "ready",
+    "manifest_sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e",
+    "selection_sha256": "286a3c34f5291a355259cfed7170e9b5a6d9d17ddf483f6d32c535cecc4f64b6",
+    "roles": {
+      "detection": {
+        "train": 25446,
+        "selection": 1604,
+        "calibration": 1771,
+        "evaluation": 1585
+      },
+      "attribution": {
+        "train": 11456,
+        "selection": 605,
+        "calibration": 757,
+        "evaluation": 606
+      }
+    },
+    "holdout_scored": false
+  },
+  "config_sha256": "02bcc2673614b99a5c254e943bd0891b67147746a9d31acad71c1105a2941b71"
+}

@@ -1,0 +1,14 @@
+queue=started time=2026-10-28T10:17:12+08:00 pid=2747094 config=configs/image_experiments/iab_followups_v7_200_q179_e30.json items=D3:evaluate A2:evaluate D1-control:train D1-control:evaluate D1:train D1:evaluate D2:train D2:evaluate D2-semantic:train D2-semantic:evaluate A1:train A1:evaluate A2-semantic:train A2-semantic:evaluate
+item=D3:evaluate start time=2026-10-28T10:17:12+08:00
+item=D3:evaluate completed time=2026-10-28T10:17:47+08:00
+item=A2:evaluate start time=2026-10-28T10:17:47+08:00
+item=A2:evaluate completed time=2026-10-28T10:20:27+08:00
+item=D1-control:train start time=2026-10-28T10:20:28+08:00
+item=D1-control:train completed time=2026-10-28T12:56:44+08:00
+item=D1-control:evaluate start time=2026-10-28T12:56:44+08:00
+item=D1-control:evaluate completed time=2026-10-28T12:57:16+08:00
+item=D1:train start time=2026-10-28T12:57:16+08:00
+item=D1:train completed time=2026-10-28T16:12:38+08:00
+item=D1:evaluate waiting gpu0_used_mib=5932 time=2026-10-28T16:12:38+08:00
+item=D1:evaluate waiting gpu0_used_mib=5938 time=2026-10-28T16:17:38+08:00
+item=D1:evaluate waiting gpu0_used_mib=5938 time=2026-10-28T16:22:39+08:00

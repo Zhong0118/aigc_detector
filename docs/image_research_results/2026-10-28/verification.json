@@ -1,0 +1,38 @@
+{
+  "verified_at": "2026-10-28T17:37:04.502169+08:00",
+  "copied_source_files_verified": 196,
+  "json_jsonl_csv_parsed": true,
+  "copied_files_byte_identical": true,
+  "append_only_live_source": "followups/queue-log.txt is a verified prefix of the still-appending server queue log",
+  "comparison_input_hashes_verified": [
+    188,
+    193
+  ],
+  "comparison_output_hashes_verified": [
+    7,
+    7
+  ],
+  "followup_completed_actions_verified": [
+    "D3:evaluate",
+    "A2:evaluate",
+    "D1-control:train",
+    "D1-control:evaluate",
+    "D1:train"
+  ],
+  "followup_artifact_hashes_verified": [
+    7,
+    7,
+    14,
+    7,
+    14
+  ],
+  "D1_and_control_contiguous_epochs_verified": 30,
+  "D1_and_control_role_hashes_equal": true,
+  "holdout_evaluated": false,
+  "weights_or_images_in_snapshot": false,
+  "credential_pattern_matches": 0,
+  "source_files_index_sha256": "3a7e79df4696ca0f067ec43e9e93689866ce7f603d5f3ce96974ee710aca9574",
+  "validation_scope": "Read-only artifact/format/hash verification; no retraining or image inference",
+  "csv_original_crlf_preserved": true,
+  "csv_whitespace_attribute_scope": "this snapshot directory only"
+}

@@ -1,0 +1,10 @@
+{
+  "status": "completed",
+  "time": 1793117926.435699,
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "summary": "outputs/image_experiments/iab-m2-v7-200-q179-e30-summary.json",
+  "summary_sha256": "41f5e6ef637d60195a3258af1dc83e94f01dfbebcd51093b5c3f8a660cd9691c",
+  "validated_summary_sha256": "41f5e6ef637d60195a3258af1dc83e94f01dfbebcd51093b5c3f8a660cd9691c",
+  "completion_scope": "extension_baseline_only",
+  "final_project_completed": false
+}

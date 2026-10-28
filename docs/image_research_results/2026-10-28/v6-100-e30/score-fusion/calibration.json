@@ -1,0 +1,93 @@
+{
+  "alpha_resnet": 0.7000000000000001,
+  "alpha_feature_fusion": 0.29999999999999993,
+  "objective": "calibration negative log likelihood",
+  "grid": [
+    {
+      "alpha": 0.0,
+      "calibration_nll": 1.4470521084830572
+    },
+    {
+      "alpha": 0.05,
+      "calibration_nll": 1.3430037394436023
+    },
+    {
+      "alpha": 0.1,
+      "calibration_nll": 1.2641917151494868
+    },
+    {
+      "alpha": 0.15000000000000002,
+      "calibration_nll": 1.1998821703133262
+    },
+    {
+      "alpha": 0.2,
+      "calibration_nll": 1.145826396568958
+    },
+    {
+      "alpha": 0.25,
+      "calibration_nll": 1.0996955828554382
+    },
+    {
+      "alpha": 0.30000000000000004,
+      "calibration_nll": 1.0600516251521206
+    },
+    {
+      "alpha": 0.35000000000000003,
+      "calibration_nll": 1.025955744316377
+    },
+    {
+      "alpha": 0.4,
+      "calibration_nll": 0.9967867259875489
+    },
+    {
+      "alpha": 0.45,
+      "calibration_nll": 0.9721484833705701
+    },
+    {
+      "alpha": 0.5,
+      "calibration_nll": 0.9518235542765989
+    },
+    {
+      "alpha": 0.55,
+      "calibration_nll": 0.935755505684061
+    },
+    {
+      "alpha": 0.6000000000000001,
+      "calibration_nll": 0.9240552383500755
+    },
+    {
+      "alpha": 0.65,
+      "calibration_nll": 0.917034743537082
+    },
+    {
+      "alpha": 0.7000000000000001,
+      "calibration_nll": 0.9152830358237124
+    },
+    {
+      "alpha": 0.75,
+      "calibration_nll": 0.9198218814920109
+    },
+    {
+      "alpha": 0.8,
+      "calibration_nll": 0.932439230374837
+    },
+    {
+      "alpha": 0.8500000000000001,
+      "calibration_nll": 0.9564928691283856
+    },
+    {
+      "alpha": 0.9,
+      "calibration_nll": 0.9992947854645918
+    },
+    {
+      "alpha": 0.9500000000000001,
+      "calibration_nll": 1.0826219284480114
+    },
+    {
+      "alpha": 1.0,
+      "calibration_nll": 1.7174419594423807
+    }
+  ],
+  "calibration_n": 757,
+  "tie_break": "larger ResNet weight within absolute NLL tolerance 1e-12"
+}

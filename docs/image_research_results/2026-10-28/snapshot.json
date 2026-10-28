@@ -1,0 +1,88 @@
+{
+  "checked_at": "2026-10-28T16:26:01.675119+08:00",
+  "branch": "attribution-pilot-baseline",
+  "source_commit": "41329e389637c11f37955d5e2399c3e3827371d5",
+  "dataset": {
+    "effective_n": 63821,
+    "ai": 43821,
+    "real": 20000,
+    "train": 37338,
+    "dev": 7189,
+    "holdout": 19294,
+    "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "quarantined_new_images": 179,
+    "raw_files_preserved": 64000,
+    "parent_ids_preserved": 42000
+  },
+  "sealed_comparisons": [
+    {
+      "folder": "outputs/image-followups-20261027/epochs20-30-comparison",
+      "inputs_verified": 188,
+      "outputs_verified": 7,
+      "summary_sha256": "47a37e21d1f045f066ac9cae28290ce35995fadf5c323ba4159ee229e7fdd53a",
+      "holdout_scored": false
+    },
+    {
+      "folder": "outputs/image-followups-20261028/v6-100-e30-vs-v7-200-q179-e30",
+      "inputs_verified": 193,
+      "outputs_verified": 7,
+      "summary_sha256": "fdc0fe496b09435d9a3d0e876d2623997ab70afc8c5bdb5e85e71f6d2a2445c9",
+      "holdout_scored": false
+    }
+  ],
+  "followup_config": "configs/image_experiments/iab_followups_v7_200_q179_e30.json",
+  "followup_config_sha256": "3cd648391e4f60c04c64e38f057e6f9e6c703e34adba602deb8a90f46d1e3888",
+  "queue_pid": 2747094,
+  "queue_identity": [
+    "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "16526293"
+  ],
+  "queue_identity_verified": true,
+  "followups": {
+    "D3": {
+      "evaluate": {
+        "status": "completed",
+        "exit_code": 0,
+        "seconds": 29.248462788993493
+      }
+    },
+    "A2": {
+      "evaluate": {
+        "status": "completed",
+        "exit_code": 0,
+        "seconds": 155.7195086349966
+      }
+    },
+    "D1-control": {
+      "train": {
+        "status": "completed",
+        "exit_code": 0,
+        "seconds": 9370.874536862015
+      },
+      "evaluate": {
+        "status": "completed",
+        "exit_code": 0,
+        "seconds": 26.391410026000813
+      }
+    },
+    "D1": {
+      "train": {
+        "status": "completed",
+        "exit_code": 0,
+        "seconds": 11717.124080228008
+      }
+    },
+    "D2": {},
+    "D2-semantic": {},
+    "A1": {},
+    "A2-semantic": {},
+    "A3": {}
+  },
+  "current_queue_item": "D1:evaluate",
+  "current_state": "waiting_gpu0_idle",
+  "A3": "blocked: unreviewed family mapping",
+  "holdout_scored": false,
+  "snapshot_contains_models_or_images": false,
+  "copied_source_files": 196,
+  "copied_bytes": 2644021
+}

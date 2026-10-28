@@ -1,0 +1,57 @@
+{
+  "time": 1793110597.7098622,
+  "stage": "D0_completed_30_epochs",
+  "metrics_sha256": "a96ae5035f9174dd4ccc5e5ee1e8d17bfd0040fecfbcad1bf6dfdeef152d9b20",
+  "checkpoint_sha256": "65e46ee38ed9897fa75f35d6428f9a4d27ed2c66c49c24aae302b27354e6b1a7",
+  "predictions_sha256": "e1d065e21c5de0c478add969ef32e8ecd65c93099271906c70757b777715351c",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "parent_manifest_sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e",
+  "parent_samples_verified": 42000,
+  "parent_split_group_label_image_hash_unchanged": true,
+  "prediction_ids_full_dev_verified": 7189,
+  "holdout_evaluated": false,
+  "selected_epoch": 11,
+  "metrics": {
+    "n": 7189,
+    "accuracy": 0.9645291417443316,
+    "macro_f1": 0.9636435569858951,
+    "auroc": 0.9955347928046389,
+    "threshold_0_5": 0.5,
+    "fpr_0_5": 0.02874331550802139,
+    "tpr_0_5": 0.9597331427209912,
+    "real_count": 2992,
+    "ai_count": 4197,
+    "dev_target_fpr": 0.02,
+    "dev_threshold": 0.6901096701622009,
+    "dev_fpr": 0.019719251336898395,
+    "dev_tpr": 0.9399571122230165,
+    "threshold_note": "Exploratory development calibration, not an independent low-FPR claim",
+    "task": "detection",
+    "evaluation_split": "dev",
+    "selected_epoch": 11,
+    "selection_metric": "auroc",
+    "tie_break": "earliest epoch",
+    "train_n": 37338,
+    "train_counts": {
+      "real": 13990,
+      "ai": 23348
+    },
+    "dev_counts": {
+      "real": 2992,
+      "ai": 4197
+    },
+    "class_weights": [
+      1.3344531808434597,
+      0.799597395922563
+    ],
+    "classes": [
+      "real",
+      "ai"
+    ],
+    "failed_samples": 0,
+    "reload_max_abs_error": 0.0,
+    "single_vs_batch_max_abs_error": 0.0,
+    "holdout_evaluated": false
+  },
+  "not_a_paired_scale_comparison": true
+}

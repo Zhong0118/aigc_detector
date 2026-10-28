@@ -1,0 +1,422 @@
+{
+  "sample_ids": [
+    "iab-004be1c1a405329c87b8041c",
+    "iab-01b4314bd3a52552a3ef1ef1"
+  ],
+  "role": "selection",
+  "cached_vs_image_max_error": 1.341104507446289e-07,
+  "image_single_batch_max_error": 1.4901161193847656e-07,
+  "batch": [
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v6-100/images/KANDINSKY/celebahq/004be1c1a405329c87b8041c.png",
+      "task": "attribution",
+      "conditional_on_ai": true,
+      "top_k": [
+        {
+          "source": "PLAYGROUND_2_5",
+          "score": 0.2089535892009735
+        },
+        {
+          "source": "kling",
+          "score": 0.12638409435749054
+        },
+        {
+          "source": "SDXL",
+          "score": 0.12187876552343369
+        },
+        {
+          "source": "hunyuan",
+          "score": 0.10364662110805511
+        },
+        {
+          "source": "hidream",
+          "score": 0.09412699937820435
+        },
+        {
+          "source": "KANDINSKY",
+          "score": 0.09216553717851639
+        },
+        {
+          "source": "FLUX",
+          "score": 0.04495939239859581
+        },
+        {
+          "source": "gemini",
+          "score": 0.035790737718343735
+        },
+        {
+          "source": "infinity",
+          "score": 0.03195643052458763
+        },
+        {
+          "source": "PIXART",
+          "score": 0.028609782457351685
+        },
+        {
+          "source": "ideogram",
+          "score": 0.026962975040078163
+        },
+        {
+          "source": "SD2_1",
+          "score": 0.02596614509820938
+        },
+        {
+          "source": "CogView3_PLUS",
+          "score": 0.021134579554200172
+        },
+        {
+          "source": "SD3_5",
+          "score": 0.008459202945232391
+        },
+        {
+          "source": "mid-5.2",
+          "score": 0.008177103474736214
+        },
+        {
+          "source": "SD3",
+          "score": 0.005475194659084082
+        },
+        {
+          "source": "4o",
+          "score": 0.003368781181052327
+        },
+        {
+          "source": "mid-6.0",
+          "score": 0.003347382415086031
+        },
+        {
+          "source": "grok3",
+          "score": 0.0030814968049526215
+        },
+        {
+          "source": "dalle3",
+          "score": 0.0027653591241687536
+        },
+        {
+          "source": "janus-pro",
+          "score": 0.002206417266279459
+        },
+        {
+          "source": "SD1_5",
+          "score": 0.0005834217299707234
+        }
+      ],
+      "score_type": "closed_set_softmax_uncalibrated",
+      "label_level": "publisher_directory",
+      "unknown": {
+        "status": "not_evaluated",
+        "decision": null
+      },
+      "note": "Candidate source ranking is not evidence that this image is AI generated. Exact backend versions are not inferred."
+    },
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v6-100/images/gemini/COCO/01b4314bd3a52552a3ef1ef1.png",
+      "task": "attribution",
+      "conditional_on_ai": true,
+      "top_k": [
+        {
+          "source": "gemini",
+          "score": 0.12318802624940872
+        },
+        {
+          "source": "SD3_5",
+          "score": 0.09520401805639267
+        },
+        {
+          "source": "SD2_1",
+          "score": 0.08871190994977951
+        },
+        {
+          "source": "SD1_5",
+          "score": 0.08593063801527023
+        },
+        {
+          "source": "SD3",
+          "score": 0.0787191167473793
+        },
+        {
+          "source": "CogView3_PLUS",
+          "score": 0.07083196192979813
+        },
+        {
+          "source": "janus-pro",
+          "score": 0.061480458825826645
+        },
+        {
+          "source": "ideogram",
+          "score": 0.04750370234251022
+        },
+        {
+          "source": "KANDINSKY",
+          "score": 0.047051019966602325
+        },
+        {
+          "source": "PIXART",
+          "score": 0.04625578597187996
+        },
+        {
+          "source": "kling",
+          "score": 0.045429032295942307
+        },
+        {
+          "source": "mid-6.0",
+          "score": 0.044286176562309265
+        },
+        {
+          "source": "SDXL",
+          "score": 0.03906319662928581
+        },
+        {
+          "source": "mid-5.2",
+          "score": 0.02811340056359768
+        },
+        {
+          "source": "infinity",
+          "score": 0.026054371148347855
+        },
+        {
+          "source": "PLAYGROUND_2_5",
+          "score": 0.0222938172519207
+        },
+        {
+          "source": "grok3",
+          "score": 0.017034973949193954
+        },
+        {
+          "source": "FLUX",
+          "score": 0.016907308250665665
+        },
+        {
+          "source": "hidream",
+          "score": 0.0068079824559390545
+        },
+        {
+          "source": "dalle3",
+          "score": 0.003933564759790897
+        },
+        {
+          "source": "4o",
+          "score": 0.003451684257015586
+        },
+        {
+          "source": "hunyuan",
+          "score": 0.0017478909576311707
+        }
+      ],
+      "score_type": "closed_set_softmax_uncalibrated",
+      "label_level": "publisher_directory",
+      "unknown": {
+        "status": "not_evaluated",
+        "decision": null
+      },
+      "note": "Candidate source ranking is not evidence that this image is AI generated. Exact backend versions are not inferred."
+    }
+  ],
+  "single": [
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v6-100/images/KANDINSKY/celebahq/004be1c1a405329c87b8041c.png",
+      "task": "attribution",
+      "conditional_on_ai": true,
+      "top_k": [
+        {
+          "source": "PLAYGROUND_2_5",
+          "score": 0.20895373821258545
+        },
+        {
+          "source": "kling",
+          "score": 0.12638407945632935
+        },
+        {
+          "source": "SDXL",
+          "score": 0.12187875062227249
+        },
+        {
+          "source": "hunyuan",
+          "score": 0.10364658385515213
+        },
+        {
+          "source": "hidream",
+          "score": 0.09412698447704315
+        },
+        {
+          "source": "KANDINSKY",
+          "score": 0.09216552972793579
+        },
+        {
+          "source": "FLUX",
+          "score": 0.04495936259627342
+        },
+        {
+          "source": "gemini",
+          "score": 0.03579071909189224
+        },
+        {
+          "source": "infinity",
+          "score": 0.03195643424987793
+        },
+        {
+          "source": "PIXART",
+          "score": 0.02860977128148079
+        },
+        {
+          "source": "ideogram",
+          "score": 0.026962969452142715
+        },
+        {
+          "source": "SD2_1",
+          "score": 0.02596615068614483
+        },
+        {
+          "source": "CogView3_PLUS",
+          "score": 0.021134568378329277
+        },
+        {
+          "source": "SD3_5",
+          "score": 0.008459203876554966
+        },
+        {
+          "source": "mid-5.2",
+          "score": 0.008177105337381363
+        },
+        {
+          "source": "SD3",
+          "score": 0.005475190933793783
+        },
+        {
+          "source": "4o",
+          "score": 0.003368780482560396
+        },
+        {
+          "source": "mid-6.0",
+          "score": 0.0033473826479166746
+        },
+        {
+          "source": "grok3",
+          "score": 0.0030815002974122763
+        },
+        {
+          "source": "dalle3",
+          "score": 0.0027653570286929607
+        },
+        {
+          "source": "janus-pro",
+          "score": 0.0022064177319407463
+        },
+        {
+          "source": "SD1_5",
+          "score": 0.0005834218463860452
+        }
+      ],
+      "score_type": "closed_set_softmax_uncalibrated",
+      "label_level": "publisher_directory",
+      "unknown": {
+        "status": "not_evaluated",
+        "decision": null
+      },
+      "note": "Candidate source ranking is not evidence that this image is AI generated. Exact backend versions are not inferred."
+    },
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v6-100/images/gemini/COCO/01b4314bd3a52552a3ef1ef1.png",
+      "task": "attribution",
+      "conditional_on_ai": true,
+      "top_k": [
+        {
+          "source": "gemini",
+          "score": 0.12318802624940872
+        },
+        {
+          "source": "SD3_5",
+          "score": 0.09520401805639267
+        },
+        {
+          "source": "SD2_1",
+          "score": 0.08871189504861832
+        },
+        {
+          "source": "SD1_5",
+          "score": 0.08593064546585083
+        },
+        {
+          "source": "SD3",
+          "score": 0.0787191316485405
+        },
+        {
+          "source": "CogView3_PLUS",
+          "score": 0.07083195447921753
+        },
+        {
+          "source": "janus-pro",
+          "score": 0.061480458825826645
+        },
+        {
+          "source": "ideogram",
+          "score": 0.047503694891929626
+        },
+        {
+          "source": "KANDINSKY",
+          "score": 0.04705102741718292
+        },
+        {
+          "source": "PIXART",
+          "score": 0.046255774796009064
+        },
+        {
+          "source": "kling",
+          "score": 0.04542902857065201
+        },
+        {
+          "source": "mid-6.0",
+          "score": 0.044286154210567474
+        },
+        {
+          "source": "SDXL",
+          "score": 0.03906320780515671
+        },
+        {
+          "source": "mid-5.2",
+          "score": 0.02811340056359768
+        },
+        {
+          "source": "infinity",
+          "score": 0.026054367423057556
+        },
+        {
+          "source": "PLAYGROUND_2_5",
+          "score": 0.022293811663985252
+        },
+        {
+          "source": "grok3",
+          "score": 0.01703498885035515
+        },
+        {
+          "source": "FLUX",
+          "score": 0.016907306388020515
+        },
+        {
+          "source": "hidream",
+          "score": 0.006807985715568066
+        },
+        {
+          "source": "dalle3",
+          "score": 0.003933564759790897
+        },
+        {
+          "source": "4o",
+          "score": 0.003451684257015586
+        },
+        {
+          "source": "hunyuan",
+          "score": 0.0017478909576311707
+        }
+      ],
+      "score_type": "closed_set_softmax_uncalibrated",
+      "label_level": "publisher_directory",
+      "unknown": {
+        "status": "not_evaluated",
+        "decision": null
+      },
+      "note": "Candidate source ranking is not evidence that this image is AI generated. Exact backend versions are not inferred."
+    }
+  ],
+  "holdout_scored": false
+}

@@ -1,0 +1,50 @@
+{
+  "sample_ids": [
+    "iab-001a5c897bb7d92889f3804a",
+    "iab-0030eb0c8e2e097c20d35b57"
+  ],
+  "role": "selection",
+  "cached_vs_image_max_error": 7.152557373046875e-07,
+  "image_single_batch_max_error": 3.8743019104003906e-07,
+  "batch": [
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v7-200-q179/images/SD1_5/FFHQ/001a5c897bb7d92889f3804a.png",
+      "task": "detection",
+      "score_ai": 0.25940439105033875,
+      "threshold": 0.5,
+      "label": "real",
+      "score_type": "binary_softmax_uncalibrated",
+      "source_scores_used": false
+    },
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v7-200-q179/images/real/FFHQ/0030eb0c8e2e097c20d35b57.png",
+      "task": "detection",
+      "score_ai": 0.3029993772506714,
+      "threshold": 0.5,
+      "label": "real",
+      "score_type": "binary_softmax_uncalibrated",
+      "source_scores_used": false
+    }
+  ],
+  "single": [
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v7-200-q179/images/SD1_5/FFHQ/001a5c897bb7d92889f3804a.png",
+      "task": "detection",
+      "score_ai": 0.2594043016433716,
+      "threshold": 0.5,
+      "label": "real",
+      "score_type": "binary_softmax_uncalibrated",
+      "source_scores_used": false
+    },
+    {
+      "image": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/outputs/image_experiments/iab-balanced-v7-200-q179/images/real/FFHQ/0030eb0c8e2e097c20d35b57.png",
+      "task": "detection",
+      "score_ai": 0.3029997646808624,
+      "threshold": 0.5,
+      "label": "real",
+      "score_type": "binary_softmax_uncalibrated",
+      "source_scores_used": false
+    }
+  ],
+  "holdout_scored": false
+}

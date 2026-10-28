@@ -1,0 +1,206 @@
+{
+  "config": {
+    "schema": "independent-image-tasks-v1",
+    "execution_enabled": true,
+    "automatic_execution": true,
+    "seed": 42,
+    "gpu_index": 0,
+    "dataset": {
+      "path": "outputs/image_experiments/iab-balanced-v7-200-q179",
+      "manifest_sha256": null,
+      "selection_sha256": "1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b"
+    },
+    "parent_manifest": {
+      "path": "outputs/image_experiments/iab-balanced-v6-100/manifest.jsonl",
+      "sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e"
+    },
+    "prerequisites": [
+      "outputs/iab-v6-100-e30-monitor/completion.json",
+      "outputs/iab-v7-200-q179-e30-monitor/completion.json"
+    ],
+    "classes": [
+      "4o",
+      "CogView3_PLUS",
+      "FLUX",
+      "KANDINSKY",
+      "PIXART",
+      "PLAYGROUND_2_5",
+      "SD1_5",
+      "SD2_1",
+      "SD3",
+      "SD3_5",
+      "SDXL",
+      "dalle3",
+      "gemini",
+      "grok3",
+      "hidream",
+      "hunyuan",
+      "ideogram",
+      "infinity",
+      "janus-pro",
+      "kling",
+      "mid-5.2",
+      "mid-6.0"
+    ],
+    "dimensions": {
+      "rgb": 384,
+      "fingerprint": 128,
+      "fusion": 512
+    },
+    "training": {
+      "epochs": 30,
+      "batch_size": 32,
+      "optimizer": "Adam",
+      "learning_rate": 0.001,
+      "weight_decay": 0,
+      "scheduler": "StepLR",
+      "scheduler_step": 1,
+      "scheduler_gamma": 0.9,
+      "loss": "unweighted_cross_entropy",
+      "encoder_frozen": true,
+      "head": "linear",
+      "augmentation": "none",
+      "selection_metric": {
+        "detection": "auroc",
+        "attribution": "macro_f1"
+      },
+      "tie_break": "earliest_epoch"
+    },
+    "target_fprs": [
+      0.01,
+      0.05
+    ],
+    "bootstrap_repeats": 200,
+    "extraction_batch_size": {
+      "rgb": 32,
+      "fingerprint": 8
+    },
+    "dinov2_directory": "outputs/image_experiments/assets/dinov2-small",
+    "assets": {
+      "fingerprint": {
+        "path": "outputs/image_experiments/assets/ofa_fingerprint.pth",
+        "sha256": "396bc6c54af7c96d2f1cbb57bb38886f096b464472cb221ec38ee185be06521b"
+      },
+      "denoiser": {
+        "path": "outputs/image_experiments/assets/model_best.th",
+        "sha256": "bf8e302573ca412c3d59d1271fb4b185242f582dee676e734a9995b7436fbfdf"
+      },
+      "dinov2_model": {
+        "path": "outputs/image_experiments/assets/dinov2-small/model.safetensors",
+        "sha256": "ae1e99fcefd534ed978cdeb8326f08030c96e28b7a81ffcbc98a857c84d14be1",
+        "bytes": 88249960
+      },
+      "dinov2_config": {
+        "path": "outputs/image_experiments/assets/dinov2-small/config.json",
+        "sha256": "1809f83e3bdb1609a501a610ad4a742f4fd8ae44d72ca4aa0df52d1f2ac8628d",
+        "bytes": 547
+      },
+      "dinov2_processor": {
+        "path": "outputs/image_experiments/assets/dinov2-small/preprocessor_config.json",
+        "sha256": "14e780d86fa1861f8751f868d7f45425b5feb55c38ca26f152ca5097ab30f828",
+        "bytes": 436
+      }
+    },
+    "implementation_sha256": {
+      "scripts/run_image_research_queue.py": "631104a83a697633d52e5fd5a116005bcb46dcc08448539b1628a5ff189108a2",
+      "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+      "research/image_attribution/vision_backbones.py": "d34c0df611ddf8f4fd05d3d3ef91db33b00fd9a41bf3a44e915daa92d3c38e20",
+      "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+      "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+      "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+      "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3",
+      "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+      "scripts/monitor_iab_v2.py": "3e6c867af478f34b9aa77e80fa663af3b4e18ec288afca42614daf508865c347",
+      "scripts/compare_image_scale_epochs.py": "752764997b36a0b664170251df9ac0494de45fb692b7d1b0b705b7e5a6e53e4e",
+      "scripts/predict_image_research.py": "e750ed71196e52b835c870fd51e41643dcb2fa10836bb8731bd0826184450620",
+      "research/image_attribution/extension_split.py": "7eda066eb04c126dac732da5f82f44b45309052a19eb93407413d737e44d4022",
+      "research/image_attribution/iab_archives.py": "fff73491a30a6a58886965165ef4d480392f5fa3a218dd71dec71d51ea7064e4",
+      "research/image_attribution/iab_protocol.py": "16d6a70f408f7e6ea77bbae123b20e743b8c119bfbc3378f568b624375a7ce60",
+      "research/image_attribution/iab_selection.py": "a3247eea1cd42011f1657b44bc35badadb1f00c533d24c1ac1d0de1bad0e4d68",
+      "scripts/download_iab_subset.py": "4eafbf8c71d14b2d44e735db96a57a359f940c06e17cfee0d52c752d83083d39",
+      "scripts/monitor_iab_extension.py": "45ac2ffe4925d4b1dec64e830dfab10bd8c5805c71d0dd8c2569b99433a220c0",
+      "scripts/prepare_iab_extension_manifest.py": "88fc6a333c0dfe3c1f1e64f8e2cc7610c7b5219d285482d884264e33bdac667c",
+      "scripts/prepare_iab_manifest.py": "c14aa7d370a36d57aa07b70e3f1b529acbd196dc0896287b3a39e702cd40e19a",
+      "scripts/run_iab_extension_m2.sh": "d13b8836bee181a569284afaf47f59c8b5881043fed6106adb97e9dcad9d6e72",
+      "scripts/summarize_iab_m2.py": "1d35e5bfc0f9e9c548d7a8d03ea6863acab1fcaa218be54395c99214eb0989b8",
+      "scripts/curate_iab_quarantine_subset.py": "e4ab7061fd6b3b37a73b874fd61ca9586fc0eb5a8949167ae4ea5c91ba7d66a1"
+    },
+    "preprocessing": {
+      "rgb": "facebook/dinov2-small@ed25f3a31f01632728cabb09d1542f84ab7b0056; official slow processor RGB bicubic Resize256 CenterCrop224 ImageNet normalization; CLS384; L2 per branch",
+      "fingerprint": "Author OFA: short-edge >=256, center crop256, [-1,1] to pixels [0,1], DnCNN per-image microbatch1 /256, log1p(abs(fft2)), encoder128; float32 TF32 off"
+    },
+    "jobs": [
+      {
+        "id": "D-DINO",
+        "task": "detection",
+        "variant": "rgb"
+      },
+      {
+        "id": "A-RGB",
+        "task": "attribution",
+        "variant": "rgb"
+      },
+      {
+        "id": "A-FP",
+        "task": "attribution",
+        "variant": "fingerprint"
+      },
+      {
+        "id": "A-Fusion",
+        "task": "attribution",
+        "variant": "fusion"
+      }
+    ],
+    "output": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu",
+    "minimum_free_bytes": 10737418240,
+    "protocol": {
+      "activation": "Explicitly approved quarantine of179 new duplicate-bridge members.63821 effective samples (43821AI+20000real), all64000 raw images retained,42000 parent IDs/splits/groups fixed. Bind only certified q179 manifest; no source relabeling.",
+      "detection": "Real=0 AI=1, frozen DINOv2 + separate Linear(384,2), CE; select AUROC only on selection role; fit low-FPR thresholds only on calibration real scores.",
+      "attribution": "AI-only22-wayCE; identical role hash/seed42 and30epoch head protocol; select macro-F1 only on selection; calibration reserved for separately registered score fusion.",
+      "score_types": "Detection softmax, attribution softmax and original OFA pair scores remain separate. Closed-set probes do not implement unknown rejection.",
+      "holdout": "metadata only; no image loading/scoring/tuning",
+      "limits": [
+        "Exploratory dev roles; earlier baseline selection used parent dev.",
+        "Single seed; larger fusion head is a capacity confound.",
+        "Frozen DINOv2 probes and OFA classification head are project adaptations, not OmniAID or original OFA pair-head reproduction.",
+        "Only new unanchored groups use extension-split-v2; old holdout never moves or receives inference.",
+        "D0 inverse-frequency class weights change with the real/AI training imbalance; this is not a pure data-volume causal estimate.",
+        "OFA keeps100references/source; reference ID changes must be reported separately from the fixed count.",
+        "Raw200/cell selection had23 duplicate-bridge components and failed closed before training;179 new members excluded by explicit human approval. Nominal200/cell is not exact after exclusion; per-cell counts are saved.",
+        "100/30 used physicalGPU1; this200-q179/30 run uses physicalGPU0."
+      ]
+    },
+    "baseline_predictions": {
+      "detection": "outputs/image_experiments/d0-resnet50-iab-v7-200-q179-e30/predictions.jsonl",
+      "attribution": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/predictions.jsonl"
+    },
+    "gpu_memory_preflight_mib": 1024,
+    "task": "attribution"
+  },
+  "job": {
+    "id": "A-Fusion",
+    "task": "attribution",
+    "variant": "fusion"
+  },
+  "plan": {
+    "status": "ready",
+    "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "selection_sha256": "1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b",
+    "roles": {
+      "detection": {
+        "train": 37338,
+        "selection": 2311,
+        "calibration": 2568,
+        "evaluation": 2310
+      },
+      "attribution": {
+        "train": 23348,
+        "selection": 1312,
+        "calibration": 1554,
+        "evaluation": 1331
+      }
+    },
+    "holdout_scored": false
+  },
+  "config_sha256": "e293747ef188eb48ace4270fa3158d95d0b04c04d14616164f028497d0b148c9"
+}

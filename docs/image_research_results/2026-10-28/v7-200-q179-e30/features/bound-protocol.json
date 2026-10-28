@@ -1,0 +1,20 @@
+{
+  "status": "ready",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "selection_sha256": "1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b",
+  "roles": {
+    "detection": {
+      "train": 37338,
+      "selection": 2311,
+      "calibration": 2568,
+      "evaluation": 2310
+    },
+    "attribution": {
+      "train": 23348,
+      "selection": 1312,
+      "calibration": 1554,
+      "evaluation": 1331
+    }
+  },
+  "holdout_scored": false
+}

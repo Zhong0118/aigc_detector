@@ -1,0 +1,12 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "manifest_sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e",
+  "selection_sha256": "286a3c34f5291a355259cfed7170e9b5a6d9d17ddf483f6d32c535cecc4f64b6",
+  "same_sample_ids_verified": true,
+  "summary_sha256": "47a37e21d1f045f066ac9cae28290ce35995fadf5c323ba4159ee229e7fdd53a",
+  "provenance_sha256": "cc74c125abc590f9ffe3cab8a0247e33da2806c9504017f6a455b1d0bd06ae55",
+  "holdout_scored": false,
+  "training_executed": false,
+  "image_inference_executed": false
+}

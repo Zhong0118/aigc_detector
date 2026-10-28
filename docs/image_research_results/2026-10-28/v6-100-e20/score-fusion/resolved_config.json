@@ -1,0 +1,63 @@
+{
+  "config": {
+    "experiment": "A-score-fusion",
+    "research_config": "configs/image_experiments/iab_research_v6_100.json",
+    "manifest_sha256": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e",
+    "feature_run": "outputs/image_experiments/independent-image-tasks-v6-100",
+    "ofa_cache": "outputs/image_experiments/ofa-iab-v6-100-e20/features.pt",
+    "resnet_predictions": "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/predictions.jsonl",
+    "output": "outputs/image_experiments/resnet-feature-score-fusion-iab-v6-100-e20",
+    "inputs_sha256": {
+      "configs/image_experiments/iab_research_v6_100.json": "02bcc2673614b99a5c254e943bd0891b67147746a9d31acad71c1105a2941b71",
+      "outputs/image_experiments/iab-balanced-v6-100/manifest.jsonl": "e8152a198db5b39481482cab18be9a56d173ba6a25dc330bc40cf1fe7cd4b06e",
+      "outputs/image_experiments/iab-balanced-v6-100/selection.json": "286a3c34f5291a355259cfed7170e9b5a6d9d17ddf483f6d32c535cecc4f64b6",
+      "outputs/image_experiments/independent-image-tasks-v6-100/state.json": "fc25f8fd86178bd97442005cbde7588fc6cd99f8f4e3f2454171411b83f93071",
+      "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion/head.pth": "716921764c1a7d20ea7375ba361d4b4464d695b17181c1b259d0711908a4bfb5",
+      "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion/metrics.json": "bc7c47dcf4bea46abe64869fbe55505f0bf2c395126226b43222c9521c34802b",
+      "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion/provenance.json": "a5b28af675ed01cc6a7c8fe4df4ee39b942506a37a01d807be7814b34be1887e",
+      "outputs/image_experiments/independent-image-tasks-v6-100/A-Fusion/predictions.jsonl": "3cfb70ab1dc242408c6fcc21b2750238d9741af930b0fbfb8c2019bcf9ba396e",
+      "outputs/image_experiments/independent-image-tasks-v6-100/feature-cache/rgb.pt": "59f12baab1a5610549d806b54787c3b33bcea67a93bcfd756f2acb9628b814b5",
+      "outputs/image_experiments/ofa-iab-v6-100-e20/features.pt": "193b9a06052919e5225d5805b5d786c22d56f154394eaf6225dc54764b0880f1",
+      "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/predictions.jsonl": "6667b332318a33cb20837cc295c83085cd8f6c3f56ae9383f475beece7250dc4",
+      "outputs/image_experiments/a0-resnet50-iab-v6-100-e20/model.pth": "940932b9aa66543ed08207be4ba6c72050892f27eaf76887365e407d18c3165a",
+      "scripts/run_image_score_fusion.py": "7377b90a5e27a0cfac1a3063bd7e291aa0f633457cdebd427110d52e0c829add"
+    },
+    "protocol": {
+      "method": "alpha*p_resnet+(1-alpha)*p_feature_fusion",
+      "alpha_grid": [
+        0.0,
+        0.05,
+        0.1,
+        0.15,
+        0.2,
+        0.25,
+        0.3,
+        0.35,
+        0.4,
+        0.45,
+        0.5,
+        0.55,
+        0.6,
+        0.65,
+        0.7,
+        0.75,
+        0.8,
+        0.85,
+        0.9,
+        0.95,
+        1.0
+      ],
+      "selection": "minimum calibration negative log likelihood; numerical ties prefer alpha=1",
+      "calibration_n": 757,
+      "evaluation_n": 606,
+      "seed": 42,
+      "bootstrap": 1000,
+      "epochs": null,
+      "backbone_training": false,
+      "holdout_scored": false,
+      "unknown_rejection": "not calibrated",
+      "limitation": "A0 used parent dev for selection; exploratory development comparison"
+    }
+  },
+  "config_sha256": "8d8395ebcbf7f92f2527b35b1fb785b84aa690bf1067ca87a32a4db93a59d46e"
+}

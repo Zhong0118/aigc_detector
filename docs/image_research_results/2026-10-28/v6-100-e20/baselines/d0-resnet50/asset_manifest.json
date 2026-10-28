@@ -1,0 +1,42 @@
+{
+  "best_dev_probabilities.npy": {
+    "sha256": "11be7497321f9457c454193323168fa7f74c3bb419e12c4757131dcfd798885a",
+    "bytes": 39808
+  },
+  "confusion_matrix.csv": {
+    "sha256": "acd981a6d90b8fec4001f149bd6a1a305769c079dc5a19b296c3fea9820d6444",
+    "bytes": 50
+  },
+  "environment.txt": {
+    "sha256": "03e10d3fdeb729f8b0a27b5be323f6fae42b1e32a5697905d04a9a31849570a1",
+    "bytes": 4919
+  },
+  "history.json": {
+    "sha256": "76c64511855cb25bf44ce0d7ae748a40f5dfcf9478faf72224096f4ecdc04448",
+    "bytes": 29180
+  },
+  "metrics.json": {
+    "sha256": "5e6704797f9ae8a150884dda1020c7f3c4d2d8c7682ba0d145db35db2b070387",
+    "bytes": 1005
+  },
+  "model.pth": {
+    "sha256": "8947baa863435a029f8aec54be4be29ee399b0aaca3bbe68d8752a24b71ecfab",
+    "bytes": 94341674
+  },
+  "predictions.jsonl": {
+    "sha256": "ec0506fe98db7dd141d8f5cfed05e5ac84acd52d58f9f6eb22e4e96886535007",
+    "bytes": 1082287
+  },
+  "resolved_config.json": {
+    "sha256": "5038baea98d89fb561c8bc22da2aeffe25c3ed1f9aa2fc0cb8616284c43e599e",
+    "bytes": 3382
+  },
+  "single_prediction.json": {
+    "sha256": "66f2e603db5ec4a0eb43493d3d893b8f3f1893647461cf60284471659cad3e36",
+    "bytes": 169
+  },
+  "stratified_metrics.json": {
+    "sha256": "3eb5e26413829bb650272d07b6b723fc258419a1599599d2e0db745a8928a021",
+    "bytes": 6904
+  }
+}
