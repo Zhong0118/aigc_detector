@@ -329,4 +329,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     result = run(args.output)
     print(json.dumps({key:result[key] for key in ("primary","matched_comparisons","inspected_real_dev_image_n","holdout_image_reads")},indent=2))
-

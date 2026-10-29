@@ -127,4 +127,3 @@ def test_successful_saved_run_binds_checkpoint_file_bytes(tmp_path):
     actual = audit().verify_saved_run(tmp_path)
     assert actual["checkpoint_sha256"] == expected
     assert actual["status"]["exit_code"] == 0
-
