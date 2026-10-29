@@ -12,12 +12,14 @@
 - 实验审计可并行，GPU任务串行。模型/数据/特征/每图预测不入Git，代码/配置/聚合结果与SHA普通推送原功能分支。
 
 ## 任务
-- [ ] T1 docs/IMAGE_UI_HANDOFF_2026-10-29.md：四页面需求、现有调用链、建议响应契约、默认模型、研究能力边界、预览隔离、设计与验收。只写文档，不实施UI。
-- [ ] T2 官方资产审计：OmniDFA、DNA-Det、OFA全预训练/T+1、A3家族映射；记录固定revision/size/SHA、许可和缺口，不能猜来源家族。
-- [ ] T3 ConvNeXt：新增scripts/run_image_convnext.py、tests/test_image_convnext.py、configs/image_experiments/iab_convnext_q179_20261029.json。先测试holdout/缓存身份/资产/重复启动与实际图像重载门槛，再实现冻结ConvNeXt-Tiny 768维L2特征；完整1000类官方权重strict load后移除分类器。使用官方288测试预处理，同角色D-clean、D-heldFFHQ、A22各30轮。它是本项目冻结特征基线，不是某篇伪造检测论文复现。
+- [x] T1 docs/IMAGE_UI_HANDOFF_2026-10-29.md：四页面需求、现有调用链、建议响应契约、默认模型、研究能力边界、预览隔离、设计与验收。只写文档，不实施UI。
+- [x] T2 官方资产审计：OmniDFA、DNA-Det、OFA全预训练/T+1、A3家族映射；记录固定revision/size/SHA、许可和缺口，不能猜来源家族。
+- [x] T3 ConvNeXt：新增scripts/run_image_convnext.py、tests/test_image_convnext.py、configs/image_experiments/iab_convnext_q179_20261029.json。先测试holdout/缓存身份/资产/重复启动与实际图像重载门槛，再实现冻结ConvNeXt-Tiny 768维L2特征；完整1000类官方权重strict load后移除分类器。使用官方288测试预处理，同角色D-clean、D-heldFFHQ、A22各30轮。它是本项目冻结特征基线，不是某篇伪造检测论文复现。
 - [ ] T4 注册ConvNeXt独立输出convnext-q179-20261029、源/配置/模型/角色SHA，审查后唯一启动；新comparison配置复用compare_image_next_routes.py，与OpenCLIP和ResNet相同ID比较，1000次group bootstrap。
 - [ ] T5 OmniDFA资产若满足条件，另写协议与独立入口；冻结作者模型与参考原型法不记30训练epoch，不将cosine当未知概率。DNA-Det、OFA/T+1仅在原资产、训练数据与预算可核验后进入独立注册，不用猜测性替代伪称复现。
 - [ ] T6 每项完成后新建docs/image_research_results时间戳快照；核验真实epochs、预测ID/类别/角色、重载、无holdout、聚合指标和source SHA。普通提交推送；为新阶段建立每30分钟安静跟进，全部完成或明确转为待用户处理时关闭或更新。
 
 ## 验证
 代码使用CPU隔离测试，真实模型只在授权GPU门槛下用selection图做全重载/缓存/单批一致性≤1e-5；每个训练头真实history连续1..30。任何failed输出原样保留，禁止重置或覆盖。既有OpenCLIP测试和比较测试作为复用接口回归。UI文档与源码、实际模型工件逐项对照，不以测试替代实验成绩。
+
+2026-10-29补充授权：用户明确优先官方模拟器＋20+1拒识头30轮；不执行完整模拟器/提取器预训练。OFA模拟器已从官方Drive导入138627153字节，实际SHA7ee94487217a8ff9fad3b0da1bdbb60b89f923be09b377b5f1ef17d9e8eb3de8，须安全CPU严格加载与固定架构重建验收后才生成train/selection派生未知样本。原图角色和holdout边界不变。

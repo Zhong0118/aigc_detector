@@ -1,0 +1,23 @@
+{
+  "status": "blocked_before_model_execution",
+  "reason": "physical GPU0 memory 1287 MiB exceeded registered idle limit1024",
+  "old_launch": {
+    "pid": 921519,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "28835808",
+    "command": [
+      "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.venv-image-next/bin/python",
+      "scripts/run_image_convnext.py",
+      "--execute"
+    ],
+    "started_unix": 1793276927.765067,
+    "source_commit": "9dee8439c6868d25b467894826fe6f8e3e4a2057"
+  },
+  "old_process_alive": false,
+  "model_output_exists": false,
+  "epochs_trained": 0,
+  "images_opened": 0,
+  "log": "outputs/image-remaining-routes-20261029/convnext.log",
+  "checked_unix": 1793277155.3150585,
+  "action": "preserve original attempt; register separate idle waiter"
+}
