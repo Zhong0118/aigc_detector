@@ -1,0 +1,130 @@
+{
+  "schema": "omniaid-v2-pretrained-evaluation-v1",
+  "status": "actual_image_verification_pending",
+  "execution_enabled": false,
+  "automatic_execution": false,
+  "task": "detection",
+  "epoch": null,
+  "seed": 42,
+  "default_device": "cpu",
+  "gpu_index": 0,
+  "batch_size": 4,
+  "classes": [
+    "real",
+    "ai"
+  ],
+  "target_fprs": [
+    0.01,
+    0.05
+  ],
+  "bootstrap_repeats": 1000,
+  "dataset": {
+    "path": "outputs/image_experiments/iab-balanced-v7-200-q179",
+    "per_cell": 200,
+    "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "selection_sha256": "1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b"
+  },
+  "assets": {
+    "source": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/reward_omniaid.py",
+      "bytes": 12908,
+      "sha256": "0280750b22d1d60815b89d6d35cff8ee6a474a5615a3f8d95a3db9998d028596",
+      "git_blob": "49ce4fb957ecab491b8a9d183f1a448a4b789ebd",
+      "source_url": "https://api.github.com/repos/yunncheng/OmniAID/git/blobs/49ce4fb957ecab491b8a9d183f1a448a4b789ebd",
+      "download_note": "GitHub blob API content is base64; decode to exact source bytes, not the API JSON body",
+      "patched_sha256": "e70258fdb053424add1a2d0eeff6573a209a56c003a3958f66d04ef868b1f212",
+      "patch": "Exactly one CLIPModel.from_pretrained call gains local_files_only=True, trust_remote_code=False, use_safetensors=True. Applied in memory only after both source hashes match reviewed constants."
+    },
+    "checkpoint": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/checkpoint_omniaid_v2.pth",
+      "bytes": 3241518989,
+      "sha256": "919338928cab88cef1e6e4b85777749c74bdff6a1796fcd7e43a91422327f906",
+      "repo_id": "Yunncheng/OmniAID",
+      "revision": "279cae7398ac6636f46fc4668f755f11210b36bf",
+      "filename": "ckpt/checkpoint_omniaid_v2.pth",
+      "source_url": "https://huggingface.co/Yunncheng/OmniAID/resolve/279cae7398ac6636f46fc4668f755f11210b36bf/ckpt/checkpoint_omniaid_v2.pth"
+    },
+    "model_config": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/config_omniaid_v2.json",
+      "bytes": 680,
+      "sha256": "333cfb2b53ff306210343e6991c2370893a893c776b765181c1d6025b0968b72",
+      "source_url": "https://huggingface.co/Yunncheng/OmniAID/resolve/279cae7398ac6636f46fc4668f755f11210b36bf/config/config_omniaid_v2.json"
+    },
+    "clip_config": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/clip-vit-large-patch14-336/config.json",
+      "bytes": 4757,
+      "sha256": "51b1c14aabcdf639c4a0370eeda1010b773bbe1df78319c7d0f5882c22ac0ac0",
+      "source_url": "https://huggingface.co/openai/clip-vit-large-patch14-336/resolve/ce19dc912ca5cd21c8a653c79e251e808ccabcd1/config.json"
+    },
+    "clip_weights": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/clip-vit-large-patch14-336/model.safetensors",
+      "bytes": 1711853860,
+      "sha256": "f51cb7b04a2afb04828b1b8e0edc34bbf082080d098b9874f5756e7b7ba8c807",
+      "status": "safe_conversion_verified",
+      "derived_from": {
+        "repo_id": "openai/clip-vit-large-patch14-336",
+        "revision": "ce19dc912ca5cd21c8a653c79e251e808ccabcd1",
+        "filename": "pytorch_model.bin",
+        "bytes": 1711974081,
+        "sha256": "c6032c2e0caae3dc2d4fba35535fa6307dbb49df59c7e182b1bc4b3329b81801",
+        "source_url": "https://huggingface.co/openai/clip-vit-large-patch14-336/resolve/ce19dc912ca5cd21c8a653c79e251e808ccabcd1/pytorch_model.bin"
+      }
+    }
+  },
+  "verification_receipt": {
+    "path": "outputs/image_experiments/assets/omniaid_v2/full_reload_q179_20261029_namespace_v1.json",
+    "sha256": null
+  },
+  "output": "outputs/image_experiments/omniaid-v2-q179-20261029",
+  "preprocessing": "RGB; torchvision Resize((336,336)) default bilinear; ToTensor; CLIP mean [.48145466,.4578275,.40821073], std [.26862954,.26130258,.27577711]",
+  "protocol": {
+    "model": "Author CLIP v2: six experts, rank one, top two, router hidden 256, hybrid true; all parameters frozen",
+    "roles": "Partition_rows seed42; verification reads exactly two selection-role images (one real, one AI), never calibration/evaluation/holdout for model checks. Evaluation reads only calibration/evaluation image files; train and sealed holdout remain untouched.",
+    "resource_guard": "New wrapper takes the shared gpu0-research.lock and requires physical GPU 0 memory.used <=1024 MiB before verification and evaluation; CUDA_VISIBLE_DEVICES=0. Root-controlled queue waits for FFHQ audit.",
+    "run_status": "Evaluation creates an exclusive output directory, writes running status and resolved_config.json, then completed/exit0 or failed/exit1. Existing run directories and their status are never overwritten.",
+    "scores": "Author output is softmax[:,1]=p_ai, converted to [1-p_ai,p_ai] without a second sigmoid",
+    "activation": "New wrapper verifies two real selection-role images, cached batch versus recomputation, batch versus single, and full model reload; binds receipt and enables this new config only on success. automatic_execution stays false. Legacy config and runner remain untouched.",
+    "overlap_caveat": "Author pretrained detector training coverage may overlap IAB generators or images; absence of overlap is not established. This is frozen pretrained detection evaluation, not a 30-epoch trained-head result or clean out-of-distribution claim.",
+    "license": "Current official OmniAID repository LICENSE is MIT, verified 2026-10-29 at commit 5217acb525892c33f5a30cdf96d37f08f008a164. License bytes/hash and source review recorded separately; no claim this license was present at the source-blob commit. OpenAI CLIP MIT."
+  },
+  "blockers": [
+    "Actual selection-image full reload receipt has not been produced or bound."
+  ],
+  "source_review_receipt": {
+    "path": "outputs/image_experiments/assets/omniaid_v2/source_review_q179_20261029.json",
+    "sha256": "fce8f72717205200c0a6c8b080871e8d153d6e8ed8017dfd5f4245312450e6f0"
+  },
+  "network_diagnosis": "outputs/image_experiments/assets/omniaid_v2/network_diagnosis_q179_20261029.json",
+  "recovery_receipt": {
+    "path": "outputs/image_experiments/assets/omniaid_v2/failed-direct-20261029/recovery_receipt.json",
+    "sha256": "6040ffb8fa302475a8f32e301270a87430d9cc854a3ef6b1cd5094d8bd15d8e4"
+  },
+  "transport_receipts": {
+    "model_config": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/import_model_config_q179_20261029.json",
+      "sha256": "ebcdb35e438d6aff11086e629fcdc23a71c88515f7647590b9142326950afcf5"
+    },
+    "clip_config": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/import_clip_config_q179_20261029.json",
+      "sha256": "31e52a6f19378078b7b1ee4a9d486353dc43659322812fa0b73d82b1cb8fb8d4"
+    },
+    "checkpoint": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/import_checkpoint_q179_20261029.json",
+      "sha256": "217d6b77e3be05d7ee715a86c12db77797901c30e4e98bb1e98a6dca70b71437"
+    },
+    "clip_binary": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/import_clip_binary_q179_20261029.json",
+      "sha256": "6452334cb25b77cad4309b8edc85333e35af3bc30a464352433756916d168e32"
+    }
+  },
+  "conversion_receipt": {
+    "path": "outputs/image_experiments/assets/omniaid_v2/clip_conversion_q179_20261029.json",
+    "sha256": "c0f7cdee076e9d81a4b2845b4fa19e16388ee15e00534933e83bdba827f7a502"
+  },
+  "metadata_load": {
+    "weights_only": true,
+    "allowed_globals": [
+      "argparse.Namespace"
+    ]
+  }
+}

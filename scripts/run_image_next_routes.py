@@ -112,7 +112,7 @@ def stages():
                                '--conversion-owner', 'serial-queue'], False,
          ASSETS / 'preparation_imported_q179_20261029.json', True),
         ('omniaid-verify', [python, 'scripts/evaluate_omniaid_q179.py', '--verify-load', '--device', 'cuda'], True,
-         ASSETS / 'verification_status_q179_20261029.json', True),
+         ASSETS / 'full_reload_q179_20261029_namespace_v1_status.json', True),
         ('omniaid-evaluate', [python, 'scripts/evaluate_omniaid_q179.py', '--execute', '--device', 'cuda'], True,
          Path('outputs/image_experiments/omniaid-v2-q179-20261029/status.json'), False),
         ('openclip', ['.venv-image-next/bin/python', 'scripts/run_image_openclip.py', '--execute'], True,
@@ -127,11 +127,62 @@ def stages():
     ]
 
 
-def execute():
-    directory = ROOT / STATE
+RECOVERY_STATE = Path('outputs/image-next-routes-20261029/queue-namespace-v1')
+RECOVERY_SNAPSHOT = Path('outputs/image-next-routes-20261029/namespace-recovery-v1/failure-snapshot.json')
+
+
+def namespace_recovery_evidence():
+    """Continue only the diagnosed pre-inference failure; never reuse failed state."""
+    snapshot = json.loads((ROOT / RECOVERY_SNAPSHOT).read_text())
+    for name, expected in snapshot['files'].items():
+        if name.startswith('outputs/') and sha256(ROOT / name) != expected:
+            raise ValueError('preserved failure evidence changed')
+    previous = json.loads((ROOT / STATE / 'status.json').read_text())
+    failed = json.loads((ROOT / ASSETS / 'verification_status_q179_20261029.json').read_text())
+    if (previous.get('status') != 'failed' or previous.get('stage') != 'omniaid-verify'
+            or previous.get('child_exit_code') != 1 or failed.get('error_type') != 'UnpicklingError'
+            or 'argparse.Namespace' not in failed.get('error', '')):
+        raise ValueError('recovery requires the diagnosed Namespace verification failure')
+    if alive(previous['launch']) or alive(previous['child']):
+        raise RuntimeError('previous queue or verifier is still alive')
+    old_registration = ROOT / STATE / 'registration.json'
+    if sha256(old_registration) != 'dd3b6c313cad34b2cefa284e9de45e73c258e8d9ce0d790b7e741681b8437262':
+        raise ValueError('original queue registration differs')
+    for name, expected in json.loads(old_registration.read_text()).get('sources', {}).items():
+        if name not in ('scripts/run_image_next_routes.py', 'scripts/evaluate_omniaid_q179.py') and sha256(ROOT / name) != expected:
+            raise ValueError(f'unrelated registered source/config changed: {name}')
+    done = previous.get('completed_stages', [])
+    if len(done) != 1 or done[0]['name'] != 'omniaid-conversion' or done[0]['exit_code'] != 0:
+        raise ValueError('recovery requires only conversion completed')
+    conversion = ROOT / done[0]['receipt']['path']
+    if sha256(conversion) != done[0]['receipt']['sha256']:
+        raise ValueError('conversion receipt changed')
+    completed(conversion, require_exit=False)
+    old_config_path = ROOT / STATE / 'omniaid-conversion-config.json'
+    if sha256(old_config_path) != done[0]['config_sha256']:
+        raise ValueError('converted config evidence changed')
+    expected = json.loads(old_config_path.read_text())
+    expected['metadata_load'] = dict(weights_only=True, allowed_globals=['argparse.Namespace'])
+    expected['verification_receipt']['path'] = str(ASSETS / 'full_reload_q179_20261029_namespace_v1.json')
+    if json.loads((ROOT / OMNI_CONFIG).read_text()) != expected:
+        raise ValueError('recovery changed more than metadata policy and new verification path')
+    for target in ['outputs/image_experiments/omniaid-v2-q179-20261029',
+                   'outputs/image_experiments/openclip-q179-20261029']:
+        if (ROOT / target).exists():
+            raise FileExistsError('recovery must precede all evaluation/training outputs')
+    return dict(snapshot_path=str(RECOVERY_SNAPSHOT), snapshot_sha256=sha256(ROOT / RECOVERY_SNAPSHOT),
+                previous_status_sha256=sha256(ROOT / STATE / 'status.json'),
+                verified_conversion_sha256=sha256(conversion),
+                scope='skip completed conversion; preserve original failed queue and verification status')
+
+
+def execute(resume_namespace=False):
+    directory = ROOT / (RECOVERY_STATE if resume_namespace else STATE)
     directory.parent.mkdir(parents=True, exist_ok=True)
     with (directory.parent / 'queue.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        recovery = namespace_recovery_evidence() if resume_namespace else None
+        active_stages = stages()[1:] if resume_namespace else stages()
         directory.mkdir(exist_ok=False)
         launch = dict(**identity(), started_unix=time.time(), source_sha256=sha256(__file__))
         write(directory / 'launch.json', launch)
@@ -139,7 +190,7 @@ def execute():
         omni_hash = sha256(ROOT / OMNI_CONFIG)
         write(directory / 'registration.json', dict(sources=hashes, initial_omniaid_config_sha256=omni_hash,
               git_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-              stages=[dict(name=s[0], command=s[1]) for s in stages()], holdout_scored=False))
+              stages=[dict(name=s[0], command=s[1]) for s in active_stages], recovery=recovery, holdout_scored=False))
         shutil.copyfile(ROOT / OMNI_CONFIG, directory / 'initial_omniaid_config.json')
         state = dict(status='waiting_assets', launch=launch, completed_stages=[], started_unix=time.time())
         state_path = directory / 'status.json'
@@ -172,7 +223,7 @@ def execute():
                 save(status='waiting_assets', ready_assets=sorted(ready))
                 if len(ready) != len(specs):
                     time.sleep(30)
-            for name, command, needs_gpu, receipt, changes_config in stages():
+            for name, command, needs_gpu, receipt, changes_config in active_stages:
                 invariant()
                 if (ROOT / receipt).exists():
                     raise FileExistsError(f'preserve pre-existing stage receipt: {receipt}')
@@ -214,9 +265,10 @@ def execute():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--execute', action='store_true')
+    parser.add_argument('--resume-namespace-v1', action='store_true')
     args = parser.parse_args()
     if args.execute:
-        execute()
+        execute(resume_namespace=args.resume_namespace_v1)
     else:
         print(json.dumps(dict(stages=[s[0] for s in stages()], execution=False, network=False)))
 

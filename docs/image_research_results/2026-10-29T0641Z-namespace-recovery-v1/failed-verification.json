@@ -1,0 +1,26 @@
+{
+  "status": "failed",
+  "exit_code": 1,
+  "epoch": null,
+  "stage": "verify-load",
+  "pid": 3778514,
+  "launch": {
+    "pid": 3778514,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "25543364",
+    "commandline": [
+      ".venv-image/bin/python",
+      "scripts/evaluate_omniaid_q179.py",
+      "--verify-load",
+      "--device",
+      "cuda"
+    ],
+    "cwd": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline",
+    "script_sha256": "c946ca5d9da3e3941b224b0dfdd746eb6aa3f6ed68671292f6f94f336937b815",
+    "launched_unix": 1793244005.2221835
+  },
+  "config_sha256": "c8e7886a94f361c7a04eea80d2c1808512241f213ba4b1ba1d4dc45ee7788213",
+  "error_type": "UnpicklingError",
+  "error": "Weights only load failed. This file can still be loaded, to do so you have two options, \u001b[1mdo those steps only if you trust the source of the checkpoint\u001b[0m. \n\t(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.\n\t(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.\n\tWeightsUnpickler error: Unsupported global: GLOBAL argparse.Namespace was not an allowed global by default. Please use `torch.serialization.add_safe_globals([Namespace])` or the `torch.serialization.safe_globals([Namespace])` context manager to allowlist this global if you trust this class/function.\n\nCheck the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.",
+  "elapsed_seconds": 18.88948382300441
+}

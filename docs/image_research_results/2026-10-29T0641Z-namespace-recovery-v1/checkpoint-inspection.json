@@ -1,0 +1,30 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "weights_only": true,
+  "static_unsafe_globals": [
+    "argparse.Namespace"
+  ],
+  "allowed_globals": [
+    "argparse.Namespace"
+  ],
+  "checkpoint_sha256": "919338928cab88cef1e6e4b85777749c74bdff6a1796fcd7e43a91422327f906",
+  "model_tensor_count": 2804,
+  "top_level_keys": [
+    "args",
+    "epoch",
+    "model",
+    "optimizer",
+    "scaler"
+  ],
+  "elapsed_seconds": 5.595701694488525,
+  "cuda_used": false,
+  "images_read": false,
+  "recovery_gate": {
+    "snapshot_path": "outputs/image-next-routes-20261029/namespace-recovery-v1/failure-snapshot.json",
+    "snapshot_sha256": "e55f9343d9e49e1fa519c3e6591321e96f7deef3c526feb5f55e388b26fd17f0",
+    "previous_status_sha256": "ede18c9d9d4b39fde3ff83e370fab73ad2de9a9538df96451e8ecadfc62f4048",
+    "verified_conversion_sha256": "ac32b8ae1b07c833dfdb24022c5496c857eb4eb287100a133cbe7a6b9e74fdba",
+    "scope": "skip completed conversion; preserve original failed queue and verification status"
+  }
+}

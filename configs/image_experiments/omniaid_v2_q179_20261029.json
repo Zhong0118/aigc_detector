@@ -1,6 +1,6 @@
 {
   "schema": "omniaid-v2-pretrained-evaluation-v1",
-  "status": "assets_importing",
+  "status": "actual_image_verification_pending",
   "execution_enabled": false,
   "automatic_execution": false,
   "task": "detection",
@@ -58,9 +58,9 @@
     },
     "clip_weights": {
       "path": "outputs/image_experiments/assets/omniaid_v2/clip-vit-large-patch14-336/model.safetensors",
-      "bytes": null,
-      "sha256": null,
-      "status": "offline_safe_conversion_and_hash_registration_required",
+      "bytes": 1711853860,
+      "sha256": "f51cb7b04a2afb04828b1b8e0edc34bbf082080d098b9874f5756e7b7ba8c807",
+      "status": "safe_conversion_verified",
       "derived_from": {
         "repo_id": "openai/clip-vit-large-patch14-336",
         "revision": "ce19dc912ca5cd21c8a653c79e251e808ccabcd1",
@@ -72,7 +72,7 @@
     }
   },
   "verification_receipt": {
-    "path": "outputs/image_experiments/assets/omniaid_v2/full_reload_q179_20261029.json",
+    "path": "outputs/image_experiments/assets/omniaid_v2/full_reload_q179_20261029_namespace_v1.json",
     "sha256": null
   },
   "output": "outputs/image_experiments/omniaid-v2-q179-20261029",
@@ -88,8 +88,7 @@
     "license": "Current official OmniAID repository LICENSE is MIT, verified 2026-10-29 at commit 5217acb525892c33f5a30cdf96d37f08f008a164. License bytes/hash and source review recorded separately; no claim this license was present at the source-blob commit. OpenAI CLIP MIT."
   },
   "blockers": [
-    "Official pinned assets are being imported over explicit HTTPS/SSH stream; not yet verified or converted.",
-    "Actual-image full reload remains unverified."
+    "Actual selection-image full reload receipt has not been produced or bound."
   ],
   "source_review_receipt": {
     "path": "outputs/image_experiments/assets/omniaid_v2/source_review_q179_20261029.json",
@@ -99,5 +98,33 @@
   "recovery_receipt": {
     "path": "outputs/image_experiments/assets/omniaid_v2/failed-direct-20261029/recovery_receipt.json",
     "sha256": "6040ffb8fa302475a8f32e301270a87430d9cc854a3ef6b1cd5094d8bd15d8e4"
+  },
+  "transport_receipts": {
+    "model_config": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/import_model_config_q179_20261029.json",
+      "sha256": "ebcdb35e438d6aff11086e629fcdc23a71c88515f7647590b9142326950afcf5"
+    },
+    "clip_config": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/import_clip_config_q179_20261029.json",
+      "sha256": "31e52a6f19378078b7b1ee4a9d486353dc43659322812fa0b73d82b1cb8fb8d4"
+    },
+    "checkpoint": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/import_checkpoint_q179_20261029.json",
+      "sha256": "217d6b77e3be05d7ee715a86c12db77797901c30e4e98bb1e98a6dca70b71437"
+    },
+    "clip_binary": {
+      "path": "outputs/image_experiments/assets/omniaid_v2/import_clip_binary_q179_20261029.json",
+      "sha256": "6452334cb25b77cad4309b8edc85333e35af3bc30a464352433756916d168e32"
+    }
+  },
+  "conversion_receipt": {
+    "path": "outputs/image_experiments/assets/omniaid_v2/clip_conversion_q179_20261029.json",
+    "sha256": "c0f7cdee076e9d81a4b2845b4fa19e16388ee15e00534933e83bdba827f7a502"
+  },
+  "metadata_load": {
+    "weights_only": true,
+    "allowed_globals": [
+      "argparse.Namespace"
+    ]
   }
 }

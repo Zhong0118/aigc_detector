@@ -300,3 +300,27 @@ def test_resume_handles_existing_shared_asset_directory_symlink(tmp_path):
     assert receipt['status']=='completed'
     assert receipt['resume']['prefix_path']==str(prep.ASSET_ROOT/'failed-import-checkpoint-20261029/resume.bin.partial')
     assert prep.asset_reference(root,target/'probe.npy')==str(prep.ASSET_ROOT/'probe.npy')
+
+def test_namespace_compatibility_keeps_weights_only_and_scope(tmp_path):
+    import argparse
+    from scripts import evaluate_omniaid_q179 as wrapper
+    from scripts import prepare_omniaid_q179 as prep
+    target=tmp_path/prep.ASSET_ROOT/'toy.pth';target.parent.mkdir(parents=True)
+    torch.save({'model':{'weight':torch.arange(3)},'args':argparse.Namespace(epoch=30)},target)
+    config={'assets':{'checkpoint':{'path':str(target.relative_to(tmp_path)),'bytes':target.stat().st_size,'sha256':prep.sha256(target)}},'metadata_load':{'weights_only':True,'allowed_globals':['argparse.Namespace']}}
+    before=torch.serialization.get_safe_globals().copy()
+    with wrapper.checkpoint_metadata(tmp_path,config):
+        state=torch.load(target,map_location='cpu',weights_only=True)
+        assert torch.equal(state['model']['weight'],torch.arange(3))
+        assert state['args'].epoch==30
+    assert torch.serialization.get_safe_globals()==before
+
+def test_namespace_compatibility_rejects_unreviewed_global_before_load(tmp_path,monkeypatch):
+    from scripts import evaluate_omniaid_q179 as wrapper
+    from scripts import prepare_omniaid_q179 as prep
+    target=tmp_path/prep.ASSET_ROOT/'toy.pth';target.parent.mkdir(parents=True);target.write_bytes(b'x')
+    config={'assets':{'checkpoint':{'path':str(target.relative_to(tmp_path)),'bytes':1,'sha256':prep.sha256(target)}},'metadata_load':{'weights_only':True,'allowed_globals':['argparse.Namespace']}}
+    monkeypatch.setattr(torch.serialization,'get_unsafe_globals_in_checkpoint',lambda _:['os.system'])
+    monkeypatch.setattr(torch,'load',lambda *a,**k:pytest.fail('unexpected load'))
+    with pytest.raises(ValueError,match='globals'):
+        with wrapper.checkpoint_metadata(tmp_path,config):pytest.fail('entered unreviewed context')

@@ -1,0 +1,72 @@
+{
+  "status": "failed",
+  "launch": {
+    "pid": 3623261,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "25367999",
+    "commandline": [
+      ".venv-image/bin/python",
+      "scripts/run_image_next_routes.py",
+      "--execute"
+    ],
+    "started_unix": 1793242249.7006292,
+    "source_sha256": "b33b0d357e3241fb9b44ea15bcdf589aabce10c7bfcb7cb1ce0e18fd5f290527"
+  },
+  "completed_stages": [
+    {
+      "name": "omniaid-conversion",
+      "receipt": {
+        "path": "outputs/image_experiments/assets/omniaid_v2/preparation_imported_q179_20261029.json",
+        "sha256": "ac32b8ae1b07c833dfdb24022c5496c857eb4eb287100a133cbe7a6b9e74fdba"
+      },
+      "child": {
+        "pid": 3777416,
+        "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+        "process_start_ticks": "25542484",
+        "commandline": [
+          ".venv-image/bin/python",
+          "scripts/prepare_omniaid_q179.py",
+          "--convert-imported",
+          "--conversion-owner",
+          "serial-queue"
+        ]
+      },
+      "config_sha256": "9edc48728b323e50e94fd8fb7065a738fced38817b4e87e791dc646dcb4fbc8f",
+      "exit_code": 0,
+      "completed_unix": 1793244003.299483
+    }
+  ],
+  "started_unix": 1793242249.7026997,
+  "updated_unix": 1793244024.7211335,
+  "ready_assets": [
+    "checkpoint",
+    "clip_binary",
+    "clip_config",
+    "model_config"
+  ],
+  "stage": "omniaid-verify",
+  "command": [
+    ".venv-image/bin/python",
+    "scripts/evaluate_omniaid_q179.py",
+    "--verify-load",
+    "--device",
+    "cuda"
+  ],
+  "child": {
+    "pid": 3778514,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "25543364",
+    "commandline": [
+      ".venv-image/bin/python",
+      "scripts/evaluate_omniaid_q179.py",
+      "--verify-load",
+      "--device",
+      "cuda"
+    ]
+  },
+  "child_exit_code": 1,
+  "error_type": "RuntimeError",
+  "error": "omniaid-verify exited 1; do not retry or overwrite",
+  "failed_unix": 1793244024.721132,
+  "exit_code": 1
+}

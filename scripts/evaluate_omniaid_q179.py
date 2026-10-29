@@ -24,6 +24,29 @@ MANIFEST_SHA = '9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3
 SELECTION_SHA = '1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b'
 
 
+METADATA_LOAD = dict(weights_only=True, allowed_globals=['argparse.Namespace'])
+
+
+@contextmanager
+def checkpoint_metadata(root, config):
+    """Permit only reviewed stdlib metadata on the SHA-pinned checkpoint."""
+    if config.get('metadata_load') != METADATA_LOAD:
+        raise ValueError('checkpoint metadata policy differs from reviewed globals')
+    spec = config['assets']['checkpoint']
+    path = asset_path(root, spec['path'])
+    if path.stat().st_size != spec['bytes'] or core.sha256(path) != spec['sha256']:
+        raise ValueError('checkpoint identity mismatch before metadata permission')
+    if torch.serialization.get_unsafe_globals_in_checkpoint(path) != ['argparse.Namespace']:
+        raise ValueError('checkpoint globals differ from reviewed Namespace metadata')
+    with torch.serialization.safe_globals([argparse.Namespace]):
+        yield
+
+
+def load_detector(root, config, device):
+    with checkpoint_metadata(root, config):
+        return core.load_detector(root, config, device)
+
+
 def process_identity():
     return dict(pid=os.getpid(), boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
                 process_start_ticks=Path('/proc/self/stat').read_text().rsplit(')', 1)[1].split()[19],
@@ -169,15 +192,15 @@ def validate_actual_receipt(root, config, receipt):
 def verify_load(root, config, requested):
     validate_route(root, config)
     path = asset_path(root, config['verification_receipt']['path'])
-    cache_path = path.with_name('actual_selection_scores_q179_20261029.npy')
+    cache_path = path.with_name(path.stem + '_scores.npy')
     if path.exists() or cache_path.exists():
         raise FileExistsError('preserve prior actual-image verification evidence')
     with core.research_lock(root), stage_status(
-            path.with_name('verification_status_q179_20261029.json'), 'verify-load', config):
+            path.with_name(path.stem + '_status.json'), 'verify-load', config):
         idle = gpu_guard(config, requested)
         device = core.resolve_device(config, requested)
         selected, images = probe_images(root, config)
-        model, audit = core.load_detector(root, config, device)
+        model, audit = load_detector(root, config, device)
         first = core.score_loader(model, [(images, None)], device)
         with cache_path.open('xb') as stream:
             np.save(stream, first, allow_pickle=False)
@@ -187,7 +210,7 @@ def verify_load(root, config, requested):
         gc.collect()
         if device.startswith('cuda'):
             torch.cuda.empty_cache()
-        model, second_audit = core.load_detector(root, config, device)
+        model, second_audit = load_detector(root, config, device)
         if second_audit['asset_digest'] != audit['asset_digest']:
             raise ValueError('assets changed between model loads')
         reloaded = core.score_loader(model, [(images, None)], device)
@@ -201,7 +224,8 @@ def verify_load(root, config, requested):
                        cache_max_error=float(np.abs(cached - same_model).max()),
                        cache=dict(path=asset_reference(root, cache_path), sha256=core.sha256(cache_path)),
                        scores=cached.tolist(), device=device, gpu_index=config['gpu_index'],
-                       gpu_memory_before_mib=idle, epoch=None, encoder_training=False)
+                       gpu_memory_before_mib=idle, epoch=None, encoder_training=False,
+                       metadata_load=METADATA_LOAD)
         validate_actual_receipt(root, config, receipt)
         with path.open('x') as stream:
             json.dump(receipt, stream, indent=2, allow_nan=False)
@@ -228,7 +252,8 @@ def run(root, config, requested):
         with stage_status(out / 'status.json', 'execute', config):
             core.write_json(out / 'resolved_config.json', dict(config, runtime_device=device,
                             gpu_memory_before_mib=idle, cuda_visible_devices=os.environ.get('CUDA_VISIBLE_DEVICES')))
-            result = core._evaluate(root, config, device, out)
+            with checkpoint_metadata(root, config):
+                result = core._evaluate(root, config, device, out)
             result['pretraining_overlap_caveat'] = config['protocol']['overlap_caveat']
             core.write_json(out / 'metrics.json', result)
             return result

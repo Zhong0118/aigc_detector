@@ -1,0 +1,17 @@
+{
+  "files": {
+    "scripts/evaluate_omniaid_q179.py": "c946ca5d9da3e3941b224b0dfdd746eb6aa3f6ed68671292f6f94f336937b815",
+    "scripts/run_image_next_routes.py": "b33b0d357e3241fb9b44ea15bcdf589aabce10c7bfcb7cb1ce0e18fd5f290527",
+    "configs/image_experiments/omniaid_v2_q179_20261029.json": "9edc48728b323e50e94fd8fb7065a738fced38817b4e87e791dc646dcb4fbc8f",
+    "outputs/image-next-routes-20261029/queue/status.json": "ede18c9d9d4b39fde3ff83e370fab73ad2de9a9538df96451e8ecadfc62f4048",
+    "outputs/image-next-routes-20261029/queue/registration.json": "dd3b6c313cad34b2cefa284e9de45e73c258e8d9ce0d790b7e741681b8437262",
+    "outputs/image-next-routes-20261029/queue/omniaid-verify.log": "b92df5a1c3a14b4fa483ab73857b73246de68c84d618c2f0fc99ad8d8fd035bd",
+    "outputs/image_experiments/assets/omniaid_v2/verification_status_q179_20261029.json": "3824fca8cbd804b1ce7889d204fbcece19f5695b013eecad4dddb69cd78cb4b7"
+  },
+  "old_queue_dead": true,
+  "old_verifier_dead": true,
+  "static_unsafe_globals": [
+    "argparse.Namespace"
+  ],
+  "created_unix": 1793256209.4405966
+}

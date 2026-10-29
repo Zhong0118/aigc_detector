@@ -1,0 +1,31 @@
+{
+  "status": "completed",
+  "pid": 3777416,
+  "started_unix": 1793243994.564643,
+  "script_sha256": "00afc3495a42815e893e6f3ac048064368088b4765a72291d9035aefe21c3a11",
+  "config_sha256": "9edc48728b323e50e94fd8fb7065a738fced38817b4e87e791dc646dcb4fbc8f",
+  "cuda_used": false,
+  "retry_policy": "none; preserve partials",
+  "mode": "convert_imported_offline",
+  "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+  "process_start_ticks": "25542484",
+  "commandline": [
+    ".venv-image/bin/python",
+    "scripts/prepare_omniaid_q179.py",
+    "--convert-imported",
+    "--conversion-owner",
+    "serial-queue"
+  ],
+  "cwd": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline",
+  "current_asset": "safe_conversion",
+  "completed_unix": 1793244003.1221814,
+  "conversion": {
+    "bytes": 1711853860,
+    "sha256": "f51cb7b04a2afb04828b1b8e0edc34bbf082080d098b9874f5756e7b7ba8c807",
+    "tensor_equality_verified": true,
+    "tensor_count": 592,
+    "source_sha256": "c6032c2e0caae3dc2d4fba35535fa6307dbb49df59c7e182b1bc4b3329b81801",
+    "torch_load_weights_only": true
+  },
+  "execution_enabled": false
+}

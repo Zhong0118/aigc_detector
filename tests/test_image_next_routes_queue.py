@@ -73,3 +73,29 @@ def test_queue_disk_failure_prevents_child_launch(tmp_path,monkeypatch):
 def test_model_completion_requires_explicit_zero_exit(tmp_path):
     p=tmp_path/'status.json';p.write_text(json.dumps({'status':'completed'}))
     with pytest.raises(ValueError,match='successfully'):mod().completed(p)
+
+@pytest.mark.parametrize('change',[None,'live','config','evidence','output'])
+def test_namespace_recovery_gate_preserves_failure_and_recipe(tmp_path,monkeypatch,change):
+    m=mod();monkeypatch.setattr(m,'ROOT',tmp_path)
+    def put(name,data):
+        p=tmp_path/name;p.parent.mkdir(parents=True,exist_ok=True)
+        p.write_text(json.dumps(data));return p
+    cfg={'verification_receipt':{'path':'old.json','sha256':None},'epoch':None}
+    converted=put(m.STATE/'omniaid-conversion-config.json',cfg)
+    receipt=put(m.ASSETS/'preparation_imported_q179_20261029.json',{'status':'completed'})
+    state=put(m.STATE/'status.json',{'status':'failed','stage':'omniaid-verify','child_exit_code':1,'launch':{'pid':1},'child':{'pid':2},'completed_stages':[{'name':'omniaid-conversion','exit_code':0,'receipt':{'path':str(receipt.relative_to(tmp_path)),'sha256':m.sha256(receipt)},'config_sha256':m.sha256(converted)}]})
+    failed=put(m.ASSETS/'verification_status_q179_20261029.json',{'status':'failed','error_type':'UnpicklingError','error':'argparse.Namespace'})
+    registration=put(m.STATE/'registration.json',{})
+    original_hash=m.sha256
+    monkeypatch.setattr(m,'sha256',lambda p:'dd3b6c313cad34b2cefa284e9de45e73c258e8d9ce0d790b7e741681b8437262' if Path(p)==registration else original_hash(p))
+    put(m.RECOVERY_SNAPSHOT,{'files':{str(state.relative_to(tmp_path)):m.sha256(state),str(failed.relative_to(tmp_path)):m.sha256(failed)}})
+    cfg['metadata_load']={'weights_only':True,'allowed_globals':['argparse.Namespace']}
+    cfg['verification_receipt']['path']=str(m.ASSETS/'full_reload_q179_20261029_namespace_v1.json')
+    if change=='config':cfg['epoch']=30
+    put(m.OMNI_CONFIG,cfg)
+    monkeypatch.setattr(m,'alive',lambda _:change=='live')
+    if change=='evidence':failed.write_text('{}')
+    if change=='output':(tmp_path/'outputs/image_experiments/openclip-q179-20261029').mkdir(parents=True)
+    if change is None:assert m.namespace_recovery_evidence()['scope'].startswith('skip completed conversion')
+    else:
+        with pytest.raises((RuntimeError,ValueError,FileExistsError)):m.namespace_recovery_evidence()

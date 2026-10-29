@@ -1,0 +1,86 @@
+{
+  "sources": {
+    "scripts/run_image_next_routes.py": "b33b0d357e3241fb9b44ea15bcdf589aabce10c7bfcb7cb1ce0e18fd5f290527",
+    "scripts/prepare_omniaid_q179.py": "00afc3495a42815e893e6f3ac048064368088b4765a72291d9035aefe21c3a11",
+    "scripts/evaluate_omniaid_q179.py": "c946ca5d9da3e3941b224b0dfdd746eb6aa3f6ed68671292f6f94f336937b815",
+    "scripts/evaluate_omniaid.py": "7308e88a13887d7ac58201452ef168fe1fa4cc03724f44b6e3d9ab2d65ad9be8",
+    "scripts/run_image_openclip.py": "115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3",
+    "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584",
+    "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+    "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+    "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+    "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+    "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3",
+    "scripts/compare_image_scale_epochs.py": "752764997b36a0b664170251df9ac0494de45fb692b7d1b0b705b7e5a6e53e4e",
+    "scripts/compare_iab_v6_100_vs_v7_200_q179.py": "717d8d159e31713b07eb3e1fd29bc64eb3e2eb4336ad3c00343130372e32174f",
+    "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+    "scripts/compare_image_next_routes.py": "d22b411c01344f3f1c88615815384a97f1fb57b3934c5a1b8f96a598ec2a5fe6",
+    "scripts/compare_image_rejection_routes.py": "6deb2b9edc551d40de048619062af96c00ce6c97f8cc721490861645c3eefc38",
+    "configs/image_experiments/iab_openclip_q179_20261029.json": "c70712b654ec15239534a6b66e3fdfe4c7914ba1bf7a0bd906f947bb9e43a562",
+    "configs/image_experiments/iab_next_routes_comparison_20261029.json": "eb0968c7e21f7102f3eeab0515941dfc0948c64228bea5584a3115651a3f163b",
+    "configs/image_experiments/omniaid_v2_evaluation.json": "313cd7c7eaf62dea99ff39b4d9f9f183c82096a5c06bf5d0bc172ea7596ce060"
+  },
+  "initial_omniaid_config_sha256": "f8fa938d83c99c7b8db099ee17080eea3ec2d7fa5980a8ae4515daf8a36e12dc",
+  "git_commit": "90d761a197728ba97fa82c06f6e01cdcbafb7f04",
+  "stages": [
+    {
+      "name": "omniaid-conversion",
+      "command": [
+        ".venv-image/bin/python",
+        "scripts/prepare_omniaid_q179.py",
+        "--convert-imported",
+        "--conversion-owner",
+        "serial-queue"
+      ]
+    },
+    {
+      "name": "omniaid-verify",
+      "command": [
+        ".venv-image/bin/python",
+        "scripts/evaluate_omniaid_q179.py",
+        "--verify-load",
+        "--device",
+        "cuda"
+      ]
+    },
+    {
+      "name": "omniaid-evaluate",
+      "command": [
+        ".venv-image/bin/python",
+        "scripts/evaluate_omniaid_q179.py",
+        "--execute",
+        "--device",
+        "cuda"
+      ]
+    },
+    {
+      "name": "openclip",
+      "command": [
+        ".venv-image-next/bin/python",
+        "scripts/run_image_openclip.py",
+        "--execute"
+      ]
+    },
+    {
+      "name": "closed-comparison",
+      "command": [
+        ".venv-image/bin/python",
+        "scripts/compare_image_next_routes.py",
+        "--config",
+        "configs/image_experiments/iab_next_routes_comparison_20261029.json",
+        "--output",
+        "outputs/image-next-routes-20261029/closed-comparison"
+      ]
+    },
+    {
+      "name": "rejection-comparison",
+      "command": [
+        ".venv-image/bin/python",
+        "scripts/compare_image_rejection_routes.py",
+        "--output",
+        "outputs/image-next-routes-20261029/rejection-comparison"
+      ]
+    }
+  ],
+  "holdout_scored": false
+}

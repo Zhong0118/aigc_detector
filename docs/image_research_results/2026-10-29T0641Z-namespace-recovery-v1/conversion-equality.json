@@ -1,0 +1,8 @@
+{
+  "bytes": 1711853860,
+  "sha256": "f51cb7b04a2afb04828b1b8e0edc34bbf082080d098b9874f5756e7b7ba8c807",
+  "tensor_equality_verified": true,
+  "tensor_count": 592,
+  "source_sha256": "c6032c2e0caae3dc2d4fba35535fa6307dbb49df59c7e182b1bc4b3329b81801",
+  "torch_load_weights_only": true
+}

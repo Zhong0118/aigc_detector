@@ -1,0 +1,54 @@
+{
+  "records": [
+    {
+      "source": "outputs/image-next-routes-20261029/queue/status.json",
+      "artifact": "original-queue-status.json",
+      "sha256": "ede18c9d9d4b39fde3ff83e370fab73ad2de9a9538df96451e8ecadfc62f4048",
+      "bytes": 2016
+    },
+    {
+      "source": "outputs/image-next-routes-20261029/queue/registration.json",
+      "artifact": "original-queue-registration.json",
+      "sha256": "dd3b6c313cad34b2cefa284e9de45e73c258e8d9ce0d790b7e741681b8437262",
+      "bytes": 3830
+    },
+    {
+      "source": "outputs/image_experiments/assets/omniaid_v2/verification_status_q179_20261029.json",
+      "artifact": "failed-verification.json",
+      "sha256": "3824fca8cbd804b1ce7889d204fbcece19f5695b013eecad4dddb69cd78cb4b7",
+      "bytes": 1851
+    },
+    {
+      "source": "outputs/image_experiments/assets/omniaid_v2/preparation_imported_q179_20261029.json",
+      "artifact": "conversion-completion.json",
+      "sha256": "ac32b8ae1b07c833dfdb24022c5496c857eb4eb287100a133cbe7a6b9e74fdba",
+      "bytes": 1129
+    },
+    {
+      "source": "outputs/image_experiments/assets/omniaid_v2/clip_conversion_q179_20261029.json",
+      "artifact": "conversion-equality.json",
+      "sha256": "c0f7cdee076e9d81a4b2845b4fa19e16388ee15e00534933e83bdba827f7a502",
+      "bytes": 287
+    },
+    {
+      "source": "outputs/image-next-routes-20261029/namespace-recovery-v1/checkpoint-inspection.json",
+      "artifact": "checkpoint-inspection.json",
+      "sha256": "1e76aac5e5c15fcebabc09a697476236a01cfb15223cda8848abd819fa789a55",
+      "bytes": 1001
+    },
+    {
+      "source": "outputs/image-next-routes-20261029/namespace-recovery-v1/failure-snapshot.json",
+      "artifact": "failure-snapshot.json",
+      "sha256": "e55f9343d9e49e1fa519c3e6591321e96f7deef3c526feb5f55e388b26fd17f0",
+      "bytes": 1074
+    },
+    {
+      "source": "configs/image_experiments/omniaid_v2_q179_20261029.json",
+      "artifact": "recovery-config.json",
+      "sha256": "52a1ae2cdd27591f46eaf2f1b497aaf1dd94f8e13583a76f2ce42dc84088b484",
+      "bytes": 7500
+    }
+  ],
+  "created_unix": 1793256455.1446826,
+  "images_models_or_predictions_included": false
+}
