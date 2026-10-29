@@ -1,0 +1,24 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "epoch": null,
+  "stage": "execute",
+  "pid": 4110615,
+  "launch": {
+    "pid": 4110615,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "26799054",
+    "commandline": [
+      ".venv-image/bin/python",
+      "scripts/evaluate_omniaid_q179.py",
+      "--execute",
+      "--device",
+      "cuda"
+    ],
+    "cwd": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline",
+    "script_sha256": "530f1df561f218c2ced3b2990d2e6a60cbcd40016d116742df8ea511d37feda7",
+    "launched_unix": 1793256562.193103
+  },
+  "config_sha256": "5c733a43005956231d716ca62dedc93809548056608a1225433d9b65aa1e6197",
+  "elapsed_seconds": 263.1352588260197
+}

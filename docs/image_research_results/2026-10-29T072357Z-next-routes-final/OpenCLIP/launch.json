@@ -1,0 +1,12 @@
+{
+  "pid": 4134814,
+  "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+  "process_start_ticks": "26825633",
+  "command_line": [
+    ".venv-image-next/bin/python",
+    "scripts/run_image_openclip.py",
+    "--execute"
+  ],
+  "started_unix": 1793256834.032865,
+  "config_sha256": "09f8610e45830f7b03a70e1d15f968ccba795e8d6f96a9bb1327cf857d6dd832"
+}

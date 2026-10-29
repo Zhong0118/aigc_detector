@@ -1,0 +1,27 @@
+{
+  "inputs": {
+    "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/status.json": "2c943db113a1577713000155ba442b4d4ea5ff47e81260ab3cca856f4a36db5e",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/roles.json": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/metrics.json": "03f478636749d0003a4c4edc4afae2f1eb5ad889efa58d864bc557bf0547d039",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/predictions.jsonl": "5863231c617ac3d5b99f180f25b365af342ef165bb7b55ffc112a94e815aac6d",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/status.json": "69f79ab969ddb0da12bc29e9852fbb74d41a1760baeb6b36441c4a9da32fc309",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/roles.json": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/metrics.json": "e301a060d3ba581432746b32df329b8a7e9b92b301ec242a2357711d67b9ea10",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/predictions.jsonl": "ee038c330c0df3c3449dccfdd0989fb1991c898a03f66d222cbfea76777544f0",
+    "scripts/compare_image_rejection_routes.py": "6deb2b9edc551d40de048619062af96c00ce6c97f8cc721490861645c3eefc38"
+  },
+  "recipe": {
+    "task": "attribution",
+    "mode": "open_set",
+    "seed": 42,
+    "unknown_calibration": [
+      "kling"
+    ],
+    "unknown_evaluation": [
+      "grok3"
+    ]
+  },
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "images_read": false
+}

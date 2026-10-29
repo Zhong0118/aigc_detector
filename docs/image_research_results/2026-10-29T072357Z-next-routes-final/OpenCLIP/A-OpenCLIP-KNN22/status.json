@@ -1,0 +1,6 @@
+{
+  "status": "completed",
+  "experiment": "A-OpenCLIP-KNN22",
+  "exit_code": 0,
+  "metrics": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/metrics.json"
+}

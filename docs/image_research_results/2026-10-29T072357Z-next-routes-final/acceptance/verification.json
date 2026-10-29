@@ -1,0 +1,239 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "checks": {
+    "OmniAID": {
+      "role_counts": {
+        "train": 37338,
+        "selection": 2311,
+        "calibration": 2568,
+        "evaluation": 2310
+      },
+      "epoch": null,
+      "all_completed_and_verified": true,
+      "root_vs_canonical_linear_score_max_error": {},
+      "threshold_decisions": {
+        "calibration": {
+          "0.01": {
+            "canonical_fp": 10,
+            "root_fp": 10,
+            "negative_count": 1014,
+            "all_decision_changes": 0
+          },
+          "0.05": {
+            "canonical_fp": 50,
+            "root_fp": 50,
+            "negative_count": 1014,
+            "all_decision_changes": 0
+          }
+        },
+        "evaluation": {
+          "0.01": {
+            "canonical_fp": 11,
+            "root_fp": 11,
+            "negative_count": 979,
+            "all_decision_changes": 0
+          },
+          "0.05": {
+            "canonical_fp": 65,
+            "root_fp": 65,
+            "negative_count": 979,
+            "all_decision_changes": 0
+          }
+        }
+      },
+      "calibrated_metric_source": "root saved scores"
+    },
+    "D-OpenCLIP": {
+      "role_counts": {
+        "train": 37338,
+        "selection": 2311,
+        "calibration": 2568,
+        "evaluation": 2310
+      },
+      "epoch": 30,
+      "all_completed_and_verified": true,
+      "root_vs_canonical_linear_score_max_error": {
+        "calibration": 2.384185791015625e-07,
+        "evaluation": 2.384185791015625e-07
+      },
+      "threshold_decisions": {
+        "calibration": {
+          "0.01": {
+            "canonical_fp": 10,
+            "root_fp": 10,
+            "negative_count": 1014,
+            "all_decision_changes": 0
+          },
+          "0.05": {
+            "canonical_fp": 50,
+            "root_fp": 50,
+            "negative_count": 1014,
+            "all_decision_changes": 0
+          }
+        },
+        "evaluation": {
+          "0.01": {
+            "canonical_fp": 10,
+            "root_fp": 10,
+            "negative_count": 979,
+            "all_decision_changes": 0
+          },
+          "0.05": {
+            "canonical_fp": 40,
+            "root_fp": 40,
+            "negative_count": 979,
+            "all_decision_changes": 0
+          }
+        }
+      },
+      "calibrated_metric_source": "linear/calibration and linear evaluation scores"
+    },
+    "D-OpenCLIP-FFHQ": {
+      "role_counts": {
+        "train": 33577,
+        "selection": 2082,
+        "calibration": 2298,
+        "evaluation": 225
+      },
+      "epoch": 30,
+      "all_completed_and_verified": true,
+      "root_vs_canonical_linear_score_max_error": {
+        "calibration": 2.086162567138672e-07,
+        "evaluation": 1.1920928955078125e-07
+      },
+      "threshold_decisions": {
+        "calibration": {
+          "0.01": {
+            "canonical_fp": 9,
+            "root_fp": 9,
+            "negative_count": 914,
+            "all_decision_changes": 0
+          },
+          "0.05": {
+            "canonical_fp": 45,
+            "root_fp": 46,
+            "negative_count": 914,
+            "all_decision_changes": 1
+          }
+        },
+        "evaluation": {
+          "0.01": {
+            "canonical_fp": 7,
+            "root_fp": 7,
+            "negative_count": 93,
+            "all_decision_changes": 0
+          },
+          "0.05": {
+            "canonical_fp": 28,
+            "root_fp": 28,
+            "negative_count": 93,
+            "all_decision_changes": 0
+          }
+        }
+      },
+      "calibrated_metric_source": "linear/calibration and linear evaluation scores"
+    },
+    "A-OpenCLIP22": {
+      "role_counts": {
+        "train": 23348,
+        "selection": 1312,
+        "calibration": 1554,
+        "evaluation": 1331
+      },
+      "epoch": 28,
+      "all_completed_and_verified": true,
+      "root_vs_canonical_linear_score_max_error": {
+        "evaluation": 6.556510925292969e-07
+      },
+      "threshold_decisions": {},
+      "calibrated_metric_source": "root saved scores"
+    },
+    "A-OpenCLIP-KNN22": {
+      "role_counts": {
+        "train": 23348,
+        "selection": 1312,
+        "calibration": 1554,
+        "evaluation": 1331
+      },
+      "epoch": null,
+      "all_completed_and_verified": true,
+      "root_vs_canonical_linear_score_max_error": {},
+      "threshold_decisions": {},
+      "calibrated_metric_source": "root saved scores"
+    },
+    "A-OpenCLIP-open20": {
+      "role_counts": {
+        "train": 21236,
+        "selection": 1179,
+        "calibration": 1482,
+        "evaluation": 1275
+      },
+      "epoch": 29,
+      "all_completed_and_verified": true,
+      "root_vs_canonical_linear_score_max_error": {},
+      "threshold_decisions": {},
+      "calibrated_metric_source": "root saved scores"
+    }
+  },
+  "inputs": {
+    "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "outputs/image-next-routes-20261029/queue-namespace-v1/status.json": "2faf089da7d92bf4d0b0787f937ab495c5f505da643bfe804b5ba6d450e92e9b",
+    "outputs/image-next-routes-20261029/queue-namespace-v1/registration.json": "c7ece993e0adf04e66ff64cf1f5d176480584e63ac6eb974982bb0f2414d3e2a",
+    "configs/image_experiments/iab_openclip_q179_20261029.json": "c70712b654ec15239534a6b66e3fdfe4c7914ba1bf7a0bd906f947bb9e43a562",
+    "outputs/image_experiments/openclip-q179-20261029/registration.json": "b3a366ee04187b655a5f442574a1d10139f338df0f0660bd00dadb34c34270d2",
+    "outputs/image_experiments/openclip-q179-20261029/cache.json": "b0d9b2133993e8f317243647d1db5c9411bd4a3c6e587220d716d7fbe9e2c8eb",
+    "outputs/image_experiments/omniaid-v2-q179-20261029/status.json": "4d0e23cd252846a25d16714d77e49e0ea582e3fb9caa8e8ee0e48339ae9d31a9",
+    "outputs/image_experiments/omniaid-v2-q179-20261029/metrics.json": "4d0ac431daffa6cc032b65b56fc0a08d9de9440db859048ab4f0b10636a0ba93",
+    "outputs/image_experiments/omniaid-v2-q179-20261029/provenance.json": "8a351ad92359a69bd99236b69d8612e046bb1f3e91b548b9b2a11f53b7076891",
+    "outputs/image_experiments/omniaid-v2-q179-20261029/config.json": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+    "outputs/image_experiments/omniaid-v2-q179-20261029/calibration/predictions.jsonl": "4f64fd5dd9478db151e77a6af7652d8446dccac646926deefda99ec9be549f2f",
+    "outputs/image_experiments/omniaid-v2-q179-20261029/evaluation/predictions.jsonl": "46e022540296ad0bc8df7ecb498e5989746b44739445c4d7cc1038e2f0c1d91d",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/status.json": "649c52d3080e25c343c48ee587ffb5cd17462602205d1c36f2358e8034b2fb52",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/metrics.json": "3ec4ff0e0aa3912c3c4c874887c3fa7be981d22fb0e28f08f77e16adbda6ba49",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/provenance.json": "1be0094babb0fb93d44aeed361045b02bac4432764c0c78cb18e31832cf848b8",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/roles.json": "82d3a0bd55628a154060fd0fe9458bf3584399366422ce58ea7cd6eba662e4a5",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/predictions.jsonl": "f72478d4bcdef2e6c2a65164ec258a8464fc7f1ccb1f6d77809b3812da296b01",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/history.jsonl": "5e1beec5272d1d678b709288c38eeeee7c7d9b947c8c02eb0194cbe1d6d1051e",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/calibration/predictions.jsonl": "7d2cb75297e99c5b44834c818daa3350021dfbfeda973b9c0038753eb2c9a002",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/predictions.jsonl": "fa09db3106ea05119f2bbec3474a05f0520d5ba81e515219b122448dc7e6fa2f",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/status.json": "55940892c7a0116184172c838a106bf1d6659348e26d7d30f975f18248a51f9d",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/metrics.json": "910cb66251ac74ef5af7ff77e415093eca47cf77441f97cd5067cfd8c799302c",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/provenance.json": "17a0cfd4a3a005cc898141bd9a828cefe0b96a767d85cb1f3fd7dba84cc8a533",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/roles.json": "e1441837145a22e8aa5726036101a18aca2d4b53f80812e3563763926f40b666",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/predictions.jsonl": "0c926694d4521acaebcf2e604743f6043c8094e906d5d62cdb24f96f96b518ca",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/history.jsonl": "8635023b9d8e90410200aea5b4db15d4ed4f1f92b2993a6dac506d7b8e817ad6",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/calibration/predictions.jsonl": "5434e29f2012a64969da752faff5e0cc9af45d385463399809502e339628d656",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/predictions.jsonl": "41acb075b2138e1b528941bccf3fed8d0c5f43910e88e6837fc97ca9cb5df454",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/status.json": "788b12d8f0ed5dc75b44b5b290bd580c65590e30516261d84d0da98f651f119e",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/metrics.json": "403a3eaf2d38acb956915667ed15749df0ef7d4743ee09ff78b934136328eadd",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/provenance.json": "cbe70fa03ca160c6b4a58a0a01896db54aedfb240c2d3e4ef963ce5fbfd96c7c",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/roles.json": "5395a9a1ae5731716afd9509127f98fe896a857159a8348f117620d1d8431246",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/predictions.jsonl": "5af97a22eb477569ea882bda3215d75dfae8cfcdcc68b9d36b4b2b89efb1fce6",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/linear/history.jsonl": "27a834b841a87dd1f77145db75c77ffe010cc0135d9a431f3ad1a1e8f60d8dc4",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/linear/predictions.jsonl": "2709adfdfecfb17983fe8e4e13b31d791e5a3d985e677e741c769d0dec38ac02",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/status.json": "c09cee007f0eac5a26fe2f65daec5571d2ca5a0b44769fe62f2db9b97e955eb4",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/metrics.json": "e1d5b29bc1cdf858542594406cad6637887500c0dc43d142cd98d91c475bd358",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/provenance.json": "68686fad86fbd73539fa23e7513040c0aacb31e0d838a618ebaf2c554cccd0fe",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/roles.json": "5395a9a1ae5731716afd9509127f98fe896a857159a8348f117620d1d8431246",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/predictions.jsonl": "8968c7a44e306bce3bbf79494a9cd0a76b346149d0940749915cbfcbf14f2b64",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/knn_selection.json": "511b76ae48b811241f65b7b2ca45940f502102878f38e04347ffb1e6466df501",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/status.json": "69f79ab969ddb0da12bc29e9852fbb74d41a1760baeb6b36441c4a9da32fc309",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/metrics.json": "e301a060d3ba581432746b32df329b8a7e9b92b301ec242a2357711d67b9ea10",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/provenance.json": "6c304070ee4ae759314f557726570f689355248f564b3490c252922ab762e9c7",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/roles.json": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/predictions.jsonl": "ee038c330c0df3c3449dccfdd0989fb1991c898a03f66d222cbfea76777544f0",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/linear/history.jsonl": "5d76c477fc6b18637b353a9c74d3882ea268e16f32d9aa2df1afd29b52a2b4ee",
+    "outputs/image-next-routes-20261029/closed-comparison/completion.json": "66fc3a2f3ea2dfbe5691298b92f4534235945590e9bc499842fc23791d94614c",
+    "outputs/image-next-routes-20261029/closed-comparison/provenance.json": "0225c0a9fb97473afc9f15d4af0ab2946188662d1b52d892fc35897db2b037e1",
+    "outputs/image-next-routes-20261029/closed-comparison/summary.json": "3fab52fe37025ff91dc23a324ed6c45619a70c1f99a2e4558ec58e314516de6e",
+    "outputs/image-next-routes-20261029/rejection-comparison/completion.json": "cc9c67fb8503c59a3c39df9bb3b39a7bd8c18805165d1ea93cd96634e8ce702d",
+    "outputs/image-next-routes-20261029/rejection-comparison/provenance.json": "19d66924375557e29e23db9ec4f64b64fe460e77b87f9f3e65eb763909475463",
+    "outputs/image-next-routes-20261029/rejection-comparison/summary.json": "dcab7c181821c599f63183708625c13195c66cdec6b0c28c71af4f259a6ea6cb",
+    "outputs/image-next-routes-20261029/completion-audit/verify_completion.py": "86d4b48ff8256a158dc8685391c3edbb73ccf621fe96327a8df020ea98e36ed8"
+  },
+  "images_read": false,
+  "model_inference_performed": false,
+  "holdout_scored": false,
+  "queue_stopped": true
+}

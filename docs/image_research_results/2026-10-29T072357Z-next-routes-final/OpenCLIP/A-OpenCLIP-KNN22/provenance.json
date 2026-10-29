@@ -1,0 +1,153 @@
+{
+  "model": "ViT-L-14-quickgelu",
+  "asset": {
+    "path": "outputs/image_experiments/assets/openclip-vit-l-14-openai/open_clip_model.safetensors",
+    "sha256": "9ce2e8a8ebfff3793d7d375ad6d3c35cb9aebf3de7ace0fc7308accab7cd207e",
+    "size": 1710517724,
+    "repository": "timm/vit_large_patch14_clip_224.openai",
+    "revision": "18d0535469bb561bf468d76c1d73aa35156c922b",
+    "url": "https://huggingface.co/timm/vit_large_patch14_clip_224.openai/resolve/18d0535469bb561bf468d76c1d73aa35156c922b/open_clip_model.safetensors",
+    "license": "MIT",
+    "license_url": "https://github.com/openai/CLIP/blob/main/LICENSE",
+    "implementation_license": "MIT",
+    "implementation_url": "https://github.com/mlfoundations/open_clip/tree/v2.32.0",
+    "format": "safetensors",
+    "full_model_strict_loading": true
+  },
+  "dependencies": {
+    "open_clip_torch": "2.32.0",
+    "timm": "1.0.15",
+    "ftfy": "6.3.1",
+    "torch": "2.6.0+cu124",
+    "torchvision": "0.21.0+cu124",
+    "numpy": "2.2.6",
+    "Pillow": "12.1.1",
+    "safetensors": "0.7.0",
+    "scikit-learn": "1.7.2",
+    "huggingface-hub": "0.36.2",
+    "regex": "2026.4.4"
+  },
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "selection_sha256": "1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b",
+  "code": {
+    "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584",
+    "scripts/run_image_openclip.py": "115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3",
+    "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+    "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+    "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+    "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+    "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3",
+    "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d"
+  },
+  "preprocessing": {
+    "size": 224,
+    "resize_mode": "shortest",
+    "interpolation": "bicubic",
+    "mean": [
+      0.48145466,
+      0.4578275,
+      0.40821073
+    ],
+    "std": [
+      0.26862954,
+      0.26130258,
+      0.27577711
+    ],
+    "crop": "center",
+    "rgb": true
+  },
+  "classes": [
+    "4o",
+    "CogView3_PLUS",
+    "FLUX",
+    "KANDINSKY",
+    "PIXART",
+    "PLAYGROUND_2_5",
+    "SD1_5",
+    "SD2_1",
+    "SD3",
+    "SD3_5",
+    "SDXL",
+    "dalle3",
+    "gemini",
+    "grok3",
+    "hidream",
+    "hunyuan",
+    "ideogram",
+    "infinity",
+    "janus-pro",
+    "kling",
+    "mid-5.2",
+    "mid-6.0"
+  ],
+  "feature_cache_sha256": "26ba5dc95a128fb494eae4f9e853a11a3a8b8cbbb166a79187828b449f3255e2",
+  "feature_cache_identity_sha256": "1c7a18352daa010a8e04234adbbb6685f606fbebf8f95e9c1c9a4122d9a3787e",
+  "experiment": {
+    "task": "attribution",
+    "mode": "clean",
+    "estimator": "knn",
+    "class_count": 22,
+    "k_candidates": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "selection_metric": "macro_f1",
+    "ties": "smallest k; stable sorted-sample reference order",
+    "training_epochs": null
+  },
+  "feature_dimensions": 768,
+  "backbone_frozen": true,
+  "holdout_scored": false,
+  "role_counts": {
+    "train": 23348,
+    "selection": 1312,
+    "calibration": 1554,
+    "evaluation": 1331
+  },
+  "role_ids_sha256": {
+    "train": "24c4db7b9b0da3b216283e4d838dd7782744bcaec36dedeafe2f0718180bb12c",
+    "selection": "9156e5b71e8a0209b3de6a5f2eb5890826b0ff40cd8919c2fa358e7ba42c8c07",
+    "calibration": "e9997ef20095510eab4727f2fcf4cdd1a3d60d991d6962eaeb03b9216ce2de2a",
+    "evaluation": "8455584d05ac5f306b85a6669b9c254e90a1aa4fca46116f28236275d8955f45"
+  },
+  "limitations": [
+    "Frozen OpenCLIP project adaptation, not an exact reproduction of UnivFD.",
+    "Official OpenAI ViT-L/14 projected 768-dimensional features, QuickGELU, L2 normalization; standard short-side resize then center crop 224.",
+    "Exploratory parent-dev comparison; earlier experiments informed this choice. Sealed holdout remains unread.",
+    "Source labels identify publisher directories, not independently verified exact backend versions.",
+    "Open-set MSP and train-only normalized-mean cosine distance are rejection scores, not calibrated unknown probabilities.",
+    "Unknown source transfer is limited to kling calibration and grok3 evaluation; no universal unknown detection claim.",
+    "Wilson intervals treat images as independent and may understate uncertainty for correlated groups."
+  ],
+  "head_asset_sha256": "c7b5da84996d039d2af24ce93b1d6926fccf34a32b683ddbb8e01551c8565746",
+  "actual_image_verification": {
+    "image_single_batch_feature_max_error": 2.4400651454925537e-07,
+    "image_cache_feature_max_error": 4.76837158203125e-07,
+    "image_single_batch_score_max_error": 0.0,
+    "image_cache_score_max_error": 0.0,
+    "selection_sample_ids": [
+      "iab-001a5c897bb7d92889f3804a",
+      "iab-004be1c1a405329c87b8041c"
+    ],
+    "full_offline_backbone_reload": true,
+    "images_opened": 2
+  }
+}

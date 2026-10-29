@@ -1,0 +1,295 @@
+{
+  "n": 1331,
+  "accuracy": 0.574755822689707,
+  "macro_f1": 0.5662518245617189,
+  "top1": 0.574755822689707,
+  "top3": 0.8234410217881293,
+  "stratified": {
+    "per_source": {
+      "4o": {
+        "n": 59,
+        "precision": 0.4444444444444444,
+        "recall": 0.4745762711864407,
+        "f1": 0.45901639344262296,
+        "top3": 0.7966101694915254
+      },
+      "CogView3_PLUS": {
+        "n": 61,
+        "precision": 0.4084507042253521,
+        "recall": 0.47540983606557374,
+        "f1": 0.4393939393939394,
+        "top3": 0.7213114754098361
+      },
+      "FLUX": {
+        "n": 67,
+        "precision": 0.6153846153846154,
+        "recall": 0.7164179104477612,
+        "f1": 0.6620689655172414,
+        "top3": 0.8656716417910447
+      },
+      "KANDINSKY": {
+        "n": 66,
+        "precision": 0.6181818181818182,
+        "recall": 0.5151515151515151,
+        "f1": 0.5619834710743802,
+        "top3": 0.8181818181818182
+      },
+      "PIXART": {
+        "n": 54,
+        "precision": 0.46511627906976744,
+        "recall": 0.37037037037037035,
+        "f1": 0.41237113402061853,
+        "top3": 0.7592592592592593
+      },
+      "PLAYGROUND_2_5": {
+        "n": 65,
+        "precision": 0.4810126582278481,
+        "recall": 0.5846153846153846,
+        "f1": 0.5277777777777778,
+        "top3": 0.9076923076923077
+      },
+      "SD1_5": {
+        "n": 61,
+        "precision": 0.6582278481012658,
+        "recall": 0.8524590163934426,
+        "f1": 0.7428571428571429,
+        "top3": 1.0
+      },
+      "SD2_1": {
+        "n": 61,
+        "precision": 0.6181818181818182,
+        "recall": 0.5573770491803278,
+        "f1": 0.5862068965517241,
+        "top3": 0.8852459016393442
+      },
+      "SD3": {
+        "n": 71,
+        "precision": 0.4117647058823529,
+        "recall": 0.29577464788732394,
+        "f1": 0.3442622950819672,
+        "top3": 0.676056338028169
+      },
+      "SD3_5": {
+        "n": 56,
+        "precision": 0.34375,
+        "recall": 0.39285714285714285,
+        "f1": 0.36666666666666664,
+        "top3": 0.7678571428571429
+      },
+      "SDXL": {
+        "n": 60,
+        "precision": 0.44642857142857145,
+        "recall": 0.4166666666666667,
+        "f1": 0.43103448275862066,
+        "top3": 0.7333333333333333
+      },
+      "dalle3": {
+        "n": 61,
+        "precision": 0.4918032786885246,
+        "recall": 0.4918032786885246,
+        "f1": 0.4918032786885246,
+        "top3": 0.9180327868852459
+      },
+      "gemini": {
+        "n": 51,
+        "precision": 0.5757575757575758,
+        "recall": 0.37254901960784315,
+        "f1": 0.4523809523809524,
+        "top3": 0.6470588235294118
+      },
+      "grok3": {
+        "n": 63,
+        "precision": 0.7530864197530864,
+        "recall": 0.9682539682539683,
+        "f1": 0.8472222222222222,
+        "top3": 1.0
+      },
+      "hidream": {
+        "n": 61,
+        "precision": 0.627906976744186,
+        "recall": 0.4426229508196721,
+        "f1": 0.5192307692307693,
+        "top3": 0.6885245901639344
+      },
+      "hunyuan": {
+        "n": 53,
+        "precision": 0.5833333333333334,
+        "recall": 0.5283018867924528,
+        "f1": 0.5544554455445545,
+        "top3": 0.6981132075471698
+      },
+      "ideogram": {
+        "n": 63,
+        "precision": 0.6071428571428571,
+        "recall": 0.5396825396825397,
+        "f1": 0.5714285714285714,
+        "top3": 0.7301587301587301
+      },
+      "infinity": {
+        "n": 53,
+        "precision": 0.6075949367088608,
+        "recall": 0.9056603773584906,
+        "f1": 0.7272727272727273,
+        "top3": 0.9811320754716981
+      },
+      "janus-pro": {
+        "n": 58,
+        "precision": 0.782608695652174,
+        "recall": 0.9310344827586207,
+        "f1": 0.8503937007874016,
+        "top3": 0.9482758620689655
+      },
+      "kling": {
+        "n": 56,
+        "precision": 0.5344827586206896,
+        "recall": 0.5535714285714286,
+        "f1": 0.543859649122807,
+        "top3": 0.8214285714285714
+      },
+      "mid-5.2": {
+        "n": 63,
+        "precision": 0.7166666666666667,
+        "recall": 0.6825396825396826,
+        "f1": 0.6991869918699187,
+        "top3": 0.9047619047619048
+      },
+      "mid-6.0": {
+        "n": 68,
+        "precision": 0.7959183673469388,
+        "recall": 0.5735294117647058,
+        "f1": 0.6666666666666666,
+        "top3": 0.8235294117647058
+      }
+    },
+    "per_semantic": {
+      "COCO": {
+        "n": 120,
+        "accuracy": 0.4583333333333333,
+        "macro_f1": 0.4409126524099786,
+        "top1": 0.4583333333333333,
+        "top3": 0.7416666666666667
+      },
+      "FFHQ": {
+        "n": 132,
+        "accuracy": 0.696969696969697,
+        "macro_f1": 0.6969712106075743,
+        "top1": 0.696969696969697,
+        "top3": 0.9015151515151515
+      },
+      "ImageNet": {
+        "n": 129,
+        "accuracy": 0.4418604651162791,
+        "macro_f1": 0.3837315000997865,
+        "top1": 0.4418604651162791,
+        "top3": 0.7209302325581395
+      },
+      "bedroom": {
+        "n": 161,
+        "accuracy": 0.5093167701863354,
+        "macro_f1": 0.47717694320565135,
+        "top1": 0.5093167701863354,
+        "top3": 0.7701863354037267
+      },
+      "cat": {
+        "n": 126,
+        "accuracy": 0.6190476190476191,
+        "macro_f1": 0.613199486584654,
+        "top1": 0.6190476190476191,
+        "top3": 0.8571428571428571
+      },
+      "celebahq": {
+        "n": 94,
+        "accuracy": 0.6063829787234043,
+        "macro_f1": 0.5999127135490773,
+        "top1": 0.6063829787234043,
+        "top3": 0.8404255319148937
+      },
+      "church": {
+        "n": 80,
+        "accuracy": 0.5625,
+        "macro_f1": 0.5125679875679876,
+        "top1": 0.5625,
+        "top3": 0.8875
+      },
+      "classroom": {
+        "n": 183,
+        "accuracy": 0.6120218579234973,
+        "macro_f1": 0.6032989951809321,
+        "top1": 0.6120218579234973,
+        "top3": 0.825136612021858
+      },
+      "dog": {
+        "n": 165,
+        "accuracy": 0.5757575757575758,
+        "macro_f1": 0.5373531296924265,
+        "top1": 0.5757575757575758,
+        "top3": 0.8363636363636363
+      },
+      "wild": {
+        "n": 141,
+        "accuracy": 0.6524822695035462,
+        "macro_f1": 0.6191547988139049,
+        "top1": 0.6524822695035462,
+        "top3": 0.8794326241134752
+      }
+    }
+  },
+  "task": "attribution",
+  "score_semantics": "softmax source probabilities conditional on known AI input",
+  "best_epoch": 28,
+  "head_parameters": 16918,
+  "reload_max_error": 0.0,
+  "single_batch_max_error": 0.0,
+  "holdout_scored": false,
+  "calibration_used": false,
+  "note": "Exploratory parent-dev evaluation; parent dev informed earlier experiments",
+  "selection_macro_f1": 0.5519404063834654,
+  "training_epochs": 30,
+  "epoch": 28,
+  "actual_image_verification": {
+    "image_single_batch_feature_max_error": 2.4400651454925537e-07,
+    "image_cache_feature_max_error": 4.76837158203125e-07,
+    "image_single_batch_score_max_error": 3.5762786865234375e-07,
+    "image_cache_score_max_error": 6.258487701416016e-07,
+    "selection_sample_ids": [
+      "iab-001a5c897bb7d92889f3804a",
+      "iab-004be1c1a405329c87b8041c"
+    ],
+    "full_offline_backbone_reload": true,
+    "images_opened": 2
+  },
+  "head_asset_sha256": "19132d40a41162554e5081710a0e6abf1a30a7b2373db7afb71c1eac5d04a60e",
+  "classes": [
+    "4o",
+    "CogView3_PLUS",
+    "FLUX",
+    "KANDINSKY",
+    "PIXART",
+    "PLAYGROUND_2_5",
+    "SD1_5",
+    "SD2_1",
+    "SD3",
+    "SD3_5",
+    "SDXL",
+    "dalle3",
+    "gemini",
+    "grok3",
+    "hidream",
+    "hunyuan",
+    "ideogram",
+    "infinity",
+    "janus-pro",
+    "kling",
+    "mid-5.2",
+    "mid-6.0"
+  ],
+  "limitations": [
+    "Frozen OpenCLIP project adaptation, not an exact reproduction of UnivFD.",
+    "Official OpenAI ViT-L/14 projected 768-dimensional features, QuickGELU, L2 normalization; standard short-side resize then center crop 224.",
+    "Exploratory parent-dev comparison; earlier experiments informed this choice. Sealed holdout remains unread.",
+    "Source labels identify publisher directories, not independently verified exact backend versions.",
+    "Open-set MSP and train-only normalized-mean cosine distance are rejection scores, not calibrated unknown probabilities.",
+    "Unknown source transfer is limited to kling calibration and grok3 evaluation; no universal unknown detection claim.",
+    "Wilson intervals treat images as independent and may understate uncertainty for correlated groups."
+  ]
+}

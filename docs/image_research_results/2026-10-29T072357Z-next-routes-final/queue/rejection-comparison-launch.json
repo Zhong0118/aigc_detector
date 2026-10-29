@@ -1,0 +1,20 @@
+{
+  "identity": {
+    "pid": 42942,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "26939971",
+    "commandline": [
+      ".venv-image/bin/python",
+      "scripts/compare_image_rejection_routes.py",
+      "--output",
+      "outputs/image-next-routes-20261029/rejection-comparison"
+    ]
+  },
+  "command": [
+    ".venv-image/bin/python",
+    "scripts/compare_image_rejection_routes.py",
+    "--output",
+    "outputs/image-next-routes-20261029/rejection-comparison"
+  ],
+  "started_unix": 1793257969.3966415
+}

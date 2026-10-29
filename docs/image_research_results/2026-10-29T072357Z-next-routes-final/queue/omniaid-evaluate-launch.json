@@ -1,0 +1,22 @@
+{
+  "identity": {
+    "pid": 4110615,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "26799054",
+    "commandline": [
+      ".venv-image/bin/python",
+      "scripts/evaluate_omniaid_q179.py",
+      "--execute",
+      "--device",
+      "cuda"
+    ]
+  },
+  "command": [
+    ".venv-image/bin/python",
+    "scripts/evaluate_omniaid_q179.py",
+    "--execute",
+    "--device",
+    "cuda"
+  ],
+  "started_unix": 1793256560.2306454
+}

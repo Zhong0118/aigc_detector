@@ -1,0 +1,556 @@
+{
+  "status": "completed",
+  "sources": {
+    "outputs/image-next-routes-20261029/closed-comparison/summary.json": {
+      "sha256": "3fab52fe37025ff91dc23a324ed6c45619a70c1f99a2e4558ec58e314516de6e",
+      "artifact": "closed-comparison/summary.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/closed-comparison/provenance.json": {
+      "sha256": "0225c0a9fb97473afc9f15d4af0ab2946188662d1b52d892fc35897db2b037e1",
+      "artifact": "closed-comparison/provenance.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/closed-comparison/completion.json": {
+      "sha256": "66fc3a2f3ea2dfbe5691298b92f4534235945590e9bc499842fc23791d94614c",
+      "artifact": "closed-comparison/completion.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/rejection-comparison/summary.json": {
+      "sha256": "dcab7c181821c599f63183708625c13195c66cdec6b0c28c71af4f259a6ea6cb",
+      "artifact": "rejection-comparison/summary.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/rejection-comparison/provenance.json": {
+      "sha256": "19d66924375557e29e23db9ec4f64b64fe460e77b87f9f3e65eb763909475463",
+      "artifact": "rejection-comparison/provenance.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/rejection-comparison/completion.json": {
+      "sha256": "cc9c67fb8503c59a3c39df9bb3b39a7bd8c18805165d1ea93cd96634e8ce702d",
+      "artifact": "rejection-comparison/completion.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/completion-audit/verification-v2.json": {
+      "sha256": "0485bd0751fb00a188df3d14336abef4e3ca05fbdc3059ef1507a752ef6dcd8e",
+      "artifact": "acceptance/verification.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/completion-audit/verify_completion.py": {
+      "sha256": "86d4b48ff8256a158dc8685391c3edbb73ccf621fe96327a8df020ea98e36ed8",
+      "artifact": "acceptance/verify_completion.py",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/queue-namespace-v1/status.json": {
+      "sha256": "2faf089da7d92bf4d0b0787f937ab495c5f505da643bfe804b5ba6d450e92e9b",
+      "artifact": "queue/status.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/queue-namespace-v1/registration.json": {
+      "sha256": "c7ece993e0adf04e66ff64cf1f5d176480584e63ac6eb974982bb0f2414d3e2a",
+      "artifact": "queue/registration.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/queue-namespace-v1/launch.json": {
+      "sha256": "e6c9930d80deabb4f1faebd25cddc53da608cf02153a7e66417cd34716e3ada7",
+      "artifact": "queue/launch.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/queue-namespace-v1/rejection-comparison-launch.json": {
+      "sha256": "504d0db7fc7f0804f47864a80a4536022f803d48edadccf6021b090edceba21a",
+      "artifact": "queue/rejection-comparison-launch.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/queue-namespace-v1/closed-comparison-launch.json": {
+      "sha256": "878a495ef0a57254bdb0e770a56600090fb99f6557b51d18bd054e4767869bc6",
+      "artifact": "queue/closed-comparison-launch.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/queue-namespace-v1/omniaid-verify-launch.json": {
+      "sha256": "9cd2827f7130565d136d8f66b87f04ecb22b807321b0be893e148af272083097",
+      "artifact": "queue/omniaid-verify-launch.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/queue-namespace-v1/omniaid-evaluate-launch.json": {
+      "sha256": "ebf9636606abae263302cb707928217a32d736e5b13845b0738dac3149c2d1c9",
+      "artifact": "queue/omniaid-evaluate-launch.json",
+      "copy": "exact"
+    },
+    "outputs/image-next-routes-20261029/queue-namespace-v1/openclip-launch.json": {
+      "sha256": "ca5514bb809994a04f48b826b75b565f3d67b7b9d4fb3f81a13c51b12c478681",
+      "artifact": "queue/openclip-launch.json",
+      "copy": "exact"
+    },
+    "configs/image_experiments/iab_openclip_q179_20261029.json": {
+      "sha256": "c70712b654ec15239534a6b66e3fdfe4c7914ba1bf7a0bd906f947bb9e43a562",
+      "artifact": "configs/iab_openclip_q179_20261029.json",
+      "copy": "exact"
+    },
+    "configs/image_experiments/omniaid_v2_q179_20261029.json": {
+      "sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+      "artifact": "configs/omniaid_v2_q179_20261029.json",
+      "copy": "exact"
+    },
+    "configs/image_experiments/iab_next_routes_comparison_20261029.json": {
+      "sha256": "eb0968c7e21f7102f3eeab0515941dfc0948c64228bea5584a3115651a3f163b",
+      "artifact": "configs/iab_next_routes_comparison_20261029.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/omniaid-v2-q179-20261029/metrics.json": {
+      "sha256": "4d0ac431daffa6cc032b65b56fc0a08d9de9440db859048ab4f0b10636a0ba93",
+      "artifact": "OmniAID/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/omniaid-v2-q179-20261029/status.json": {
+      "sha256": "4d0e23cd252846a25d16714d77e49e0ea582e3fb9caa8e8ee0e48339ae9d31a9",
+      "artifact": "OmniAID/status.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/omniaid-v2-q179-20261029/config.json": {
+      "sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+      "artifact": "OmniAID/config.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/omniaid-v2-q179-20261029/resolved_config.json": {
+      "sha256": "090ca1894c64b9b2ee25c326657ada7d398f3489db24f636924efce05b6ec640",
+      "artifact": "OmniAID/resolved_config.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/omniaid-v2-q179-20261029/calibration/confusion_matrix.csv": {
+      "sha256": "ee6184b8d0fe657c70c4f0cc7019d3aaec2a6d6e7201d9f080d4406a8131f90e",
+      "artifact": "OmniAID/calibration/confusion_matrix.csv",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/omniaid-v2-q179-20261029/evaluation/confusion_matrix.csv": {
+      "sha256": "7106d3c1bcabf33b224e7a980579bb146e5a64dd23ae4a6827ed84148b9b428c",
+      "artifact": "OmniAID/evaluation/confusion_matrix.csv",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/omniaid-v2-q179-20261029/provenance.json": {
+      "sha256": "8a351ad92359a69bd99236b69d8612e046bb1f3e91b548b9b2a11f53b7076891",
+      "artifact": "OmniAID/provenance-aggregate.json",
+      "copy": "role ID lists replaced by counts and ordered-ID hashes"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/status.json": {
+      "sha256": "2db863aaceef62e115f1d8c43a99be7cfe4e406c9dfde7791d33bbc2deb1a4e2",
+      "artifact": "OpenCLIP/status.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/registration.json": {
+      "sha256": "b3a366ee04187b655a5f442574a1d10139f338df0f0660bd00dadb34c34270d2",
+      "artifact": "OpenCLIP/registration.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/launch.json": {
+      "sha256": "aae4325f26919e8b2ecabb45e5736387762c837db4fcf8ab8432d209d3a36449",
+      "artifact": "OpenCLIP/launch.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/metrics.json": {
+      "sha256": "3ec4ff0e0aa3912c3c4c874887c3fa7be981d22fb0e28f08f77e16adbda6ba49",
+      "artifact": "OpenCLIP/D-OpenCLIP/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/status.json": {
+      "sha256": "649c52d3080e25c343c48ee587ffb5cd17462602205d1c36f2358e8034b2fb52",
+      "artifact": "OpenCLIP/D-OpenCLIP/status.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/provenance.json": {
+      "sha256": "1be0094babb0fb93d44aeed361045b02bac4432764c0c78cb18e31832cf848b8",
+      "artifact": "OpenCLIP/D-OpenCLIP/provenance.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/history.jsonl": {
+      "sha256": "5e1beec5272d1d678b709288c38eeeee7c7d9b947c8c02eb0194cbe1d6d1051e",
+      "artifact": "OpenCLIP/D-OpenCLIP/linear/history.jsonl",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/metrics.json": {
+      "sha256": "5763053d4c02a9d3d28686cf195479d4f1e3f5d966611b939a5001316b480b98",
+      "artifact": "OpenCLIP/D-OpenCLIP/linear/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/confusion_matrix.csv": {
+      "sha256": "04acdc1694889c4c836ebf685224ee17985cc58f1a7cfc8d07ebb28f2f5d4e20",
+      "artifact": "OpenCLIP/D-OpenCLIP/linear/confusion_matrix.csv",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/calibration/confusion_matrix.csv": {
+      "sha256": "243b8f67a515c06eb19b26bca05939ed8e15cd39187045eac5303dc69742159c",
+      "artifact": "OpenCLIP/D-OpenCLIP/linear/calibration/confusion_matrix.csv",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/metrics.json": {
+      "sha256": "910cb66251ac74ef5af7ff77e415093eca47cf77441f97cd5067cfd8c799302c",
+      "artifact": "OpenCLIP/D-OpenCLIP-FFHQ/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/status.json": {
+      "sha256": "55940892c7a0116184172c838a106bf1d6659348e26d7d30f975f18248a51f9d",
+      "artifact": "OpenCLIP/D-OpenCLIP-FFHQ/status.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/provenance.json": {
+      "sha256": "17a0cfd4a3a005cc898141bd9a828cefe0b96a767d85cb1f3fd7dba84cc8a533",
+      "artifact": "OpenCLIP/D-OpenCLIP-FFHQ/provenance.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/history.jsonl": {
+      "sha256": "8635023b9d8e90410200aea5b4db15d4ed4f1f92b2993a6dac506d7b8e817ad6",
+      "artifact": "OpenCLIP/D-OpenCLIP-FFHQ/linear/history.jsonl",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/metrics.json": {
+      "sha256": "dd1535585f0f6600e2ef5c50e5a342072a387a5d76dc13b1bd8d97d7cd29c557",
+      "artifact": "OpenCLIP/D-OpenCLIP-FFHQ/linear/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/confusion_matrix.csv": {
+      "sha256": "3ec747c28180c3d82e1892039e6d8da00fef408d8bb3292c1ff892f56c88d84a",
+      "artifact": "OpenCLIP/D-OpenCLIP-FFHQ/linear/confusion_matrix.csv",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/calibration/confusion_matrix.csv": {
+      "sha256": "5b6f2fb70ad7f9bf5a736330cc22a125684e62d838452e86e020ab70e0494ec8",
+      "artifact": "OpenCLIP/D-OpenCLIP-FFHQ/linear/calibration/confusion_matrix.csv",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/metrics.json": {
+      "sha256": "403a3eaf2d38acb956915667ed15749df0ef7d4743ee09ff78b934136328eadd",
+      "artifact": "OpenCLIP/A-OpenCLIP22/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/status.json": {
+      "sha256": "788b12d8f0ed5dc75b44b5b290bd580c65590e30516261d84d0da98f651f119e",
+      "artifact": "OpenCLIP/A-OpenCLIP22/status.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/provenance.json": {
+      "sha256": "cbe70fa03ca160c6b4a58a0a01896db54aedfb240c2d3e4ef963ce5fbfd96c7c",
+      "artifact": "OpenCLIP/A-OpenCLIP22/provenance.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/linear/history.jsonl": {
+      "sha256": "27a834b841a87dd1f77145db75c77ffe010cc0135d9a431f3ad1a1e8f60d8dc4",
+      "artifact": "OpenCLIP/A-OpenCLIP22/linear/history.jsonl",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/linear/metrics.json": {
+      "sha256": "9b6b9a4143ca6d849336632fcb99d95411c706f355aefa4e418de275b4d11df8",
+      "artifact": "OpenCLIP/A-OpenCLIP22/linear/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/linear/confusion_matrix.csv": {
+      "sha256": "6537e826f52b9a22e734f53fbf3efa1519b5327d3dc9b34d5ef46e8482b69a9c",
+      "artifact": "OpenCLIP/A-OpenCLIP22/linear/confusion_matrix.csv",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/metrics.json": {
+      "sha256": "e1d5b29bc1cdf858542594406cad6637887500c0dc43d142cd98d91c475bd358",
+      "artifact": "OpenCLIP/A-OpenCLIP-KNN22/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/status.json": {
+      "sha256": "c09cee007f0eac5a26fe2f65daec5571d2ca5a0b44769fe62f2db9b97e955eb4",
+      "artifact": "OpenCLIP/A-OpenCLIP-KNN22/status.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/provenance.json": {
+      "sha256": "68686fad86fbd73539fa23e7513040c0aacb31e0d838a618ebaf2c554cccd0fe",
+      "artifact": "OpenCLIP/A-OpenCLIP-KNN22/provenance.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/knn_selection.json": {
+      "sha256": "511b76ae48b811241f65b7b2ca45940f502102878f38e04347ffb1e6466df501",
+      "artifact": "OpenCLIP/A-OpenCLIP-KNN22/knn_selection.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/metrics.json": {
+      "sha256": "e301a060d3ba581432746b32df329b8a7e9b92b301ec242a2357711d67b9ea10",
+      "artifact": "OpenCLIP/A-OpenCLIP-open20/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/status.json": {
+      "sha256": "69f79ab969ddb0da12bc29e9852fbb74d41a1760baeb6b36441c4a9da32fc309",
+      "artifact": "OpenCLIP/A-OpenCLIP-open20/status.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/provenance.json": {
+      "sha256": "6c304070ee4ae759314f557726570f689355248f564b3490c252922ab762e9c7",
+      "artifact": "OpenCLIP/A-OpenCLIP-open20/provenance.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/linear/history.jsonl": {
+      "sha256": "5d76c477fc6b18637b353a9c74d3882ea268e16f32d9aa2df1afd29b52a2b4ee",
+      "artifact": "OpenCLIP/A-OpenCLIP-open20/linear/history.jsonl",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/linear/metrics.json": {
+      "sha256": "ed5ef0eb569f7ef4a37661d51132cf03301f05c955988aee9ace691454e63751",
+      "artifact": "OpenCLIP/A-OpenCLIP-open20/linear/metrics.json",
+      "copy": "exact"
+    },
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/linear/confusion_matrix.csv": {
+      "sha256": "2fce16f7fd51d19e1c4c50c31d1ca7cd6e2ffcb3f50a1425b54f2dcd9ffded9c",
+      "artifact": "OpenCLIP/A-OpenCLIP-open20/linear/confusion_matrix.csv",
+      "copy": "exact"
+    }
+  },
+  "artifacts": {
+    "README.md": {
+      "sha256": "80f150046186192b5de967f713139782f919c7ed9ffcf1b15ece7e3d79686728",
+      "bytes": 4307
+    },
+    "summary.json": {
+      "sha256": "114f92ea5976dca3942835b0ab71481710b4085ca11e4e349203f47677ed1edf",
+      "bytes": 6328
+    },
+    "per-source-comparisons.csv": {
+      "sha256": "84c2547d0ed4a02ad958844b89b07c2951568634c12ebf5f20671176be7bd0b8",
+      "bytes": 15349
+    },
+    "acceptance/verify_completion.py": {
+      "sha256": "86d4b48ff8256a158dc8685391c3edbb73ccf621fe96327a8df020ea98e36ed8",
+      "bytes": 10052
+    },
+    "acceptance/verification.json": {
+      "sha256": "0485bd0751fb00a188df3d14336abef4e3ca05fbdc3059ef1507a752ef6dcd8e",
+      "bytes": 13114
+    },
+    "OpenCLIP/status.json": {
+      "sha256": "2db863aaceef62e115f1d8c43a99be7cfe4e406c9dfde7791d33bbc2deb1a4e2",
+      "bytes": 562
+    },
+    "OpenCLIP/registration.json": {
+      "sha256": "b3a366ee04187b655a5f442574a1d10139f338df0f0660bd00dadb34c34270d2",
+      "bytes": 5505
+    },
+    "OpenCLIP/launch.json": {
+      "sha256": "aae4325f26919e8b2ecabb45e5736387762c837db4fcf8ab8432d209d3a36449",
+      "bytes": 348
+    },
+    "OpenCLIP/A-OpenCLIP-open20/status.json": {
+      "sha256": "69f79ab969ddb0da12bc29e9852fbb74d41a1760baeb6b36441c4a9da32fc309",
+      "bytes": 179
+    },
+    "OpenCLIP/A-OpenCLIP-open20/metrics.json": {
+      "sha256": "e301a060d3ba581432746b32df329b8a7e9b92b301ec242a2357711d67b9ea10",
+      "bytes": 37754
+    },
+    "OpenCLIP/A-OpenCLIP-open20/provenance.json": {
+      "sha256": "6c304070ee4ae759314f557726570f689355248f564b3490c252922ab762e9c7",
+      "bytes": 5220
+    },
+    "OpenCLIP/A-OpenCLIP-open20/linear/confusion_matrix.csv": {
+      "sha256": "2fce16f7fd51d19e1c4c50c31d1ca7cd6e2ffcb3f50a1425b54f2dcd9ffded9c",
+      "bytes": 1172
+    },
+    "OpenCLIP/A-OpenCLIP-open20/linear/metrics.json": {
+      "sha256": "ed5ef0eb569f7ef4a37661d51132cf03301f05c955988aee9ace691454e63751",
+      "bytes": 6343
+    },
+    "OpenCLIP/A-OpenCLIP-open20/linear/history.jsonl": {
+      "sha256": "5d76c477fc6b18637b353a9c74d3882ea268e16f32d9aa2df1afd29b52a2b4ee",
+      "bytes": 32994
+    },
+    "OpenCLIP/A-OpenCLIP22/status.json": {
+      "sha256": "788b12d8f0ed5dc75b44b5b290bd580c65590e30516261d84d0da98f651f119e",
+      "bytes": 169
+    },
+    "OpenCLIP/A-OpenCLIP22/metrics.json": {
+      "sha256": "403a3eaf2d38acb956915667ed15749df0ef7d4743ee09ff78b934136328eadd",
+      "bytes": 8501
+    },
+    "OpenCLIP/A-OpenCLIP22/provenance.json": {
+      "sha256": "cbe70fa03ca160c6b4a58a0a01896db54aedfb240c2d3e4ef963ce5fbfd96c7c",
+      "bytes": 5100
+    },
+    "OpenCLIP/A-OpenCLIP22/linear/confusion_matrix.csv": {
+      "sha256": "6537e826f52b9a22e734f53fbf3efa1519b5327d3dc9b34d5ef46e8482b69a9c",
+      "bytes": 1368
+    },
+    "OpenCLIP/A-OpenCLIP22/linear/metrics.json": {
+      "sha256": "9b6b9a4143ca6d849336632fcb99d95411c706f355aefa4e418de275b4d11df8",
+      "bytes": 6740
+    },
+    "OpenCLIP/A-OpenCLIP22/linear/history.jsonl": {
+      "sha256": "27a834b841a87dd1f77145db75c77ffe010cc0135d9a431f3ad1a1e8f60d8dc4",
+      "bytes": 34667
+    },
+    "OpenCLIP/A-OpenCLIP-KNN22/status.json": {
+      "sha256": "c09cee007f0eac5a26fe2f65daec5571d2ca5a0b44769fe62f2db9b97e955eb4",
+      "bytes": 177
+    },
+    "OpenCLIP/A-OpenCLIP-KNN22/metrics.json": {
+      "sha256": "e1d5b29bc1cdf858542594406cad6637887500c0dc43d142cd98d91c475bd358",
+      "bytes": 11571
+    },
+    "OpenCLIP/A-OpenCLIP-KNN22/knn_selection.json": {
+      "sha256": "511b76ae48b811241f65b7b2ca45940f502102878f38e04347ffb1e6466df501",
+      "bytes": 1342
+    },
+    "OpenCLIP/A-OpenCLIP-KNN22/provenance.json": {
+      "sha256": "68686fad86fbd73539fa23e7513040c0aacb31e0d838a618ebaf2c554cccd0fe",
+      "bytes": 5435
+    },
+    "OpenCLIP/A-OpenCLIP-KNN22/evaluation-confusion-matrix.csv": {
+      "sha256": "f44708a3d93fd2ff10b774167c812e54dfa60c28614c6c5d58e363f56c5349e7",
+      "bytes": 1369
+    },
+    "OpenCLIP/D-OpenCLIP/status.json": {
+      "sha256": "649c52d3080e25c343c48ee587ffb5cd17462602205d1c36f2358e8034b2fb52",
+      "bytes": 165
+    },
+    "OpenCLIP/D-OpenCLIP/metrics.json": {
+      "sha256": "3ec4ff0e0aa3912c3c4c874887c3fa7be981d22fb0e28f08f77e16adbda6ba49",
+      "bytes": 11891
+    },
+    "OpenCLIP/D-OpenCLIP/provenance.json": {
+      "sha256": "1be0094babb0fb93d44aeed361045b02bac4432764c0c78cb18e31832cf848b8",
+      "bytes": 4801
+    },
+    "OpenCLIP/D-OpenCLIP/linear/confusion_matrix.csv": {
+      "sha256": "04acdc1694889c4c836ebf685224ee17985cc58f1a7cfc8d07ebb28f2f5d4e20",
+      "bytes": 49
+    },
+    "OpenCLIP/D-OpenCLIP/linear/metrics.json": {
+      "sha256": "5763053d4c02a9d3d28686cf195479d4f1e3f5d966611b939a5001316b480b98",
+      "bytes": 10426
+    },
+    "OpenCLIP/D-OpenCLIP/linear/history.jsonl": {
+      "sha256": "5e1beec5272d1d678b709288c38eeeee7c7d9b947c8c02eb0194cbe1d6d1051e",
+      "bytes": 21609
+    },
+    "OpenCLIP/D-OpenCLIP/linear/calibration/confusion_matrix.csv": {
+      "sha256": "243b8f67a515c06eb19b26bca05939ed8e15cd39187045eac5303dc69742159c",
+      "bytes": 49
+    },
+    "OpenCLIP/D-OpenCLIP-FFHQ/status.json": {
+      "sha256": "55940892c7a0116184172c838a106bf1d6659348e26d7d30f975f18248a51f9d",
+      "bytes": 175
+    },
+    "OpenCLIP/D-OpenCLIP-FFHQ/metrics.json": {
+      "sha256": "910cb66251ac74ef5af7ff77e415093eca47cf77441f97cd5067cfd8c799302c",
+      "bytes": 6991
+    },
+    "OpenCLIP/D-OpenCLIP-FFHQ/provenance.json": {
+      "sha256": "17a0cfd4a3a005cc898141bd9a828cefe0b96a767d85cb1f3fd7dba84cc8a533",
+      "bytes": 4850
+    },
+    "OpenCLIP/D-OpenCLIP-FFHQ/linear/confusion_matrix.csv": {
+      "sha256": "3ec747c28180c3d82e1892039e6d8da00fef408d8bb3292c1ff892f56c88d84a",
+      "bytes": 46
+    },
+    "OpenCLIP/D-OpenCLIP-FFHQ/linear/metrics.json": {
+      "sha256": "dd1535585f0f6600e2ef5c50e5a342072a387a5d76dc13b1bd8d97d7cd29c557",
+      "bytes": 5529
+    },
+    "OpenCLIP/D-OpenCLIP-FFHQ/linear/history.jsonl": {
+      "sha256": "8635023b9d8e90410200aea5b4db15d4ed4f1f92b2993a6dac506d7b8e817ad6",
+      "bytes": 21602
+    },
+    "OpenCLIP/D-OpenCLIP-FFHQ/linear/calibration/confusion_matrix.csv": {
+      "sha256": "5b6f2fb70ad7f9bf5a736330cc22a125684e62d838452e86e020ab70e0494ec8",
+      "bytes": 49
+    },
+    "configs/omniaid_v2_q179_20261029.json": {
+      "sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+      "bytes": 7449
+    },
+    "configs/iab_openclip_q179_20261029.json": {
+      "sha256": "c70712b654ec15239534a6b66e3fdfe4c7914ba1bf7a0bd906f947bb9e43a562",
+      "bytes": 5120
+    },
+    "configs/iab_next_routes_comparison_20261029.json": {
+      "sha256": "eb0968c7e21f7102f3eeab0515941dfc0948c64228bea5584a3115651a3f163b",
+      "bytes": 3980
+    },
+    "OmniAID/status.json": {
+      "sha256": "4d0e23cd252846a25d16714d77e49e0ea582e3fb9caa8e8ee0e48339ae9d31a9",
+      "bytes": 732
+    },
+    "OmniAID/metrics.json": {
+      "sha256": "4d0ac431daffa6cc032b65b56fc0a08d9de9440db859048ab4f0b10636a0ba93",
+      "bytes": 10425
+    },
+    "OmniAID/config.json": {
+      "sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+      "bytes": 7449
+    },
+    "OmniAID/provenance-aggregate.json": {
+      "sha256": "b1974861a2828461ded5a7d1c1b17ec50783dc4af12f600babe94f8b9c4226a5",
+      "bytes": 2238
+    },
+    "OmniAID/resolved_config.json": {
+      "sha256": "090ca1894c64b9b2ee25c326657ada7d398f3489db24f636924efce05b6ec640",
+      "bytes": 7541
+    },
+    "OmniAID/evaluation/confusion_matrix.csv": {
+      "sha256": "7106d3c1bcabf33b224e7a980579bb146e5a64dd23ae4a6827ed84148b9b428c",
+      "bytes": 50
+    },
+    "OmniAID/calibration/confusion_matrix.csv": {
+      "sha256": "ee6184b8d0fe657c70c4f0cc7019d3aaec2a6d6e7201d9f080d4406a8131f90e",
+      "bytes": 50
+    },
+    "rejection-comparison/completion.json": {
+      "sha256": "cc9c67fb8503c59a3c39df9bb3b39a7bd8c18805165d1ea93cd96634e8ce702d",
+      "bytes": 252
+    },
+    "rejection-comparison/provenance.json": {
+      "sha256": "19d66924375557e29e23db9ec4f64b64fe460e77b87f9f3e65eb763909475463",
+      "bytes": 1808
+    },
+    "rejection-comparison/summary.json": {
+      "sha256": "dcab7c181821c599f63183708625c13195c66cdec6b0c28c71af4f259a6ea6cb",
+      "bytes": 6390
+    },
+    "closed-comparison/completion.json": {
+      "sha256": "66fc3a2f3ea2dfbe5691298b92f4534235945590e9bc499842fc23791d94614c",
+      "bytes": 252
+    },
+    "closed-comparison/provenance.json": {
+      "sha256": "0225c0a9fb97473afc9f15d4af0ab2946188662d1b52d892fc35897db2b037e1",
+      "bytes": 3102
+    },
+    "closed-comparison/summary.json": {
+      "sha256": "3fab52fe37025ff91dc23a324ed6c45619a70c1f99a2e4558ec58e314516de6e",
+      "bytes": 45133
+    },
+    "queue/rejection-comparison-launch.json": {
+      "sha256": "504d0db7fc7f0804f47864a80a4536022f803d48edadccf6021b090edceba21a",
+      "bytes": 543
+    },
+    "queue/status.json": {
+      "sha256": "2faf089da7d92bf4d0b0787f937ab495c5f505da643bfe804b5ba6d450e92e9b",
+      "bytes": 4778
+    },
+    "queue/closed-comparison-launch.json": {
+      "sha256": "878a495ef0a57254bdb0e770a56600090fb99f6557b51d18bd054e4767869bc6",
+      "bytes": 711
+    },
+    "queue/registration.json": {
+      "sha256": "c7ece993e0adf04e66ff64cf1f5d176480584e63ac6eb974982bb0f2414d3e2a",
+      "bytes": 4106
+    },
+    "queue/omniaid-verify-launch.json": {
+      "sha256": "9cd2827f7130565d136d8f66b87f04ecb22b807321b0be893e148af272083097",
+      "bytes": 468
+    },
+    "queue/omniaid-evaluate-launch.json": {
+      "sha256": "ebf9636606abae263302cb707928217a32d736e5b13845b0738dac3149c2d1c9",
+      "bytes": 461
+    },
+    "queue/launch.json": {
+      "sha256": "e6c9930d80deabb4f1faebd25cddc53da608cf02153a7e66417cd34716e3ada7",
+      "bytes": 374
+    },
+    "queue/openclip-launch.json": {
+      "sha256": "ca5514bb809994a04f48b826b75b565f3d67b7b9d4fb3f81a13c51b12c478681",
+      "bytes": 405
+    }
+  },
+  "acceptance_sha256": "0485bd0751fb00a188df3d14336abef4e3ca05fbdc3059ef1507a752ef6dcd8e",
+  "models_images_data_features_or_large_predictions_included": false
+}

@@ -1,0 +1,145 @@
+{
+  "status": "awaiting_git_archive",
+  "launch": {
+    "pid": 4106639,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "26794564",
+    "commandline": [
+      ".venv-image/bin/python",
+      "scripts/run_image_next_routes.py",
+      "--execute",
+      "--resume-namespace-v1"
+    ],
+    "started_unix": 1793256515.352877,
+    "source_sha256": "1141851cc93a877d33d81be2f54b388813d68967b13551b47220ea2273223273"
+  },
+  "completed_stages": [
+    {
+      "name": "omniaid-verify",
+      "receipt": {
+        "path": "outputs/image_experiments/assets/omniaid_v2/full_reload_q179_20261029_namespace_v1_status.json",
+        "sha256": "a43f78dfad9c9a788710bb1382b034aa423988d5efd0e6bb1d6fdabec99fb6d8"
+      },
+      "child": {
+        "pid": 4106707,
+        "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+        "process_start_ticks": "26794895",
+        "commandline": [
+          ".venv-image/bin/python",
+          "scripts/evaluate_omniaid_q179.py",
+          "--verify-load",
+          "--device",
+          "cuda"
+        ]
+      },
+      "config_sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+      "exit_code": 0,
+      "completed_unix": 1793256560.1975808
+    },
+    {
+      "name": "omniaid-evaluate",
+      "receipt": {
+        "path": "outputs/image_experiments/omniaid-v2-q179-20261029/status.json",
+        "sha256": "4d0e23cd252846a25d16714d77e49e0ea582e3fb9caa8e8ee0e48339ae9d31a9"
+      },
+      "child": {
+        "pid": 4110615,
+        "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+        "process_start_ticks": "26799054",
+        "commandline": [
+          ".venv-image/bin/python",
+          "scripts/evaluate_omniaid_q179.py",
+          "--execute",
+          "--device",
+          "cuda"
+        ]
+      },
+      "config_sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+      "exit_code": 0,
+      "completed_unix": 1793256825.983139
+    },
+    {
+      "name": "openclip",
+      "receipt": {
+        "path": "outputs/image_experiments/openclip-q179-20261029/status.json",
+        "sha256": "2db863aaceef62e115f1d8c43a99be7cfe4e406c9dfde7791d33bbc2deb1a4e2"
+      },
+      "child": {
+        "pid": 4134814,
+        "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+        "process_start_ticks": "26825633",
+        "commandline": [
+          ".venv-image-next/bin/python",
+          "scripts/run_image_openclip.py",
+          "--execute"
+        ]
+      },
+      "config_sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+      "exit_code": 0,
+      "completed_unix": 1793257961.2418551
+    },
+    {
+      "name": "closed-comparison",
+      "receipt": {
+        "path": "outputs/image-next-routes-20261029/closed-comparison/completion.json",
+        "sha256": "66fc3a2f3ea2dfbe5691298b92f4534235945590e9bc499842fc23791d94614c"
+      },
+      "child": {
+        "pid": 42804,
+        "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+        "process_start_ticks": "26939156",
+        "commandline": [
+          ".venv-image/bin/python",
+          "scripts/compare_image_next_routes.py",
+          "--config",
+          "configs/image_experiments/iab_next_routes_comparison_20261029.json",
+          "--output",
+          "outputs/image-next-routes-20261029/closed-comparison"
+        ]
+      },
+      "config_sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+      "exit_code": 0,
+      "completed_unix": 1793257969.3948772
+    },
+    {
+      "name": "rejection-comparison",
+      "receipt": {
+        "path": "outputs/image-next-routes-20261029/rejection-comparison/completion.json",
+        "sha256": "cc9c67fb8503c59a3c39df9bb3b39a7bd8c18805165d1ea93cd96634e8ce702d"
+      },
+      "child": {
+        "pid": 42942,
+        "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+        "process_start_ticks": "26939971",
+        "commandline": [
+          ".venv-image/bin/python",
+          "scripts/compare_image_rejection_routes.py",
+          "--output",
+          "outputs/image-next-routes-20261029/rejection-comparison"
+        ]
+      },
+      "config_sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+      "exit_code": 0,
+      "completed_unix": 1793257974.9933321
+    }
+  ],
+  "started_unix": 1793256515.3548021,
+  "updated_unix": 1793257974.9947207,
+  "ready_assets": [
+    "checkpoint",
+    "clip_binary",
+    "clip_config",
+    "model_config"
+  ],
+  "stage": "rejection-comparison",
+  "command": [
+    ".venv-image/bin/python",
+    "scripts/compare_image_rejection_routes.py",
+    "--output",
+    "outputs/image-next-routes-20261029/rejection-comparison"
+  ],
+  "child": null,
+  "child_exit_code": 0,
+  "finished_unix": 1793257974.9947193,
+  "exit_code": 0
+}

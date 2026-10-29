@@ -1,0 +1,205 @@
+{
+  "methods": {
+    "resnet_msp": {
+      "n": 1275,
+      "known_n": 1212,
+      "unknown_n": 63,
+      "threshold": 0.9986448884010316,
+      "calibration_unknown_n": 64,
+      "calibration_unknown_false_acceptance": 0.046875,
+      "unknown_auroc": 0.7403020063911152,
+      "known_closed_set_accuracy": 0.7376237623762376,
+      "threshold_role": "calibration",
+      "score_note": "Acceptance evidence, not calibrated probability of unknown origin",
+      "known_retention": 0.4752475247524752,
+      "known_retention_count": 576,
+      "known_retention_wilson95": [
+        0.44725533806001233,
+        0.5033961226508297
+      ],
+      "known_correct_and_retained": 0.44471947194719474,
+      "known_correct_and_retained_count": 539,
+      "known_correct_and_retained_wilson95": [
+        0.41696114267461165,
+        0.4728271195796025
+      ],
+      "unknown_false_acceptance": 0.06349206349206349,
+      "unknown_false_acceptance_count": 4,
+      "unknown_false_acceptance_wilson95": [
+        0.024965618013394072,
+        0.15219177845306375
+      ],
+      "unknown_rejection": 0.9365079365079365,
+      "unknown_rejection_count": 59,
+      "unknown_rejection_wilson95": [
+        0.8478082215469362,
+        0.9750343819866059
+      ]
+    },
+    "openclip_msp": {
+      "n": 1275,
+      "known_n": 1212,
+      "unknown_n": 63,
+      "threshold": 0.2497510761022568,
+      "calibration_unknown_n": 64,
+      "calibration_unknown_false_acceptance": 0.046875,
+      "unknown_auroc": 0.5004845722667505,
+      "known_closed_set_accuracy": 0.5676567656765676,
+      "threshold_role": "calibration",
+      "score_note": "Acceptance evidence, not calibrated probability of unknown origin",
+      "known_retention": 0.45957095709570955,
+      "known_retention_count": 557,
+      "known_retention_wilson95": [
+        0.4316856839837165,
+        0.4877117018439922
+      ],
+      "known_correct_and_retained": 0.3523102310231023,
+      "known_correct_and_retained_count": 427,
+      "known_correct_and_retained_wilson95": [
+        0.3259220941264887,
+        0.3796316214482029
+      ],
+      "unknown_false_acceptance": 0.47619047619047616,
+      "unknown_false_acceptance_count": 30,
+      "unknown_false_acceptance_wilson95": [
+        0.3578212405382701,
+        0.5972964356326276
+      ],
+      "unknown_rejection": 0.5238095238095238,
+      "unknown_rejection_count": 33,
+      "unknown_rejection_wilson95": [
+        0.4027035643673724,
+        0.6421787594617299
+      ]
+    },
+    "openclip_prototype": {
+      "n": 1275,
+      "known_n": 1212,
+      "unknown_n": 63,
+      "threshold": 0.8495342135429383,
+      "calibration_unknown_n": 64,
+      "calibration_unknown_false_acceptance": 0.046875,
+      "unknown_auroc": 0.48438891508198445,
+      "known_closed_set_accuracy": 0.5676567656765676,
+      "threshold_role": "calibration",
+      "score_note": "Acceptance evidence, not calibrated probability of unknown origin",
+      "known_retention": 0.10148514851485149,
+      "known_retention_count": 123,
+      "known_retention_wilson95": [
+        0.08572404042312698,
+        0.11976447702143189
+      ],
+      "known_correct_and_retained": 0.06683168316831684,
+      "known_correct_and_retained_count": 81,
+      "known_correct_and_retained_wilson95": [
+        0.05409651094487873,
+        0.08230405149485918
+      ],
+      "unknown_false_acceptance": 0.06349206349206349,
+      "unknown_false_acceptance_count": 4,
+      "unknown_false_acceptance_wilson95": [
+        0.024965618013394072,
+        0.15219177845306375
+      ],
+      "unknown_rejection": 0.9365079365079365,
+      "unknown_rejection_count": 59,
+      "unknown_rejection_wilson95": [
+        0.8478082215469362,
+        0.9750343819866059
+      ]
+    }
+  },
+  "paired_uncertainty": {
+    "repeats": 1000,
+    "valid_repeats": 1000,
+    "seed": 42,
+    "evaluation_groups": 302,
+    "unknown_calibration_groups": 62,
+    "method": "Paired original-group percentile bootstrap; refit each method only on resampled kling calibration; shared calibration/evaluation draws",
+    "delta_95_ci": {
+      "openclip_msp_minus_resnet_msp": {
+        "known_retention": [
+          -0.16876981493769813,
+          0.2145499972557766
+        ],
+        "known_correct_and_retained": [
+          -0.19797091104085132,
+          0.1046269307403089
+        ],
+        "unknown_false_acceptance": [
+          0.21625,
+          0.5577651515151515
+        ],
+        "unknown_rejection": [
+          -0.5577651515151515,
+          -0.21625000000000028
+        ],
+        "unknown_auroc": [
+          -0.3257220001331016,
+          -0.15781048286719998
+        ]
+      },
+      "openclip_prototype_minus_resnet_msp": {
+        "known_retention": [
+          -0.5235324411896419,
+          -0.14663743786267522
+        ],
+        "known_correct_and_retained": [
+          -0.4902621233906281,
+          -0.18585425923622817
+        ],
+        "unknown_false_acceptance": [
+          -0.13433553386911595,
+          0.09729166666666661
+        ],
+        "unknown_rejection": [
+          -0.09729166666666665,
+          0.1343355338691159
+        ],
+        "unknown_auroc": [
+          -0.3385440632111086,
+          -0.17812634170118938
+        ]
+      },
+      "openclip_prototype_minus_openclip_msp": {
+        "known_retention": [
+          -0.47137780185916867,
+          -0.2534243717228446
+        ],
+        "known_correct_and_retained": [
+          -0.35248788463661523,
+          -0.21686225412058566
+        ],
+        "unknown_false_acceptance": [
+          -0.5797235641438541,
+          -0.21873579545454547
+        ],
+        "unknown_rejection": [
+          0.21873579545454547,
+          0.579723564143854
+        ],
+        "unknown_auroc": [
+          -0.10853481964183606,
+          0.07070315217743689
+        ]
+      }
+    },
+    "threshold_95_ci": {
+      "resnet_msp": [
+        0.9870715737342836,
+        0.9999899864196778
+      ],
+      "openclip_msp": [
+        0.2282405495643616,
+        0.26978343725204473
+      ],
+      "openclip_prototype": [
+        0.8447258472442628,
+        0.8593986034393312
+      ]
+    },
+    "limitations": "Conditional on frozen representation/checkpoint; source variation limited to kling and grok3"
+  },
+  "holdout_scored": false,
+  "caveat": "Exploratory developer comparison, single seed, limited unknown source pair; no deployment calibration guarantee"
+}

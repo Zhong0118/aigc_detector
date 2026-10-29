@@ -1,0 +1,402 @@
+{
+  "n": 2310,
+  "accuracy": 0.9857142857142858,
+  "macro_f1": 0.9853647326342272,
+  "auroc": 0.9989079459022647,
+  "threshold_0_5": 0.5,
+  "fpr_0_5": 0.01940755873340143,
+  "tpr_0_5": 0.9894815927873779,
+  "real_count": 979,
+  "ai_count": 1331,
+  "fixed_0_5": {
+    "n": 2310,
+    "accuracy": 0.9857142857142858,
+    "macro_f1": 0.9853647326342272,
+    "auroc": 0.9989079459022647,
+    "threshold": 0.5,
+    "negative_count": 979,
+    "positive_count": 1331,
+    "fpr": 0.01940755873340143,
+    "tpr": 0.9894815927873779,
+    "fpr_resolution": 0.0010214504596527069,
+    "fpr_wilson95": [
+      0.012459236190463768,
+      0.030112694862281457
+    ],
+    "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+  },
+  "per_semantic": {
+    "COCO": {
+      "n": 211,
+      "accuracy": 0.943127962085308,
+      "macro_f1": 0.9418732782369146,
+      "auroc": 0.9905677655677656,
+      "threshold": 0.5,
+      "negative_count": 91,
+      "positive_count": 120,
+      "fpr": 0.07692307692307693,
+      "tpr": 0.9583333333333334,
+      "fpr_resolution": 0.01098901098901099,
+      "fpr_wilson95": [
+        0.03775950132295323,
+        0.15035927123225315
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    },
+    "FFHQ": {
+      "n": 225,
+      "accuracy": 0.9777777777777777,
+      "macro_f1": 0.9769755019340578,
+      "auroc": 0.9976376669925057,
+      "threshold": 0.5,
+      "negative_count": 93,
+      "positive_count": 132,
+      "fpr": 0.043010752688172046,
+      "tpr": 0.9924242424242424,
+      "fpr_resolution": 0.010752688172043012,
+      "fpr_wilson95": [
+        0.016851153993758472,
+        0.10542559570513925
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    },
+    "ImageNet": {
+      "n": 212,
+      "accuracy": 0.9575471698113207,
+      "macro_f1": 0.955151258726465,
+      "auroc": 0.9931820304473709,
+      "threshold": 0.5,
+      "negative_count": 83,
+      "positive_count": 129,
+      "fpr": 0.07228915662650602,
+      "tpr": 0.9767441860465116,
+      "fpr_resolution": 0.012048192771084338,
+      "fpr_wilson95": [
+        0.03355029552299279,
+        0.14886786091773183
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    },
+    "bedroom": {
+      "n": 252,
+      "accuracy": 0.9880952380952381,
+      "macro_f1": 0.987130381492263,
+      "auroc": 0.9995222169135213,
+      "threshold": 0.5,
+      "negative_count": 91,
+      "positive_count": 161,
+      "fpr": 0.01098901098901099,
+      "tpr": 0.9875776397515528,
+      "fpr_resolution": 0.01098901098901099,
+      "fpr_wilson95": [
+        0.0019424713318492125,
+        0.05964935668650616
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    },
+    "cat": {
+      "n": 221,
+      "accuracy": 0.995475113122172,
+      "macro_f1": 0.9953901670803696,
+      "auroc": 0.998078529657477,
+      "threshold": 0.5,
+      "negative_count": 95,
+      "positive_count": 126,
+      "fpr": 0.0,
+      "tpr": 0.9920634920634921,
+      "fpr_resolution": 0.010526315789473684,
+      "fpr_wilson95": [
+        0.0,
+        0.038864853539472964
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    },
+    "celebahq": {
+      "n": 194,
+      "accuracy": 0.9948453608247423,
+      "macro_f1": 0.9948386410195014,
+      "auroc": 1.0,
+      "threshold": 0.5,
+      "negative_count": 100,
+      "positive_count": 94,
+      "fpr": 0.0,
+      "tpr": 0.9893617021276596,
+      "fpr_resolution": 0.01,
+      "fpr_wilson95": [
+        3.469446951953614e-18,
+        0.03699349820698568
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    },
+    "church": {
+      "n": 185,
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "auroc": 1.0,
+      "threshold": 0.5,
+      "negative_count": 105,
+      "positive_count": 80,
+      "fpr": 0.0,
+      "tpr": 1.0,
+      "fpr_resolution": 0.009523809523809525,
+      "fpr_wilson95": [
+        0.0,
+        0.035294076929109894
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    },
+    "classroom": {
+      "n": 285,
+      "accuracy": 0.9964912280701754,
+      "macro_f1": 0.9961745479926444,
+      "auroc": 1.0,
+      "threshold": 0.5,
+      "negative_count": 102,
+      "positive_count": 183,
+      "fpr": 0.00980392156862745,
+      "tpr": 1.0,
+      "fpr_resolution": 0.00980392156862745,
+      "fpr_wilson95": [
+        0.0017327343974216647,
+        0.053457914765777534
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    },
+    "dog": {
+      "n": 275,
+      "accuracy": 0.9963636363636363,
+      "macro_f1": 0.9962177997221802,
+      "auroc": 0.9999449035812673,
+      "threshold": 0.5,
+      "negative_count": 110,
+      "positive_count": 165,
+      "fpr": 0.0,
+      "tpr": 0.9939393939393939,
+      "fpr_resolution": 0.00909090909090909,
+      "fpr_wilson95": [
+        0.0,
+        0.033743935298164184
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    },
+    "wild": {
+      "n": 250,
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "auroc": 1.0,
+      "threshold": 0.5,
+      "negative_count": 109,
+      "positive_count": 141,
+      "fpr": 0.0,
+      "tpr": 1.0,
+      "fpr_resolution": 0.009174311926605505,
+      "fpr_wilson95": [
+        0.0,
+        0.034042973751325124
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    }
+  },
+  "per_source": {
+    "4o": {
+      "n": 59,
+      "predicted_ai_rate": 1.0
+    },
+    "CogView3_PLUS": {
+      "n": 61,
+      "predicted_ai_rate": 0.9836065573770492
+    },
+    "FLUX": {
+      "n": 67,
+      "predicted_ai_rate": 0.9701492537313433
+    },
+    "KANDINSKY": {
+      "n": 66,
+      "predicted_ai_rate": 0.9393939393939394
+    },
+    "PIXART": {
+      "n": 54,
+      "predicted_ai_rate": 1.0
+    },
+    "PLAYGROUND_2_5": {
+      "n": 65,
+      "predicted_ai_rate": 1.0
+    },
+    "SD1_5": {
+      "n": 61,
+      "predicted_ai_rate": 0.9836065573770492
+    },
+    "SD2_1": {
+      "n": 61,
+      "predicted_ai_rate": 0.9836065573770492
+    },
+    "SD3": {
+      "n": 71,
+      "predicted_ai_rate": 1.0
+    },
+    "SD3_5": {
+      "n": 56,
+      "predicted_ai_rate": 1.0
+    },
+    "SDXL": {
+      "n": 60,
+      "predicted_ai_rate": 0.9833333333333333
+    },
+    "dalle3": {
+      "n": 61,
+      "predicted_ai_rate": 1.0
+    },
+    "gemini": {
+      "n": 51,
+      "predicted_ai_rate": 1.0
+    },
+    "grok3": {
+      "n": 63,
+      "predicted_ai_rate": 0.9841269841269841
+    },
+    "hidream": {
+      "n": 61,
+      "predicted_ai_rate": 0.9836065573770492
+    },
+    "hunyuan": {
+      "n": 53,
+      "predicted_ai_rate": 1.0
+    },
+    "ideogram": {
+      "n": 63,
+      "predicted_ai_rate": 1.0
+    },
+    "infinity": {
+      "n": 53,
+      "predicted_ai_rate": 1.0
+    },
+    "janus-pro": {
+      "n": 58,
+      "predicted_ai_rate": 0.9827586206896551
+    },
+    "kling": {
+      "n": 56,
+      "predicted_ai_rate": 1.0
+    },
+    "mid-5.2": {
+      "n": 63,
+      "predicted_ai_rate": 1.0
+    },
+    "mid-6.0": {
+      "n": 68,
+      "predicted_ai_rate": 0.9852941176470589
+    },
+    "real": {
+      "n": 979,
+      "predicted_ai_rate": 0.01940755873340143
+    }
+  },
+  "calibrated": {
+    "0.01": {
+      "calibration_negative_n": 1014,
+      "calibration_fpr": 0.009861932938856016,
+      "evaluation": {
+        "n": 2310,
+        "accuracy": 0.9805194805194806,
+        "macro_f1": 0.9801211320111735,
+        "auroc": 0.9989079459022647,
+        "threshold": 0.7415329813957215,
+        "negative_count": 979,
+        "positive_count": 1331,
+        "fpr": 0.010214504596527068,
+        "tpr": 0.9737039819684448,
+        "fpr_resolution": 0.0010214504596527069,
+        "fpr_wilson95": [
+          0.005557654016960029,
+          0.018700031296092753
+        ],
+        "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+      },
+      "threshold_stability": {
+        "repeats": 1000,
+        "calibration_negative_groups": 1014,
+        "median": 0.7415329813957215,
+        "p025": 0.53811514377594,
+        "p975": 0.9014355540275575,
+        "method": "group bootstrap of calibration negatives only"
+      }
+    },
+    "0.05": {
+      "calibration_negative_n": 1014,
+      "calibration_fpr": 0.04930966469428008,
+      "evaluation": {
+        "n": 2310,
+        "accuracy": 0.9800865800865801,
+        "macro_f1": 0.9795145807757084,
+        "auroc": 0.9989079459022647,
+        "threshold": 0.26835751533508306,
+        "negative_count": 979,
+        "positive_count": 1331,
+        "fpr": 0.04085801838610827,
+        "tpr": 0.9954921111945906,
+        "fpr_resolution": 0.0010214504596527069,
+        "fpr_wilson95": [
+          0.030146979220735767,
+          0.0551581918912918
+        ],
+        "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+      },
+      "threshold_stability": {
+        "repeats": 1000,
+        "calibration_negative_groups": 1014,
+        "median": 0.26835751533508306,
+        "p025": 0.18837387859821322,
+        "p975": 0.3558719158172608,
+        "method": "group bootstrap of calibration negatives only"
+      }
+    }
+  },
+  "calibration_protocol": {
+    "task": "detection",
+    "mode": "calibration",
+    "target_fprs": [
+      0.01,
+      0.05
+    ],
+    "seed": 42,
+    "bootstrap_repeats": 1000
+  },
+  "task": "detection",
+  "score_semantics": "softmax probabilities ordered [real, ai]; column 1 is p_ai",
+  "best_epoch": 30,
+  "head_parameters": 1538,
+  "reload_max_error": 0.0,
+  "single_batch_max_error": 0.0,
+  "holdout_scored": false,
+  "calibration_used": true,
+  "note": "Exploratory parent-dev evaluation; parent dev informed earlier experiments",
+  "selection_auroc": 0.9991767682316464,
+  "training_epochs": 30,
+  "epoch": 30,
+  "actual_image_verification": {
+    "image_single_batch_feature_max_error": 1.6391277313232422e-07,
+    "image_cache_feature_max_error": 2.5331974029541016e-07,
+    "image_single_batch_score_max_error": 4.0978193283081055e-08,
+    "image_cache_score_max_error": 1.1920928955078125e-07,
+    "selection_sample_ids": [
+      "iab-001a5c897bb7d92889f3804a",
+      "iab-0030eb0c8e2e097c20d35b57"
+    ],
+    "full_offline_backbone_reload": true,
+    "images_opened": 2
+  },
+  "head_asset_sha256": "0432c050a2c9afcb1845e31651586032e5672f0e4096713fdd4a9f0d64ea4bbb",
+  "classes": [
+    "real",
+    "ai"
+  ],
+  "limitations": [
+    "Frozen OpenCLIP project adaptation, not an exact reproduction of UnivFD.",
+    "Official OpenAI ViT-L/14 projected 768-dimensional features, QuickGELU, L2 normalization; standard short-side resize then center crop 224.",
+    "Exploratory parent-dev comparison; earlier experiments informed this choice. Sealed holdout remains unread.",
+    "Source labels identify publisher directories, not independently verified exact backend versions.",
+    "Open-set MSP and train-only normalized-mean cosine distance are rejection scores, not calibrated unknown probabilities.",
+    "Unknown source transfer is limited to kling calibration and grok3 evaluation; no universal unknown detection claim.",
+    "Wilson intervals treat images as independent and may understate uncertainty for correlated groups."
+  ]
+}

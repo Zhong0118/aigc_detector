@@ -1,0 +1,1542 @@
+{
+  "closed_known_head": {
+    "n": 1212,
+    "accuracy": 0.5676567656765676,
+    "macro_f1": 0.5595266517996367,
+    "top1": 0.5676567656765676,
+    "top3": 0.8250825082508251,
+    "stratified": {
+      "per_source": {
+        "4o": {
+          "n": 59,
+          "precision": 0.4603174603174603,
+          "recall": 0.4915254237288136,
+          "f1": 0.47540983606557374,
+          "top3": 0.7966101694915254
+        },
+        "CogView3_PLUS": {
+          "n": 61,
+          "precision": 0.39436619718309857,
+          "recall": 0.45901639344262296,
+          "f1": 0.42424242424242425,
+          "top3": 0.7377049180327869
+        },
+        "FLUX": {
+          "n": 67,
+          "precision": 0.6329113924050633,
+          "recall": 0.746268656716418,
+          "f1": 0.684931506849315,
+          "top3": 0.8656716417910447
+        },
+        "KANDINSKY": {
+          "n": 66,
+          "precision": 0.6181818181818182,
+          "recall": 0.5151515151515151,
+          "f1": 0.5619834710743802,
+          "top3": 0.8333333333333334
+        },
+        "PIXART": {
+          "n": 54,
+          "precision": 0.46808510638297873,
+          "recall": 0.4074074074074074,
+          "f1": 0.43564356435643564,
+          "top3": 0.8148148148148148
+        },
+        "PLAYGROUND_2_5": {
+          "n": 65,
+          "precision": 0.5348837209302325,
+          "recall": 0.7076923076923077,
+          "f1": 0.609271523178808,
+          "top3": 0.9076923076923077
+        },
+        "SD1_5": {
+          "n": 61,
+          "precision": 0.6222222222222222,
+          "recall": 0.9180327868852459,
+          "f1": 0.7417218543046358,
+          "top3": 1.0
+        },
+        "SD2_1": {
+          "n": 61,
+          "precision": 0.6071428571428571,
+          "recall": 0.5573770491803278,
+          "f1": 0.5811965811965812,
+          "top3": 0.9180327868852459
+        },
+        "SD3": {
+          "n": 71,
+          "precision": 0.42857142857142855,
+          "recall": 0.29577464788732394,
+          "f1": 0.35,
+          "top3": 0.6901408450704225
+        },
+        "SD3_5": {
+          "n": 56,
+          "precision": 0.3384615384615385,
+          "recall": 0.39285714285714285,
+          "f1": 0.36363636363636365,
+          "top3": 0.7678571428571429
+        },
+        "SDXL": {
+          "n": 60,
+          "precision": 0.4642857142857143,
+          "recall": 0.43333333333333335,
+          "f1": 0.4482758620689655,
+          "top3": 0.7333333333333333
+        },
+        "dalle3": {
+          "n": 61,
+          "precision": 0.5,
+          "recall": 0.47540983606557374,
+          "f1": 0.48739495798319327,
+          "top3": 0.9180327868852459
+        },
+        "gemini": {
+          "n": 51,
+          "precision": 0.6129032258064516,
+          "recall": 0.37254901960784315,
+          "f1": 0.4634146341463415,
+          "top3": 0.6862745098039216
+        },
+        "hidream": {
+          "n": 61,
+          "precision": 0.6428571428571429,
+          "recall": 0.4426229508196721,
+          "f1": 0.5242718446601942,
+          "top3": 0.6557377049180327
+        },
+        "hunyuan": {
+          "n": 53,
+          "precision": 0.6086956521739131,
+          "recall": 0.5283018867924528,
+          "f1": 0.5656565656565656,
+          "top3": 0.7735849056603774
+        },
+        "ideogram": {
+          "n": 63,
+          "precision": 0.5862068965517241,
+          "recall": 0.5396825396825397,
+          "f1": 0.5619834710743802,
+          "top3": 0.7301587301587301
+        },
+        "infinity": {
+          "n": 53,
+          "precision": 0.5975609756097561,
+          "recall": 0.9245283018867925,
+          "f1": 0.725925925925926,
+          "top3": 0.9811320754716981
+        },
+        "janus-pro": {
+          "n": 58,
+          "precision": 0.7910447761194029,
+          "recall": 0.9137931034482759,
+          "f1": 0.848,
+          "top3": 0.9482758620689655
+        },
+        "mid-5.2": {
+          "n": 63,
+          "precision": 0.6935483870967742,
+          "recall": 0.6825396825396826,
+          "f1": 0.688,
+          "top3": 0.9047619047619048
+        },
+        "mid-6.0": {
+          "n": 68,
+          "precision": 0.7755102040816326,
+          "recall": 0.5588235294117647,
+          "f1": 0.6495726495726496,
+          "top3": 0.8382352941176471
+        }
+      },
+      "per_semantic": {
+        "COCO": {
+          "n": 105,
+          "accuracy": 0.4380952380952381,
+          "macro_f1": 0.4326505439005439,
+          "top1": 0.4380952380952381,
+          "top3": 0.7428571428571429
+        },
+        "FFHQ": {
+          "n": 123,
+          "accuracy": 0.7073170731707317,
+          "macro_f1": 0.7002298797693535,
+          "top1": 0.7073170731707317,
+          "top3": 0.8943089430894309
+        },
+        "ImageNet": {
+          "n": 119,
+          "accuracy": 0.4369747899159664,
+          "macro_f1": 0.3755266492766493,
+          "top1": 0.4369747899159664,
+          "top3": 0.7058823529411765
+        },
+        "bedroom": {
+          "n": 147,
+          "accuracy": 0.4965986394557823,
+          "macro_f1": 0.4689402393272363,
+          "top1": 0.4965986394557823,
+          "top3": 0.7687074829931972
+        },
+        "cat": {
+          "n": 117,
+          "accuracy": 0.6239316239316239,
+          "macro_f1": 0.6065651814645621,
+          "top1": 0.6239316239316239,
+          "top3": 0.8717948717948718
+        },
+        "celebahq": {
+          "n": 90,
+          "accuracy": 0.6,
+          "macro_f1": 0.5868697968697969,
+          "top1": 0.6,
+          "top3": 0.8888888888888888
+        },
+        "church": {
+          "n": 74,
+          "accuracy": 0.5675675675675675,
+          "macro_f1": 0.5351234876234876,
+          "top1": 0.5675675675675675,
+          "top3": 0.9054054054054054
+        },
+        "classroom": {
+          "n": 166,
+          "accuracy": 0.5903614457831325,
+          "macro_f1": 0.5798305108503318,
+          "top1": 0.5903614457831325,
+          "top3": 0.8253012048192772
+        },
+        "dog": {
+          "n": 148,
+          "accuracy": 0.5743243243243243,
+          "macro_f1": 0.5416145668767153,
+          "top1": 0.5743243243243243,
+          "top3": 0.8378378378378378
+        },
+        "wild": {
+          "n": 123,
+          "accuracy": 0.6341463414634146,
+          "macro_f1": 0.6065042392248274,
+          "top1": 0.6341463414634146,
+          "top3": 0.8536585365853658
+        }
+      }
+    },
+    "task": "attribution",
+    "score_semantics": "softmax source probabilities conditional on known AI input",
+    "best_epoch": 29,
+    "head_parameters": 15380,
+    "reload_max_error": 0.0,
+    "single_batch_max_error": 0.0,
+    "holdout_scored": false,
+    "calibration_used": false,
+    "note": "Exploratory parent-dev evaluation; parent dev informed earlier experiments",
+    "selection_macro_f1": 0.5498671346860429,
+    "training_epochs": 30,
+    "epoch": 29
+  },
+  "standard_msp": {
+    "n": 1275,
+    "known_n": 1212,
+    "unknown_n": 63,
+    "unknown_auroc": 0.5004845722667505,
+    "acceptance_threshold": 0.2497510761022568,
+    "known_acceptance": 0.45957095709570955,
+    "known_closed_set_accuracy": 0.5676567656765676,
+    "known_correct_and_accepted_rate": 0.3523102310231023,
+    "unknown_rejection_rate": 0.5238095238095238,
+    "unknown_false_acceptance": 0.47619047619047616,
+    "accepted_known_accuracy": 0.7666068222621185,
+    "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability",
+    "calibration_unknown_n": 64,
+    "calibration_unknown_false_acceptance": 0.046875,
+    "per_source": {
+      "4o": {
+        "n": 59,
+        "known": true,
+        "acceptance_rate": 0.559322033898305
+      },
+      "CogView3_PLUS": {
+        "n": 61,
+        "known": true,
+        "acceptance_rate": 0.29508196721311475
+      },
+      "FLUX": {
+        "n": 67,
+        "known": true,
+        "acceptance_rate": 0.373134328358209
+      },
+      "KANDINSKY": {
+        "n": 66,
+        "known": true,
+        "acceptance_rate": 0.2878787878787879
+      },
+      "PIXART": {
+        "n": 54,
+        "known": true,
+        "acceptance_rate": 0.4444444444444444
+      },
+      "PLAYGROUND_2_5": {
+        "n": 65,
+        "known": true,
+        "acceptance_rate": 0.3384615384615385
+      },
+      "SD1_5": {
+        "n": 61,
+        "known": true,
+        "acceptance_rate": 0.7377049180327869
+      },
+      "SD2_1": {
+        "n": 61,
+        "known": true,
+        "acceptance_rate": 0.639344262295082
+      },
+      "SD3": {
+        "n": 71,
+        "known": true,
+        "acceptance_rate": 0.19718309859154928
+      },
+      "SD3_5": {
+        "n": 56,
+        "known": true,
+        "acceptance_rate": 0.16071428571428573
+      },
+      "SDXL": {
+        "n": 60,
+        "known": true,
+        "acceptance_rate": 0.21666666666666667
+      },
+      "dalle3": {
+        "n": 61,
+        "known": true,
+        "acceptance_rate": 0.5081967213114754
+      },
+      "gemini": {
+        "n": 51,
+        "known": true,
+        "acceptance_rate": 0.43137254901960786
+      },
+      "grok3": {
+        "n": 63,
+        "known": false,
+        "acceptance_rate": 0.47619047619047616
+      },
+      "hidream": {
+        "n": 61,
+        "known": true,
+        "acceptance_rate": 0.36065573770491804
+      },
+      "hunyuan": {
+        "n": 53,
+        "known": true,
+        "acceptance_rate": 0.32075471698113206
+      },
+      "ideogram": {
+        "n": 63,
+        "known": true,
+        "acceptance_rate": 0.49206349206349204
+      },
+      "infinity": {
+        "n": 53,
+        "known": true,
+        "acceptance_rate": 0.6981132075471698
+      },
+      "janus-pro": {
+        "n": 58,
+        "known": true,
+        "acceptance_rate": 0.896551724137931
+      },
+      "mid-5.2": {
+        "n": 63,
+        "known": true,
+        "acceptance_rate": 0.6190476190476191
+      },
+      "mid-6.0": {
+        "n": 68,
+        "known": true,
+        "acceptance_rate": 0.6617647058823529
+      }
+    },
+    "per_semantic": {
+      "COCO": {
+        "n": 111,
+        "known_n": 105,
+        "unknown_n": 6,
+        "unknown_auroc": 0.6634920634920635,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.4380952380952381,
+        "known_closed_set_accuracy": 0.4380952380952381,
+        "known_correct_and_accepted_rate": 0.3142857142857143,
+        "unknown_rejection_rate": 1.0,
+        "unknown_false_acceptance": 0.0,
+        "accepted_known_accuracy": 0.717391304347826,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      },
+      "FFHQ": {
+        "n": 127,
+        "known_n": 123,
+        "unknown_n": 4,
+        "unknown_auroc": 0.6382113821138211,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.6991869918699187,
+        "known_closed_set_accuracy": 0.7073170731707317,
+        "known_correct_and_accepted_rate": 0.5609756097560976,
+        "unknown_rejection_rate": 0.5,
+        "unknown_false_acceptance": 0.5,
+        "accepted_known_accuracy": 0.8023255813953488,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      },
+      "ImageNet": {
+        "n": 125,
+        "known_n": 119,
+        "unknown_n": 6,
+        "unknown_auroc": 0.4887955182072829,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.3025210084033613,
+        "known_closed_set_accuracy": 0.4369747899159664,
+        "known_correct_and_accepted_rate": 0.2184873949579832,
+        "unknown_rejection_rate": 0.6666666666666666,
+        "unknown_false_acceptance": 0.3333333333333333,
+        "accepted_known_accuracy": 0.7222222222222222,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      },
+      "bedroom": {
+        "n": 155,
+        "known_n": 147,
+        "unknown_n": 8,
+        "unknown_auroc": 0.2712585034013605,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.3333333333333333,
+        "known_closed_set_accuracy": 0.4965986394557823,
+        "known_correct_and_accepted_rate": 0.2108843537414966,
+        "unknown_rejection_rate": 0.25,
+        "unknown_false_acceptance": 0.75,
+        "accepted_known_accuracy": 0.6326530612244898,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      },
+      "cat": {
+        "n": 121,
+        "known_n": 117,
+        "unknown_n": 4,
+        "unknown_auroc": 0.4935897435897436,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.5299145299145299,
+        "known_closed_set_accuracy": 0.6239316239316239,
+        "known_correct_and_accepted_rate": 0.41025641025641024,
+        "unknown_rejection_rate": 0.5,
+        "unknown_false_acceptance": 0.5,
+        "accepted_known_accuracy": 0.7741935483870968,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      },
+      "celebahq": {
+        "n": 92,
+        "known_n": 90,
+        "unknown_n": 2,
+        "unknown_auroc": 0.8722222222222222,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.6888888888888889,
+        "known_closed_set_accuracy": 0.6,
+        "known_correct_and_accepted_rate": 0.5222222222222223,
+        "unknown_rejection_rate": 1.0,
+        "unknown_false_acceptance": 0.0,
+        "accepted_known_accuracy": 0.7580645161290323,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      },
+      "church": {
+        "n": 77,
+        "known_n": 74,
+        "unknown_n": 3,
+        "unknown_auroc": 0.5540540540540541,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.4189189189189189,
+        "known_closed_set_accuracy": 0.5675675675675675,
+        "known_correct_and_accepted_rate": 0.28378378378378377,
+        "unknown_rejection_rate": 0.6666666666666666,
+        "unknown_false_acceptance": 0.3333333333333333,
+        "accepted_known_accuracy": 0.6774193548387096,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      },
+      "classroom": {
+        "n": 174,
+        "known_n": 166,
+        "unknown_n": 8,
+        "unknown_auroc": 0.4246987951807229,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.4578313253012048,
+        "known_closed_set_accuracy": 0.5903614457831325,
+        "known_correct_and_accepted_rate": 0.3674698795180723,
+        "unknown_rejection_rate": 0.25,
+        "unknown_false_acceptance": 0.75,
+        "accepted_known_accuracy": 0.8026315789473685,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      },
+      "dog": {
+        "n": 159,
+        "known_n": 148,
+        "unknown_n": 11,
+        "unknown_auroc": 0.45884520884520885,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.43243243243243246,
+        "known_closed_set_accuracy": 0.5743243243243243,
+        "known_correct_and_accepted_rate": 0.35135135135135137,
+        "unknown_rejection_rate": 0.5454545454545454,
+        "unknown_false_acceptance": 0.45454545454545453,
+        "accepted_known_accuracy": 0.8125,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      },
+      "wild": {
+        "n": 134,
+        "known_n": 123,
+        "unknown_n": 11,
+        "unknown_auroc": 0.39320029563932,
+        "acceptance_threshold": 0.2497510761022568,
+        "known_acceptance": 0.36585365853658536,
+        "known_closed_set_accuracy": 0.6341463414634146,
+        "known_correct_and_accepted_rate": 0.3170731707317073,
+        "unknown_rejection_rate": 0.45454545454545453,
+        "unknown_false_acceptance": 0.5454545454545454,
+        "accepted_known_accuracy": 0.8666666666666667,
+        "score_note": "1 - maximum softmax probability is a rejection score, not calibrated unknown probability"
+      }
+    },
+    "confusion_classes": [
+      "4o",
+      "CogView3_PLUS",
+      "FLUX",
+      "KANDINSKY",
+      "PIXART",
+      "PLAYGROUND_2_5",
+      "SD1_5",
+      "SD2_1",
+      "SD3",
+      "SD3_5",
+      "SDXL",
+      "dalle3",
+      "gemini",
+      "hidream",
+      "hunyuan",
+      "ideogram",
+      "infinity",
+      "janus-pro",
+      "mid-5.2",
+      "mid-6.0",
+      "__unknown__"
+    ],
+    "confusion_matrix": [
+      [
+        24,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        26
+      ],
+      [
+        0,
+        10,
+        0,
+        2,
+        2,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        0,
+        0,
+        0,
+        0,
+        43
+      ],
+      [
+        0,
+        0,
+        23,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        42
+      ],
+      [
+        0,
+        0,
+        0,
+        15,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        1,
+        0,
+        0,
+        47
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        12,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        3,
+        1,
+        1,
+        0,
+        0,
+        0,
+        30
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        21,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        43
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        43,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        16
+      ],
+      [
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        8,
+        25,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        22
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        5,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        4,
+        0,
+        0,
+        0,
+        57
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        47
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        6,
+        0,
+        1,
+        2,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        47
+      ],
+      [
+        16,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        30
+      ],
+      [
+        4,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        29
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        1,
+        13,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        39
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        15,
+        1,
+        0,
+        0,
+        0,
+        0,
+        36
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        27,
+        0,
+        0,
+        0,
+        0,
+        32
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        37,
+        0,
+        0,
+        0,
+        16
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        51,
+        0,
+        0,
+        6
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        31,
+        6,
+        24
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        9,
+        34,
+        23
+      ],
+      [
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        21,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        33
+      ]
+    ]
+  },
+  "rejection": {
+    "msp": {
+      "threshold_fitted_role": "calibration",
+      "threshold_unknown_sources": [
+        "kling"
+      ],
+      "rejection_score": "1 - msp",
+      "acceptance_threshold": 0.2497510761022568,
+      "distance_threshold": 0.7502489238977432,
+      "calibration": {
+        "n": 1482,
+        "known_n": 1418,
+        "unknown_n": 64,
+        "acceptance_threshold": 0.2497510761022568,
+        "unknown_auroc": 0.7257581100141043,
+        "known_closed_set_accuracy": 0.5994358251057827,
+        "score_note": "Rejection evidence, not a calibrated probability of unknown origin",
+        "uncertainty_note": "Wilson intervals treat images as independent; groups may be correlated",
+        "known_retention": 0.4936530324400564,
+        "known_retention_wilson95": [
+          0.4676830927702078,
+          0.5196572679371458
+        ],
+        "known_correct_and_retained": 0.37729196050775743,
+        "known_correct_and_retained_wilson95": [
+          0.35242693493108956,
+          0.4028200387444152
+        ],
+        "unknown_false_acceptance": 0.046875,
+        "unknown_false_acceptance_wilson95": [
+          0.016069016786292974,
+          0.12899653740093686
+        ],
+        "unknown_rejection": 0.953125,
+        "unknown_rejection_wilson95": [
+          0.8710034625990631,
+          0.983930983213707
+        ],
+        "per_source": {
+          "4o": {
+            "n": 68,
+            "acceptance_rate": 0.7058823529411765
+          },
+          "CogView3_PLUS": {
+            "n": 67,
+            "acceptance_rate": 0.417910447761194
+          },
+          "FLUX": {
+            "n": 69,
+            "acceptance_rate": 0.4057971014492754
+          },
+          "KANDINSKY": {
+            "n": 73,
+            "acceptance_rate": 0.3287671232876712
+          },
+          "PIXART": {
+            "n": 82,
+            "acceptance_rate": 0.3902439024390244
+          },
+          "PLAYGROUND_2_5": {
+            "n": 62,
+            "acceptance_rate": 0.4032258064516129
+          },
+          "SD1_5": {
+            "n": 71,
+            "acceptance_rate": 0.5915492957746479
+          },
+          "SD2_1": {
+            "n": 75,
+            "acceptance_rate": 0.4666666666666667
+          },
+          "SD3": {
+            "n": 77,
+            "acceptance_rate": 0.24675324675324675
+          },
+          "SD3_5": {
+            "n": 69,
+            "acceptance_rate": 0.30434782608695654
+          },
+          "SDXL": {
+            "n": 63,
+            "acceptance_rate": 0.3968253968253968
+          },
+          "dalle3": {
+            "n": 85,
+            "acceptance_rate": 0.611764705882353
+          },
+          "gemini": {
+            "n": 68,
+            "acceptance_rate": 0.5441176470588235
+          },
+          "hidream": {
+            "n": 71,
+            "acceptance_rate": 0.30985915492957744
+          },
+          "hunyuan": {
+            "n": 69,
+            "acceptance_rate": 0.30434782608695654
+          },
+          "ideogram": {
+            "n": 76,
+            "acceptance_rate": 0.5526315789473685
+          },
+          "infinity": {
+            "n": 71,
+            "acceptance_rate": 0.6901408450704225
+          },
+          "janus-pro": {
+            "n": 63,
+            "acceptance_rate": 0.9206349206349206
+          },
+          "kling": {
+            "n": 64,
+            "acceptance_rate": 0.046875
+          },
+          "mid-5.2": {
+            "n": 70,
+            "acceptance_rate": 0.6428571428571429
+          },
+          "mid-6.0": {
+            "n": 69,
+            "acceptance_rate": 0.6811594202898551
+          }
+        }
+      },
+      "evaluation": {
+        "n": 1275,
+        "known_n": 1212,
+        "unknown_n": 63,
+        "acceptance_threshold": 0.2497510761022568,
+        "unknown_auroc": 0.5004845722667505,
+        "known_closed_set_accuracy": 0.5676567656765676,
+        "score_note": "Rejection evidence, not a calibrated probability of unknown origin",
+        "uncertainty_note": "Wilson intervals treat images as independent; groups may be correlated",
+        "known_retention": 0.45957095709570955,
+        "known_retention_wilson95": [
+          0.4316856839837165,
+          0.4877117018439922
+        ],
+        "known_correct_and_retained": 0.3523102310231023,
+        "known_correct_and_retained_wilson95": [
+          0.3259220941264887,
+          0.3796316214482029
+        ],
+        "unknown_false_acceptance": 0.47619047619047616,
+        "unknown_false_acceptance_wilson95": [
+          0.3578212405382701,
+          0.5972964356326276
+        ],
+        "unknown_rejection": 0.5238095238095238,
+        "unknown_rejection_wilson95": [
+          0.4027035643673724,
+          0.6421787594617299
+        ],
+        "per_source": {
+          "4o": {
+            "n": 59,
+            "acceptance_rate": 0.559322033898305
+          },
+          "CogView3_PLUS": {
+            "n": 61,
+            "acceptance_rate": 0.29508196721311475
+          },
+          "FLUX": {
+            "n": 67,
+            "acceptance_rate": 0.373134328358209
+          },
+          "KANDINSKY": {
+            "n": 66,
+            "acceptance_rate": 0.2878787878787879
+          },
+          "PIXART": {
+            "n": 54,
+            "acceptance_rate": 0.4444444444444444
+          },
+          "PLAYGROUND_2_5": {
+            "n": 65,
+            "acceptance_rate": 0.3384615384615385
+          },
+          "SD1_5": {
+            "n": 61,
+            "acceptance_rate": 0.7377049180327869
+          },
+          "SD2_1": {
+            "n": 61,
+            "acceptance_rate": 0.639344262295082
+          },
+          "SD3": {
+            "n": 71,
+            "acceptance_rate": 0.19718309859154928
+          },
+          "SD3_5": {
+            "n": 56,
+            "acceptance_rate": 0.16071428571428573
+          },
+          "SDXL": {
+            "n": 60,
+            "acceptance_rate": 0.21666666666666667
+          },
+          "dalle3": {
+            "n": 61,
+            "acceptance_rate": 0.5081967213114754
+          },
+          "gemini": {
+            "n": 51,
+            "acceptance_rate": 0.43137254901960786
+          },
+          "grok3": {
+            "n": 63,
+            "acceptance_rate": 0.47619047619047616
+          },
+          "hidream": {
+            "n": 61,
+            "acceptance_rate": 0.36065573770491804
+          },
+          "hunyuan": {
+            "n": 53,
+            "acceptance_rate": 0.32075471698113206
+          },
+          "ideogram": {
+            "n": 63,
+            "acceptance_rate": 0.49206349206349204
+          },
+          "infinity": {
+            "n": 53,
+            "acceptance_rate": 0.6981132075471698
+          },
+          "janus-pro": {
+            "n": 58,
+            "acceptance_rate": 0.896551724137931
+          },
+          "mid-5.2": {
+            "n": 63,
+            "acceptance_rate": 0.6190476190476191
+          },
+          "mid-6.0": {
+            "n": 68,
+            "acceptance_rate": 0.6617647058823529
+          }
+        }
+      }
+    },
+    "prototype_cosine": {
+      "threshold_fitted_role": "calibration",
+      "threshold_unknown_sources": [
+        "kling"
+      ],
+      "rejection_score": "1 - prototype_cosine",
+      "acceptance_threshold": 0.8495342135429383,
+      "distance_threshold": 0.15046578645706166,
+      "calibration": {
+        "n": 1482,
+        "known_n": 1418,
+        "unknown_n": 64,
+        "acceptance_threshold": 0.8495342135429383,
+        "unknown_auroc": 0.40702133286318753,
+        "known_closed_set_accuracy": 0.5994358251057827,
+        "score_note": "Rejection evidence, not a calibrated probability of unknown origin",
+        "uncertainty_note": "Wilson intervals treat images as independent; groups may be correlated",
+        "known_retention": 0.07334273624823695,
+        "known_retention_wilson95": [
+          0.06089585043608572,
+          0.08809506378046834
+        ],
+        "known_correct_and_retained": 0.05148095909732017,
+        "known_correct_and_retained_wilson95": [
+          0.04114299860869582,
+          0.06424249137763208
+        ],
+        "unknown_false_acceptance": 0.046875,
+        "unknown_false_acceptance_wilson95": [
+          0.016069016786292974,
+          0.12899653740093686
+        ],
+        "unknown_rejection": 0.953125,
+        "unknown_rejection_wilson95": [
+          0.8710034625990631,
+          0.983930983213707
+        ],
+        "per_source": {
+          "4o": {
+            "n": 68,
+            "acceptance_rate": 0.07352941176470588
+          },
+          "CogView3_PLUS": {
+            "n": 67,
+            "acceptance_rate": 0.07462686567164178
+          },
+          "FLUX": {
+            "n": 69,
+            "acceptance_rate": 0.14492753623188406
+          },
+          "KANDINSKY": {
+            "n": 73,
+            "acceptance_rate": 0.0410958904109589
+          },
+          "PIXART": {
+            "n": 82,
+            "acceptance_rate": 0.07317073170731707
+          },
+          "PLAYGROUND_2_5": {
+            "n": 62,
+            "acceptance_rate": 0.12903225806451613
+          },
+          "SD1_5": {
+            "n": 71,
+            "acceptance_rate": 0.07042253521126761
+          },
+          "SD2_1": {
+            "n": 75,
+            "acceptance_rate": 0.02666666666666667
+          },
+          "SD3": {
+            "n": 77,
+            "acceptance_rate": 0.05194805194805195
+          },
+          "SD3_5": {
+            "n": 69,
+            "acceptance_rate": 0.14492753623188406
+          },
+          "SDXL": {
+            "n": 63,
+            "acceptance_rate": 0.06349206349206349
+          },
+          "dalle3": {
+            "n": 85,
+            "acceptance_rate": 0.11764705882352941
+          },
+          "gemini": {
+            "n": 68,
+            "acceptance_rate": 0.08823529411764706
+          },
+          "hidream": {
+            "n": 71,
+            "acceptance_rate": 0.014084507042253521
+          },
+          "hunyuan": {
+            "n": 69,
+            "acceptance_rate": 0.0
+          },
+          "ideogram": {
+            "n": 76,
+            "acceptance_rate": 0.09210526315789473
+          },
+          "infinity": {
+            "n": 71,
+            "acceptance_rate": 0.11267605633802817
+          },
+          "janus-pro": {
+            "n": 63,
+            "acceptance_rate": 0.07936507936507936
+          },
+          "kling": {
+            "n": 64,
+            "acceptance_rate": 0.046875
+          },
+          "mid-5.2": {
+            "n": 70,
+            "acceptance_rate": 0.04285714285714286
+          },
+          "mid-6.0": {
+            "n": 69,
+            "acceptance_rate": 0.028985507246376812
+          }
+        }
+      },
+      "evaluation": {
+        "n": 1275,
+        "known_n": 1212,
+        "unknown_n": 63,
+        "acceptance_threshold": 0.8495342135429383,
+        "unknown_auroc": 0.48438891508198445,
+        "known_closed_set_accuracy": 0.5676567656765676,
+        "score_note": "Rejection evidence, not a calibrated probability of unknown origin",
+        "uncertainty_note": "Wilson intervals treat images as independent; groups may be correlated",
+        "known_retention": 0.10148514851485149,
+        "known_retention_wilson95": [
+          0.08572404042312698,
+          0.11976447702143189
+        ],
+        "known_correct_and_retained": 0.06683168316831684,
+        "known_correct_and_retained_wilson95": [
+          0.05409651094487873,
+          0.08230405149485918
+        ],
+        "unknown_false_acceptance": 0.06349206349206349,
+        "unknown_false_acceptance_wilson95": [
+          0.024965618013394072,
+          0.15219177845306375
+        ],
+        "unknown_rejection": 0.9365079365079365,
+        "unknown_rejection_wilson95": [
+          0.8478082215469362,
+          0.9750343819866059
+        ],
+        "per_source": {
+          "4o": {
+            "n": 59,
+            "acceptance_rate": 0.11864406779661017
+          },
+          "CogView3_PLUS": {
+            "n": 61,
+            "acceptance_rate": 0.14754098360655737
+          },
+          "FLUX": {
+            "n": 67,
+            "acceptance_rate": 0.22388059701492538
+          },
+          "KANDINSKY": {
+            "n": 66,
+            "acceptance_rate": 0.10606060606060606
+          },
+          "PIXART": {
+            "n": 54,
+            "acceptance_rate": 0.1111111111111111
+          },
+          "PLAYGROUND_2_5": {
+            "n": 65,
+            "acceptance_rate": 0.18461538461538463
+          },
+          "SD1_5": {
+            "n": 61,
+            "acceptance_rate": 0.04918032786885246
+          },
+          "SD2_1": {
+            "n": 61,
+            "acceptance_rate": 0.01639344262295082
+          },
+          "SD3": {
+            "n": 71,
+            "acceptance_rate": 0.11267605633802817
+          },
+          "SD3_5": {
+            "n": 56,
+            "acceptance_rate": 0.08928571428571429
+          },
+          "SDXL": {
+            "n": 60,
+            "acceptance_rate": 0.1
+          },
+          "dalle3": {
+            "n": 61,
+            "acceptance_rate": 0.13114754098360656
+          },
+          "gemini": {
+            "n": 51,
+            "acceptance_rate": 0.09803921568627451
+          },
+          "grok3": {
+            "n": 63,
+            "acceptance_rate": 0.06349206349206349
+          },
+          "hidream": {
+            "n": 61,
+            "acceptance_rate": 0.09836065573770492
+          },
+          "hunyuan": {
+            "n": 53,
+            "acceptance_rate": 0.1320754716981132
+          },
+          "ideogram": {
+            "n": 63,
+            "acceptance_rate": 0.047619047619047616
+          },
+          "infinity": {
+            "n": 53,
+            "acceptance_rate": 0.16981132075471697
+          },
+          "janus-pro": {
+            "n": 58,
+            "acceptance_rate": 0.034482758620689655
+          },
+          "mid-5.2": {
+            "n": 63,
+            "acceptance_rate": 0.047619047619047616
+          },
+          "mid-6.0": {
+            "n": 68,
+            "acceptance_rate": 0.014705882352941176
+          }
+        }
+      }
+    }
+  },
+  "prototype_sha256": "aa068b50c83db972d630c8692cce03f8e12f69a8bd779c7a0c9e8a777520ebc2",
+  "training_epochs": 30,
+  "epoch": 29,
+  "actual_image_verification": {
+    "image_single_batch_feature_max_error": 2.4400651454925537e-07,
+    "image_cache_feature_max_error": 4.76837158203125e-07,
+    "image_single_batch_score_max_error": 4.172325134277344e-07,
+    "image_cache_score_max_error": 7.152557373046875e-07,
+    "selection_sample_ids": [
+      "iab-001a5c897bb7d92889f3804a",
+      "iab-004be1c1a405329c87b8041c"
+    ],
+    "full_offline_backbone_reload": true,
+    "images_opened": 2
+  },
+  "head_asset_sha256": "bd19224dc09cc34b6cf16fe633b50daafd6b853888f87615052fb3ff69c32c53",
+  "classes": [
+    "4o",
+    "CogView3_PLUS",
+    "FLUX",
+    "KANDINSKY",
+    "PIXART",
+    "PLAYGROUND_2_5",
+    "SD1_5",
+    "SD2_1",
+    "SD3",
+    "SD3_5",
+    "SDXL",
+    "dalle3",
+    "gemini",
+    "hidream",
+    "hunyuan",
+    "ideogram",
+    "infinity",
+    "janus-pro",
+    "mid-5.2",
+    "mid-6.0"
+  ],
+  "holdout_scored": false,
+  "limitations": [
+    "Frozen OpenCLIP project adaptation, not an exact reproduction of UnivFD.",
+    "Official OpenAI ViT-L/14 projected 768-dimensional features, QuickGELU, L2 normalization; standard short-side resize then center crop 224.",
+    "Exploratory parent-dev comparison; earlier experiments informed this choice. Sealed holdout remains unread.",
+    "Source labels identify publisher directories, not independently verified exact backend versions.",
+    "Open-set MSP and train-only normalized-mean cosine distance are rejection scores, not calibrated unknown probabilities.",
+    "Unknown source transfer is limited to kling calibration and grok3 evaluation; no universal unknown detection claim.",
+    "Wilson intervals treat images as independent and may understate uncertainty for correlated groups."
+  ]
+}

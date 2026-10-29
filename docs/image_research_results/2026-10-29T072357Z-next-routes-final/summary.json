@@ -1,0 +1,188 @@
+{
+  "status": "completed",
+  "dataset_manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "effective_images": 63821,
+  "nominal_per_cell": 200,
+  "actual_generated_per_cell": [
+    187,
+    200
+  ],
+  "training_epochs": 30,
+  "seed": 42,
+  "detector": {
+    "OmniAID": {
+      "n": 2310,
+      "accuracy": 0.883982683982684,
+      "auroc": 0.962646838300018,
+      "negative_count": 979,
+      "positive_count": 1331,
+      "fpr": 0.07048008171603677,
+      "tpr": 0.850488354620586
+    },
+    "D-OpenCLIP": {
+      "n": 2310,
+      "accuracy": 0.9857142857142858,
+      "auroc": 0.9989079459022647,
+      "negative_count": 979,
+      "positive_count": 1331,
+      "fpr": 0.01940755873340143,
+      "tpr": 0.9894815927873779
+    },
+    "D-OpenCLIP-FFHQ": {
+      "n": 225,
+      "accuracy": 0.9288888888888889,
+      "auroc": 0.992098403388726,
+      "negative_count": 93,
+      "positive_count": 132,
+      "fpr": 0.16129032258064516,
+      "tpr": 0.9924242424242424
+    }
+  },
+  "attribution": {
+    "A-OpenCLIP22": {
+      "n": 1331,
+      "top1": 0.574755822689707,
+      "top3": 0.8234410217881293,
+      "macro_f1": 0.5662518245617189,
+      "epoch": 28,
+      "training_epochs": 30
+    },
+    "A-OpenCLIP-KNN22": {
+      "n": 1331,
+      "top1": 0.47107438016528924,
+      "top3": 0.5311795642374155,
+      "macro_f1": 0.47378741841693706,
+      "epoch": null,
+      "training_epochs": null
+    }
+  },
+  "rejection": {
+    "resnet_msp": {
+      "n": 1275,
+      "known_n": 1212,
+      "unknown_n": 63,
+      "threshold": 0.9986448884010316,
+      "calibration_unknown_n": 64,
+      "calibration_unknown_false_acceptance": 0.046875,
+      "unknown_auroc": 0.7403020063911152,
+      "known_closed_set_accuracy": 0.7376237623762376,
+      "threshold_role": "calibration",
+      "score_note": "Acceptance evidence, not calibrated probability of unknown origin",
+      "known_retention": 0.4752475247524752,
+      "known_retention_count": 576,
+      "known_retention_wilson95": [
+        0.44725533806001233,
+        0.5033961226508297
+      ],
+      "known_correct_and_retained": 0.44471947194719474,
+      "known_correct_and_retained_count": 539,
+      "known_correct_and_retained_wilson95": [
+        0.41696114267461165,
+        0.4728271195796025
+      ],
+      "unknown_false_acceptance": 0.06349206349206349,
+      "unknown_false_acceptance_count": 4,
+      "unknown_false_acceptance_wilson95": [
+        0.024965618013394072,
+        0.15219177845306375
+      ],
+      "unknown_rejection": 0.9365079365079365,
+      "unknown_rejection_count": 59,
+      "unknown_rejection_wilson95": [
+        0.8478082215469362,
+        0.9750343819866059
+      ]
+    },
+    "openclip_msp": {
+      "n": 1275,
+      "known_n": 1212,
+      "unknown_n": 63,
+      "threshold": 0.2497510761022568,
+      "calibration_unknown_n": 64,
+      "calibration_unknown_false_acceptance": 0.046875,
+      "unknown_auroc": 0.5004845722667505,
+      "known_closed_set_accuracy": 0.5676567656765676,
+      "threshold_role": "calibration",
+      "score_note": "Acceptance evidence, not calibrated probability of unknown origin",
+      "known_retention": 0.45957095709570955,
+      "known_retention_count": 557,
+      "known_retention_wilson95": [
+        0.4316856839837165,
+        0.4877117018439922
+      ],
+      "known_correct_and_retained": 0.3523102310231023,
+      "known_correct_and_retained_count": 427,
+      "known_correct_and_retained_wilson95": [
+        0.3259220941264887,
+        0.3796316214482029
+      ],
+      "unknown_false_acceptance": 0.47619047619047616,
+      "unknown_false_acceptance_count": 30,
+      "unknown_false_acceptance_wilson95": [
+        0.3578212405382701,
+        0.5972964356326276
+      ],
+      "unknown_rejection": 0.5238095238095238,
+      "unknown_rejection_count": 33,
+      "unknown_rejection_wilson95": [
+        0.4027035643673724,
+        0.6421787594617299
+      ]
+    },
+    "openclip_prototype": {
+      "n": 1275,
+      "known_n": 1212,
+      "unknown_n": 63,
+      "threshold": 0.8495342135429383,
+      "calibration_unknown_n": 64,
+      "calibration_unknown_false_acceptance": 0.046875,
+      "unknown_auroc": 0.48438891508198445,
+      "known_closed_set_accuracy": 0.5676567656765676,
+      "threshold_role": "calibration",
+      "score_note": "Acceptance evidence, not calibrated probability of unknown origin",
+      "known_retention": 0.10148514851485149,
+      "known_retention_count": 123,
+      "known_retention_wilson95": [
+        0.08572404042312698,
+        0.11976447702143189
+      ],
+      "known_correct_and_retained": 0.06683168316831684,
+      "known_correct_and_retained_count": 81,
+      "known_correct_and_retained_wilson95": [
+        0.05409651094487873,
+        0.08230405149485918
+      ],
+      "unknown_false_acceptance": 0.06349206349206349,
+      "unknown_false_acceptance_count": 4,
+      "unknown_false_acceptance_wilson95": [
+        0.024965618013394072,
+        0.15219177845306375
+      ],
+      "unknown_rejection": 0.9365079365079365,
+      "unknown_rejection_count": 59,
+      "unknown_rejection_wilson95": [
+        0.8478082215469362,
+        0.9750343819866059
+      ]
+    }
+  },
+  "selected_epochs": {
+    "D-OpenCLIP": 30,
+    "D-OpenCLIP-FFHQ": 30,
+    "A-OpenCLIP22": 28,
+    "A-OpenCLIP-KNN22": null,
+    "A-OpenCLIP-open20": 29
+  },
+  "knn_k": 1,
+  "all_registered_routes_verified": true,
+  "holdout_scored": false,
+  "independent_external_test": false,
+  "limitations": [
+    "Single seed; previously viewed developer roles and earlier parent-dev model selection bias.",
+    "ResNet fine tuning versus frozen CLIP heads also differs in preprocessing and training scope, so this is not an isolated architecture effect.",
+    "Official model pretraining overlap with IAB generators or images is unknown.",
+    "Unknown transfer only tests kling calibration to grok3 evaluation.",
+    "KNN selects k=1: Top-3 partly depends on tie ordering among zero-vote classes.",
+    "Published calibrated thresholds/rates use canonical batch-32 linear-stage predictions; regenerated batch-128 scores produce one changed held-FFHQ calibration decision at the 5% threshold (45/914 versus 46/914). All reported evaluation decisions are unchanged; both source hashes and counts are bound in acceptance/verification.json."
+  ]
+}

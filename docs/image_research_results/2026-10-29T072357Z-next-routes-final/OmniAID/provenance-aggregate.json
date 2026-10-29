@@ -1,0 +1,44 @@
+{
+  "assets": {
+    "source": {
+      "path": "/home/zhongxu/projects/aigc_detector/.worktrees/image-m0-m2-paper/outputs/image_experiments/assets/omniaid_v2/reward_omniaid.py",
+      "sha256": "0280750b22d1d60815b89d6d35cff8ee6a474a5615a3f8d95a3db9998d028596",
+      "bytes": 12908
+    },
+    "checkpoint": {
+      "path": "/home/zhongxu/projects/aigc_detector/.worktrees/image-m0-m2-paper/outputs/image_experiments/assets/omniaid_v2/checkpoint_omniaid_v2.pth",
+      "sha256": "919338928cab88cef1e6e4b85777749c74bdff6a1796fcd7e43a91422327f906",
+      "bytes": 3241518989
+    },
+    "model_config": {
+      "path": "/home/zhongxu/projects/aigc_detector/.worktrees/image-m0-m2-paper/outputs/image_experiments/assets/omniaid_v2/config_omniaid_v2.json",
+      "sha256": "333cfb2b53ff306210343e6991c2370893a893c776b765181c1d6025b0968b72",
+      "bytes": 680
+    },
+    "clip_config": {
+      "path": "/home/zhongxu/projects/aigc_detector/.worktrees/image-m0-m2-paper/outputs/image_experiments/assets/omniaid_v2/clip-vit-large-patch14-336/config.json",
+      "sha256": "51b1c14aabcdf639c4a0370eeda1010b773bbe1df78319c7d0f5882c22ac0ac0",
+      "bytes": 4757
+    },
+    "clip_weights": {
+      "path": "/home/zhongxu/projects/aigc_detector/.worktrees/image-m0-m2-paper/outputs/image_experiments/assets/omniaid_v2/clip-vit-large-patch14-336/model.safetensors",
+      "sha256": "f51cb7b04a2afb04828b1b8e0edc34bbf082080d098b9874f5756e7b7ba8c807",
+      "bytes": 1711853860
+    }
+  },
+  "asset_digest": "f19f88c685a719826763cb3bd8260c3a344263034b8725c31f7b7755b5a70cd5",
+  "original_source_sha256": "0280750b22d1d60815b89d6d35cff8ee6a474a5615a3f8d95a3db9998d028596",
+  "patched_source_sha256": "e70258fdb053424add1a2d0eeff6573a209a56c003a3958f66d04ef868b1f212",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "verification_receipt_sha256": "56c64372cd83787d8c03732a2e3b93a40f3b214a986efcd29f99bd2d850211ba",
+  "roles": {
+    "calibration": {
+      "n": 2568,
+      "ordered_ids_sha256": "381753d8e09d1ebbb4056aaffc4af5ab140b6330a34074e850468ece90c615c1"
+    },
+    "evaluation": {
+      "n": 2310,
+      "ordered_ids_sha256": "99396cfe0bca58eed6ab205af9e0388ce77312906446da74a0c1d487fe479376"
+    }
+  }
+}
