@@ -1,0 +1,38 @@
+{
+  "status": "verified",
+  "asset_sha256": "641cf077f667636c62828227cd1d4ecb78494744245186062973b0f31d962d92",
+  "asset_size": 23635063,
+  "strict_full_model_load": true,
+  "original_classes": 11,
+  "feature_dimensions": 512,
+  "weights_only": true,
+  "implementation_sha256": {
+    "scripts/run_image_dna.py": "a285b9f8e5c9a2edc1559a96370b08b2b3f3b420384d46654c76ad38a5215af4",
+    "research/image_attribution/dna_route.py": "cbbd143b3aa64e69496c3f9d079ee6124dc74ee3b47e85ab4d5dd5209839900e",
+    "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+    "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584",
+    "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+    "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+    "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+    "research/image_attribution/iab_protocol.py": "16d6a70f408f7e6ea77bbae123b20e743b8c119bfbc3378f568b624375a7ce60",
+    "scripts/run_image_openclip.py": "115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3",
+    "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+    "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3"
+  },
+  "dependencies": {
+    "torch": "2.6.0+cu124",
+    "torchvision": "0.21.0+cu124",
+    "numpy": "2.2.6",
+    "Pillow": "12.1.1",
+    "scikit-learn": "1.7.2"
+  },
+  "unsafe_globals": [],
+  "state_tensors": 58,
+  "synthetic_tensor_probe_shape": [
+    1,
+    512
+  ],
+  "dataset_images_opened": 0,
+  "gpu_used": false,
+  "checked_unix": 1793277794.1467795
+}

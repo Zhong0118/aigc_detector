@@ -1,0 +1,11 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "bytes": 23635063,
+  "sha256": "641cf077f667636c62828227cd1d4ecb78494744245186062973b0f31d962d92",
+  "source_url": "https://drive.google.com/file/d/1bvFXsNgEs43JH50L6eLAqbdzZCBKO9j6/view",
+  "publisher_sha256_available": false,
+  "transport": "official public Drive HTTPS download then ssh school",
+  "started_unix": 1793276934.4502375,
+  "completed_unix": 1793276946.0742981
+}

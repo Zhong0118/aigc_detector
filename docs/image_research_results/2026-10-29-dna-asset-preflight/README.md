@@ -1,0 +1,3 @@
+# DNA-Det frozen adapter preflight
+
+Official public in-the-wild model imported at23635063bytes and pinned by observedSHA641cf077f667636c62828227cd1d4ecb78494744245186062973b0f31d962d92. Author does not publish SHA/revision; code and weight licensing remain unestablished. CPU weights_only strict-load verifies all58 tensors including the original11-class classifier; a synthetic512x512 tensor verifies512D features. No real q179 model inference or GPU was used.47 CPU tests and independent review passed. New source head is a project adaptation, not DNA-Det contrastive/full-training reproduction. Main paired reference is OpenCLIP; parent-dev-selected A0 reference is separate.

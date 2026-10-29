@@ -36,3 +36,7 @@ DAIR默认COCO真图、crop256、MSE+.25LPIPS(VGG)、batch4累计32、100万micr
 
 ## 验收和归档
 源代码、配置、资产、数据和角色SHA先登记；任何资产下载/安全加载失败保留文件和诊断，不绕TLS或静默unsafe fallback。新输出独占创建，failed不重置。完成检查真实history1..30（冻结/prototype例外null）、重载/单批一致≤1e-5、predictions角色和ID完整、无holdout；保存源路径/哈希、metrics/history/逐类/配对结果到独立Git快照，不上传模型/图片/特征/逐图大预测。
+
+## 本轮后续核验补充
+DNA-Det官方权重现已完整导入并CPU安全strict-load，实际SHA641cf077f667636c62828227cd1d4ecb78494744245186062973b0f31d962d92；独立新入口run_image_dna.py已通过47项CPU测试/独立审查，已绑定CPU收据，尚未做正式q179GPU推理。OmniDFA part1的1198070905字节和发布者SHA已全文件核验，静态extra globals仅argparse.Namespace，安全适配开发中。
+用户已明确优先官方模拟器＋20+1拒识头30轮。OFA模拟器138627153字节SHA7ee94487217a8ff9fad3b0da1bdbb60b89f923be09b377b5f1ef17d9e8eb3de8通过weights_only及官方encoder/decoder CPU严格加载；未运行完整预训练。另发现官方arch_json回放会把浅层架构误解为深层（CPU合成输入复现），本轮使用隔离Python RNG种子回放并核验真实trace，保留上游源码不修改。重建未知类预登记1024个不同real-train组、8架构各128张；20+1头只以known selection选epoch，kling仅cal，grok3仅eval。这些资产/合成CPU检查均不是模型成绩。

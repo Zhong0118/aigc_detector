@@ -1,0 +1,16 @@
+{
+  "status": "asset_preflight_only_not_model_results",
+  "inputs": [
+    {
+      "source": "outputs/image_experiments/assets/dna-det-wild-20261029/model.pth.import.json",
+      "archive": "docs/image_research_results/2026-10-29-dna-asset-preflight/model.pth.import.json",
+      "sha256": "361354c45d624fb4ebdc4c18746a45e7de16595e54c1e9e2b1a654c42b7dbbac"
+    },
+    {
+      "source": "outputs/image_experiments/assets/dna-det-wild-20261029/cpu-verification.json",
+      "archive": "docs/image_research_results/2026-10-29-dna-asset-preflight/cpu-verification.json",
+      "sha256": "4396807ba1258eebc3194400881359afc8496941dfbda2cf291df92191a6a1ed"
+    }
+  ],
+  "holdout_scored": false
+}
