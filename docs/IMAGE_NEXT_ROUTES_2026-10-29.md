@@ -66,4 +66,4 @@ OpenCLIP detection AUROC is 99.8908% on the same 2310 developer evaluation IDs, 
 
 Calibrated metrics bind canonical batch-32 linear-stage predictions. Regenerated batch-128 scores differ by at most about 2.4e-7; one held-FFHQ 5% calibration decision changes (45/914 versus 46/914), while all reported evaluation decisions are unchanged. Both score-file hashes and counts are retained. No threshold, tolerance or model was changed after evaluation.
 
-The ffhq heartbeat is to be removed after the final ordinary Git push and artifact-hash verification. No further model run is authorized by completion of this phase.
+Final result archive was normally pushed in commit 536956befb994344a7d71fcc1ce5b428021690d5. Remote/head equality, a clean worktree, 63 snapshot artifact hashes and sensitive/large-file checks passed. Original CSV CRLF bytes were preserved; the whitespace check explicitly recognized CRLF endings. Heartbeat ffhq was deleted after this verification. No further model run is authorized by completion of this phase.
