@@ -1,0 +1,11 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "bytes": 114374272,
+  "sha256": "77b619e187de71bce58721689da0c009e84cc20677293d7d43105307e34d868a",
+  "source_url": "https://huggingface.co/timm/convnext_tiny.fb_in22k_ft_in1k/resolve/bc48a87f119bae1b06418f5340bfa97ef75d4609/model.safetensors",
+  "revision": "bc48a87f119bae1b06418f5340bfa97ef75d4609",
+  "transport": "local verified HTTPS to ssh school",
+  "started_unix": 1793276105.491471,
+  "completed_unix": 1793276147.8055346
+}

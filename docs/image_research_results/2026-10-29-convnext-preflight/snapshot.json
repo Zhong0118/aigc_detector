@@ -1,0 +1,22 @@
+{
+  "status": "preflight_only_not_model_results",
+  "inputs": [
+    {
+      "source": "outputs/image_experiments/assets/convnext-tiny-in22k-20261029/model.safetensors.import.json",
+      "archive": "docs/image_research_results/2026-10-29-convnext-preflight/model.safetensors.import.json",
+      "sha256": "823f35283224a38cadde5d510f460e7647b823352b4e09701ac9e98be2f360c7"
+    },
+    {
+      "source": "outputs/image_experiments/assets/convnext-tiny-in22k-20261029/config.json.import.json",
+      "archive": "docs/image_research_results/2026-10-29-convnext-preflight/config.json.import.json",
+      "sha256": "48b17a6150b503b8170516d9a84e5602ae950e497b3db61e70ce8761ab1dc5c4"
+    },
+    {
+      "source": "outputs/image_experiments/assets/convnext-tiny-in22k-20261029/cpu-strict-load.json",
+      "archive": "docs/image_research_results/2026-10-29-convnext-preflight/cpu-strict-load.json",
+      "sha256": "ff7f12742b46b8c73943cbd91dd71fe04bb49dd7ef5898276d0ae66b321811c1"
+    }
+  ],
+  "images_opened": 0,
+  "gpu_used": false
+}

@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "automatic_execution": false,
+  "manifest": "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "pairs": [
+    {
+      "id": "D-ConvNeXt-vs-openclip",
+      "task": "detection",
+      "before": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP",
+        "recipe": {
+          "task": "detection",
+          "mode": "clean",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt",
+        "recipe": {
+          "task": "detection",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "D-ConvNeXt-vs-resnet",
+      "task": "detection",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate",
+        "recipe": {
+          "task": "detection",
+          "mode": "clean",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt",
+        "recipe": {
+          "task": "detection",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "D-ConvNeXt-FFHQ-vs-openclip",
+      "task": "detection",
+      "before": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ",
+        "recipe": {
+          "task": "detection",
+          "mode": "cross_semantic",
+          "held_semantics": [
+            "FFHQ"
+          ],
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ",
+        "recipe": {
+          "task": "detection",
+          "mode": "cross_semantic",
+          "held_semantics": [
+            "FFHQ"
+          ],
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "D-ConvNeXt-FFHQ-vs-resnet",
+      "task": "detection",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate",
+        "recipe": {
+          "task": "detection",
+          "mode": "cross_semantic",
+          "held_semantics": [
+            "FFHQ"
+          ],
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ",
+        "recipe": {
+          "task": "detection",
+          "mode": "cross_semantic",
+          "held_semantics": [
+            "FFHQ"
+          ],
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "A-ConvNeXt22-vs-openclip",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    }
+  ],
+  "note": "Read-only full-role comparisons; no new evaluation tuning. OpenCLIP is the main matched frozen-head reference. ResNet detection comparisons compare full routes with different backbone training/pretraining/preprocessing and weighting, not a causal backbone-only effect. A0 parent-dev-selected source reference is isolated in a separate exploratory configuration."
+}

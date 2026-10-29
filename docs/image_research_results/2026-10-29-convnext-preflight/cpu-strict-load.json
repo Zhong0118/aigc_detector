@@ -1,0 +1,12 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "full_original_classifier_strict_load": true,
+  "feature_dimensions": 768,
+  "backbone_frozen": true,
+  "transform": "Compose(\n    Resize(size=288, interpolation=bicubic, max_size=None, antialias=True)\n    CenterCrop(size=(288, 288))\n    MaybeToTensor()\n    Normalize(mean=tensor([0.4850, 0.4560, 0.4060]), std=tensor([0.2290, 0.2240, 0.2250]))\n)",
+  "images_opened": 0,
+  "gpu_used": false,
+  "model_sha256": "77b619e187de71bce58721689da0c009e84cc20677293d7d43105307e34d868a",
+  "config_sha256": "ad56361e341a408d3bc9d2802fc6336701621670916636a53002bad84a45cdec"
+}
