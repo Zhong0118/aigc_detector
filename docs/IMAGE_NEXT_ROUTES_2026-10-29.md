@@ -31,3 +31,19 @@ Single seed, already-viewed developer evaluation, prior parent-dev model-selecti
 -FFHQ audit / OmniAID assets / OpenCLIP implementation delegated to separate file owners under subagent-driven-development. CPU preparation may overlap; GPU experiments remain ordered.
 
 -FFHQ audit completed: authoritative outputs/image-next-routes-20261029/ffhq-audit/verified/. Reproduced56/93 vs same-ID1/93; all93FFHQ and100celebaHQ RGB8 PNG256 with matching measuredheaders. No confirmed pixelcause. D1-control/D3 actualreal-eval probabilitiesidentical, not independentreplications. 39combinedtests passed. OmniAID first download timeoutpreserved; boundednetworkdiagnosis ongoing; no modelrunyet.
+
+## Serial execution and follow-up
+Entry: `CUDA_VISIBLE_DEVICES=0 .venv-image/bin/python scripts/run_image_next_routes.py --execute`.
+This is a one-shot queue, not a restart command. Its unique state directory is `outputs/image-next-routes-20261029/queue`; inspect `launch.json`, `registration.json`, `status.json` and each stage's launch/log before acting. The queue stops on any failed child or changed registered source/config. It preserves every child identity and exit code. `awaiting_git_archive` means calculations finished, not delivery completed.
+
+Order: verified official asset receipts → CPU safe conversion → two actual selection-image OmniAID reload checks → frozen OmniAID evaluation → all five OpenCLIP jobs → six closed comparisons → open-set comparison. The final OpenCLIP open20 job trains its head for 30 epochs and evaluates both MSP and train-prototype cosine rejection; KNN and the frozen detector have no training epoch. GPU stages independently acquire the existing shared research lock and recheck physical GPU 0 availability. No original holdout scoring is permitted.
+
+Outputs:
+- Frozen detector: `outputs/image_experiments/omniaid-v2-q179-20261029`.
+- OpenCLIP: `outputs/image_experiments/openclip-q179-20261029`, one subdirectory per registered job.
+- Paired reports: `outputs/image-next-routes-20261029/{closed-comparison,rejection-comparison}`.
+- Asset transport receipts: `outputs/image_experiments/assets/omniaid_v2`. Original school direct timeout and subsequent interrupted SSH stream evidence remain archived. A single explicit official HTTPS Range recovery reuses the SHA-checked archived prefix; final complete source SHA remains mandatory. The downloader never performs conversion or model inference; those belong to the serial queue.
+
+Code/guard tests and the OpenCLIP CPU strict weight-load receipt are preparation evidence only. No new model score is established until the corresponding completed runtime status and saved predictions pass validation. The enabled OmniAID config legitimately transitions after conversion and actual-image verification; each transition is copied and hashed in queue evidence. It should be committed with subsequent results after review, without changing the historical initial config copy.
+
+- New-route preflight: 103 tests passed (queue, OpenCLIP, role-matched comparisons, rejection, OmniAID and FFHQ audit). The independent review found no remaining Critical/Important issue after argument-lock, asset-reference and child-identity fixes. OpenCLIP official checkpoint passed complete SHA/size and CPU strict-load checks; no actual new GPU model result yet.

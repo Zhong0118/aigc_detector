@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "automatic_execution": false,
+  "manifest": "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "pairs": [
+    {
+      "id": "openclip-detection-vs-d1-control",
+      "task": "detection",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate",
+        "recipe": {
+          "task": "detection",
+          "mode": "clean",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP",
+        "recipe": {
+          "task": "detection",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "openclip-ffhq-vs-d2-semantic",
+      "task": "detection",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate",
+        "recipe": {
+          "task": "detection",
+          "mode": "cross_semantic",
+          "held_semantics": [
+            "FFHQ"
+          ],
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ",
+        "recipe": {
+          "task": "detection",
+          "mode": "cross_semantic",
+          "held_semantics": [
+            "FFHQ"
+          ],
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "openclip-attribution22-vs-a2-clean",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate",
+        "recipe": {
+          "task": "attribution",
+          "mode": "postprocess",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "openclip-knn22-vs-a2-clean",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate",
+        "recipe": {
+          "task": "attribution",
+          "mode": "postprocess",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "openclip-knn22-vs-linear22",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "omniaid-v2-vs-d1-control",
+      "task": "detection",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate",
+        "recipe": {
+          "task": "detection",
+          "mode": "clean",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/omniaid-v2-q179-20261029",
+        "predictions": "evaluation/predictions.jsonl",
+        "recipe": {
+          "task": "detection",
+          "mode": "calibration",
+          "seed": 42
+        },
+        "roles": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/roles.json",
+        "legacy_scope": "evaluation"
+      }
+    }
+  ],
+  "note": "Run only after every input status is completed with exit_code 0. Complete role IDs are derived from the frozen manifest and each seed-42 recipe. Clean fixed-threshold closed-set comparisons only; unknown rejection is separate."
+}
