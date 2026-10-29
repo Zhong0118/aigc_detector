@@ -1,0 +1,11 @@
+{
+  "created_at": "2026-10-29T02:20:43.508207+00:00",
+  "source": "outputs/image-next-routes-20261029/ffhq-audit/verified/summary.json",
+  "source_sha256": "6067cf5483e2d1c863207bbdc6b56cb10ea56ccb60dfeee7a83306f5e363c0a9",
+  "files": {
+    "README.md": "634171a97408e371d57b0a5caeb373a8a5657849a1a18c1c57f9ec14c9c0dab7",
+    "summary.json": "6067cf5483e2d1c863207bbdc6b56cb10ea56ccb60dfeee7a83306f5e363c0a9"
+  },
+  "holdout_scored": false,
+  "images_uploaded": false
+}
