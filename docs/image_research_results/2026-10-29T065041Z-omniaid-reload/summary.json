@@ -1,0 +1,35 @@
+{
+  "status": "verified",
+  "reload_verified": true,
+  "actual_images_verified": true,
+  "probe_role": "selection",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "selection_sha256": "1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b",
+  "asset_digest": "f19f88c685a719826763cb3bd8260c3a344263034b8725c31f7b7755b5a70cd5",
+  "original_source_sha256": "0280750b22d1d60815b89d6d35cff8ee6a474a5615a3f8d95a3db9998d028596",
+  "patched_source_sha256": "e70258fdb053424add1a2d0eeff6573a209a56c003a3958f66d04ef868b1f212",
+  "reload_max_error": 0.0,
+  "single_batch_max_error": 8.344650268554688e-07,
+  "cache_max_error": 0.0,
+  "device": "cuda:0",
+  "gpu_index": 0,
+  "gpu_memory_before_mib": 18,
+  "epoch": null,
+  "encoder_training": false,
+  "metadata_load": {
+    "weights_only": true,
+    "allowed_globals": [
+      "argparse.Namespace"
+    ]
+  },
+  "probe_images": 2,
+  "evaluation_metrics_available": false,
+  "holdout_scored": false,
+  "assets_sha256": {
+    "source": "0280750b22d1d60815b89d6d35cff8ee6a474a5615a3f8d95a3db9998d028596",
+    "checkpoint": "919338928cab88cef1e6e4b85777749c74bdff6a1796fcd7e43a91422327f906",
+    "model_config": "333cfb2b53ff306210343e6991c2370893a893c776b765181c1d6025b0968b72",
+    "clip_config": "51b1c14aabcdf639c4a0370eeda1010b773bbe1df78319c7d0f5882c22ac0ac0",
+    "clip_weights": "f51cb7b04a2afb04828b1b8e0edc34bbf082080d098b9874f5756e7b7ba8c807"
+  }
+}

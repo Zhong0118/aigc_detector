@@ -1,7 +1,7 @@
 {
   "schema": "omniaid-v2-pretrained-evaluation-v1",
-  "status": "actual_image_verification_pending",
-  "execution_enabled": false,
+  "status": "ready",
+  "execution_enabled": true,
   "automatic_execution": false,
   "task": "detection",
   "epoch": null,
@@ -73,7 +73,7 @@
   },
   "verification_receipt": {
     "path": "outputs/image_experiments/assets/omniaid_v2/full_reload_q179_20261029_namespace_v1.json",
-    "sha256": null
+    "sha256": "56c64372cd83787d8c03732a2e3b93a40f3b214a986efcd29f99bd2d850211ba"
   },
   "output": "outputs/image_experiments/omniaid-v2-q179-20261029",
   "preprocessing": "RGB; torchvision Resize((336,336)) default bilinear; ToTensor; CLIP mean [.48145466,.4578275,.40821073], std [.26862954,.26130258,.27577711]",
@@ -87,9 +87,7 @@
     "overlap_caveat": "Author pretrained detector training coverage may overlap IAB generators or images; absence of overlap is not established. This is frozen pretrained detection evaluation, not a 30-epoch trained-head result or clean out-of-distribution claim.",
     "license": "Current official OmniAID repository LICENSE is MIT, verified 2026-10-29 at commit 5217acb525892c33f5a30cdf96d37f08f008a164. License bytes/hash and source review recorded separately; no claim this license was present at the source-blob commit. OpenAI CLIP MIT."
   },
-  "blockers": [
-    "Actual selection-image full reload receipt has not been produced or bound."
-  ],
+  "blockers": [],
   "source_review_receipt": {
     "path": "outputs/image_experiments/assets/omniaid_v2/source_review_q179_20261029.json",
     "sha256": "fce8f72717205200c0a6c8b080871e8d153d6e8ed8017dfd5f4245312450e6f0"

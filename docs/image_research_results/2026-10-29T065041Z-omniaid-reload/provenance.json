@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "outputs/image_experiments/assets/omniaid_v2/full_reload_q179_20261029_namespace_v1.json": "56c64372cd83787d8c03732a2e3b93a40f3b214a986efcd29f99bd2d850211ba",
+    "outputs/image_experiments/assets/omniaid_v2/full_reload_q179_20261029_namespace_v1_status.json": "a43f78dfad9c9a788710bb1382b034aa423988d5efd0e6bb1d6fdabec99fb6d8",
+    "configs/image_experiments/omniaid_v2_q179_20261029.json": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+    "scripts/evaluate_omniaid_q179.py": "530f1df561f218c2ced3b2990d2e6a60cbcd40016d116742df8ea511d37feda7",
+    "scripts/run_image_next_routes.py": "1141851cc93a877d33d81be2f54b388813d68967b13551b47220ea2273223273"
+  },
+  "artifacts": {
+    "verification-status.json": "a43f78dfad9c9a788710bb1382b034aa423988d5efd0e6bb1d6fdabec99fb6d8",
+    "ready-config.json": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+    "summary.json": "eb5615119d22972690707faf0b58de354de15f5c1062439b6d8b8ded9644a834"
+  },
+  "images_models_or_predictions_included": false
+}
