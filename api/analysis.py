@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -67,7 +68,7 @@ class AnalysisService:
             attribution_config=provenance_cfg.get("attribution", {}),
         )
         # 报告生成器现在是模板版，后续可以在 reports/generator.py 内接 LLM。
-        self.reporter = ReportGenerator()
+        self.reporter = ReportGenerator(config_path=config_path)
 
     def analyze_file_path(self, path: str | Path, filename: str | None = None) -> dict[str, Any]:
         """分析一个已经存在于本地磁盘上的文件。
@@ -237,5 +238,5 @@ def get_analysis_service() -> AnalysisService:
     """
     global _service
     if _service is None:
-        _service = AnalysisService()
+        _service = AnalysisService(config_path=os.getenv("AIGC_CONFIG", "config.yaml"))
     return _service

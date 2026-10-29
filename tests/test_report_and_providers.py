@@ -16,8 +16,10 @@ from reports.generator import ReportGenerator
 class ReportGeneratorLlmTests(unittest.TestCase):
     def test_user_facing_detection_scores_are_not_described_as_probabilities(self) -> None:
         project_root = Path(__file__).resolve().parents[1]
-        dashboard_source = (project_root / "api" / "dashboard.py").read_text(
-            encoding="utf-8"
+        # 文本结果渲染已从 dashboard.py 抽到共享的 text_view.py，两者都是用户可见文案。
+        dashboard_source = "".join(
+            (project_root / "api" / name).read_text(encoding="utf-8")
+            for name in ("dashboard.py", "text_view.py")
         )
         report_source = (project_root / "reports" / "generator.py").read_text(
             encoding="utf-8"

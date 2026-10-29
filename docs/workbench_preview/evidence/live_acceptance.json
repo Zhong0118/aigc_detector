@@ -1,0 +1,138 @@
+{
+  "schema": "workbench-live-acceptance.v1",
+  "created_unix": 1793290256,
+  "selection_sample_ids": [
+    "iab-001a5c897bb7d92889f3804a",
+    "iab-0030eb0c8e2e097c20d35b57"
+  ],
+  "holdout_opened": false,
+  "passed": true,
+  "checks": {
+    "capabilities": {
+      "ok": true,
+      "ofa": "disabled"
+    },
+    "live_vs_offline": {
+      "ok": true,
+      "per_image": {
+        "iab-001a5c897bb7d92889f3804a": {
+          "status": 200,
+          "error": 3.5762786865234375e-07,
+          "label": "at_or_above_threshold",
+          "attribution": "ok",
+          "top1_shown": true,
+          "seconds": 0.34,
+          "legacy_keys": true
+        },
+        "iab-0030eb0c8e2e097c20d35b57": {
+          "status": 200,
+          "error": 0.0,
+          "label": "below_threshold",
+          "attribution": "not_applicable",
+          "top1_shown": false,
+          "seconds": 0.26,
+          "legacy_keys": true
+        }
+      }
+    },
+    "dedupe": {
+      "ok": true
+    },
+    "research_mode": {
+      "ok": true,
+      "ofa_reason": "cpu_reproduction_exceeds_registered_tolerance"
+    },
+    "typed_errors": {
+      "ok": true,
+      "cases": {
+        "empty": {
+          "status": 400,
+          "code": "invalid_input",
+          "has_request_id": true,
+          "retryable": false,
+          "image_result": false
+        },
+        "garbage.png": {
+          "status": 422,
+          "code": "decode_failed",
+          "has_request_id": true,
+          "retryable": false,
+          "image_result": false
+        },
+        "truncated.png": {
+          "status": 422,
+          "code": "decode_failed",
+          "has_request_id": true,
+          "retryable": false,
+          "image_result": false
+        },
+        "anim.gif": {
+          "status": 400,
+          "code": "invalid_input",
+          "has_request_id": true,
+          "retryable": false,
+          "image_result": false
+        },
+        "tiny.png": {
+          "status": 400,
+          "code": "invalid_input",
+          "has_request_id": true,
+          "retryable": false,
+          "image_result": false
+        },
+        "wide.png": {
+          "status": 413,
+          "code": "too_large",
+          "has_request_id": true,
+          "retryable": false,
+          "image_result": false
+        }
+      }
+    },
+    "busy_under_concurrency": {
+      "ok": true,
+      "statuses": [
+        200,
+        200,
+        429,
+        429,
+        429,
+        429
+      ]
+    },
+    "history": {
+      "ok": true,
+      "snapshot_bytes": 4064
+    },
+    "experiments": {
+      "ok": true,
+      "routes": {
+        "ConvNeXt": "completed",
+        "DNA-Det": "asset_preflight_only",
+        "OmniDFA": "registration_in_progress",
+        "OFA T+1": "registration_in_progress",
+        "A3": "blocked"
+      }
+    },
+    "text_flow": {
+      "ok": true,
+      "label": "high_risk_ai",
+      "report_provider": "template",
+      "providers": [
+        [
+          null,
+          "ok"
+        ]
+      ],
+      "seconds": 0.5
+    },
+    "isolation": {
+      "ok": true,
+      "main_db_unchanged": true,
+      "uploaded_images_persisted": 0,
+      "raw_image_bytes_in_preview_db": false,
+      "hashes_in_preview_db": true,
+      "history_added": 7
+    }
+  }
+}

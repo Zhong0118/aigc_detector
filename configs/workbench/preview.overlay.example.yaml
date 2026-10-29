@@ -1,0 +1,75 @@
+# Isolated preview overlay. scripts/workbench_preview.py deep-merges it over config.yaml
+# into <preview_dir>/config.yaml. ${RESEARCH_ROOT}, ${MAIN_ROOT}, ${PREVIEW_DIR} are expanded.
+# No secrets here; the launcher also starts children with a clean environment (no API keys).
+database:
+  path: "${PREVIEW_DIR}/preview.db"
+
+detection:
+  demo_provider_enabled: false
+  api_providers:          # nothing is uploaded to external services from the preview
+    hive: {enabled: false}
+    sightengine: {enabled: false}
+  local_models:
+    text_yuchuan:
+      cache_dir: "${MAIN_ROOT}/models/huggingface"   # read-only, offline
+      device: "cpu"
+
+provenance:
+  fingerprint_db_path: "${PREVIEW_DIR}/fingerprint_registry.db"
+  attribution:
+    text:
+      providers:
+        window_a0_equal_fusion:
+          a0_model_dir: "${MAIN_ROOT}/outputs/attribution/family-window-split/A0-closed-seed42/model"
+          a0_tokenizer_dir: "${MAIN_ROOT}/outputs/attribution/family-window-split/A0-closed-seed42/tokenizer"
+          b0_model_path: "${MAIN_ROOT}/outputs/attribution/family-phase4/fast-track-v1/classical/closed-seed42/B0/model.joblib"
+          b1_model_path: "${MAIN_ROOT}/outputs/attribution/family-phase4/fast-track-v1/classical/closed-seed42/B1/model.joblib"
+          b3_model_path: "${MAIN_ROOT}/outputs/attribution/family-phase1/final/models/B3.joblib"
+    image:
+      enabled: false        # legacy image branches (pHash prototypes, scaffold) are never used
+
+report:
+  provider: "template"      # no LLM explanations in the preview
+
+api:
+  host: "127.0.0.1"
+  port: 8611
+
+dashboard:
+  port: 8612
+
+workbench:
+  research_root: "${RESEARCH_ROOT}"
+  device: "cpu"             # registered device policy: CPU only, GPUs hidden from the process
+  torch_threads: 8
+  max_pending: 2            # one running + one waiting; more requests get `busy`
+  queue_timeout_seconds: 120
+  # OFA on CPU differs from the registered GPU predictions by ~5e-4 (> its registered 1e-4
+  # tolerance; see docs/workbench_preview/evidence/adapter_consistency.json): fail closed.
+  research_ofa: false
+  research_ofa_note: "cpu_reproduction_exceeds_registered_tolerance"
+  limits: {max_bytes: 20971520, min_side: 32, max_side: 8192, max_pixels: 40000000}
+  artifacts:
+    openclip_config: {path: configs/image_experiments/iab_openclip_q179_20261029.json, sha256: c70712b654ec15239534a6b66e3fdfe4c7914ba1bf7a0bd906f947bb9e43a562}
+    openclip_backbone: {path: outputs/image_experiments/assets/openclip-vit-l-14-openai/open_clip_model.safetensors, sha256: 9ce2e8a8ebfff3793d7d375ad6d3c35cb9aebf3de7ace0fc7308accab7cd207e}
+    dopenclip_head: {path: outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/head.pth, sha256: 0432c050a2c9afcb1845e31651586032e5672f0e4096713fdd4a9f0d64ea4bbb}
+    dopenclip_provenance: {path: outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/provenance.json, sha256: 1be0094babb0fb93d44aeed361045b02bac4432764c0c78cb18e31832cf848b8}
+    dopenclip_metrics: {path: outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/metrics.json, sha256: 3ec4ff0e0aa3912c3c4c874887c3fa7be981d22fb0e28f08f77e16adbda6ba49}
+    a0_model: {path: outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/model.pth, sha256: c3756dd56fbd3d151ebda8db69b683fd8c78cd773a9967af6e70a3565891562b}
+    a0_asset_manifest: {path: outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/asset_manifest.json, sha256: 16101f1d80a7b74e4fcac0d6883d3db745e7feaf8936a0c30a275dcf1291f4c2}
+    ofa_fingerprint: {path: outputs/image_experiments/assets/ofa_fingerprint.pth, sha256: 396bc6c54af7c96d2f1cbb57bb38886f096b464472cb221ec38ee185be06521b}
+    ofa_denoiser: {path: outputs/image_experiments/assets/model_best.th, sha256: bf8e302573ca412c3d59d1271fb4b185242f582dee676e734a9995b7436fbfdf}
+    ofa_reference_bank: {path: outputs/image_experiments/ofa-iab-v7-200-q179-e30/reference_bank.pt, sha256: b07b6d1becf28c5b5628e6804e096c766b0272d7596dd18aad7e350cea23c2d9}
+    ofa_reference_manifest: {path: outputs/image_experiments/ofa-iab-v7-200-q179-e30/reference_manifest.json, sha256: a00aa26ed21dc01bdb04398ebcbd051a0dd65d6ea49aa1c1b8d34cd7a74cc87b}
+  catalog:
+    sources:
+      next_routes_summary: {label: "next-routes-final summary.json", path: docs/image_research_results/2026-10-29T072357Z-next-routes-final/summary.json, sha256: 114f92ea5976dca3942835b0ab71481710b4085ca11e4e349203f47677ed1edf}
+      closed_comparison: {label: "next-routes-final closed-comparison", path: docs/image_research_results/2026-10-29T072357Z-next-routes-final/closed-comparison/summary.json, sha256: 3fab52fe37025ff91dc23a324ed6c45619a70c1f99a2e4558ec58e314516de6e}
+      fusion_summary: {label: "200-q179 score fusion summary", path: outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/summary.json, sha256: 7f9c605edfc680caedb82bfaed37326ddbe0f5e278e94c81b713bfc12f94e5fb}
+      dopenclip_metrics: {label: "D-OpenCLIP metrics", path: outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/metrics.json, sha256: 3ec4ff0e0aa3912c3c4c874887c3fa7be981d22fb0e28f08f77e16adbda6ba49}
+    routes:
+      - {id: ConvNeXt, status_file: outputs/image_experiments/convnext-q179-20261029/status.json, note: "冻结 ConvNeXt 对照已运行，结果未验收"}
+      - {id: DNA-Det, status: asset_preflight_only, note: "仅完成资产预检（docs/image_research_results/2026-10-29-dna-asset-preflight）"}
+      - {id: OmniDFA, status: registration_in_progress, note: "配置与代码仍在另一研究线程登记中"}
+      - {id: OFA T+1, status: registration_in_progress, note: "配置与代码仍在另一研究线程登记中"}
+      - {id: A3, status: blocked, note: "family mapping 未审查（reviewed=false），按设计阻塞"}

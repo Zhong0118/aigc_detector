@@ -9,10 +9,12 @@
 - 具体模型/API 调用写在 detection/ 或 provenance/
 """
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 from api.analysis import get_analysis_service
+from api.workbench_routes import analyze_image_upload, looks_like_image, record_text
 from storage.database import get_session
 from storage.models import Content, DetectionResult, ProvenanceRecord
 
@@ -55,20 +57,31 @@ async def analyze_text(request: TextAnalyzeRequest):
     这个接口会把文本临时保存成一个 .txt 文件，再进入统一分析流程：
     ingestion -> detection -> provenance -> report -> storage。
     """
-    return get_analysis_service().analyze_text(request.text, filename=request.filename)
+    payload = get_analysis_service().analyze_text(request.text, filename=request.filename)
+    return record_text(payload, request.filename, request.text.encode("utf-8"))
 
 
 @router.post("/analyze/file")
-async def analyze_file(file: UploadFile = File(...)):
+async def analyze_file(
+    file: UploadFile = File(...),
+    mode: str = Form("default"),
+    request_id: str | None = Form(None),
+):
     """分析用户上传的文件。
 
-    支持文本、图片、音频、视频等文件。这里先读取上传内容，
-    然后交给 AnalysisService.analyze_upload 统一处理。
+    图片走真实图片适配器（D-OpenCLIP 检测 + A0 来源候选），返回旧字段与 image_result；
+    模型不可用时返回带 request_id/retryable 的错误，不回退到占位或演示分数。
+    其他文件仍交给 AnalysisService.analyze_upload 统一处理。
     """
     content = await file.read()
+    filename = file.filename or "upload.bin"
+    if looks_like_image(filename, content):
+        # 线程池执行，推理期间 capabilities/history 仍可响应，排队上限由图片服务控制。
+        return await run_in_threadpool(analyze_image_upload, filename, content, mode == "research", request_id)
     if not content:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
-    return get_analysis_service().analyze_upload(file.filename or "upload.bin", content)
+    payload = get_analysis_service().analyze_upload(filename, content)
+    return record_text(payload, filename, content)
 
 
 @router.post("/detect")
@@ -78,7 +91,7 @@ async def detect_content(file: UploadFile = File(...)):
     早期前端调用的是 `/detect`。为了不让旧调用失效，
     这里直接复用新的 `/analyze/file` 逻辑。
     """
-    return await analyze_file(file)
+    return await analyze_file(file, mode="default", request_id=None)
 
 
 @router.post("/provenance")
@@ -88,7 +101,9 @@ async def analyze_provenance(file: UploadFile = File(...)):
     当前实现会先跑完整分析，再只抽取 provenance 相关字段返回。
     这样可以避免检测流程和溯源流程分叉成两套逻辑。
     """
-    analysis = await analyze_file(file)
+    analysis = await analyze_file(file, mode="default", request_id=None)
+    if not isinstance(analysis, dict):
+        return analysis
     return {
         "filename": analysis["filename"],
         "modality": analysis["modality"],

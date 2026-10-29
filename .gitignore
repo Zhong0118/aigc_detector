@@ -91,3 +91,4 @@ transfer/
 
 .codex_artifacts
 tmp/
+.preview/

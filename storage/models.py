@@ -85,3 +85,24 @@ class ProvenanceRecord(Base):
 
     # 多对一关联回 Content。
     content = relationship("Content", back_populates="provenance_records")
+
+
+class AnalysisSnapshot(Base):
+    """预览工作台的版本化结果快照（文本/图片），不保存原始图片字节。
+
+    snapshot 保存当时的模型哈希、阈值和预处理，历史页按它还原，不重新推理。
+    """
+
+    __tablename__ = "analysis_snapshots"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    analysis_id = Column(String(64), unique=True, index=True)
+    kind = Column(String(16), index=True)
+    schema_version = Column(String(32))
+    status = Column(String(16), index=True)
+    label = Column(String(64), nullable=True)
+    score = Column(Float, nullable=True)
+    display_name = Column(String(256))
+    input_sha256 = Column(String(64), index=True, nullable=True)
+    snapshot = Column(JSON)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
