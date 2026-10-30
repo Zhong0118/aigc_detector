@@ -1,0 +1,818 @@
+{
+  "schema_version": "image-model-handoff-v1",
+  "purpose": "documentation_inventory_only_not_active_runtime_config",
+  "date": "2026-10-30",
+  "evidence_commit": "881618c7d9075750283fa068c188caf48ee75968",
+  "server_worktree": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline",
+  "default_bundle_id": "image-standard-q179-v1",
+  "defaults": [
+    {
+      "id": "det-openclip-q179-v1",
+      "task": "detection",
+      "architecture": "ViT-L-14-quickgelu visual + Linear(768,2)",
+      "experiment_run": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP",
+      "assets": [
+        {
+          "path": "outputs/image_experiments/assets/openclip-vit-l-14-openai/open_clip_model.safetensors",
+          "sha256": "9ce2e8a8ebfff3793d7d375ad6d3c35cb9aebf3de7ace0fc7308accab7cd207e",
+          "bytes": 1710517724
+        },
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/head.pth",
+          "sha256": "0432c050a2c9afcb1845e31651586032e5672f0e4096713fdd4a9f0d64ea4bbb",
+          "bytes": 11974
+        }
+      ],
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/provenance.json",
+          "sha256": "1be0094babb0fb93d44aeed361045b02bac4432764c0c78cb18e31832cf848b8",
+          "bytes": 4801
+        },
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/metrics.json",
+          "sha256": "3ec4ff0e0aa3912c3c4c874887c3fa7be981d22fb0e28f08f77e16adbda6ba49",
+          "bytes": 11891
+        },
+        {
+          "path": "configs/image_experiments/iab_openclip_q179_20261029.json",
+          "sha256": "c70712b654ec15239534a6b66e3fdfe4c7914ba1bf7a0bd906f947bb9e43a562",
+          "bytes": 5120
+        }
+      ],
+      "classes": [
+        "real",
+        "ai"
+      ],
+      "classes_sha256": "fb8ea606be8ff22177301d34bccc0184eadaab0c2a062f9bc77a81c44d3a390f",
+      "image_preprocessing": {
+        "size": 224,
+        "resize_mode": "shortest",
+        "interpolation": "bicubic",
+        "mean": [
+          0.48145466,
+          0.4578275,
+          0.40821073
+        ],
+        "std": [
+          0.26862954,
+          0.26130258,
+          0.27577711
+        ],
+        "crop": "center",
+        "rgb": true
+      },
+      "image_preprocessing_sha256": "3f716194bfe45424db7020aa8b81425f8e0fef9e481f487865e81f763bf3210b",
+      "feature_normalization": "float32 L2",
+      "head_checkpoint_preprocessing_tag": "per-branch-l2-concat-l2-v1",
+      "threshold": 0.5,
+      "threshold_kind": "fixed_0_5",
+      "score_kind": "binary_softmax_p_ai",
+      "training_epochs": 30,
+      "selected_epoch": 30,
+      "dependencies": {
+        "open_clip_torch": "2.32.0",
+        "timm": "1.0.15",
+        "ftfy": "6.3.1",
+        "torch": "2.6.0+cu124",
+        "torchvision": "0.21.0+cu124",
+        "numpy": "2.2.6",
+        "Pillow": "12.1.1",
+        "safetensors": "0.7.0",
+        "scikit-learn": "1.7.2",
+        "huggingface-hub": "0.36.2",
+        "regex": "2026.4.4"
+      },
+      "exposure": "standard",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "runtime_device_validation": "pending"
+    },
+    {
+      "id": "attr-resnet50-q179-v1",
+      "task": "source_classification",
+      "architecture": "ResNetClassifier: backbone resnet50 fc=Identity, external Linear(2048,22)",
+      "experiment_run": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30",
+      "assets": [
+        {
+          "path": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/model.pth",
+          "sha256": "c3756dd56fbd3d151ebda8db69b683fd8c78cd773a9967af6e70a3565891562b",
+          "bytes": 94505898
+        }
+      ],
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/resolved_config.json",
+          "sha256": "4576ce83c7e80b99255860bbdf32c0ee408c9f967c68d0affd1ff7982dbd7dab",
+          "bytes": 2634
+        },
+        {
+          "path": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/asset_manifest.json",
+          "sha256": "16101f1d80a7b74e4fcac0d6883d3db745e7feaf8936a0c30a275dcf1291f4c2",
+          "bytes": 1319
+        },
+        {
+          "path": "outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/metrics.json",
+          "sha256": "99f34a24e4d9e666439539d4e0ac6cf6e88869c661a101f5303ddbb4abd543a1",
+          "bytes": 1747
+        }
+      ],
+      "classes": [
+        "4o",
+        "CogView3_PLUS",
+        "FLUX",
+        "KANDINSKY",
+        "PIXART",
+        "PLAYGROUND_2_5",
+        "SD1_5",
+        "SD2_1",
+        "SD3",
+        "SD3_5",
+        "SDXL",
+        "dalle3",
+        "gemini",
+        "grok3",
+        "hidream",
+        "hunyuan",
+        "ideogram",
+        "infinity",
+        "janus-pro",
+        "kling",
+        "mid-5.2",
+        "mid-6.0"
+      ],
+      "classes_sha256": "36592d0f921fd1c2fdf7bd6d62ad8fd2d0a8653349e7bdf01f0a1e5e007788b7",
+      "image_preprocessing": {
+        "id": "iab-resnet50-v1",
+        "resize_short_edge": 256,
+        "resize_interpolation": "torchvision_Resize_default_BILINEAR",
+        "center_crop": [
+          224,
+          224
+        ],
+        "rgb": true,
+        "to_tensor": "uint8_to_float32_div255",
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ]
+      },
+      "image_preprocessing_sha256": "e44736b22217acbcfe33ad33b7ab29e9b6d2152f3ef499274690e14b41d4e041",
+      "feature_normalization": "none_before_fc",
+      "score_kind": "known_ai_22_source_softmax",
+      "training_epochs": 30,
+      "selected_epoch": 29,
+      "checkpoint_preprocessing_tag": "iab-resnet50-v1",
+      "selection_bias": "full parent dev participated in checkpoint selection",
+      "exposure": "standard",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "runtime_device_validation": "pending"
+    }
+  ],
+  "research_catalog": [
+    {
+      "id": "research-dna-lp22",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/metrics.json",
+          "sha256": "6359643b2df475274aec00cc3a8521bd659e970b756ecf5b5a72d20c4ea52ac7",
+          "bytes": 8666
+        },
+        {
+          "path": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/provenance.json",
+          "sha256": "18bfeb0ed85c0d03931748e730732359524409ea13114e003e26d537943d824a",
+          "bytes": 5752
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/linear/head.pth",
+          "sha256": "d1e5651ab26ca56314d5a88d0e6b27a375328275ecf1fe7b5e4c384424ed12a7",
+          "bytes": 51782
+        }
+      ]
+    },
+    {
+      "id": "research-convnext-detection",
+      "task": "detection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/metrics.json",
+          "sha256": "a06e21ff127fef48f25be9efad088fa5ab24e4d626e0a5b065b2963204a2573b",
+          "bytes": 11826
+        },
+        {
+          "path": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/provenance.json",
+          "sha256": "af8e063a08525abc672a2d3a8444177cf32364dd0dc17a1f9016fd335c920011",
+          "bytes": 4859
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/linear/head.pth",
+          "sha256": "467c2be35913291d3849e8c6f60458005257e7c476486be182476e0e270b1fa5",
+          "bytes": 11974
+        }
+      ]
+    },
+    {
+      "id": "research-convnext-ffhq",
+      "task": "detection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/metrics.json",
+          "sha256": "1451c552b2a9519111f602da6a66dc1b6cf7d163bf1cdc7695facb0b05d4636b",
+          "bytes": 6867
+        },
+        {
+          "path": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/provenance.json",
+          "sha256": "20ab44b563486198bf12cd16a8848126b7c283f7fdb3f3b636f5ae21e845dcd1",
+          "bytes": 4893
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/head.pth",
+          "sha256": "781f6492a602f5b4acd7dd860371bd3e250239bb73af036f98eeae3cc5a6d479",
+          "bytes": 12038
+        }
+      ]
+    },
+    {
+      "id": "research-convnext-source22",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/metrics.json",
+          "sha256": "9d85808dba8a3887e22f469a9dfb5e590475db9b01cfaa900ec12ca9d9ba15a2",
+          "bytes": 8305
+        },
+        {
+          "path": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/provenance.json",
+          "sha256": "1d1a90b5ad88e3e7f1525d554a133a066b8f8ca62f31203ec9a3e90800e942c2",
+          "bytes": 5160
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/linear/head.pth",
+          "sha256": "d5c911e5dc8c8fdad3ae182e07910fe2a786a1ec1febb452b096278f12618df3",
+          "bytes": 73798
+        }
+      ]
+    },
+    {
+      "id": "research-omnidfa-lp22",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/metrics.json",
+          "sha256": "d2157422f06b79b00a5a8c7b7b0cc335bb870644b093020cb3aef81286b1f085",
+          "bytes": 18661
+        },
+        {
+          "path": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/provenance.json",
+          "sha256": "1dc789708b79af0c82fe482a811607e4673c2e748f36478421f65ea2cda4ce4f",
+          "bytes": 9615
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/linear/head.pth",
+          "sha256": "ce2dd976552af9eb1289c9041df9d4cb846e6e1dfbe3a62a985a3f7b41024db0",
+          "bytes": 21190
+        }
+      ]
+    },
+    {
+      "id": "research-omnidfa-k10",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/metrics.json",
+          "sha256": "e6c8baf092614e9a7d37cd1483af825c7cc8fad38ce8e3c20103ec3c5049633e",
+          "bytes": 13877
+        },
+        {
+          "path": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/provenance.json",
+          "sha256": "0fa9feb37c24a6a7bf9cf11df53dffdec3036454eaf00fddfdcac8a5c9e5cff4",
+          "bytes": 9706
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/prototypes.pth",
+          "sha256": "f3a3ae13397089448d146592abac60a09e900cbe738572518dd1af57bd413701",
+          "bytes": 81643
+        }
+      ]
+    },
+    {
+      "id": "research-openclip-source22",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/metrics.json",
+          "sha256": "403a3eaf2d38acb956915667ed15749df0ef7d4743ee09ff78b934136328eadd",
+          "bytes": 8501
+        },
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/provenance.json",
+          "sha256": "cbe70fa03ca160c6b4a58a0a01896db54aedfb240c2d3e4ef963ce5fbfd96c7c",
+          "bytes": 5100
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/linear/head.pth",
+          "sha256": "19132d40a41162554e5081710a0e6abf1a30a7b2373db7afb71c1eac5d04a60e",
+          "bytes": 73734
+        }
+      ]
+    },
+    {
+      "id": "research-openclip-knn22",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/metrics.json",
+          "sha256": "e1d5b29bc1cdf858542594406cad6637887500c0dc43d142cd98d91c475bd358",
+          "bytes": 11571
+        },
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/provenance.json",
+          "sha256": "68686fad86fbd73539fa23e7513040c0aacb31e0d838a618ebaf2c554cccd0fe",
+          "bytes": 5435
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-KNN22/knn.pth",
+          "sha256": "c7b5da84996d039d2af24ce93b1d6926fccf34a32b683ddbb8e01551c8565746",
+          "bytes": 72800256
+        }
+      ]
+    },
+    {
+      "id": "research-openclip-ffhq",
+      "task": "detection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/metrics.json",
+          "sha256": "910cb66251ac74ef5af7ff77e415093eca47cf77441f97cd5067cfd8c799302c",
+          "bytes": 6991
+        },
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/provenance.json",
+          "sha256": "17a0cfd4a3a005cc898141bd9a828cefe0b96a767d85cb1f3fd7dba84cc8a533",
+          "bytes": 4850
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/head.pth",
+          "sha256": "ea698651bc03a56b5de0c0c948946d3d193748c7c6861616d52f8327845a8f8f",
+          "bytes": 12038
+        }
+      ]
+    },
+    {
+      "id": "research-dino-detection",
+      "task": "detection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/D-DINO",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/D-DINO/metrics.json",
+          "sha256": "a40dee5ff629d908e511ed67b9a83c0ebfff2b4f5c084d7c17ab52d68721458d",
+          "bytes": 10795
+        },
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/D-DINO/provenance.json",
+          "sha256": "eaf5f42189df4ba511a2f37c8c5cf7601c7e5cc35d15d6128c42dc131dba0a57",
+          "bytes": 1787711
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/D-DINO/head.pth",
+          "sha256": "4f32f050401f7334444e7cb1eb3209a40e25583b0cb99f5822bb41b06333d620",
+          "bytes": 1700294
+        }
+      ]
+    },
+    {
+      "id": "research-rgb22",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-RGB",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-RGB/metrics.json",
+          "sha256": "10a70d056221ca83157b01eb5160b8552f3eabf605a02de9da1d5b7363e7fdfb",
+          "bytes": 6745
+        },
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-RGB/provenance.json",
+          "sha256": "8b819bb9108f6a3e0f0cf12b0326432d81d04675e8c5d457361b9d112ac2f55b",
+          "bytes": 1787711
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-RGB/head.pth",
+          "sha256": "8ea4512366834e4a8b41d538991697cb147cb03c32b4d9d2bb89ba64790eb33c",
+          "bytes": 1731462
+        }
+      ]
+    },
+    {
+      "id": "research-fingerprint22",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-FP",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-FP/metrics.json",
+          "sha256": "abc69c106ed23736570628b170b84a06436c86c84ead494766fb8dd08cdeadb7",
+          "bytes": 6790
+        },
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-FP/provenance.json",
+          "sha256": "7c587b3e4c2bb29efce51689140a695abf3de6745fe98c269d21672af759b49d",
+          "bytes": 1046166
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-FP/head.pth",
+          "sha256": "7a81443b683ef101791d2bfeaa9c2aee5271ffe7acd46ad5f934f4cd9bf64a67",
+          "bytes": 1004358
+        }
+      ]
+    },
+    {
+      "id": "research-feature-fusion22",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-Fusion",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-Fusion/metrics.json",
+          "sha256": "457450415d461beeedbca3e84941ab239aac83e0c5b53307b08d156293c71d82",
+          "bytes": 6711
+        },
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-Fusion/provenance.json",
+          "sha256": "d1b16b0ff07d6fb9ce6610681821dd5db7dfab0f79fbcbf7c7466fc8aade60fb",
+          "bytes": 2830550
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/independent-image-tasks-v7-200-q179-e30-gpu/A-Fusion/head.pth",
+          "sha256": "4a3b62875672186eb19de667af64123386ba5df3d03a20b9635ae96d466c7715",
+          "bytes": 1872902
+        }
+      ]
+    },
+    {
+      "id": "research-openclip-open20",
+      "task": "unknown_rejection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/metrics.json",
+          "sha256": "e301a060d3ba581432746b32df329b8a7e9b92b301ec242a2357711d67b9ea10",
+          "bytes": 37754
+        },
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/provenance.json",
+          "sha256": "6c304070ee4ae759314f557726570f689355248f564b3490c252922ab762e9c7",
+          "bytes": 5220
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/linear/head.pth",
+          "sha256": "bd19224dc09cc34b6cf16fe633b50daafd6b853888f87615052fb3ff69c32c53",
+          "bytes": 67718
+        },
+        {
+          "path": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/prototypes.pth",
+          "sha256": "aa068b50c83db972d630c8692cce03f8e12f69a8bd779c7a0c9e8a777520ebc2",
+          "bytes": 869355
+        }
+      ]
+    },
+    {
+      "id": "research-ofa-tplus1",
+      "task": "unknown_rejection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/ofa-tplus1-q179-20261029",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/ofa-tplus1-q179-20261029/metrics.json",
+          "sha256": "e33f4b96f44c0a60de164fff473d9646e1e8bfbaf4a3164bbefdc9f5615cf1d5",
+          "bytes": 10001
+        },
+        {
+          "path": "outputs/image_experiments/ofa-tplus1-q179-20261029/provenance.json",
+          "sha256": "7a959bd69644c33d39a23aef0dbcee139e9af414a6ce132ff3de3d6c4ccc65ce",
+          "bytes": 9141
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/ofa-tplus1-q179-20261029/head.pth",
+          "sha256": "a514b1d7193a1d70d74e9ba990d8222b9a1234ee17e77d700e8264265f972c8e",
+          "bytes": 12806
+        }
+      ]
+    },
+    {
+      "id": "research-ofa-pair",
+      "task": "source_verification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/ofa-iab-v7-200-q179-e30",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/ofa-iab-v7-200-q179-e30/metrics.json",
+          "sha256": "8243f947adbcb08669a8883dd82534da0e446cc258451fec18b908041f4bcc07",
+          "bytes": 36611
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/ofa-iab-v7-200-q179-e30/reference_bank.pt",
+          "sha256": "b07b6d1becf28c5b5628e6804e096c766b0272d7596dd18aad7e350cea23c2d9",
+          "bytes": 2180618
+        }
+      ]
+    },
+    {
+      "id": "research-resnet-open20",
+      "task": "unknown_rejection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/metrics.json",
+          "sha256": "03f478636749d0003a4c4edc4afae2f1eb5ad889efa58d864bc557bf0547d039",
+          "bytes": 16818
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/followups-v7-200-q179-e30/A1/train/model.pth",
+          "sha256": "241efc41100a0fca6c5d88c071467424b4c4ea1cd8f92bb5321714658a3a3e67",
+          "bytes": 94489834
+        }
+      ]
+    },
+    {
+      "id": "research-resnet-control",
+      "task": "detection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/metrics.json",
+          "sha256": "8660bcef2bb1a212a85b7c9c14a7138f476e35cbce9197dce27079d7c7f0c77f",
+          "bytes": 9206
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/train/model.pth",
+          "sha256": "dd123b43a4e15935c9572cd4b77b53f9191a3f119fbdbbc16ad3781a3cc00384",
+          "bytes": 94342058
+        }
+      ]
+    },
+    {
+      "id": "research-resnet-ffhq",
+      "task": "detection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate/metrics.json",
+          "sha256": "c842d205f1f6ec7aef54bb1af35e70fa5c7925c9d2e40c0ce4fddd6dbf1e9220",
+          "bytes": 3712
+        }
+      ],
+      "entry_artifacts": [
+        {
+          "path": "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/train/model.pth",
+          "sha256": "373275b67dca3db7ebe930ab9ac6a283b95b95e9903ecf9e9c6a1e5bf2653b53",
+          "bytes": 94342058
+        }
+      ]
+    },
+    {
+      "id": "research-score-fusion-uniform",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "alpha_resnet": 0.5,
+      "formula": "alpha*ResNet22_probability+(1-alpha)*A-Fusion22_probability",
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/summary.json",
+          "sha256": "7f9c605edfc680caedb82bfaed37326ddbe0f5e278e94c81b713bfc12f94e5fb",
+          "bytes": 2582
+        },
+        {
+          "path": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/resolved_config.json",
+          "sha256": "ead70695326c2016f80f5d1c9c83819c687e2d8cb7478b9fe1556250df608367",
+          "bytes": 6542
+        },
+        {
+          "path": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/provenance.json",
+          "sha256": "a3304100f229664b80786087e4e21c7726015239085774d04db6a313c1880ddc",
+          "bytes": 4546
+        }
+      ]
+    },
+    {
+      "id": "research-score-fusion-calibrated",
+      "task": "source_classification",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "alpha_resnet": 0.75,
+      "formula": "alpha*ResNet22_probability+(1-alpha)*A-Fusion22_probability",
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/summary.json",
+          "sha256": "7f9c605edfc680caedb82bfaed37326ddbe0f5e278e94c81b713bfc12f94e5fb",
+          "bytes": 2582
+        },
+        {
+          "path": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/resolved_config.json",
+          "sha256": "ead70695326c2016f80f5d1c9c83819c687e2d8cb7478b9fe1556250df608367",
+          "bytes": 6542
+        },
+        {
+          "path": "outputs/image_experiments/resnet-feature-score-fusion-iab-v7-200-q179-e30/provenance.json",
+          "sha256": "a3304100f229664b80786087e4e21c7726015239085774d04db6a313c1880ddc",
+          "bytes": 4546
+        }
+      ]
+    },
+    {
+      "id": "research-omniaid-v2",
+      "task": "detection",
+      "exposure": "research_only",
+      "experiment_run": "outputs/image_experiments/omniaid-v2-q179-20261029",
+      "offline_validation": "completed",
+      "online_integration": "not_implemented",
+      "v1_online_required": false,
+      "evidence": [
+        {
+          "path": "outputs/image_experiments/omniaid-v2-q179-20261029/config.json",
+          "sha256": "be5c64ecbf7731db219721608b90b009c5ebb1c9453c06558a2ebcf57d8892a9",
+          "bytes": 7449
+        },
+        {
+          "path": "outputs/image_experiments/omniaid-v2-q179-20261029/resolved_config.json",
+          "sha256": "090ca1894c64b9b2ee25c326657ada7d398f3489db24f636924efce05b6ec640",
+          "bytes": 7541
+        },
+        {
+          "path": "outputs/image_experiments/omniaid-v2-q179-20261029/provenance.json",
+          "sha256": "8a351ad92359a69bd99236b69d8612e046bb1f3e91b548b9b2a11f53b7076891",
+          "bytes": 187379
+        },
+        {
+          "path": "outputs/image_experiments/omniaid-v2-q179-20261029/metrics.json",
+          "sha256": "4d0ac431daffa6cc032b65b56fc0a08d9de9440db859048ab4f0b10636a0ba93",
+          "bytes": 10425
+        }
+      ]
+    }
+  ],
+  "validation_probe": {
+    "source_selection_ids": [
+      "iab-001a5c897bb7d92889f3804a",
+      "iab-004be1c1a405329c87b8041c"
+    ],
+    "source_manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "holdout_allowed": false,
+    "numerical_tolerance": 1e-05
+  },
+  "source_module_sha256": {
+    "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+    "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584",
+    "research/image_attribution/dna_route.py": "cbbd143b3aa64e69496c3f9d079ee6124dc74ee3b47e85ab4d5dd5209839900e",
+    "scripts/run_image_openclip.py": "115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3",
+    "scripts/run_image_dna.py": "a285b9f8e5c9a2edc1559a96370b08b2b3f3b420384d46654c76ad38a5215af4",
+    "scripts/run_image_ofa_tplus1.py": "54be4ce5639b66a686217297ce61e8d3bc34098e796bba0ee4e16545c3661906",
+    "research/image_attribution/ofa_tplus1.py": "aa1af4036982b0a07b9368e0f55295415bca13dc467d00dab0d84cfc1260ee20",
+    "scripts/run_image_omnidfa.py": "5d37c60a674893fd1bb9c8df82f996bb1beecb743ceb6f3b63067d2c37daea71",
+    "research/image_attribution/omnidfa_route.py": "4ad85918179cae8c1d36ace250c5eaf985643a0f494b55f1fa09cbb6f7630e6d"
+  },
+  "unknown_standard": {
+    "status": "unavailable",
+    "score": null,
+    "reason_code": "not_calibrated_for_22_classes"
+  },
+  "not_exposed": [
+    "untrained_image_detector_scaffold",
+    "demo_or_hash_score",
+    "A3_unreviewed_family_mapping",
+    "full_OFA_pretraining_not_run"
+  ],
+  "research_artifact_note": "Research entry_artifacts are anchors, not a complete inference dependency closure; bind backbone/preprocessing/reference assets from the stated run provenance and registered configs before enabling.",
+  "research_catalog_note": "Candidate research adapters only, not the exhaustive experiment directory. Read the final overview.json for all completed experiments and six-condition/held-domain reports."
+}
