@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,7 @@ from provenance.pipeline import ProvenancePipeline
 from reports.generator import ReportGenerator
 from storage.database import get_session
 from storage.models import Content, DetectionResult, ProvenanceRecord
+from workbench.history import text_snapshot
 
 
 class AnalysisService:
@@ -67,7 +69,7 @@ class AnalysisService:
             attribution_config=provenance_cfg.get("attribution", {}),
         )
         # 报告生成器现在是模板版，后续可以在 reports/generator.py 内接 LLM。
-        self.reporter = ReportGenerator()
+        self.reporter = ReportGenerator(config_path=config_path)
 
     def analyze_file_path(self, path: str | Path, filename: str | None = None) -> dict[str, Any]:
         """分析一个已经存在于本地磁盘上的文件。
@@ -190,12 +192,13 @@ class AnalysisService:
             session.flush()
 
             # 检测结果表：记录最终分数、标签和完整 detection JSON。
+            # report_snapshot 额外保存当时完整的分析与报告，历史页据此还原，不重新推理。
             db_result = DetectionResult(
                 content_id=db_content.id,
                 modality=analysis["modality"],
                 score=analysis["detection"]["score"],
                 label=analysis["detection"]["label"],
-                details=analysis["detection"],
+                details=dict(analysis["detection"], report_snapshot=text_snapshot(analysis)),
             )
             session.add(db_result)
 
@@ -237,5 +240,5 @@ def get_analysis_service() -> AnalysisService:
     """
     global _service
     if _service is None:
-        _service = AnalysisService()
+        _service = AnalysisService(config_path=os.getenv("AIGC_CONFIG", "config.yaml"))
     return _service

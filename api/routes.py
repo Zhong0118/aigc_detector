@@ -9,12 +9,14 @@
 - 具体模型/API 调用写在 detection/ 或 provenance/
 """
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from api.analysis import get_analysis_service
-from storage.database import get_session
-from storage.models import Content, DetectionResult, ProvenanceRecord
+from api.workbench_routes import analyze_upload_request
+from workbench import history
+from workbench.image_engine import WorkbenchError
 
 # APIRouter 是 FastAPI 的子路由容器。
 # main.py 会把这个 router 挂载到 `/api/v1` 前缀下。
@@ -59,36 +61,37 @@ async def analyze_text(request: TextAnalyzeRequest):
 
 
 @router.post("/analyze/file")
-async def analyze_file(file: UploadFile = File(...)):
+async def analyze_file(
+    file: UploadFile = File(...),
+    mode: str = Form("standard"),
+    research_method_id: str | None = Form(None),
+    request_id: str | None = Form(None),
+):
     """分析用户上传的文件。
 
-    支持文本、图片、音频、视频等文件。这里先读取上传内容，
-    然后交给 AnalysisService.analyze_upload 统一处理。
+    图片（按真实 JPEG/PNG 内容识别）走独立图片服务：D-OpenCLIP 检测 + 门控后的 A0 来源候选，
+    返回旧字段与权威的 image_result；模型不可用、输入不合规时返回类型化错误，不回退到演示分数。
+    其他文件仍交给 AnalysisService.analyze_upload，行为不变；research 模式只适用于图片。
     """
-    content = await file.read()
-    if not content:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty")
-    return get_analysis_service().analyze_upload(file.filename or "upload.bin", content)
+    return await analyze_upload_request(file, mode, research_method_id, request_id)
 
 
 @router.post("/detect")
 async def detect_content(file: UploadFile = File(...)):
-    """兼容旧版本的检测接口。
-
-    早期前端调用的是 `/detect`。为了不让旧调用失效，
-    这里直接复用新的 `/analyze/file` 逻辑。
-    """
-    return await analyze_file(file)
+    """兼容旧版本的检测接口：与 /analyze/file 共用同一 helper，并显式使用 standard 模式。"""
+    return await analyze_upload_request(file, "standard", None, None)
 
 
 @router.post("/provenance")
 async def analyze_provenance(file: UploadFile = File(...)):
     """兼容旧版本的溯源接口。
 
-    当前实现会先跑完整分析，再只抽取 provenance 相关字段返回。
-    这样可以避免检测流程和溯源流程分叉成两套逻辑。
+    先跑完整分析（显式 standard 模式），再只抽取 provenance 相关字段返回；
+    图片错误按同样的类型化错误返回，不投影为 0 分或 human。
     """
-    analysis = await analyze_file(file)
+    analysis = await analyze_upload_request(file, "standard", None, None)
+    if not isinstance(analysis, dict):
+        return analysis
     return {
         "filename": analysis["filename"],
         "modality": analysis["modality"],
@@ -101,46 +104,11 @@ async def analyze_provenance(file: UploadFile = File(...)):
 async def get_report(content_id: int):
     """按数据库 ID 读取历史报告。
 
-    content_id 是 storage.models.Content 的主键。
-    这个接口会把内容信息、检测结果和溯源记录一起查出来返回。
+    保留原有 content / detection_results / provenance 字段；有版本化快照时另给出当时的
+    image_result 或 report_snapshot，历史不按当前模型重算。
     """
-    session = get_session()
     try:
-        # 先查内容主表；如果不存在，直接返回 404。
-        content = session.query(Content).filter(Content.id == content_id).first()
-        if not content:
-            raise HTTPException(status_code=404, detail="Content not found")
-
-        # 一个内容可以有多条检测记录，这里按 content_id 全部取出。
-        results = session.query(DetectionResult).filter(
-            DetectionResult.content_id == content_id
-        ).all()
-        # 一个内容也可以有多条溯源记录，这里同样全部取出。
-        provenance = session.query(ProvenanceRecord).filter(
-            ProvenanceRecord.content_id == content_id
-        ).all()
-
-        return {
-            "content": {
-                "id": content.id,
-                "filename": content.filename,
-                "modality": content.modality,
-                "fingerprint": content.fingerprint,
-            },
-            "detection_results": [
-                {"score": r.score, "label": r.label, "details": r.details}
-                for r in results
-            ],
-            "provenance": [
-                {
-                    "c2pa": p.c2pa_metadata,
-                    "watermark": p.watermark_info,
-                    "attribution": p.attribution_top_k,
-                    "confidence": p.confidence,
-                }
-                for p in provenance
-            ],
-        }
-    finally:
-        # SQLAlchemy session 用完必须关闭，避免连接泄漏。
-        session.close()
+        return history.report_detail(content_id)
+    except WorkbenchError as exc:
+        # 保留旧的 detail 字段，同时给出统一错误体。
+        return JSONResponse(status_code=exc.status, content={"error": exc.payload(None), "detail": "Content not found"})

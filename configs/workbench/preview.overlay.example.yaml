@@ -1,0 +1,166 @@
+# Isolated preview overlay. scripts/workbench_preview.py deep-merges it over config.yaml
+# into <preview_dir>/config.yaml. ${RESEARCH_ROOT}, ${MAIN_ROOT}, ${PREVIEW_DIR} are expanded.
+# No secrets here; the launcher also starts children with a clean environment (no API keys).
+database:
+  path: "${PREVIEW_DIR}/preview.db"
+
+detection:
+  demo_provider_enabled: false
+  api_providers:          # nothing is uploaded to external services from the preview
+    hive: {enabled: false}
+    sightengine: {enabled: false}
+  local_models:
+    text_yuchuan:
+      cache_dir: "${MAIN_ROOT}/models/huggingface"   # read-only, offline
+      device: "cpu"
+
+provenance:
+  fingerprint_db_path: "${PREVIEW_DIR}/fingerprint_registry.db"
+  attribution:
+    text:
+      providers:
+        window_a0_equal_fusion:
+          a0_model_dir: "${MAIN_ROOT}/outputs/attribution/family-window-split/A0-closed-seed42/model"
+          a0_tokenizer_dir: "${MAIN_ROOT}/outputs/attribution/family-window-split/A0-closed-seed42/tokenizer"
+          b0_model_path: "${MAIN_ROOT}/outputs/attribution/family-phase4/fast-track-v1/classical/closed-seed42/B0/model.joblib"
+          b1_model_path: "${MAIN_ROOT}/outputs/attribution/family-phase4/fast-track-v1/classical/closed-seed42/B1/model.joblib"
+          b3_model_path: "${MAIN_ROOT}/outputs/attribution/family-phase1/final/models/B3.joblib"
+    image:
+      enabled: false        # legacy image branches (pHash prototypes, scaffold) are never used
+
+report:
+  provider: "template"      # no LLM explanations in the preview
+
+api:
+  host: "127.0.0.1"
+  port: 8611
+
+dashboard:
+  port: 8612
+
+workbench:
+  research_root: "${RESEARCH_ROOT}"
+  device: "cpu"             # accepted device: CPU only; GPUs are hidden from the process
+  torch_threads: 8
+  max_pending: 2            # one running + one waiting; more requests get `busy`
+  queue_timeout_seconds: 120
+  limits: {max_bytes: 10485760, max_pixels: 16000000, max_side: 8192}
+  # Device acceptance written by scripts/verify_workbench_adapter.py; a model is only
+  # served when this file records a pass for exactly the registered asset hashes.
+  acceptance_evidence: {path: docs/workbench_preview/evidence/adapter_acceptance.json, sha256: e75a4fe2523fc04098e5cd670967585e3ac5f71b788a13906256c3ecd1f2f54a}
+
+  # Runtime registry (its canonical-JSON SHA-256 is reported as registry_sha256). Values are
+  # copied from docs/IMAGE_MODEL_INVENTORY_2026-10-30.json and re-verified at load.
+  registry:
+    bundle_id: image-standard-q179-v1
+    code_sha256:
+      research/image_attribution/models.py: 2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5
+      research/image_attribution/openclip_route.py: 25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584
+      research/image_attribution/dna_route.py: cbbd143b3aa64e69496c3f9d079ee6124dc74ee3b47e85ab4d5dd5209839900e
+      scripts/run_image_openclip.py: 115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3
+      scripts/run_image_dna.py: a285b9f8e5c9a2edc1559a96370b08b2b3f3b420384d46654c76ad38a5215af4
+    detection:
+      model_id: det-openclip-q179-v1
+      classes: [real, ai]
+      classes_sha256: fb8ea606be8ff22177301d34bccc0184eadaab0c2a062f9bc77a81c44d3a390f
+      preprocessing_sha256: 3f716194bfe45424db7020aa8b81425f8e0fef9e481f487865e81f763bf3210b
+      threshold: 0.5
+      threshold_id: fixed-0.5-v1
+      assets:
+        backbone: {path: outputs/image_experiments/assets/openclip-vit-l-14-openai/open_clip_model.safetensors, bytes: 1710517724, sha256: 9ce2e8a8ebfff3793d7d375ad6d3c35cb9aebf3de7ace0fc7308accab7cd207e}
+        head: {path: outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/linear/head.pth, bytes: 11974, sha256: 0432c050a2c9afcb1845e31651586032e5672f0e4096713fdd4a9f0d64ea4bbb}
+      evidence:
+        config: {path: configs/image_experiments/iab_openclip_q179_20261029.json, bytes: 5120, sha256: c70712b654ec15239534a6b66e3fdfe4c7914ba1bf7a0bd906f947bb9e43a562}
+        provenance: {path: outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/provenance.json, bytes: 4801, sha256: 1be0094babb0fb93d44aeed361045b02bac4432764c0c78cb18e31832cf848b8}
+        metrics: {path: outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/metrics.json, bytes: 11891, sha256: 3ec4ff0e0aa3912c3c4c874887c3fa7be981d22fb0e28f08f77e16adbda6ba49}
+    attribution:
+      model_id: attr-resnet50-q179-v1
+      classes: [4o, CogView3_PLUS, FLUX, KANDINSKY, PIXART, PLAYGROUND_2_5, SD1_5, SD2_1, SD3, SD3_5, SDXL,
+                dalle3, gemini, grok3, hidream, hunyuan, ideogram, infinity, janus-pro, kling, mid-5.2, mid-6.0]
+      classes_sha256: 36592d0f921fd1c2fdf7bd6d62ad8fd2d0a8653349e7bdf01f0a1e5e007788b7
+      preprocessing:
+        id: iab-resnet50-v1
+        resize_short_edge: 256
+        resize_interpolation: torchvision_Resize_default_BILINEAR
+        center_crop: [224, 224]
+        rgb: true
+        to_tensor: uint8_to_float32_div255
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+      preprocessing_sha256: e44736b22217acbcfe33ad33b7ab29e9b6d2152f3ef499274690e14b41d4e041
+      assets:
+        model: {path: outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/model.pth, bytes: 94505898, sha256: c3756dd56fbd3d151ebda8db69b683fd8c78cd773a9967af6e70a3565891562b}
+      evidence:
+        asset_manifest: {path: outputs/image_experiments/a0-resnet50-iab-v7-200-q179-e30/asset_manifest.json, bytes: 1319, sha256: 16101f1d80a7b74e4fcac0d6883d3db745e7feaf8936a0c30a275dcf1291f4c2}
+    research_methods:   # allowlist; one per request; never rewrites the standard result
+      - id: research-dna-lp22
+        kind: dna
+        loader: dna
+        task: source_classification
+        label: "DNA-Det 冻结骨干 + 22 类线性头"
+        score_kind: known_ai_source_softmax
+        label_space: known_ai_22
+        classes_sha256: 36592d0f921fd1c2fdf7bd6d62ad8fd2d0a8653349e7bdf01f0a1e5e007788b7
+        preprocessing_sha256: e0d5b6da47adaf76aaa6c08a7831ebb78ecd7b917ce2045f7a7f78eea043d317
+        assets:
+          backbone: {path: outputs/image_experiments/assets/dna-det-wild-20261029/model.pth, bytes: 23635063, sha256: 641cf077f667636c62828227cd1d4ecb78494744245186062973b0f31d962d92}
+          head: {path: outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/linear/head.pth, bytes: 51782, sha256: d1e5651ab26ca56314d5a88d0e6b27a375328275ecf1fe7b5e4c384424ed12a7}
+        evidence:
+          config: {path: configs/image_experiments/iab_dna_q179_20261029.json, bytes: 5921, sha256: 4edfe24b56cb19624d83154510e2e2afd7f100907ce83f32bd9f380c4b7eca04}
+          provenance: {path: outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/provenance.json, bytes: 5752, sha256: 18bfeb0ed85c0d03931748e730732359524409ea13114e003e26d537943d824a}
+        note: "研究来源对照：与默认 A0 是不同模型，分数不混入标准结论。"
+        limitations:
+          - "官方 in-the-wild 骨干冻结 + 项目 22 类线性探针；不是 DNA-Det 对比学习/AWL 完整重训。"
+          - "同 1331 张 AI evaluation Top1 70.02%、Top3 90.46%；单 seed 开发结果。"
+          - "预处理为非正方形中心裁剪 128 → 128 → 512、均值方差 0.5，与默认 A0 不同。"
+          - "DNA 骨干来源与权重许可尚未确认。"
+      - id: research-a0-assumed-known-ai
+        kind: a0_assumed_known_ai
+        uses_default_models: true
+        task: source_classification
+        label: "A0 来源排序（不经检测门控）"
+        score_kind: known_ai_source_softmax
+        label_space: known_ai_22
+        classes_sha256: 36592d0f921fd1c2fdf7bd6d62ad8fd2d0a8653349e7bdf01f0a1e5e007788b7
+        note: "检测低于阈值时也给出 A0 排序，仅在“假设为已知 22 类 AI”下有意义。"
+        limitations:
+          - "这是假设条件下的排序，不是来源结论；检测低于阈值时不能据此认定图片为 AI 生成。"
+          - "排序不能证明“已验证的未知来源”；22 类模型没有未知类。"
+      - id: research-openclip-calibrated-thresholds
+        kind: calibrated_thresholds
+        uses_default_models: true
+        task: detection
+        label: "D-OpenCLIP 已登记校准阈值（1% / 5%）"
+        score_kind: binary_softmax_p_ai
+        label_space: real_ai
+        note: "同一检测分数在已登记 calibration 阈值下的读数；不在上传图上拟合。"
+        limitations:
+          - "阈值只用 1014 张 calibration 真实图拟合；目标 FPR 只是开发协议内的目标。"
+          - "校准目标不是跨域保证：held-FFHQ 对照模型按非 FFHQ calibration 选 1% 阈值后，FFHQ 仍误报 7/93。"
+    offline_only_methods:   # completed offline experiments; no upload inference in this preview
+      - {id: research-convnext-detection, task: detection, label: "ConvNeXt 冻结检测头", reason: online_adapter_not_implemented}
+      - {id: research-convnext-ffhq, task: detection, label: "ConvNeXt held-FFHQ 检测头", reason: online_adapter_not_implemented}
+      - {id: research-openclip-ffhq, task: detection, label: "OpenCLIP held-FFHQ 检测头", reason: online_adapter_not_implemented}
+      - {id: research-dino-detection, task: detection, label: "DINOv2 检测头", reason: online_adapter_not_implemented}
+      - {id: research-resnet-control, task: detection, label: "ResNet-control 检测", reason: online_adapter_not_implemented}
+      - {id: research-resnet-ffhq, task: detection, label: "ResNet held-FFHQ 检测", reason: online_adapter_not_implemented}
+      - {id: research-omniaid-v2, task: detection, label: "OmniAID 冻结外部模型", reason: online_adapter_not_implemented}
+      - {id: research-convnext-source22, task: source_classification, label: "ConvNeXt 22 类线性头", reason: online_adapter_not_implemented}
+      - {id: research-omnidfa-lp22, task: source_classification, label: "OmniDFA 22 类线性头", reason: online_adapter_not_implemented}
+      - {id: research-omnidfa-k10, task: source_classification, label: "OmniDFA K10 原型", reason: online_adapter_not_implemented}
+      - {id: research-openclip-source22, task: source_classification, label: "OpenCLIP 22 类线性头", reason: online_adapter_not_implemented}
+      - {id: research-openclip-knn22, task: source_classification, label: "OpenCLIP KNN（k=1）", reason: online_adapter_not_implemented}
+      - {id: research-rgb22, task: source_classification, label: "A-RGB（DINOv2 CLS）", reason: online_adapter_not_implemented}
+      - {id: research-fingerprint22, task: source_classification, label: "A-FP（OFA 指纹）", reason: fingerprint_cpu_gpu_consistency_not_accepted}
+      - {id: research-feature-fusion22, task: source_classification, label: "A-Fusion（RGB+FP 特征融合）", reason: fingerprint_cpu_gpu_consistency_not_accepted}
+      - {id: research-score-fusion-uniform, task: source_classification, label: "分数融合 50/50（A0 + A-Fusion）", reason: requires_feature_fusion_branch}
+      - {id: research-score-fusion-calibrated, task: source_classification, label: "分数融合 75/25（A0 + A-Fusion）", reason: requires_feature_fusion_branch}
+      - {id: research-ofa-pair, task: source_verification, label: "OFA 固定参考库配对验证", reason: cpu_reproduction_exceeds_tolerance}
+      - {id: research-resnet-open20, task: unknown_rejection, label: "ResNet open20 MSP 拒识", reason: online_adapter_not_implemented}
+      - {id: research-openclip-open20, task: unknown_rejection, label: "OpenCLIP open20 MSP / 原型拒识", reason: online_adapter_not_implemented}
+      - {id: research-ofa-tplus1, task: unknown_rejection, label: "OFA20+1 未知拒识", reason: online_adapter_not_implemented}
+    not_exposed: [untrained_image_detector_scaffold, demo_or_hash_score, A3_unreviewed_family_mapping, full_OFA_pretraining_not_run]
+
+  catalog:   # sealed aggregate results only; hash-checked, never per-image predictions
+    overview: {path: docs/image_research_results/2026-10-30T0444Z-final/overview.json, sha256: 5a9878a9e2a77f1ab47d862d7734a45c373896beed9ce9d61045c01baac1de5e}
+    inventory: {path: docs/IMAGE_MODEL_INVENTORY_2026-10-30.json, sha256: 9ca8de82f29fda9f0aa3e1fc99bbf114700c73f6e18a815309a42e923eab9550}

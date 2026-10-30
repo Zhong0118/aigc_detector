@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from fastapi import FastAPI
 from storage.database import init_db
 from api.routes import router
+from api.workbench_routes import get_image_service, router as workbench_router
 
 # 创建 FastAPI 应用对象。这个对象会被 uvicorn 加载：
 # `uvicorn api.main:app --reload`
@@ -27,6 +28,7 @@ app = FastAPI(
 # 把 api/routes.py 里的所有业务接口挂到 `/api/v1` 下面。
 # 例如 routes.py 里定义 `/analyze/text`，最终访问路径就是 `/api/v1/analyze/text`。
 app.include_router(router, prefix="/api/v1")
+app.include_router(workbench_router, prefix="/api/v1")
 
 
 @app.on_event("startup")
@@ -37,6 +39,8 @@ def startup():
     如果 SQLite 数据库文件或表不存在，会自动创建。
     """
     init_db()
+    # 图片模型在后台线程常驻加载一次；未配置时保持 disabled，图片请求明确报错。
+    get_image_service().start()
 
 
 @app.get("/health")

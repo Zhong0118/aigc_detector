@@ -14,6 +14,7 @@
 - 区分 dev/test/prod 数据库
 """
 
+import os
 from pathlib import Path
 
 import yaml
@@ -31,7 +32,8 @@ def _load_db_path() -> str:
 
     如果配置文件不存在或没有 database.path，就使用默认路径。
     """
-    config_path = Path(__file__).parent.parent / "config.yaml"
+    # AIGC_CONFIG 让隔离预览使用自己的配置与数据库，默认仍是项目根目录 config.yaml。
+    config_path = Path(os.getenv("AIGC_CONFIG") or Path(__file__).parent.parent / "config.yaml")
     if config_path.exists():
         with open(config_path) as f:
             cfg = yaml.safe_load(f)
