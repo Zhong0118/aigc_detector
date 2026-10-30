@@ -124,7 +124,8 @@ def launch(commands, ports, env, logs, cwd=None, timeout=STARTUP_TIMEOUT):
 
     Identity (PID + start ticks) is read right after spawning. A child that exits or never
     listens raises StartupFailed after every child started here has been stopped; nothing
-    is returned, so nothing can be recorded as started. Logs are always kept.
+    is returned, so nothing can be recorded as started. Logs are always kept. Once all have
+    started, every child is checked again, since an earlier one may have died meanwhile.
     """
     procs, records = [], {}
     try:
@@ -147,6 +148,16 @@ def launch(commands, ports, env, logs, cwd=None, timeout=STARTUP_TIMEOUT):
                 time.sleep(0.2)
             if not alive(records[name]):
                 raise StartupFailed(f"{name} failed the identity check after startup")
+        for proc, (name, record) in zip(procs, records.items()):
+            code = proc.poll()
+            if code is not None:
+                raise StartupFailed(f"{name} exited with code {code} before startup finished; "
+                                    f"see {logs / (name + '.log')}")
+            if not alive(record):
+                raise StartupFailed(f"{name} failed the identity check before startup finished")
+            if not listening(record["port"]):
+                raise StartupFailed(f"{name} is no longer listening on 127.0.0.1:{record['port']}; "
+                                    f"see {logs / (name + '.log')}")
         return records
     except BaseException:
         for proc in reversed(procs):

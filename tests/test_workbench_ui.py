@@ -266,6 +266,35 @@ def test_experiments_page_shows_denominators_and_status(monkeypatch):
     assert "15 张" in text and "58/1212" in text and "7/93" in text  # key limitations stay above the tables
 
 
+@pytest.mark.skipif(not __import__("pathlib").Path(__file__).resolve().parents[1].joinpath(
+    "docs/image_research_results/2026-10-30T0444Z-final/overview.json").is_file(), reason="sealed overview not present")
+def test_experiments_page_separates_prototype_epochs_from_its_support_head(monkeypatch):
+    from pathlib import Path
+    from tests.test_workbench_catalog import CATALOG
+    from workbench.catalog import build_catalog
+    catalog = build_catalog(dict(research_root=str(Path(__file__).resolve().parents[1]), catalog=CATALOG))
+    api = FakeAPI(monkeypatch)
+    original = api.reply
+    monkeypatch.setattr("requests.request", lambda method, url, **kw: FakeAPI._ok(catalog) if url.endswith("/experiments")
+                        else original(method, url, **kw))
+
+    def script():
+        from workbench.ui.pages import experiments_page
+        experiments_page()
+    app = AppTest.from_function(script)
+    app.run(timeout=30)
+    assert not app.exception
+    unknown = next(df.value for df in app.dataframe if "OpenCLIP open20 原型余弦" in set(df.value.get("方法", [])))
+    rows = unknown.set_index("方法")
+    proto, msp = rows.loc["OpenCLIP open20 原型余弦"], rows.loc["OpenCLIP open20 MSP"]
+    assert proto["训练 / 选模 epoch"].startswith("不适用") and "30" not in proto["训练 / 选模 epoch"]
+    assert proto["配套分类头 epoch"] == "30 / 29" and msp["配套分类头 epoch"] == "—"
+    assert msp["训练 / 选模 epoch"] == "30 / 29"
+    assert "train 特征" in proto["说明"] and "线性分类头" in proto["说明"]
+    text = text_of(app)
+    assert "原型拒识分数本身没有训练轮次" in text and "30 / 29 属于配套 open20 线性分类头" in text
+
+
 def test_history_date_filter_sends_utc_half_open_bounds_and_resets_page(monkeypatch):
     import datetime as dt
     api = FakeAPI(monkeypatch)

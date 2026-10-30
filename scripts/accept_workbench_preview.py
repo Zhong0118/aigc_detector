@@ -244,19 +244,30 @@ def main():
     bad_status, bad = listing(created_from="2026-10-31", created_to="2026-10-30")
     junk_status, junk = listing(created_from="yesterday")
     _, legacy = listing(limit=5)
+    # UTC overflow must be a typed 422 for either end (requests URL-encodes "+")
+    overflow = [listing(**{field: value}) for field, value in (("created_from", "0001-01-01T00:00:00+14:00"),
+                                                               ("created_to", "9999-12-31T23:59:59-14:00"))]
+    _, offset_range = listing(created_from=(moment + timedelta(hours=8)).strftime("%Y-%m-%dT%H:%M:%S+08:00"),
+                              created_to=(moment + timedelta(hours=8, seconds=1)).strftime("%Y-%m-%dT%H:%M:%S+08:00"),
+                              modality="image", limit=100)
     checks["history_time_filter"] = dict(
         ok=content_id in [i["content_id"] for i in inclusive["items"]]
         and content_id not in [i["content_id"] for i in exclusive["items"]]
         and [i["content_id"] for i in combined["items"]] == [content_id] and empty["total"] == 0 and empty["items"] == []
         and sum(len(p["items"]) for p in pages) == day["total"] and all(p["total"] == day["total"] for p in pages)
         and bad_status == 422 and bad["error"]["code"] == "invalid_time_range"
-        and junk_status == 422 and junk["error"]["code"] == "invalid_time_range" and legacy["total"] >= after["total"],
-        anchor=anchor, day_total=day["total"], pages=len(pages))
+        and junk_status == 422 and junk["error"]["code"] == "invalid_time_range" and legacy["total"] >= after["total"]
+        and all(code == 422 and body["error"]["code"] == "invalid_time_range" and body["error"]["retryable"] is False
+                for code, body in overflow)
+        and [i["content_id"] for i in offset_range["items"]] == [i["content_id"] for i in inclusive["items"]],
+        anchor=anchor, day_total=day["total"], pages=len(pages), overflow_status=[code for code, _ in overflow])
 
     # -- experiments catalog with training metadata from sealed evidence
     catalog = requests.get(f"{api}/experiments", timeout=60).json()
     methods = {m["id"]: m for m in catalog.get("methods", [])}
     epoch = lambda mid, key: (methods[mid][key]["value"], methods[mid][key]["status"])  # noqa: E731
+    unknown = {r["method"]: r for g in catalog["groups"] if g["id"] == "unknown-1275" for r in g["rows"]}
+    proto, msp = unknown["OpenCLIP open20 原型余弦"], unknown["OpenCLIP open20 MSP"]
     checks["experiments"] = dict(
         ok=catalog["status"] == "ok" and catalog["schema_version"] == "experiments-v2" and len(catalog["groups"]) >= 9
         and any("7/93" in f for f in catalog["key_facts"]) and catalog["key_facts_primary"] == 4
@@ -264,7 +275,10 @@ def main():
         and epoch("attr-resnet50-q179-v1", "selected_epoch") == (29, "registered")
         and epoch("research-rgb22", "training_epochs") == (None, "not_registered")
         and epoch("research-openclip-knn22", "training_epochs") == (None, "not_applicable")
-        and all("training_epochs" in r for g in catalog["groups"] for r in g["rows"]),
+        and all("training_epochs" in r for g in catalog["groups"] for r in g["rows"])
+        and (proto["training_epochs"]["status"], proto["selected_epoch"]["status"]) == ("not_applicable",) * 2
+        and (proto["support_head"]["training_epochs"]["value"], proto["support_head"]["selected_epoch"]["value"]) == (30, 29)
+        and (msp["training_epochs"]["value"], msp["selected_epoch"]["value"]) == (30, 29) and "support_head" not in msp,
         groups=len(catalog["groups"]), methods=len(methods))
 
     # -- text flow unchanged and stored with a snapshot

@@ -227,6 +227,29 @@ def test_reports_invalid_or_reversed_time_range_is_a_clear_error(dated, params):
     assert response.status_code == 422 and error["code"] == "invalid_time_range" and error["message"]
 
 
+@pytest.mark.parametrize("params", [
+    dict(created_from="0001-01-01T00:00:00+14:00"),                                  # UTC result before year 1
+    dict(created_to="9999-12-31T23:59:59-14:00"),                                    # UTC result after year 9999
+    dict(created_from="0001-01-01T00:00:00+14:00", created_to="9999-12-31T23:59:59-14:00"),
+])
+def test_reports_time_outside_the_representable_utc_range_is_422_not_500(dated, params):
+    # Sent through params so "+" is URL-encoded instead of turning into a space.
+    test_client, _ = dated
+    response = test_client.get("/api/v1/reports", params=params)
+    error = response.json()["error"]
+    assert response.status_code == 422 and error["code"] == "invalid_time_range" and error["retryable"] is False
+    field = next(iter(params))
+    assert field in error["message"] and "UTC" in error["message"]
+    assert "Traceback" not in response.text and "/home/" not in response.text and "Overflow" not in response.text
+
+
+def test_offset_times_select_the_same_reports_as_the_equivalent_utc_range(dated):
+    _, ids = dated
+    assert ids(created_from="2026-10-30T08:00:00+08:00", created_to="2026-10-31T08:00:00+08:00") \
+        == ids(created_from="2026-10-30T00:00:00Z", created_to="2026-10-31T00:00:00Z") == ([2, 3], 2)
+    assert ids(created_from="2026-10-29T19:00:00-05:00") == ids(created_from="2026-10-30") == ([2, 3, 4, 5], 4)
+
+
 def test_history_listing_never_reinfers(dated):
     test_client, _ = dated
     import api.workbench_routes as routes

@@ -145,3 +145,59 @@ def test_stale_record_file_is_cleared_so_start_can_proceed(tmp_path):
     pids_file = tmp_path / "pids.json"
     pids_file.write_text(json.dumps(dict(api=dict(pid=2147483647, start_ticks=None, port=1))))
     assert wp.running_records(pids_file) == {} and not pids_file.exists()
+
+
+def pid_listener(port, pid_file, delay=0.0, then=""):
+    """Writes its own PID, listens on port after `delay` seconds, then runs `then` (default: stay up)."""
+    return [sys.executable, "-c", "import os, socket, sys, time; "
+            f"open({str(pid_file)!r}, 'w').write(str(os.getpid())); time.sleep({delay}); s = socket.socket(); "
+            f"s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1); s.bind(('127.0.0.1', {port})); s.listen(); "
+            f"{then or 'time.sleep(60)'}"]
+
+
+def recorded_pid(pid_file, timeout=5.0):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if pid_file.exists() and pid_file.read_text().strip():
+            return int(pid_file.read_text())
+        time.sleep(0.05)
+    raise AssertionError(f"{pid_file} was never written")
+
+
+@pytest.mark.parametrize("then, reason", [
+    ("time.sleep(0.8); sys.exit(7)", "api exited with code 7"),  # exits after passing its own check
+    ("time.sleep(0.8); s.close(); time.sleep(60)", "api is no longer listening"),  # alive but no longer ready
+])
+def test_earlier_child_that_fails_while_a_later_one_starts_fails_the_whole_start(tmp_path, then, reason):
+    # The first fix only checked each child right after it started: the API passed, then died while the UI
+    # was still starting, and launch() still returned both records (api_exit_code=7, cleanup_calls=0).
+    api_port, ui_port = free_port(), free_port()
+    api_pid, ui_pid = tmp_path / "api.pid", tmp_path / "ui.pid"
+    commands = dict(api=pid_listener(api_port, api_pid, then=then), ui=pid_listener(ui_port, ui_pid, delay=2.0))
+    with pytest.raises(wp.StartupFailed, match=reason):
+        wp.launch(commands, dict(api=api_port, ui=ui_port), dict(os.environ), tmp_path, cwd=tmp_path, timeout=10)
+    assert wait_dead(recorded_pid(ui_pid)) and wait_dead(recorded_pid(api_pid))  # the live UI was cleaned up too
+    assert not wp.listening(ui_port) and not wp.listening(api_port)
+    assert (tmp_path / "api.log").exists() and (tmp_path / "ui.log").exists()
+
+
+def test_failed_ui_start_stops_the_already_running_api(tmp_path):
+    api_port, ui_port = free_port(), free_port()
+    api_pid = tmp_path / "api.pid"
+    commands = dict(api=pid_listener(api_port, api_pid), ui=[sys.executable, "-c", "raise SystemExit(5)"])
+    with pytest.raises(wp.StartupFailed, match="ui exited with code 5"):
+        wp.launch(commands, dict(api=api_port, ui=ui_port), dict(os.environ), tmp_path, cwd=tmp_path, timeout=10)
+    assert wait_dead(recorded_pid(api_pid)) and not wp.listening(api_port)
+
+
+def test_start_writes_no_record_when_launch_fails(tmp_path, monkeypatch):
+    def failing_launch(*args, **kwargs):
+        raise wp.StartupFailed("api exited with code 7 during the final check")
+    monkeypatch.setattr(wp, "prepare", lambda args: tmp_path / "config.yaml")
+    monkeypatch.setattr(wp, "port_free", lambda port: True)
+    monkeypatch.setattr(wp, "launch", failing_launch)
+    args = SimpleNamespace(preview_dir=tmp_path, api_port=free_port(), ui_port=free_port())
+    (tmp_path / "logs").mkdir()
+    with pytest.raises(SystemExit, match="preview start failed: api exited with code 7"):
+        wp.start(args)
+    assert not (tmp_path / "pids.json").exists()

@@ -129,7 +129,12 @@ def parse_utc(value: str | None, field: str) -> datetime | None:
         raise WorkbenchError("invalid_time_range",
                              f"{field} 不是有效的 ISO 8601 时间（例如 2026-10-30 或 2026-10-30T08:00:00Z）") from None
     if parsed.tzinfo is not None:
-        parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        try:  # e.g. 0001-01-01T00:00:00+14:00 has no UTC equivalent; never clamp it to another time
+            parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        except OverflowError:
+            raise WorkbenchError("invalid_time_range",
+                                 f"{field} 换算为 UTC 后超出可表示的日期范围（0001-01-01 至 9999-12-31），"
+                                 "请使用该范围内的时间") from None
     return parsed
 
 

@@ -6,6 +6,7 @@ different denominators are grouped separately and never turned into "improvement
 """
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 from typing import Any
@@ -92,8 +93,17 @@ NOT_APPLICABLE = {
 BACKBONE_OVERRIDES = {"research-omniaid-v2": "冻结外部模型，不训练", "research-openclip-knn22": "冻结骨干，不训练头",
                       "research-omnidfa-k10": "冻结骨干，不训练头", "research-score-fusion-uniform": "不适用（只融合已有分数）",
                       "research-score-fusion-calibrated": "不适用（只融合已有分数）"}
-ROW_NOTES = {"openclip_prototype": "epoch 属于 open20 闭集线性头；原型拒识分数本身无训练轮次。",
-             "score-fusion-ResNet50": "融合输入，即 A0 本身。", "score-fusion-FeatureFusion": "融合输入，即 A-Fusion 本身。"}
+ROW_NOTES = {"score-fusion-ResNet50": "融合输入，即 A0 本身。", "score-fusion-FeatureFusion": "融合输入，即 A-Fusion 本身。"}
+# The open20 prototype row shares its run (research-openclip-open20) with the MSP row, but its rejection score is
+# the cosine to train-feature class means: no gradient training and no selected epoch. The run's registered 30/29
+# belong to the open20 linear head, which still supplies the known-class prediction behind "correct and retained".
+PROTOTYPE_NOTE = "类原型为 train 特征 L2 归一化均值，无梯度训练轮次"
+ROW_META = {"openclip_prototype": dict(
+    backbone="冻结骨干，不训练；类原型 = train 特征均值",
+    training_epochs=dict(value=None, status="not_applicable", note=PROTOTYPE_NOTE),
+    selected_epoch=dict(value=None, status="not_applicable", note=PROTOTYPE_NOTE),
+    support_head=dict(name="配套 open20 线性分类头", role="提供已知类预测（用于“正确且保留”）"))}
+METHOD_NOTES = {"research-openclip-open20": "epoch 属于 open20 线性分类头（MSP 行及原型行的已知类预测）；原型拒识分数本身无训练轮次。"}
 TRAINING_EPOCH_KEYS = ("training_epochs", "epochs", "training.epochs", "config.training.epochs",
                        "experiment.training_epochs", "config.protocol.epochs")
 SELECTED_EPOCH_KEYS = ("selected_epoch", "epoch", "best_epoch")
@@ -158,7 +168,8 @@ def method_metadata(root: Path, inventory: dict, errors: list) -> dict[str, dict
                 docs.append(json.loads(path.read_text()))
         if broken:
             errors.append(dict(source=m["id"], code="artifact_mismatch",
-                               message="方法证据文件缺失或哈希不符，相关元数据按未登记显示"))
+                               message="方法证据文件缺失或哈希不符，已不再使用该文件；仍有效的证据和已通过哈希校验的 "
+                                       "inventory 中明确登记的字段照常显示，无法证实的字段显示未登记"))
         docs.append({k: m[k] for k in ("training_epochs", "selected_epoch") if k in m})  # inventory's own fields last
         frozen = _lookup(docs, ("backbone_frozen",))
         encoder = _lookup(docs, ("encoder_training",))
@@ -175,13 +186,18 @@ def method_metadata(root: Path, inventory: dict, errors: list) -> dict[str, dict
     return out
 
 
-def _with_meta(row: dict, meta: dict, method_id: str | None, note: str | None = None) -> dict:
-    info = meta.get(method_id) if method_id else None
-    info = info or UNREGISTERED
+def _with_meta(row: dict, meta: dict, method_id: str | None, note: str | None = None,
+               override: dict | None = None) -> dict:
+    # Deep copies: rows of one run (MSP and prototype) and the method table never share mutable metadata.
+    info = copy.deepcopy((meta.get(method_id) if method_id else None) or UNREGISTERED)
     row.update(method_id=method_id, protocol=info["protocol"], train_n=row.get("train_n", info["train_n"]),
                selection_n=info["selection_n"], backbone=info["backbone"],
                training_epochs=info["training_epochs"], selected_epoch=info["selected_epoch"],
                meta_notes=info["notes"] + ([note] if note else []))
+    override = copy.deepcopy(override or {})
+    if "support_head" in override:  # the run's registered epochs move to the head they belong to
+        override["support_head"].update(training_epochs=info["training_epochs"], selected_epoch=info["selected_epoch"])
+    row.update(override)
     return row
 
 
@@ -294,7 +310,7 @@ def source_groups(o: dict, meta: dict) -> list[dict]:
         dict(id="source-full-dev", task="source_classification", kind="summary", title="A0 完整 4197 AI dev（另一分母，单列）",
              rows=[dict(method="A0 ResNet50", n=a0["n"], top1=a0["top1"], top3=a0["top3"],
                         protocol="22 类来源 · 完整 AI dev 4197（另一分母，父 dev 选模）", train_n=a0["train_n"],
-                        training_epochs=(meta.get("attr-resnet50-q179-v1") or UNREGISTERED)["training_epochs"],
+                        training_epochs=copy.deepcopy((meta.get("attr-resnet50-q179-v1") or UNREGISTERED)["training_epochs"]),
                         selected_epoch=_epoch(True, a0["selected_epoch"], None))], paired=[], notes=[]),
     ]
 
@@ -310,7 +326,7 @@ def unknown_groups(o: dict, meta: dict) -> list[dict]:
                  unknown_false_acceptance_count=v["unknown_false_acceptance_count"],
                  unknown_false_acceptance_wilson95=v["unknown_false_acceptance_wilson95"],
                  unknown_rejection_count=v["unknown_rejection_count"], unknown_auroc=v["unknown_auroc"], oscr=v.get("oscr")),
-                       meta, UNKNOWN_IDS.get(k), ROW_NOTES.get(k))
+                       meta, UNKNOWN_IDS.get(k), ROW_NOTES.get(k), ROW_META.get(k))
             for k, v in u["methods"].items()]
     pu = u["paired_uncertainty"]
     paired = [dict(comparison=k.replace("_minus_", " − "), n=1275, group_n=pu["evaluation_groups"], repeats=pu["repeats"],
@@ -331,7 +347,9 @@ def unknown_groups(o: dict, meta: dict) -> list[dict]:
 def _methods(inventory: dict, meta: dict) -> list[dict]:
     out = []
     for m in inventory.get("defaults", []) + inventory.get("research_catalog", []):
-        info = meta.get(m["id"]) or UNREGISTERED
+        info = copy.deepcopy(meta.get(m["id"]) or UNREGISTERED)
+        if m["id"] in METHOD_NOTES:
+            info["notes"].append(METHOD_NOTES[m["id"]])
         out.append(dict(id=m["id"], task=m["task"], exposure=m["exposure"], offline_validation=m["offline_validation"],
                         architecture=m.get("architecture"), evidence_sha256=[e["sha256"] for e in m.get("evidence", [])],
                         **info))

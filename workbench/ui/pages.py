@@ -341,7 +341,26 @@ def _unknown_table(rows: list[dict]) -> pd.DataFrame:
         "未知误接收": f"{r['unknown_false_acceptance_count']}/{r['unknown_n']}（{pct(r['unknown_false_acceptance'])}）",
         "误接收 Wilson 95%": _ci(r["unknown_false_acceptance_wilson95"]),
         "未知拒绝": f"{r['unknown_rejection_count']}/{r['unknown_n']}", "未知 AUROC": pct(r["unknown_auroc"]),
-        "OSCR": pct(r.get("oscr")), **_meta_columns(r)} for r in rows])
+        "OSCR": pct(r.get("oscr")), **_meta_columns(r),
+        "配套分类头 epoch": _epochs(r["support_head"]) if r.get("support_head") else "—",
+        "说明": _row_notes(r)} for r in rows])
+
+
+def _row_notes(r: dict) -> str:
+    notes = list(r.get("meta_notes") or [])
+    head = r.get("support_head")
+    if head:
+        notes.insert(0, f"{r['training_epochs'].get('note', '无训练轮次')}；{head['name']}{head['role']}")
+    return "；".join(notes) or "—"
+
+
+def _support_head_captions(rows: list[dict]) -> None:
+    """Rows whose registered epochs belong to a supporting head, not to the scorer itself, say so in plain view."""
+    for r in rows:
+        head = r.get("support_head")
+        if head:
+            st.caption(f"{r['method']}：拒识分数是与 train 特征类原型的余弦，原型拒识分数本身没有训练轮次；"
+                       f"{_epochs(head)} 属于{head['name']}（{head['role']}），不是原型的训练轮次。")
 
 
 def _summary_table(rows: list[dict]) -> pd.DataFrame:
@@ -356,6 +375,7 @@ def _group(group: dict) -> None:
     table = {"detection": _detection_table, "source": _source_table, "unknown": _unknown_table,
              "summary": _summary_table}[group["kind"]]
     st.dataframe(table(group["rows"]), hide_index=True, width="stretch")
+    _support_head_captions(group["rows"])
     if group.get("calibrated_rows"):
         st.markdown("按非 FFHQ calibration 真实图选择的阈值（只报告 FFHQ 结果，不是跨域保证）")
         st.dataframe(_detection_table(group["calibrated_rows"], calibrated=True), hide_index=True, width="stretch")
