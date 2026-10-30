@@ -1,0 +1,1 @@
+DNA-Det骨干适配与OmniDFA两项来源对照已完成。线性头真实30轮、selection选模；OmniDFA K10原型epoch=null。共同1331张AI evaluation：DNA Top1 70.0225% / Top3 90.4583%；OmniDFA线性58.0766% / 83.6965%；K10原型45.5297% / 73.7040%。完整角色/标签/词表、保存scores复算、模型/代码/缓存SHA、实际两张selection重载及单批一致性通过。它们是来源适配，不能当作FFHQ真假误报改善证据。配对group区间待现有队列完成后另归档。单seed开发结果，官方预训练重叠和许可局限保留。没有读取holdout图像推理，模型/缓存/每图预测未复制Git。

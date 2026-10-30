@@ -1,0 +1,297 @@
+{
+  "n": 1331,
+  "accuracy": 0.7002253944402704,
+  "macro_f1": 0.6978873948739042,
+  "top1": 0.7002253944402704,
+  "top3": 0.9045830202854996,
+  "stratified": {
+    "per_source": {
+      "4o": {
+        "n": 59,
+        "precision": 0.5614035087719298,
+        "recall": 0.5423728813559322,
+        "f1": 0.5517241379310345,
+        "top3": 1.0
+      },
+      "CogView3_PLUS": {
+        "n": 61,
+        "precision": 0.5263157894736842,
+        "recall": 0.32786885245901637,
+        "f1": 0.40404040404040403,
+        "top3": 0.7868852459016393
+      },
+      "FLUX": {
+        "n": 67,
+        "precision": 0.8253968253968254,
+        "recall": 0.7761194029850746,
+        "f1": 0.8,
+        "top3": 0.9104477611940298
+      },
+      "KANDINSKY": {
+        "n": 66,
+        "precision": 0.5522388059701493,
+        "recall": 0.5606060606060606,
+        "f1": 0.556390977443609,
+        "top3": 0.8181818181818182
+      },
+      "PIXART": {
+        "n": 54,
+        "precision": 0.45588235294117646,
+        "recall": 0.5740740740740741,
+        "f1": 0.5081967213114754,
+        "top3": 0.8703703703703703
+      },
+      "PLAYGROUND_2_5": {
+        "n": 65,
+        "precision": 0.7068965517241379,
+        "recall": 0.6307692307692307,
+        "f1": 0.6666666666666666,
+        "top3": 0.8307692307692308
+      },
+      "SD1_5": {
+        "n": 61,
+        "precision": 0.8507462686567164,
+        "recall": 0.9344262295081968,
+        "f1": 0.890625,
+        "top3": 0.9836065573770492
+      },
+      "SD2_1": {
+        "n": 61,
+        "precision": 0.6346153846153846,
+        "recall": 0.5409836065573771,
+        "f1": 0.584070796460177,
+        "top3": 0.8852459016393442
+      },
+      "SD3": {
+        "n": 71,
+        "precision": 0.6567164179104478,
+        "recall": 0.6197183098591549,
+        "f1": 0.6376811594202898,
+        "top3": 0.8591549295774648
+      },
+      "SD3_5": {
+        "n": 56,
+        "precision": 0.5471698113207547,
+        "recall": 0.5178571428571429,
+        "f1": 0.5321100917431193,
+        "top3": 0.8035714285714286
+      },
+      "SDXL": {
+        "n": 60,
+        "precision": 0.8070175438596491,
+        "recall": 0.7666666666666667,
+        "f1": 0.7863247863247863,
+        "top3": 0.8833333333333333
+      },
+      "dalle3": {
+        "n": 61,
+        "precision": 0.5277777777777778,
+        "recall": 0.6229508196721312,
+        "f1": 0.5714285714285714,
+        "top3": 0.9836065573770492
+      },
+      "gemini": {
+        "n": 51,
+        "precision": 0.8431372549019608,
+        "recall": 0.8431372549019608,
+        "f1": 0.8431372549019608,
+        "top3": 0.9019607843137255
+      },
+      "grok3": {
+        "n": 63,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "top3": 1.0
+      },
+      "hidream": {
+        "n": 61,
+        "precision": 0.8833333333333333,
+        "recall": 0.8688524590163934,
+        "f1": 0.8760330578512396,
+        "top3": 0.9672131147540983
+      },
+      "hunyuan": {
+        "n": 53,
+        "precision": 0.5211267605633803,
+        "recall": 0.6981132075471698,
+        "f1": 0.5967741935483871,
+        "top3": 0.8113207547169812
+      },
+      "ideogram": {
+        "n": 63,
+        "precision": 0.6567164179104478,
+        "recall": 0.6984126984126984,
+        "f1": 0.676923076923077,
+        "top3": 0.8571428571428571
+      },
+      "infinity": {
+        "n": 53,
+        "precision": 0.85,
+        "recall": 0.9622641509433962,
+        "f1": 0.9026548672566371,
+        "top3": 1.0
+      },
+      "janus-pro": {
+        "n": 58,
+        "precision": 0.8333333333333334,
+        "recall": 0.8620689655172413,
+        "f1": 0.847457627118644,
+        "top3": 0.9482758620689655
+      },
+      "kling": {
+        "n": 56,
+        "precision": 0.6666666666666666,
+        "recall": 0.5714285714285714,
+        "f1": 0.6153846153846154,
+        "top3": 0.8035714285714286
+      },
+      "mid-5.2": {
+        "n": 63,
+        "precision": 0.75,
+        "recall": 0.8095238095238095,
+        "f1": 0.7786259541984732,
+        "top3": 1.0
+      },
+      "mid-6.0": {
+        "n": 68,
+        "precision": 0.75,
+        "recall": 0.7058823529411765,
+        "f1": 0.7272727272727273,
+        "top3": 0.9852941176470589
+      }
+    },
+    "per_semantic": {
+      "COCO": {
+        "n": 120,
+        "accuracy": 0.6166666666666667,
+        "macro_f1": 0.6197347044236997,
+        "top1": 0.6166666666666667,
+        "top3": 0.8666666666666667
+      },
+      "FFHQ": {
+        "n": 132,
+        "accuracy": 0.7575757575757576,
+        "macro_f1": 0.762969457755554,
+        "top1": 0.7575757575757576,
+        "top3": 0.9621212121212122
+      },
+      "ImageNet": {
+        "n": 129,
+        "accuracy": 0.5736434108527132,
+        "macro_f1": 0.5585089885572331,
+        "top1": 0.5736434108527132,
+        "top3": 0.8527131782945736
+      },
+      "bedroom": {
+        "n": 161,
+        "accuracy": 0.6273291925465838,
+        "macro_f1": 0.6148288650059963,
+        "top1": 0.6273291925465838,
+        "top3": 0.8385093167701864
+      },
+      "cat": {
+        "n": 126,
+        "accuracy": 0.8253968253968254,
+        "macro_f1": 0.8250646264015249,
+        "top1": 0.8253968253968254,
+        "top3": 0.9126984126984127
+      },
+      "celebahq": {
+        "n": 94,
+        "accuracy": 0.7446808510638298,
+        "macro_f1": 0.7222683881774791,
+        "top1": 0.7446808510638298,
+        "top3": 0.9468085106382979
+      },
+      "church": {
+        "n": 80,
+        "accuracy": 0.5625,
+        "macro_f1": 0.5813965075328712,
+        "top1": 0.5625,
+        "top3": 0.9125
+      },
+      "classroom": {
+        "n": 183,
+        "accuracy": 0.7213114754098361,
+        "macro_f1": 0.7177081426488846,
+        "top1": 0.7213114754098361,
+        "top3": 0.912568306010929
+      },
+      "dog": {
+        "n": 165,
+        "accuracy": 0.7636363636363637,
+        "macro_f1": 0.7283108233675115,
+        "top1": 0.7636363636363637,
+        "top3": 0.9212121212121213
+      },
+      "wild": {
+        "n": 141,
+        "accuracy": 0.75177304964539,
+        "macro_f1": 0.7425427831542383,
+        "top1": 0.75177304964539,
+        "top3": 0.9361702127659575
+      }
+    }
+  },
+  "task": "attribution",
+  "score_semantics": "softmax source probabilities conditional on known AI input",
+  "best_epoch": 29,
+  "head_parameters": 11286,
+  "reload_max_error": 0.0,
+  "single_batch_max_error": 0.0,
+  "holdout_scored": false,
+  "calibration_used": false,
+  "note": "Exploratory parent-dev evaluation; parent dev informed earlier experiments",
+  "selection_macro_f1": 0.6826323312099383,
+  "actual_image_verification": {
+    "image_cache_feature_max_error": 5.960464477539063e-08,
+    "image_single_batch_feature_max_error": 0.0,
+    "image_cache_score_max_error": 1.7881393432617188e-07,
+    "image_single_batch_score_max_error": 0.0,
+    "images_opened": 2,
+    "full_offline_backbone_reload": true,
+    "selection_sample_ids": [
+      "iab-001a5c897bb7d92889f3804a",
+      "iab-004be1c1a405329c87b8041c"
+    ]
+  },
+  "head_asset_sha256": "d1e5651ab26ca56314d5a88d0e6b27a375328275ecf1fe7b5e4c384424ed12a7",
+  "training_epochs": 30,
+  "epoch": 29,
+  "classes": [
+    "4o",
+    "CogView3_PLUS",
+    "FLUX",
+    "KANDINSKY",
+    "PIXART",
+    "PLAYGROUND_2_5",
+    "SD1_5",
+    "SD2_1",
+    "SD3",
+    "SD3_5",
+    "SDXL",
+    "dalle3",
+    "gemini",
+    "grok3",
+    "hidream",
+    "hunyuan",
+    "ideogram",
+    "infinity",
+    "janus-pro",
+    "kling",
+    "mid-5.2",
+    "mid-6.0"
+  ],
+  "failed_samples": [],
+  "limitations": [
+    "Frozen DNA-Det in-the-wild backbone with a new 22-source linear head; not full DNA-Det transformation pretraining and CE/SupCon/AWL training.",
+    "The complete original 11-class checkpoint is strict-loaded before its classifier is discarded; no 11-architecture prediction is used.",
+    "GAP features receive project L2 normalization before the 30epoch head; this is a project adaptation.",
+    "Official source and checkpoint licensing is unestablished; no publisher SHA or immutable weight revision was provided. The imported bytes have a locally verified SHA.",
+    "Source labels identify publisher directories, not independently verified backend versions or GAN architectures.",
+    "Exploratory parent-dev comparison; earlier experiments informed the choice. The sealed holdout remains unread.",
+    "OpenCLIP A22 is the matched selection-protocol main reference. A0 used full parent-dev model selection including evaluation IDs and is only an exploratory route reference.",
+    "Official pretraining image/source overlap is not established; no universal unseen-generator or production-readiness claim."
+  ]
+}

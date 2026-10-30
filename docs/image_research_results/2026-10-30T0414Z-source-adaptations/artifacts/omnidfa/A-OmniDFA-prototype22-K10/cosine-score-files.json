@@ -1,0 +1,60 @@
+{
+  "calibration": {
+    "path": "calibration-cosine.npy",
+    "sha256": "cac451d8bcd256758396611b266ddf9f07b32155899e3f17c1e45e1aecd48d33",
+    "sample_ids_sha256": "e9997ef20095510eab4727f2fcf4cdd1a3d60d991d6962eaeb03b9216ce2de2a",
+    "classes": [
+      "4o",
+      "CogView3_PLUS",
+      "FLUX",
+      "KANDINSKY",
+      "PIXART",
+      "PLAYGROUND_2_5",
+      "SD1_5",
+      "SD2_1",
+      "SD3",
+      "SD3_5",
+      "SDXL",
+      "dalle3",
+      "gemini",
+      "grok3",
+      "hidream",
+      "hunyuan",
+      "ideogram",
+      "infinity",
+      "janus-pro",
+      "kling",
+      "mid-5.2",
+      "mid-6.0"
+    ]
+  },
+  "evaluation": {
+    "path": "evaluation-cosine.npy",
+    "sha256": "39b3b6857a64b38d8ae1f343b8f1c7b99f7c0f0df7ae76cd48527eec236b7c49",
+    "sample_ids_sha256": "8455584d05ac5f306b85a6669b9c254e90a1aa4fca46116f28236275d8955f45",
+    "classes": [
+      "4o",
+      "CogView3_PLUS",
+      "FLUX",
+      "KANDINSKY",
+      "PIXART",
+      "PLAYGROUND_2_5",
+      "SD1_5",
+      "SD2_1",
+      "SD3",
+      "SD3_5",
+      "SDXL",
+      "dalle3",
+      "gemini",
+      "grok3",
+      "hidream",
+      "hunyuan",
+      "ideogram",
+      "infinity",
+      "janus-pro",
+      "kling",
+      "mid-5.2",
+      "mid-6.0"
+    ]
+  }
+}

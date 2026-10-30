@@ -1,0 +1,21 @@
+{
+  "launch": {
+    "pid": 3264979,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "34318060",
+    "command_line": [
+      "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.venv-image-next/bin/python",
+      "scripts/run_image_dna.py",
+      "--config",
+      "configs/image_experiments/iab_dna_q179_20261029.json",
+      "--execute"
+    ],
+    "started_unix": 1793331756.140862
+  },
+  "updated_unix": 1793332571.4513404,
+  "status": "completed",
+  "exit_code": 0,
+  "experiments": [
+    "A-DNA-Wild-LP22"
+  ]
+}

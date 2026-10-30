@@ -1,0 +1,195 @@
+{
+  "config": {
+    "schema_version": 1,
+    "execution_enabled": true,
+    "seed": 42,
+    "dataset": "outputs/image_experiments/iab-balanced-v7-200-q179",
+    "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "selection_sha256": "1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b",
+    "output_root": "outputs/image_experiments/dna-wild-q179-20261029",
+    "training": {
+      "epochs": 30,
+      "batch_size": 32,
+      "learning_rate": 0.001,
+      "scheduler_step": 1,
+      "scheduler_gamma": 0.9,
+      "optimizer": "Adam",
+      "backbone_frozen": true,
+      "loss": "unweighted_CrossEntropyLoss"
+    },
+    "preprocessing": {
+      "rgb": true,
+      "nonsquare_center_crop": [
+        128,
+        128
+      ],
+      "resize_sizes": [
+        [
+          128,
+          128
+        ],
+        [
+          512,
+          512
+        ]
+      ],
+      "interpolation": "PIL-BICUBIC",
+      "mean": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "std": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "whole_image": true,
+      "feature_layer": "GAP before classifier",
+      "feature_normalization": "l2"
+    },
+    "asset": {
+      "path": "outputs/image_experiments/assets/dna-det-wild-20261029/model.pth",
+      "size": 23635063,
+      "sha256": "641cf077f667636c62828227cd1d4ecb78494744245186062973b0f31d962d92",
+      "source_url": "https://drive.google.com/file/d/1bvFXsNgEs43JH50L6eLAqbdzZCBKO9j6/view",
+      "file_id": "1bvFXsNgEs43JH50L6eLAqbdzZCBKO9j6",
+      "publisher_sha256_available": false,
+      "publisher_revision": null,
+      "license": null,
+      "original_classes": 11,
+      "format": "pytorch-state-dict",
+      "weights_only": true,
+      "implementation_url": "https://github.com/ICTMCG/DNA-Det/tree/d811395b92fb22d5f82f06ee98dbde77e53cea69",
+      "implementation_license": null,
+      "import_receipt": {
+        "path": "outputs/image_experiments/assets/dna-det-wild-20261029/model.pth.import.json",
+        "sha256": "361354c45d624fb4ebdc4c18746a45e7de16595e54c1e9e2b1a654c42b7dbbac",
+        "size": 425
+      }
+    },
+    "asset_cpu_receipt": {
+      "path": "outputs/image_experiments/assets/dna-det-wild-20261029/cpu-verification.json",
+      "sha256": "4396807ba1258eebc3194400881359afc8496941dfbda2cf291df92191a6a1ed",
+      "size": 1872
+    },
+    "dependencies": {
+      "torch": "2.6.0+cu124",
+      "torchvision": "0.21.0+cu124",
+      "numpy": "2.2.6",
+      "Pillow": "12.1.1",
+      "scikit-learn": "1.7.2"
+    },
+    "environment": {
+      "path": ".venv-image-next",
+      "existing_dependencies_unchanged": true
+    },
+    "implementation_sha256": {
+      "scripts/run_image_dna.py": "a285b9f8e5c9a2edc1559a96370b08b2b3f3b420384d46654c76ad38a5215af4",
+      "research/image_attribution/dna_route.py": "cbbd143b3aa64e69496c3f9d079ee6124dc74ee3b47e85ab4d5dd5209839900e",
+      "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+      "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584",
+      "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+      "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+      "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+      "research/image_attribution/iab_protocol.py": "16d6a70f408f7e6ea77bbae123b20e743b8c119bfbc3378f568b624375a7ce60",
+      "scripts/run_image_openclip.py": "115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3",
+      "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+      "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3"
+    },
+    "experiments": {
+      "A-DNA-Wild-LP22": {
+        "task": "attribution",
+        "mode": "clean",
+        "class_count": 22
+      }
+    },
+    "expected_job": {
+      "classes": [
+        "4o",
+        "CogView3_PLUS",
+        "FLUX",
+        "KANDINSKY",
+        "PIXART",
+        "PLAYGROUND_2_5",
+        "SD1_5",
+        "SD2_1",
+        "SD3",
+        "SD3_5",
+        "SDXL",
+        "dalle3",
+        "gemini",
+        "grok3",
+        "hidream",
+        "hunyuan",
+        "ideogram",
+        "infinity",
+        "janus-pro",
+        "kling",
+        "mid-5.2",
+        "mid-6.0"
+      ],
+      "role_counts": {
+        "train": 23348,
+        "selection": 1312,
+        "calibration": 1554,
+        "evaluation": 1331
+      },
+      "role_ids_sha256": {
+        "train": "24c4db7b9b0da3b216283e4d838dd7782744bcaec36dedeafe2f0718180bb12c",
+        "selection": "9156e5b71e8a0209b3de6a5f2eb5890826b0ff40cd8919c2fa358e7ba42c8c07",
+        "calibration": "e9997ef20095510eab4727f2fcf4cdd1a3d60d991d6962eaeb03b9216ce2de2a",
+        "evaluation": "8455584d05ac5f306b85a6669b9c254e90a1aa4fca46116f28236275d8955f45"
+      }
+    },
+    "limitations": [
+      "Frozen DNA-Det in-the-wild backbone with a new 22-source linear head; not full DNA-Det transformation pretraining and CE/SupCon/AWL training.",
+      "The complete original 11-class checkpoint is strict-loaded before its classifier is discarded; no 11-architecture prediction is used.",
+      "GAP features receive project L2 normalization before the 30epoch head; this is a project adaptation.",
+      "Official source and checkpoint licensing is unestablished; no publisher SHA or immutable weight revision was provided. The imported bytes have a locally verified SHA.",
+      "Source labels identify publisher directories, not independently verified backend versions or GAN architectures.",
+      "Exploratory parent-dev comparison; earlier experiments informed the choice. The sealed holdout remains unread.",
+      "OpenCLIP A22 is the matched selection-protocol main reference. A0 used full parent-dev model selection including evaluation IDs and is only an exploratory route reference.",
+      "Official pretraining image/source overlap is not established; no universal unseen-generator or production-readiness claim."
+    ]
+  },
+  "config_sha256": "8d2f4a58a1ea368f95bdc1f849c6f48dba4fc5bebeadc375bc6e68d71d0520f6",
+  "job": {
+    "classes": [
+      "4o",
+      "CogView3_PLUS",
+      "FLUX",
+      "KANDINSKY",
+      "PIXART",
+      "PLAYGROUND_2_5",
+      "SD1_5",
+      "SD2_1",
+      "SD3",
+      "SD3_5",
+      "SDXL",
+      "dalle3",
+      "gemini",
+      "grok3",
+      "hidream",
+      "hunyuan",
+      "ideogram",
+      "infinity",
+      "janus-pro",
+      "kling",
+      "mid-5.2",
+      "mid-6.0"
+    ],
+    "role_counts": {
+      "train": 23348,
+      "selection": 1312,
+      "calibration": 1554,
+      "evaluation": 1331
+    },
+    "role_ids_sha256": {
+      "train": "24c4db7b9b0da3b216283e4d838dd7782744bcaec36dedeafe2f0718180bb12c",
+      "selection": "9156e5b71e8a0209b3de6a5f2eb5890826b0ff40cd8919c2fa358e7ba42c8c07",
+      "calibration": "e9997ef20095510eab4727f2fcf4cdd1a3d60d991d6962eaeb03b9216ce2de2a",
+      "evaluation": "8455584d05ac5f306b85a6669b9c254e90a1aa4fca46116f28236275d8955f45"
+    }
+  }
+}

@@ -1,0 +1,212 @@
+{
+  "sources": {
+    "configs/image_experiments/iab_dna_q179_20261029.json": "4edfe24b56cb19624d83154510e2e2afd7f100907ce83f32bd9f380c4b7eca04",
+    "outputs/image_experiments/dna-wild-q179-20261029/status.json": "8f30238381787fccac386424a84d4361e5786b178264322b9f0d521627a4b692",
+    "outputs/image_experiments/dna-wild-q179-20261029/registration.json": "719d7c0f84033f385e5b0b79d1d6e41d3f1ff871a9ec39d0e79fd084061bbb25",
+    "outputs/image_experiments/dna-wild-q179-20261029/cache.json": "d95206685477b194c0b5b2f506eb687c90c947f7145697a0fac3ab8129d784fa",
+    "outputs/image_experiments/dna-wild-q179-20261029/features.pt": "f806e777ec15c492f9aedcd50f90f64b76fe3455c50ea1bead2b6a6b68e9af66",
+    "scripts/run_image_dna.py": "a285b9f8e5c9a2edc1559a96370b08b2b3f3b420384d46654c76ad38a5215af4",
+    "research/image_attribution/dna_route.py": "cbbd143b3aa64e69496c3f9d079ee6124dc74ee3b47e85ab4d5dd5209839900e",
+    "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+    "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584",
+    "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+    "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+    "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+    "research/image_attribution/iab_protocol.py": "16d6a70f408f7e6ea77bbae123b20e743b8c119bfbc3378f568b624375a7ce60",
+    "scripts/run_image_openclip.py": "115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3",
+    "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+    "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3",
+    "outputs/image_experiments/assets/dna-det-wild-20261029/model.pth": "641cf077f667636c62828227cd1d4ecb78494744245186062973b0f31d962d92",
+    "outputs/image_experiments/dna-wild-q179-20261029/launch.json": "d76c0a6dd722c62d6e0f0c51687419fd36247ced6f49ba5ae4a7f15f305eeac7",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/status.json": "59a6fe8aa615ad6505059483dd0da022381b1a3b7e4187d742a0fb54f171fb88",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/metrics.json": "6359643b2df475274aec00cc3a8521bd659e970b756ecf5b5a72d20c4ea52ac7",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/provenance.json": "18bfeb0ed85c0d03931748e730732359524409ea13114e003e26d537943d824a",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/roles.json": "5395a9a1ae5731716afd9509127f98fe896a857159a8348f117620d1d8431246",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/predictions.jsonl": "f67e86e7296cacf2827509f7dcaa77c0773393823dc53d04858bae4cbf36cfd8",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/linear/status.json": "5304b39ed075f1d21ceee44cb4f47bd57968450ec22d2839cc0cd8093d55643f",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/linear/history.jsonl": "c2f4aaacd8088d6a5c1764298021469df609b6b0cc77fdb59cbbe50683d6382f",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/linear/provenance.json": "91570125f303c9f41b97ee439c1eb7c525dfd4f2bc0a099f5703d6b868ce97c9",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/linear/head.pth": "d1e5651ab26ca56314d5a88d0e6b27a375328275ecf1fe7b5e4c384424ed12a7",
+    "configs/image_experiments/iab_omnidfa_q179_20261029.json": "b6c49d1dcc678360167bc582e962ac80b1a65d724e072c197817f43c41d0f2cd",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/status.json": "bf3d4be21c8b46b72490bd337413f08a0d6e1267b690024a7539b753420d3c59",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/registration.json": "09c7fc70a0cb26125cbb9fd4dd011ff295902abd37c847aa36d725cfc5beb34a",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/cache.json": "c6c2992c3d4b6b1a8119021c4bbaf7451cca9855f47f20128b1bd53c6f66e8a2",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/features.pt": "9349ca3edfd13d7a7587560b856d18de31b718c92badf8d434ad7e2e98c353ec",
+    "scripts/run_image_omnidfa.py": "5d37c60a674893fd1bb9c8df82f996bb1beecb743ceb6f3b63067d2c37daea71",
+    "research/image_attribution/omnidfa_route.py": "4ad85918179cae8c1d36ace250c5eaf985643a0f494b55f1fa09cbb6f7630e6d",
+    "outputs/image_experiments/assets/omnidfa-part1-20261029/model.pth": "91d368bbd24a20a3cbe9b1f381e334580cef7f4c1c10f7d058961371945d1e33",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/launch.json": "23934729e38b50173fa53e4ae5912a44d6ceb083bed13c5c8450662f25042065",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/status.json": "91bc476f84b514a48033f12590e0dcab6d98de41c792c9c58f286005e3da46d9",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/metrics.json": "d2157422f06b79b00a5a8c7b7b0cc335bb870644b093020cb3aef81286b1f085",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/provenance.json": "1dc789708b79af0c82fe482a811607e4673c2e748f36478421f65ea2cda4ce4f",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/roles.json": "5395a9a1ae5731716afd9509127f98fe896a857159a8348f117620d1d8431246",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/predictions.jsonl": "973cecf0f6d9fab86090f64a773914873ed00a0cdb92b9cb05ce283d8b40561f",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/linear/status.json": "28e9facb11dc1fae61b9b000c489b83ebd0aa278d932662f40d391c937b0cadf",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/linear/history.jsonl": "fcc179ffea4f588e87e2930692137d38bc008abb5333cea38006dded25ed502c",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/linear/provenance.json": "a036d2bf7b6516aadc5c9f96e58f236f20198db02175b5b5027579af92515ea7",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/linear/head.pth": "ce2dd976552af9eb1289c9041df9d4cb846e6e1dfbe3a62a985a3f7b41024db0",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/status.json": "cc69414f5e766c877935efcd70742fe1982905b6ab7f263063ed62cccc557018",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/metrics.json": "e6c8baf092614e9a7d37cd1483af825c7cc8fad38ce8e3c20103ec3c5049633e",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/provenance.json": "0fa9feb37c24a6a7bf9cf11df53dffdec3036454eaf00fddfdcac8a5c9e5cff4",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/roles.json": "5395a9a1ae5731716afd9509127f98fe896a857159a8348f117620d1d8431246",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/predictions.jsonl": "d3cf4f325299492304bf7e4d69add4237144604e110264e359f7c369b8ad6a2e",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/support.json": "849300e281b5d725409687affe627208956d6d8295174f5fd66ccb00bf36a57b",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/calibration-cosine.npy": "cac451d8bcd256758396611b266ddf9f07b32155899e3f17c1e45e1aecd48d33",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/evaluation-cosine.npy": "39b3b6857a64b38d8ae1f343b8f1c7b99f7c0f0df7ae76cd48527eec236b7c49",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/prototypes.pth": "f3a3ae13397089448d146592abac60a09e900cbe738572518dd1af57bd413701"
+  },
+  "copied": [
+    {
+      "source": "configs/image_experiments/iab_dna_q179_20261029.json",
+      "path": "artifacts/dna/config.json",
+      "sha256": "4edfe24b56cb19624d83154510e2e2afd7f100907ce83f32bd9f380c4b7eca04",
+      "bytes": 5921
+    },
+    {
+      "source": "outputs/image_experiments/dna-wild-q179-20261029/registration.json",
+      "path": "artifacts/dna/registration.json",
+      "sha256": "719d7c0f84033f385e5b0b79d1d6e41d3f1ff871a9ec39d0e79fd084061bbb25",
+      "bytes": 7238
+    },
+    {
+      "source": "outputs/image_experiments/dna-wild-q179-20261029/launch.json",
+      "path": "artifacts/dna/launch.json",
+      "sha256": "d76c0a6dd722c62d6e0f0c51687419fd36247ced6f49ba5ae4a7f15f305eeac7",
+      "bytes": 407
+    },
+    {
+      "source": "outputs/image_experiments/dna-wild-q179-20261029/status.json",
+      "path": "artifacts/dna/status.json",
+      "sha256": "8f30238381787fccac386424a84d4361e5786b178264322b9f0d521627a4b692",
+      "bytes": 574
+    },
+    {
+      "source": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/linear/history.jsonl",
+      "path": "artifacts/dna/A-DNA-Wild-LP22/linear/history.jsonl",
+      "sha256": "c2f4aaacd8088d6a5c1764298021469df609b6b0cc77fdb59cbbe50683d6382f",
+      "bytes": 34648
+    },
+    {
+      "source": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/linear/status.json",
+      "path": "artifacts/dna/A-DNA-Wild-LP22/linear/status.json",
+      "sha256": "5304b39ed075f1d21ceee44cb4f47bd57968450ec22d2839cc0cd8093d55643f",
+      "bytes": 106
+    },
+    {
+      "source": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/linear/provenance.json",
+      "path": "artifacts/dna/A-DNA-Wild-LP22/linear/provenance.json",
+      "sha256": "91570125f303c9f41b97ee439c1eb7c525dfd4f2bc0a099f5703d6b868ce97c9",
+      "bytes": 5370
+    },
+    {
+      "source": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/status.json",
+      "path": "artifacts/dna/A-DNA-Wild-LP22/status.json",
+      "sha256": "59a6fe8aa615ad6505059483dd0da022381b1a3b7e4187d742a0fb54f171fb88",
+      "bytes": 81
+    },
+    {
+      "source": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/metrics.json",
+      "path": "artifacts/dna/A-DNA-Wild-LP22/metrics.json",
+      "sha256": "6359643b2df475274aec00cc3a8521bd659e970b756ecf5b5a72d20c4ea52ac7",
+      "bytes": 8666
+    },
+    {
+      "source": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/provenance.json",
+      "path": "artifacts/dna/A-DNA-Wild-LP22/provenance.json",
+      "sha256": "18bfeb0ed85c0d03931748e730732359524409ea13114e003e26d537943d824a",
+      "bytes": 5752
+    },
+    {
+      "source": "configs/image_experiments/iab_omnidfa_q179_20261029.json",
+      "path": "artifacts/omnidfa/config.json",
+      "sha256": "b6c49d1dcc678360167bc582e962ac80b1a65d724e072c197817f43c41d0f2cd",
+      "bytes": 10266
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/registration.json",
+      "path": "artifacts/omnidfa/registration.json",
+      "sha256": "09c7fc70a0cb26125cbb9fd4dd011ff295902abd37c847aa36d725cfc5beb34a",
+      "bytes": 11711
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/launch.json",
+      "path": "artifacts/omnidfa/launch.json",
+      "sha256": "23934729e38b50173fa53e4ae5912a44d6ceb083bed13c5c8450662f25042065",
+      "bytes": 416
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/status.json",
+      "path": "artifacts/omnidfa/status.json",
+      "sha256": "bf3d4be21c8b46b72490bd337413f08a0d6e1267b690024a7539b753420d3c59",
+      "bytes": 615
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/linear/history.jsonl",
+      "path": "artifacts/omnidfa/A-OmniDFA-LP22/linear/history.jsonl",
+      "sha256": "fcc179ffea4f588e87e2930692137d38bc008abb5333cea38006dded25ed502c",
+      "bytes": 34692
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/linear/status.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-LP22/linear/status.json",
+      "sha256": "28e9facb11dc1fae61b9b000c489b83ebd0aa278d932662f40d391c937b0cadf",
+      "bytes": 107
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/linear/provenance.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-LP22/linear/provenance.json",
+      "sha256": "a036d2bf7b6516aadc5c9f96e58f236f20198db02175b5b5027579af92515ea7",
+      "bytes": 9113
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/status.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-LP22/status.json",
+      "sha256": "91bc476f84b514a48033f12590e0dcab6d98de41c792c9c58f286005e3da46d9",
+      "bytes": 80
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/metrics.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-LP22/metrics.json",
+      "sha256": "d2157422f06b79b00a5a8c7b7b0cc335bb870644b093020cb3aef81286b1f085",
+      "bytes": 18661
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/provenance.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-LP22/provenance.json",
+      "sha256": "1dc789708b79af0c82fe482a811607e4673c2e748f36478421f65ea2cda4ce4f",
+      "bytes": 9615
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/support.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-prototype22-K10/support.json",
+      "sha256": "849300e281b5d725409687affe627208956d6d8295174f5fd66ccb00bf36a57b",
+      "bytes": 75726
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/cosine-score-files.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-prototype22-K10/cosine-score-files.json",
+      "sha256": "e45b53b8489eb95b1b203ee61ff573c5fa621d917e970fc62661c9e2aca2b617",
+      "bytes": 1249
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/status.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-prototype22-K10/status.json",
+      "sha256": "cc69414f5e766c877935efcd70742fe1982905b6ab7f263063ed62cccc557018",
+      "bytes": 91
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/metrics.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-prototype22-K10/metrics.json",
+      "sha256": "e6c8baf092614e9a7d37cd1483af825c7cc8fad38ce8e3c20103ec3c5049633e",
+      "bytes": 13877
+    },
+    {
+      "source": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/provenance.json",
+      "path": "artifacts/omnidfa/A-OmniDFA-prototype22-K10/provenance.json",
+      "sha256": "0fa9feb37c24a6a7bf9cf11df53dffdec3036454eaf00fddfdcac8a5c9e5cff4",
+      "bytes": 9706
+    }
+  ],
+  "images_read": false,
+  "models_or_features_copied": false
+}
