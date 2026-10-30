@@ -292,7 +292,8 @@ def test_experiments_page_separates_prototype_epochs_from_its_support_head(monke
     assert msp["训练 / 选模 epoch"] == "30 / 29"
     assert "train 特征" in proto["说明"] and "线性分类头" in proto["说明"]
     text = text_of(app)
-    assert "原型拒识分数本身没有训练轮次" in text and "30 / 29 属于配套 open20 线性分类头" in text
+    assert "原型拒识分数本身没有训练轮次" in text and "30 / 29 属于配套 open20 线性分类头，该分类头提供已知类预测" in text
+    assert "）（" not in text and "））" not in text  # no nested brackets in the caption
 
 
 def test_history_date_filter_sends_utc_half_open_bounds_and_resets_page(monkeypatch):

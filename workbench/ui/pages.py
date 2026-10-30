@@ -360,7 +360,7 @@ def _support_head_captions(rows: list[dict]) -> None:
         head = r.get("support_head")
         if head:
             st.caption(f"{r['method']}：拒识分数是与 train 特征类原型的余弦，原型拒识分数本身没有训练轮次；"
-                       f"{_epochs(head)} 属于{head['name']}（{head['role']}），不是原型的训练轮次。")
+                       f"{_epochs(head)} 属于{head['name']}，该分类头{head['role']}，不是原型的训练轮次。")
 
 
 def _summary_table(rows: list[dict]) -> pd.DataFrame:
