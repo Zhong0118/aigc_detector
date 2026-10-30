@@ -8,6 +8,8 @@ from workbench import export
 from workbench.ui.common import esc, pct, ranked_rows, score_bar
 
 TENDENCY = {"ai": "AI 生成倾向", "real": "真实图片倾向"}
+SCORE_NOTE = {"ai": "这是 AI 类的分数，越高越像 AI 生成；不是校准概率，阈值附近也没有标定的灰区。",
+              "real": "这是 AI 类的分数，越低越不像 AI 生成；它不是“真实图片”的置信度，也不是校准概率。"}
 
 
 def card(kicker: str, body: str) -> None:
@@ -17,8 +19,7 @@ def card(kicker: str, body: str) -> None:
 def render_image_result(r: dict, key: str, snapshot: bool = False) -> None:
     d, a, rt = r["detection"], r["attribution"], r["runtime"]
     chips = ["部分成功" if r["status"] == "partial" else "完成", "研究模式" if r["mode"] == "research" else "标准模式",
-             r["bundle_id"], f"{rt['device'].upper()} · {rt['precision'].upper()}",
-             f"服务端用时 {rt['timing_ms']['total_ms'] / 1000:.2f} 秒"]
+             f"用时 {rt['timing_ms']['total_ms'] / 1000:.2f} 秒"]  # bundle, model IDs and device: technical details
     if snapshot:
         chips.insert(0, "历史快照")
     st.markdown("".join(f'<span class="wb-chip{" blue" if i == 0 else ""}">{esc(c)}</span>'
@@ -27,14 +28,14 @@ def render_image_result(r: dict, key: str, snapshot: bool = False) -> None:
         st.warning("部分成功：检测结果有效；失败的组件显示为不可用，没有填充默认值。", icon=":material/warning:")
 
     ev = d.get("threshold_evidence") or {}
-    card(f"真假检测 · {d['model_id']}", (
+    card(f"真假检测 · 固定阈值 {d['threshold']}", (
         f'<div class="wb-verdict {d["label"]}">{TENDENCY[d["label"]]}</div>'
-        f'<div class="wb-score">模型检测分数 {d["score"] * 100:.2f}%</div>{score_bar(d["score"], d["threshold"])}'
-        f'<div class="wb-muted">固定阈值 {d["threshold"]}（{esc(d["threshold_id"])}）；分数不是校准概率，接近阈值时也没有经过标定的灰区。'
-        f'开发 evaluation {ev.get("n")} 张上该阈值 FPR {pct(ev.get("fpr"))}、TPR {pct(ev.get("tpr"))}，'
-        f'不代表新上传图片的性能。</div>'))
+        f'<div class="wb-score">AI 生成分数 {d["score"] * 100:.2f}%</div>{score_bar(d["score"], d["threshold"])}'
+        f'<div class="wb-line">{SCORE_NOTE[d["label"]]}</div>'
+        f'<div class="wb-muted">开发 evaluation {ev.get("n")} 张上，同一阈值误报 {pct(ev.get("fpr"))}、检出 {pct(ev.get("tpr"))}；'
+        f'不代表新上传图片的表现，真实人脸等跨域图片误报会明显增加。</div>'))
 
-    kicker = f"来源候选 · {a['model_id']} · 已知 22 类"
+    kicker = "来源候选 · 已知 22 类"
     if a["status"] == "ok":
         card(kicker, f'<div class="wb-muted">{esc(a["conditional_statement"])}</div>{ranked_rows(a["top_k"], 3)}'
                      '<div class="wb-muted">Top3 为原 22 类 softmax 分数，未重新归一化。</div>')
@@ -72,6 +73,7 @@ def render_image_result(r: dict, key: str, snapshot: bool = False) -> None:
             "（短边 bilinear 256 → 中心裁剪 224 → ImageNet 均值方差）\n"
             f"- 模型包 `{r['bundle_id']}`，registry `{r['registry_sha256'][:16]}…`，推理代码 `{r['inference_code_commit']}`\n"
             f"- 设备 {rt['device']}，{rt['precision']}，TF32 关闭；外部调用：无\n"
+            f"- 分数类型 `{d['score_kind']}`：`[real, ai]` softmax 的 ai 列；阈值 `{d['threshold_id']}`\n"
             f"- 服务端耗时（毫秒）：解码 {t.get('decode_ms')} · 排队 {t.get('queue_ms')} · 检测 {t.get('detection_ms')} · "
             f"来源 {t.get('attribution_ms') if t.get('attribution_ms') is not None else '未运行'} · "
             f"研究 {t.get('research_ms') if t.get('research_ms') is not None else '未运行'} · 合计 {t.get('total_ms')}")

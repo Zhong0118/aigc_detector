@@ -39,7 +39,8 @@ def image_markdown(r: dict[str, Any]) -> str:
         f"- 解码策略：`{i['decode_policy']}`（模型随后各自缩放与中心裁剪）", "",
         f"## 真假检测（{d['model_id']}）", "",
         f"- 结论：**{TENDENCY[d['label']]}**",
-        f"- 模型检测分数：{_pct(d['score'])}（原始值 {d['score']:.6f}，{d['score_kind']}，不是校准概率）",
+        f"- AI 生成分数：{_pct(d['score'])}（原始值 {d['score']:.6f}，{d['score_kind']}）。这是 AI 类的分数，"
+        "不是校准概率，低分也不是“真实图片”的置信度",
         f"- 固定阈值：{d['threshold']}（`{d['threshold_id']}`）",
     ]
     ev = d.get("threshold_evidence")

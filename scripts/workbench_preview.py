@@ -5,6 +5,10 @@ Builds <preview_dir>/config.yaml (config.yaml + overlay), verifies the ports are
 starts uvicorn and Streamlit bound to 127.0.0.1 with a clean environment (no API keys,
 GPUs hidden, Hugging Face offline, private TMPDIR) and records PID + start time so
 `stop` only ever signals the processes it started. Never touches online services.
+
+A start is recorded only after every child is still running and listening on its port;
+a child that exits during startup fails the start, its siblings are stopped and the
+logs are kept. Liveness requires a valid recorded start time equal to the live one.
 """
 import argparse
 import json
@@ -59,15 +63,106 @@ def port_free(port):
     return not re.search(rf"[:.]{port}\s", listening + " ")
 
 
-def start_ticks(pid):
+STARTUP_TIMEOUT = 60.0
+
+
+class StartupFailed(RuntimeError):
+    pass
+
+
+def proc_stat(pid):
+    """(state, start_ticks) of a live PID from /proc, or None if it does not exist."""
     try:
-        return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
-    except (OSError, IndexError):
+        fields = Path(f"/proc/{int(pid)}/stat").read_text().rsplit(")", 1)[1].split()
+        return fields[0], fields[19]
+    except (OSError, IndexError, TypeError, ValueError):
         return None
 
 
+def start_ticks(pid):
+    stat = proc_stat(pid)
+    return stat[1] if stat else None
+
+
 def alive(record):
-    return record and start_ticks(record["pid"]) == record["start_ticks"]
+    """Identity-checked liveness. Both the recorded and the live start time must be valid and equal,
+    the process must not be a zombie, and it must still lead the session the launcher created."""
+    if not isinstance(record, dict):
+        return False
+    pid, ticks = record.get("pid"), record.get("start_ticks")
+    if type(pid) is not int or pid <= 0 or not isinstance(ticks, str) or not ticks.isdigit():
+        return False
+    stat = proc_stat(pid)
+    if stat is None or stat[0] in ("Z", "X") or stat[1] != ticks:
+        return False
+    try:
+        return os.getpgid(pid) == pid
+    except OSError:
+        return False
+
+
+def listening(port):
+    with socket.socket() as sock:
+        sock.settimeout(0.5)
+        return sock.connect_ex(("127.0.0.1", port)) == 0
+
+
+def terminate(proc, timeout=10.0):
+    if proc.poll() is None:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+            proc.wait(timeout)
+        except ProcessLookupError:
+            pass
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait(timeout)
+
+
+def launch(commands, ports, env, logs, cwd=None, timeout=STARTUP_TIMEOUT):
+    """Start each command in its own session and wait until it listens on its port.
+
+    Identity (PID + start ticks) is read right after spawning. A child that exits or never
+    listens raises StartupFailed after every child started here has been stopped; nothing
+    is returned, so nothing can be recorded as started. Logs are always kept.
+    """
+    procs, records = [], {}
+    try:
+        for name, command in commands.items():
+            with open(logs / f"{name}.log", "ab") as log:
+                proc = subprocess.Popen(command, cwd=cwd or ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                        stdin=subprocess.DEVNULL, start_new_session=True)
+            procs.append(proc)
+            records[name] = dict(pid=proc.pid, start_ticks=start_ticks(proc.pid), port=ports[name])
+            deadline = time.monotonic() + timeout
+            while True:
+                code = proc.poll()
+                if code is not None:
+                    raise StartupFailed(f"{name} exited with code {code} during startup; see {logs / (name + '.log')}")
+                if listening(ports[name]):
+                    break
+                if time.monotonic() > deadline:
+                    raise StartupFailed(f"{name} did not listen on 127.0.0.1:{ports[name]} within {timeout:.0f}s; "
+                                        f"see {logs / (name + '.log')}")
+                time.sleep(0.2)
+            if not alive(records[name]):
+                raise StartupFailed(f"{name} failed the identity check after startup")
+        return records
+    except BaseException:
+        for proc in reversed(procs):
+            terminate(proc)
+        raise
+
+
+def running_records(pids_file):
+    """Records of a previous start that are still alive; a fully stale record file is removed."""
+    if not pids_file.exists():
+        return {}
+    records = json.loads(pids_file.read_text())
+    live = {name: r for name, r in records.items() if alive(r)}
+    if not live:
+        pids_file.unlink()
+    return live
 
 
 def clean_env(config, api_port):
@@ -81,7 +176,7 @@ def clean_env(config, api_port):
 
 def start(args):
     pids_file = args.preview_dir / "pids.json"
-    if pids_file.exists() and any(alive(r) for r in json.loads(pids_file.read_text()).values()):
+    if running_records(pids_file):
         sys.exit("preview already running; use status/stop")
     for port in (args.api_port, args.ui_port):
         if not port_free(port):
@@ -98,13 +193,10 @@ def start(args):
                "--theme.base", "light", "--theme.primaryColor", "#1d4ed8", "--theme.backgroundColor", "#ffffff",
                "--theme.secondaryBackgroundColor", "#f4f6fa", "--theme.textColor", "#111827"],
     }
-    records = {}
-    for name, command in commands.items():
-        with open(logs / f"{name}.log", "ab") as log:
-            proc = subprocess.Popen(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
-                                    stdin=subprocess.DEVNULL, start_new_session=True)
-        time.sleep(0.5)
-        records[name] = dict(pid=proc.pid, start_ticks=start_ticks(proc.pid), port=args.api_port if name == "api" else args.ui_port)
+    try:
+        records = launch(commands, dict(api=args.api_port, ui=args.ui_port), env, logs)
+    except StartupFailed as exc:
+        sys.exit(f"preview start failed: {exc}")
     pids_file.write_text(json.dumps(records, indent=2))
     print(json.dumps(dict(config=str(config), **records), indent=2))
 
@@ -126,13 +218,28 @@ def stop(args):
     pids_file = args.preview_dir / "pids.json"
     if not pids_file.exists():
         return print("no preview recorded")
+    remaining = {}
     for name, record in json.loads(pids_file.read_text()).items():
-        if alive(record):
+        if not alive(record):
+            print(f"{name} not running (identity check failed or process gone; nothing signalled)")
+            continue
+        try:
             os.killpg(record["pid"], signal.SIGTERM)
-            print(f"stopped {name} pid={record['pid']}")
+        except ProcessLookupError:
+            print(f"{name} exited before it was signalled")
+            continue
+        deadline = time.monotonic() + 15
+        while alive(record) and time.monotonic() < deadline:
+            time.sleep(0.2)
+        if alive(record):
+            remaining[name] = record
+            print(f"{name} pid={record['pid']} still running after SIGTERM; record kept")
         else:
-            print(f"{name} not running (pid reuse guarded)")
-    pids_file.unlink()
+            print(f"stopped {name} pid={record['pid']}")
+    if remaining:
+        pids_file.write_text(json.dumps(remaining, indent=2))
+    else:
+        pids_file.unlink()
 
 
 def main():

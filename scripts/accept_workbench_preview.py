@@ -46,6 +46,7 @@ def main():
     parser.add_argument("--api", default="http://127.0.0.1:8611/api/v1")
     parser.add_argument("--main-db", required=True, help="online DB whose mtime must not change")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--expect-commit", help="inference_code_commit every new result must report (clean, no +dirty)")
     args = parser.parse_args()
     config = load_config(args.config)
     settings = workbench_settings(config)
@@ -204,6 +205,18 @@ def main():
     checks["concurrency"] = dict(ok=set(codes) <= {200, 503} and all(e["code"] == "busy" and e["retryable"] for e in busy)
                                  and 200 in codes, status_codes=codes)
 
+    # -- capacity recovers after busy bursts and failed decodes (admission happens before decoding)
+    broken = post("broken.png", b"\x89PNG\r\n\x1a\n" + b"0" * 64)
+    recovered = post("recover.png", images[ids[-1]], request_id=str(uuid.uuid4()))
+    checks["recovery"] = dict(ok=broken.status_code == 400 and broken.json()["error"]["code"] == "decode_failed"
+                              and recovered.status_code == 200, after_decode_failure=recovered.status_code)
+
+    # -- every new result names the exact running code
+    commits = {b["image_result"]["inference_code_commit"] for _, b in saved.values()}
+    commits.add(recovered.json()["image_result"]["inference_code_commit"])
+    checks["code_version"] = dict(ok=(args.expect_commit is None or commits == {args.expect_commit})
+                                  and not any(c.endswith("+dirty") for c in commits), commits=sorted(commits))
+
     # -- history snapshots
     after = requests.get(f"{api}/reports", params=dict(limit=100, modality="image"), timeout=30).json()
     content_id = saved[ids[0]][1]["content_id"]
@@ -213,10 +226,46 @@ def main():
                              and missing.status_code == 404 and missing.json()["error"]["code"] == "report_not_found",
                              image_reports=after["total"], reports_before=before)
 
-    # -- experiments catalog
+    # -- history UTC time range: [created_from, created_to), combined with other filters, same totals for paging
+    def listing(**params):
+        response = requests.get(f"{api}/reports", params=params, timeout=30)
+        return response.status_code, response.json()
+    anchor = next(i for i in after["items"] if i["content_id"] == content_id)["created_at"]  # e.g. 2026-10-30T07:00:00Z
+    stamp = anchor.replace("Z", "+00:00")
+    from datetime import datetime, timedelta
+    moment = datetime.fromisoformat(stamp)
+    later = (moment + timedelta(seconds=1)).isoformat().replace("+00:00", "Z")
+    _, inclusive = listing(created_from=anchor, created_to=later, modality="image", limit=100)
+    _, exclusive = listing(created_to=anchor, modality="image", limit=100)
+    _, combined = listing(created_from=anchor, created_to=later, modality="image", status="ok", q="selection-0", limit=100)
+    _, empty = listing(created_from="2099-01-01")
+    _, day = listing(created_from=moment.date().isoformat(), limit=5, offset=0)
+    pages = [listing(created_from=moment.date().isoformat(), limit=5, offset=o)[1] for o in range(0, day["total"], 5)]
+    bad_status, bad = listing(created_from="2026-10-31", created_to="2026-10-30")
+    junk_status, junk = listing(created_from="yesterday")
+    _, legacy = listing(limit=5)
+    checks["history_time_filter"] = dict(
+        ok=content_id in [i["content_id"] for i in inclusive["items"]]
+        and content_id not in [i["content_id"] for i in exclusive["items"]]
+        and [i["content_id"] for i in combined["items"]] == [content_id] and empty["total"] == 0 and empty["items"] == []
+        and sum(len(p["items"]) for p in pages) == day["total"] and all(p["total"] == day["total"] for p in pages)
+        and bad_status == 422 and bad["error"]["code"] == "invalid_time_range"
+        and junk_status == 422 and junk["error"]["code"] == "invalid_time_range" and legacy["total"] >= after["total"],
+        anchor=anchor, day_total=day["total"], pages=len(pages))
+
+    # -- experiments catalog with training metadata from sealed evidence
     catalog = requests.get(f"{api}/experiments", timeout=60).json()
-    checks["experiments"] = dict(ok=catalog["status"] == "ok" and len(catalog["groups"]) >= 9 and
-                                 any("7/93" in f for f in catalog["key_facts"]), groups=len(catalog["groups"]))
+    methods = {m["id"]: m for m in catalog.get("methods", [])}
+    epoch = lambda mid, key: (methods[mid][key]["value"], methods[mid][key]["status"])  # noqa: E731
+    checks["experiments"] = dict(
+        ok=catalog["status"] == "ok" and catalog["schema_version"] == "experiments-v2" and len(catalog["groups"]) >= 9
+        and any("7/93" in f for f in catalog["key_facts"]) and catalog["key_facts_primary"] == 4
+        and epoch("attr-resnet50-q179-v1", "training_epochs") == (30, "registered")
+        and epoch("attr-resnet50-q179-v1", "selected_epoch") == (29, "registered")
+        and epoch("research-rgb22", "training_epochs") == (None, "not_registered")
+        and epoch("research-openclip-knn22", "training_epochs") == (None, "not_applicable")
+        and all("training_epochs" in r for g in catalog["groups"] for r in g["rows"]),
+        groups=len(catalog["groups"]), methods=len(methods))
 
     # -- text flow unchanged and stored with a snapshot
     t = time.monotonic()
@@ -237,7 +286,7 @@ def main():
         and images[ids[0]][100:132].hex() not in dump and "/home/" not in json.dumps(catalog, ensure_ascii=False),
         main_db_mtime_unchanged=main_db.stat().st_mtime == main_mtime, upload_files_left=len(leftovers))
 
-    result = dict(schema="workbench-live-acceptance-v1", created_unix=int(time.time()), api="loopback preview",
+    result = dict(schema="workbench-live-acceptance-v2", created_unix=int(time.time()), api="loopback preview",
                   device=image["device"], holdout_opened=False, images=ids, tolerance=TOLERANCE,
                   passed=all(c["ok"] for c in checks.values()), checks=checks,
                   wall_seconds=round(time.monotonic() - started, 1))

@@ -103,8 +103,18 @@ def capabilities() -> dict[str, Any]:
 def reports(modality: str | None = Query(None, pattern="^(text|image|audio|video)$"),
             status: str | None = Query(None, pattern="^(ok|partial|legacy)$"),
             limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0),
-            q: str | None = Query(None, max_length=128)):
-    return history.list_reports(modality, status, limit, offset, q)
+            q: str | None = Query(None, max_length=128),
+            created_from: str | None = Query(None, max_length=40,
+                                             description="UTC, inclusive; ISO 8601 date or date-time"),
+            created_to: str | None = Query(None, max_length=40,
+                                           description="UTC, exclusive; ISO 8601 date or date-time")):
+    """Optional filters combine with AND. Time range is the half-open UTC interval
+    [created_from, created_to); an offset-less value is read as UTC."""
+    try:
+        start, end = history.time_range(created_from, created_to)
+    except WorkbenchError as exc:
+        return error_response(exc, None)
+    return history.list_reports(modality, status, limit, offset, q, start, end)
 
 
 @router.get("/experiments")

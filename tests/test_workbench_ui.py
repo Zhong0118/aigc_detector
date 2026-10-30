@@ -20,7 +20,7 @@ class FakeAPI:
     def __init__(self, monkeypatch, score=0.9, status=200, error=None, **model_flags):
         self.posts, self.score, self.status, self.error, self.flags = [], score, status, error, model_flags
         self.caps = ImageService(settings(), models=FakeModels(), acceptance=acceptance("research-dna-lp22")).capabilities()
-        self.reports = {}
+        self.reports, self.report_params = {}, []
         monkeypatch.setattr("requests.request", self.reply)
         from workbench.ui.common import capabilities
         capabilities.clear()
@@ -42,6 +42,7 @@ class FakeAPI:
             result["input"]["sha256"] = hashlib.sha256(data).hexdigest()
             return self._ok({"image_result": result, "modality": "image"})
         if "/reports" in url:
+            self.report_params.append(dict(kwargs.get("params") or {}))
             items = [dict(content_id=k, created_at="2026-10-30T00:00:00Z", modality=v[0], filename="a.png", status=v[2],
                           label="ai", score=0.9, bundle_id="image-standard-q179-v1") for k, v in self.reports.items()]
             return self._ok(dict(items=items, total=len(items), limit=15, offset=0))
@@ -84,7 +85,7 @@ def test_success_renders_semantics_and_reuses_result(monkeypatch):
     button(app, "开始分析").click().run(timeout=30)
     assert not app.exception
     text = text_of(app)
-    assert "AI 生成倾向" in text and "模型检测分数 90.00%" in text and CONDITIONAL_STATEMENT in text
+    assert "AI 生成倾向" in text and "AI 生成分数 90.00%" in text and "越高越像 AI 生成" in text and CONDITIONAL_STATEMENT in text
     assert "不可用 · score = null" in text and "报告已保存" in text
     assert len(api.posts) == 1 and api.posts[0]["mode"] == "standard" and "research_method_id" not in api.posts[0]
     button(app, "开始分析").click().run(timeout=30)
@@ -98,6 +99,8 @@ def test_below_threshold_skips_source(monkeypatch):
     button(app, "开始分析").click().run(timeout=30)
     text = text_of(app)
     assert "真实图片倾向" in text and "未运行：检测分数低于阈值" in text and CONDITIONAL_STATEMENT not in text
+    assert "AI 生成分数 10.00%" in text and "不是“真实图片”的置信度" in text  # low AI score is not real-confidence
+    assert "det-openclip-q179-v1" not in "\n".join(m.value for m in app.markdown if "wb-card" in m.value)
 
 
 def test_partial_keeps_detection(monkeypatch):
@@ -115,7 +118,7 @@ def test_failure_is_error_not_result(monkeypatch):
     app.run(timeout=30)
     button(app, "开始分析").click().run(timeout=30)
     assert any("模型不可用" in e.value for e in app.error)
-    assert "模型检测分数" not in text_of(app) and not button(app, "开始分析").disabled
+    assert "AI 生成分数" not in text_of(app) and not button(app, "开始分析").disabled
 
 
 def test_timeout_does_not_resubmit_and_retry_reuses_request_id(monkeypatch):
@@ -153,7 +156,7 @@ def test_changed_image_never_shows_old_result(monkeypatch):
     other = png(size=(80, 20))
     app.session_state["img_file"] = dict(name="b.png", data=other, sha256=hashlib.sha256(other).hexdigest())
     app.run(timeout=30)
-    assert "AI 生成倾向" not in text_of(app) and "已选择图片" in text_of(app)
+    assert "AI 生成倾向" not in text_of(app) and 'class="wb-verdict' not in text_of(app) and "已选择图片" in text_of(app)
 
 
 def test_clear_drops_file_and_session_results(monkeypatch):
@@ -195,7 +198,13 @@ def test_model_not_ready_disables_submit(monkeypatch):
     assert button(app, "开始分析").disabled
 
 
+HIST_TABLE = None  # set lazily: the selection key is derived from the active filters
+
+
 def test_history_restores_snapshot_and_legacy(monkeypatch):
+    global HIST_TABLE
+    from workbench.ui.pages import _filter_key
+    HIST_TABLE = "hist_table_" + _filter_key(dict(limit=15, offset=0))
     api = FakeAPI(monkeypatch)
     snap = image_result()
     api.reports = {2: ("image", dict(image_result=snap, report_snapshot={}, summary={}), "ok"),
@@ -207,11 +216,11 @@ def test_history_restores_snapshot_and_legacy(monkeypatch):
     app = AppTest.from_function(script)
     app.run(timeout=30)
     assert not app.exception and app.dataframe
-    app.session_state["hist_table_0"] = {"selection": {"rows": [0], "columns": []}}
+    app.session_state[HIST_TABLE] = {"selection": {"rows": [0], "columns": []}}
     app.run(timeout=30)
     text = text_of(app)
     assert "历史快照" in text and "不会改写或重算" in text
-    app.session_state["hist_table_0"] = {"selection": {"rows": [1], "columns": []}}
+    app.session_state[HIST_TABLE] = {"selection": {"rows": [1], "columns": []}}
     app.run(timeout=30)
     assert any("旧记录" in i.value for i in app.info)
 
@@ -248,3 +257,29 @@ def test_experiments_page_shows_denominators_and_status(monkeypatch):
     assert "58/1212" in frames and "28/1212" in frames and "0/63" in frames
     assert "未接入（已有离线结果）" in frames and "不提供入口" in frames
     assert "None" not in frames and "计数未登记" in frames  # DINOv2 has rates but no registered counts
+    assert "未登记 / 28" in frames and "30 / 29" in frames and "不适用（KNN 无训练轮次）" in frames
+    assert "train 37,338 · selection 2,311" in frames and "held-FFHQ" in frames
+    text = text_of(app)
+    assert "15 张" in text and "58/1212" in text and "7/93" in text  # key limitations stay above the tables
+
+
+def test_history_date_filter_sends_utc_half_open_bounds_and_resets_page(monkeypatch):
+    import datetime as dt
+    api = FakeAPI(monkeypatch)
+
+    def script():
+        from workbench.ui.pages import history_page
+        history_page()
+    app = AppTest.from_function(script)
+    app.run(timeout=30)
+    assert "created_from" not in api.report_params[-1] and "created_to" not in api.report_params[-1]
+    assert any("没有" not in i.value and "暂无记录" in i.value for i in app.info)
+    app.session_state["hist_page"] = 2
+    app.date_input(key="hist_from").set_value(dt.date(2026, 10, 30)).run(timeout=30)
+    assert app.session_state["hist_page"] == 0
+    assert api.report_params[-1]["created_from"] == "2026-10-30T00:00:00Z" and "created_to" not in api.report_params[-1]
+    app.date_input(key="hist_to").set_value(dt.date(2026, 10, 31)).run(timeout=30)
+    params = api.report_params[-1]
+    assert params["created_to"] == "2026-11-01T00:00:00Z" and params["offset"] == 0  # end day inclusive
+    assert any("没有符合筛选条件的记录" in i.value for i in app.info)
+    assert "UTC" in text_of(app)

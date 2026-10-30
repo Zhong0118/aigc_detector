@@ -38,7 +38,7 @@ ERROR_STATUS = {
     "unsupported_mode": 422, "unknown_method_id": 422, "invalid_request_id": 422,
     "request_id_conflict": 409,
     "model_unavailable": 503, "artifact_mismatch": 503, "busy": 503,
-    "inference_failed": 500, "report_not_found": 404,
+    "inference_failed": 500, "report_not_found": 404, "invalid_time_range": 422,
 }
 DEFAULT_LIMITS = dict(max_bytes=10 * 1024 * 1024, max_pixels=16_000_000, max_side=8192)
 MEDIA_TYPES = {"JPEG": "image/jpeg", "PNG": "image/png"}
@@ -51,7 +51,7 @@ UNKNOWN = dict(status="unavailable", score=None, reason_code="not_calibrated_for
 MODES = ("standard", "research")
 DEPENDENCIES = ("torch", "torchvision", "open_clip_torch", "Pillow", "numpy", "safetensors")
 LIMITATIONS = [
-    "检测分数是模型输出的 softmax 分数，不是校准概率；固定阈值 0.5 未针对新上传图片重新标定。",
+    "AI 生成分数是 [real, ai] 两类 softmax 中 AI 类的值，不是校准概率；低分不等于“确定为真实图片”。固定阈值 0.5 未针对新上传图片重新标定。",
     "来源候选是条件排序：只在“图片为 AI 生成且来源属于已知 22 类”的假设下成立；未知来源拒识在标准模式不可用。",
     "所有性能数字来自 IAB v7-200-q179 单 seed、已查看过的开发角色，不是独立外部测试；holdout 未推理。",
     "跨语义域会明显增加误报：held-FFHQ 93 张真实人脸中 OpenCLIP 路线固定 0.5 误报 15 张。",
@@ -535,12 +535,13 @@ class ImageService:
             self._require_ready()
             if mode == "research" and self.method_state(method_id) != "ready":
                 raise WorkbenchError("model_unavailable", "该研究方法只有离线结果，在线未接入或未通过验收")
-            start = time.monotonic()
-            rgb, info = decode_image(data, self.limits)
-            timing = dict(decode_ms=_ms(start))
+            # Capacity admission comes before decoding: a full queue must not cost a ~48 MB pixel buffer.
             if not self._gate.acquire(blocking=False):
                 raise WorkbenchError("busy", "已有图片在分析，请稍后重试", retryable=True)
             try:
+                start = time.monotonic()
+                rgb, info = decode_image(data, self.limits)
+                timing = dict(decode_ms=_ms(start))
                 waited = time.monotonic()
                 if not self._lock.acquire(timeout=float(self.settings.get("queue_timeout_seconds", 120))):
                     raise WorkbenchError("busy", "等待推理超时，请稍后重试", retryable=True)
@@ -549,6 +550,7 @@ class ImageService:
                     result = self._run(rgb, info, mode, method_id, request_id, timing, start)
                 finally:
                     self._lock.release()
+                del rgb
             finally:
                 self._gate.release()
             self._persist(result, persist)

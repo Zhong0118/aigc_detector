@@ -168,6 +168,74 @@ def test_reports_paging_filters_and_not_found(client):
     assert missing.json()["detail"] == "Content not found"
 
 
+TIMES = ["2026-10-29 23:59:59.999999", "2026-10-30 00:00:00.000000", "2026-10-30 12:00:00.000000",
+         "2026-10-31 00:00:00.000000", "2026-11-01 08:00:00.000000"]
+
+
+@pytest.fixture
+def dated(client):
+    """Five image reports with controlled UTC created_at values; report 3 is partial."""
+    test_client, routes, _, models, db = client
+    for i in range(5):
+        models.attribution_fails = i == 2
+        upload(test_client, png(size=(40 + i, 40)), name=f"img{i + 1}.png")
+    with sqlite3.connect(db) as conn:
+        for content_id, value in enumerate(TIMES, start=1):
+            conn.execute("UPDATE contents SET created_at = ? WHERE id = ?", (value, content_id))
+
+    def ids(**params):
+        body = test_client.get("/api/v1/reports", params=params).json()
+        return sorted(i["content_id"] for i in body["items"]), body["total"]
+    return test_client, ids
+
+
+@pytest.mark.parametrize("params,expected", [
+    (dict(created_from="2026-10-30", created_to="2026-10-31T00:00:00Z"), [2, 3]),   # start inclusive, end exclusive
+    (dict(created_from="2026-10-30T08:00:00+08:00"), [2, 3, 4, 5]),                 # offset converted to UTC
+    (dict(created_from="2026-10-30T00:00:00"), [2, 3, 4, 5]),                       # no offset means UTC
+    (dict(created_to="2026-10-30"), [1]),                                            # end only
+    (dict(created_from="2026-10-31"), [4, 5]),                                       # start only
+    (dict(created_from="2026-10-29T23:59:59.999999Z", created_to="2026-10-30T00:00:00.000001Z"), [1, 2]),
+    (dict(created_from="", created_to=""), [1, 2, 3, 4, 5]),                         # empty means unbounded
+    (dict(), [1, 2, 3, 4, 5]),                                                       # legacy call
+])
+def test_reports_time_range_boundaries(dated, params, expected):
+    _, ids = dated
+    assert ids(**params) == (expected, len(expected))
+
+
+def test_reports_time_range_combines_with_other_filters_and_pages(dated):
+    test_client, ids = dated
+    assert ids(created_from="2026-10-30", created_to="2026-10-31", status="partial") == ([3], 1)
+    assert ids(created_from="2026-10-30", status="partial", q="img4") == ([], 0)
+    assert ids(created_from="2026-10-30", modality="image", q="img5") == ([5], 1)
+    assert ids(created_from="2027-01-01") == ([], 0)
+    first = test_client.get("/api/v1/reports", params=dict(created_from="2026-10-30", limit=3, offset=0)).json()
+    rest = test_client.get("/api/v1/reports", params=dict(created_from="2026-10-30", limit=3, offset=3)).json()
+    assert first["total"] == rest["total"] == 4 and len(first["items"]) == 3 and len(rest["items"]) == 1
+    assert {i["content_id"] for i in first["items"] + rest["items"]} == {2, 3, 4, 5}
+    assert rest["items"][0]["created_at"] == "2026-10-30T00:00:00Z"
+
+
+@pytest.mark.parametrize("params", [dict(created_from="yesterday"), dict(created_to="2026-13-01"),
+                                    dict(created_from="2026-10-31", created_to="2026-10-30"),
+                                    dict(created_from="2026-10-30", created_to="2026-10-30T00:00:00Z")])
+def test_reports_invalid_or_reversed_time_range_is_a_clear_error(dated, params):
+    test_client, _ = dated
+    response = test_client.get("/api/v1/reports", params=params)
+    error = response.json()["error"]
+    assert response.status_code == 422 and error["code"] == "invalid_time_range" and error["message"]
+
+
+def test_history_listing_never_reinfers(dated):
+    test_client, _ = dated
+    import api.workbench_routes as routes
+    before = dict(routes._image_service.models.calls)
+    test_client.get("/api/v1/reports", params=dict(created_from="2026-10-30"))
+    test_client.get("/api/v1/report/3")
+    assert routes._image_service.models.calls == before
+
+
 def test_capabilities_are_path_free(client):
     test_client, *_ = client
     caps = test_client.get("/api/v1/capabilities").json()

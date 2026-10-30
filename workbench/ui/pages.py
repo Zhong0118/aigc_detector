@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import uuid
+from datetime import timedelta
 
 import pandas as pd
 import streamlit as st
@@ -170,9 +171,25 @@ def _research_controls(caps: dict | None, pending: bool) -> None:
                for m in offline]), hide_index=True, width="stretch")
 
 
+def _model_details(image_caps: dict) -> None:
+    """Model IDs, bundle, device and method wording live here, not in the first screen."""
+    if not image_caps:
+        return
+    det = next((m for m in image_caps.get("defaults", []) if m.get("task") == "detection"), {})
+    att = next((m for m in image_caps.get("defaults", []) if m.get("task") != "detection"), {})
+    with st.expander("模型与方法说明"):
+        st.markdown(
+            f"- 模型包 `{image_caps.get('bundle_id', '—')}`；设备 {image_caps.get('device', '—')}，FP32；不调用外部服务。\n"
+            f"- 真假检测 `{det.get('model_id', '—')}`：clean D-OpenCLIP（冻结 ViT-L/14 + 线性头），"
+            "输出 `[real, ai]` softmax 的 AI 类分数，固定阈值 0.5。\n"
+            f"- 来源候选 `{att.get('model_id', '—')}`：A0 ResNet50，22 个已知来源；只在 AI 分数 ≥ 0.5 时运行，"
+            "分数为原 22 类 softmax，不重新归一化。父 dev 参与过选模。\n"
+            "- 未知来源：标准模式不可用（score = null）；22 类分数不用于推导“未知”。\n"
+            "- 研究模式每次只附加一个方法，结果单列，不改写标准结论。")
+
+
 def image_page() -> None:
-    caps = header("图片检测", "默认：D-OpenCLIP 真假检测（固定阈值 0.5）；达到阈值时 A0 ResNet50 给出已知 22 类来源候选。"
-                              "未知来源在标准模式不可用。")
+    caps = header("图片检测", "判断图片是否更像 AI 生成；达到阈值时再给出已知 22 类来源候选。分数未经校准，不是鉴定结论。")
     image_caps = (caps or {}).get("image") or {}
     ready = image_caps.get("state") == "ready"
     policy = image_caps.get("input_policy") or {}
@@ -180,8 +197,12 @@ def image_page() -> None:
     pending = bool(S.get("img_pending"))  # the job keeps running across reruns and page switches
     left, right = st.columns([5, 7], gap="large")
     with left:
-        st.file_uploader(f"选择图片（静态 8-bit JPEG/PNG，RGB 或灰度，≤{max_bytes // (1024 * 1024)} MiB，"
-                         f"≤{policy.get('max_pixels', 16_000_000):,} 像素）", type=IMAGE_TYPES,
+        mib = max_bytes // (1024 * 1024)
+        # Per-widget cap (Streamlit MB = MiB) so the control says the same 10 MB as the server policy; the
+        # global server.maxUploadSize that the text uploader uses is left unchanged.
+        st.file_uploader(f"选择图片（JPEG/PNG，≤{mib} MiB）", type=IMAGE_TYPES, max_upload_size=mib,
+                         help=f"静态 8-bit，RGB 或灰度；≤{policy.get('max_pixels', 16_000_000):,} 像素，边长 ≤"
+                              f"{policy.get('max_side', 8192)}；不接受透明通道、多帧和 EXIF 旋转。服务器会再次校验。",
                          key=f"img_uploader_{S.get('img_nonce', 0)}", on_change=_on_image_upload, disabled=pending)
         file = S.get("img_file")
         too_big = bool(file and len(file["data"]) > max_bytes)
@@ -204,6 +225,7 @@ def image_page() -> None:
             st.info({"loading": "图片模型正在加载，完成后即可分析。"}.get(
                 image_caps.get("state"), "图片模型不可用，分析按钮已禁用；不会使用演示或占位分数。"), icon=":material/info:")
         st.caption("原图只用于本次分析，不写入数据库；历史只保存结果快照与 SHA-256。")
+        _model_details(image_caps)
     with right:
         if pending:
             _finish_pending()
@@ -220,7 +242,7 @@ def image_page() -> None:
         elif not (failure and failure["key"] == key):
             st.markdown('<div class="wb-card empty"><div class="wb-kicker">结果</div><div class="wb-muted">'
                         + ("已选择图片，点击“开始分析”。只在显式提交时推理。" if file else
-                           "上传图片后点击“开始分析”。结果包含真假倾向、模型检测分数、条件来源候选和局限说明。")
+                           "上传图片后点击“开始分析”。结果包含真假倾向、AI 生成分数、条件来源候选和局限说明。")
                         + "</div></div>", unsafe_allow_html=True)
 
 
@@ -253,6 +275,36 @@ def _count(k, n, rate) -> str:
     return f"{k}/{n}（{pct(rate)}）" if k is not None and n is not None else f"计数未登记（{pct(rate)}）"
 
 
+EPOCH_TEXT = {"not_applicable": "不适用", "not_registered": "未登记"}
+
+
+def _epoch_text(epoch: dict | None) -> str:
+    if not epoch:
+        return "未登记"
+    return str(epoch["value"]) if epoch["status"] == "registered" else EPOCH_TEXT[epoch["status"]]
+
+
+def _epochs(r: dict) -> str:
+    """Actual training epochs / selected epoch, exactly as the sealed evidence records them (never guessed)."""
+    t, s = r.get("training_epochs"), r.get("selected_epoch")
+    if t and s and t["status"] == s["status"] == "not_applicable":
+        return f"不适用（{t.get('note', '无训练轮次')}）"
+    return f"{_epoch_text(t)} / {_epoch_text(s)}"
+
+
+def _scope(r: dict) -> str:
+    parts = [r.get("protocol") or "未登记"]
+    if r.get("train_n") is not None:
+        parts.append(f"train {r['train_n']:,}")
+    if r.get("selection_n") is not None:
+        parts.append(f"selection {r['selection_n']:,}")
+    return " · ".join(parts)
+
+
+def _meta_columns(r: dict) -> dict:
+    return {"训练范围": _scope(r), "训练 / 选模 epoch": _epochs(r)} if "training_epochs" in r else {}
+
+
 def _detection_table(rows: list[dict], calibrated: bool = False) -> pd.DataFrame:
     out = []
     for r in rows:
@@ -265,6 +317,8 @@ def _detection_table(rows: list[dict], calibrated: bool = False) -> pd.DataFrame
                     "误报 / 真实": _count(r["fp"], r["real_n"], r["fpr"]),
                     "检出 / AI": _count(r["tp"], r["ai_n"], r["tpr"]),
                     "FPR Wilson 95%": _ci(r.get("fpr_wilson95"))})
+        if not calibrated:
+            row.update(_meta_columns(r))
         out.append(row)
     return pd.DataFrame(out)
 
@@ -273,9 +327,7 @@ def _source_table(rows: list[dict]) -> pd.DataFrame:
     return pd.DataFrame([{
         "方法": r["method"], **({"角色": ROLE_NAMES.get(r["role"], r["role"])} if r.get("role") else {}),
         "n": r["n"], "Top1": pct(r["top1"]) + (f"（{r['top1_correct']}/{r['n']}）" if r.get("top1_correct") is not None else ""),
-        "Top3": pct(r["top3"]), "Macro-F1": pct(r.get("macro_f1")),
-        "训练/选模 epoch": "—" if r.get("training_epochs") is None and r.get("selected_epoch") is None
-        else f"{r.get('training_epochs') or 'null'} / {r.get('selected_epoch') or 'null'}"} for r in rows])
+        "Top3": pct(r["top3"]), "Macro-F1": pct(r.get("macro_f1")), **_meta_columns(r)} for r in rows])
 
 
 def _unknown_table(rows: list[dict]) -> pd.DataFrame:
@@ -285,14 +337,14 @@ def _unknown_table(rows: list[dict]) -> pd.DataFrame:
         "未知误接收": f"{r['unknown_false_acceptance_count']}/{r['unknown_n']}（{pct(r['unknown_false_acceptance'])}）",
         "误接收 Wilson 95%": _ci(r["unknown_false_acceptance_wilson95"]),
         "未知拒绝": f"{r['unknown_rejection_count']}/{r['unknown_n']}", "未知 AUROC": pct(r["unknown_auroc"]),
-        "OSCR": pct(r.get("oscr"))} for r in rows])
+        "OSCR": pct(r.get("oscr")), **_meta_columns(r)} for r in rows])
 
 
 def _summary_table(rows: list[dict]) -> pd.DataFrame:
     names = {"method": "方法", "n": "n", "auroc": "AUROC", "fpr": "FPR@0.5", "tpr": "TPR@0.5", "top1": "Top1",
-             "top3": "Top3", "macro_auroc": "宏 AUROC", "selected_epoch": "选模 epoch", "train_n": "训练 n"}
-    return pd.DataFrame([{names[k]: (pct(v) if k in ("auroc", "fpr", "tpr", "top1", "top3", "macro_auroc") else
-                                     ("null" if v is None else v)) for k, v in r.items() if k in names} for r in rows])
+             "top3": "Top3", "macro_auroc": "宏 AUROC"}
+    return pd.DataFrame([{**{names[k]: (pct(v) if k in ("auroc", "fpr", "tpr", "top1", "top3", "macro_auroc") else v)
+                             for k, v in r.items() if k in names}, **_meta_columns(r)} for r in rows])
 
 
 def _group(group: dict) -> None:
@@ -316,20 +368,32 @@ def _group(group: dict) -> None:
         st.caption(note)
 
 
+TASK_NAMES = {"detection": "真假检测", "source_classification": "来源分类", "unknown_rejection": "未知拒识",
+              "source_verification": "来源配对验证"}
+
+
 def _method_status(catalog: dict, caps: dict | None) -> pd.DataFrame:
     image = (caps or {}).get("image") or {}
     online = {m["model_id"]: m["online_integration"] for m in image.get("defaults", [])}
     online.update({m["id"]: m["online_integration"] for m in image.get("research_methods", [])})
     names = {"ready": "可用", "loading": "加载中", "unavailable": "不可用", "unvalidated": "未通过验收",
              "artifact_mismatch": "校验失败", "disabled": "未配置"}
-    rows = [{"方法 ID": m["id"], "任务": m["task"], "暴露": "标准" if m["exposure"] == "standard" else "仅研究",
+    rows = [{"方法 ID": m["id"], "任务": TASK_NAMES.get(m["task"], m["task"]),
+             "暴露": "标准" if m["exposure"] == "standard" else "仅研究",
              "离线实验": "已完成" if m["offline_validation"] == "completed" else m["offline_validation"],
-             "在线接入": names.get(online.get(m["id"]), online.get(m["id"])) if m["id"] in online else "未接入（已有离线结果）"}
+             "在线接入": names.get(online.get(m["id"]), online.get(m["id"])) if m["id"] in online else "未接入（已有离线结果）",
+             "训练范围": _scope(m), "骨干": m.get("backbone", "未登记"), "训练 / 选模 epoch": _epochs(m),
+             "说明": "；".join(m.get("notes") or []) or "—"}
             for m in catalog["methods"]]
-    rows += [{"方法 ID": m["id"], "任务": m["task"], "暴露": "研究", "离线实验": "—",
-              "在线接入": "可用（复用已验收默认模型）" if m["run_allowed"] else names.get(m["online_integration"])}
+    derived = {"research-a0-assumed-known-ai": "复用 A0 权重，不另训练", "research-openclip-calibrated-thresholds":
+               "复用 D-OpenCLIP 权重，只换已登记阈值"}
+    rows += [{"方法 ID": m["id"], "任务": TASK_NAMES.get(m["task"], m["task"]), "暴露": "研究", "离线实验": "—",
+              "在线接入": "可用（复用已验收默认模型）" if m["run_allowed"] else names.get(m["online_integration"]),
+              "训练范围": derived.get(m["id"], "未登记"), "骨干": "—", "训练 / 选模 epoch": "不适用（不另训练）",
+              "说明": "—"}
              for m in image.get("research_methods", []) if m["id"] not in {r["方法 ID"] for r in rows}]
-    rows += [{"方法 ID": n, "任务": "—", "暴露": "不提供", "离线实验": "未核验/未运行/未训练", "在线接入": "不提供入口"}
+    rows += [{"方法 ID": n, "任务": "—", "暴露": "不提供", "离线实验": "未核验/未运行/未训练", "在线接入": "不提供入口",
+              "训练范围": "—", "骨干": "—", "训练 / 选模 epoch": "—", "说明": "—"}
              for n in catalog["not_exposed"]]
     return pd.DataFrame(rows)
 
@@ -342,15 +406,20 @@ def experiments_page() -> None:
         return
     for problem in catalog["errors"]:
         st.error(f"登记结果 {problem['source']} 不可用：{problem['message']}", icon=":material/error:")
-    sc = catalog.get("scope") or {}
-    if sc:
-        st.caption(f"IAB v7-200-q179 · 有效 {sc['effective_images']:,} 张（AI {sc['ai']:,} / 真实 {sc['real']:,}）· "
-                   f"train {sc['train']:,} / dev {sc['dev']:,} / holdout {sc['holdout']:,}（未推理）· 每格实际 "
-                   f"{sc['actual_generated_per_cell'][0]}–{sc['actual_generated_per_cell'][1]} 张 · 隔离 "
-                   f"{sc['quarantined_new_members']} 张 · seed {sc['seed']}")
+    facts, primary = catalog["key_facts"], catalog.get("key_facts_primary", len(catalog["key_facts"]))
     with st.container(border=True):
-        st.markdown("**必须同时看到的限制**")
-        st.markdown("\n".join(f"- {x}" for x in catalog["key_facts"]))
+        st.markdown("**读表前必须知道**")
+        st.markdown("\n".join(f"- {x}" for x in facts[:primary]))
+        sc = catalog.get("scope") or {}
+        with st.expander(f"其余限制（{len(facts) - primary} 条）与数据范围"):
+            st.markdown("\n".join(f"- {x}" for x in facts[primary:]))
+            if sc:
+                st.caption(f"IAB v7-200-q179 · 有效 {sc['effective_images']:,} 张（AI {sc['ai']:,} / 真实 {sc['real']:,}）· "
+                           f"train {sc['train']:,} / dev {sc['dev']:,} / holdout {sc['holdout']:,}（未推理）· 每格实际 "
+                           f"{sc['actual_generated_per_cell'][0]}–{sc['actual_generated_per_cell'][1]} 张 · 隔离 "
+                           f"{sc['quarantined_new_members']} 张 · seed {sc['seed']}")
+            st.caption("训练范围与 epoch 只取自封口证据文件（哈希校验）：“不适用”表示该方法本就没有训练轮次，"
+                       "“未登记”表示封口文件没有记录，均不按 30 轮推测。")
     groups = {g["id"]: g for g in catalog["groups"]}
     tabs = st.tabs(["真假检测", "22 来源分类", "未知拒识", "OFA 配对验证", "方法与接入状态", "局限与数据来源"])
     for tab, ids in zip(tabs[:4], (("detection-clean", "detection-ffhq", "detection-extensions", "detection-full-dev"),
@@ -377,6 +446,18 @@ def _reset_page() -> None:
     S["hist_page"] = 0
 
 
+def _filter_key(params: dict) -> str:
+    """Selection state is per filtered page, so a row index never points into a different listing."""
+    return hashlib.sha256(repr(sorted(params.items())).encode()).hexdigest()[:12]
+
+
+def _utc_midnight(day, next_day: bool = False) -> str | None:
+    """A picked date as a UTC bound; the end date is inclusive, so it becomes the next day's 00:00."""
+    if day is None:
+        return None
+    return f"{(day + timedelta(days=1)) if next_day else day:%Y-%m-%d}T00:00:00Z"
+
+
 def history_page() -> None:
     header("历史报告", "还原当时保存的结果快照（模型包、阈值、预处理与报告），不重新推理、不保存原图。")
     cols = st.columns([1.2, 1.2, 2.6, 1])
@@ -386,16 +467,25 @@ def history_page() -> None:
     status = cols[1].selectbox("状态", list(statuses), key="hist_status", on_change=_reset_page)
     query = cols[2].text_input("文件名或 SHA-256", key="hist_query", on_change=_reset_page)
     cols[3].button("刷新", icon=":material/refresh:", width="stretch")
+    dates = st.columns([1.2, 1.2, 3.6])
+    first = dates[0].date_input("开始日期（UTC）", value=None, key="hist_from", on_change=_reset_page, format="YYYY-MM-DD")
+    last = dates[1].date_input("结束日期（UTC，含当天）", value=None, key="hist_to", on_change=_reset_page,
+                               format="YYYY-MM-DD")
+    dates[2].caption("时间按 UTC 计。区间为 [开始日 00:00, 结束日次日 00:00)，即两端日期都包含；"
+                     "留空表示不限，可只填一端。所有条件同时生效。")
     page = S.setdefault("hist_page", 0)
     params = {k: v for k, v in dict(limit=PAGE_SIZE, offset=page * PAGE_SIZE, modality=kinds[kind],
-                                    status=statuses[status], q=query.strip() or None).items() if v is not None}
+                                    status=statuses[status], q=query.strip() or None,
+                                    created_from=_utc_midnight(first),
+                                    created_to=_utc_midnight(last, next_day=True)).items() if v is not None}
     listing, error = api("GET", "/reports", params=params)
     if error:
         show_error(error)
         return
     total, pages = listing["total"], max(1, -(-listing["total"] // PAGE_SIZE))
     if not listing["items"]:
-        st.info("暂无记录。", icon=":material/info:")
+        filtered = len(params) > 2
+        st.info("没有符合筛选条件的记录。" if filtered else "暂无记录。", icon=":material/info:")
         return
     tendency = {"ai": "AI 倾向", "human": "真实/未明显检出", **export.TEXT_LABELS}
     frame = pd.DataFrame([{"报告 ID": i["content_id"], "时间（UTC）": i["created_at"],
@@ -405,7 +495,7 @@ def history_page() -> None:
                            "分数": None if i["score"] is None else round(i["score"], 4),
                            "模型包": i["bundle_id"] or "—"} for i in listing["items"]])
     selection = st.dataframe(frame, hide_index=True, width="stretch", on_select="rerun",
-                             selection_mode="single-row", key=f"hist_table_{page}")
+                             selection_mode="single-row", key=f"hist_table_{_filter_key(params)}")
     nav = st.columns([1, 2, 1])
     nav[0].button("上一页", icon=":material/chevron_left:", disabled=page <= 0, width="stretch",
                   on_click=lambda: S.update(hist_page=page - 1))

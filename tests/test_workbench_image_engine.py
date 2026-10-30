@@ -255,6 +255,100 @@ def test_lock_timeout_reports_busy():
         svc._lock.release()
 
 
+def free_slots(svc):
+    return svc._gate._value  # read-only peek; probing with acquire() would race the workers under test
+
+
+def counting_decode(monkeypatch, fail=False):
+    import workbench.image_engine as engine
+    calls, original = [], engine.decode_image
+
+    def wrapper(*args, **kwargs):
+        calls.append(1)
+        if fail:
+            raise RuntimeError("decode_was_called")
+        return original(*args, **kwargs)
+    monkeypatch.setattr(engine, "decode_image", wrapper)
+    return calls
+
+
+def test_full_queue_is_rejected_before_any_decoding(monkeypatch):
+    calls = counting_decode(monkeypatch, fail=True)  # reaching decode would raise RuntimeError, not busy
+    models = FakeModels()
+    svc = service(models)
+    while svc._gate.acquire(blocking=False):
+        pass
+    with pytest.raises(WorkbenchError) as error:
+        svc.analyze(png(), request_id="00000000-0000-4000-8000-0000000000c1", persist=stored)
+    assert error.value.code == "busy" and calls == [] and models.calls["detect"] == 0 and not svc._inflight
+    svc._gate.release()
+    svc._gate.release()
+    monkeypatch.undo()
+    assert run(svc, request_id="00000000-0000-4000-8000-0000000000c1")["status"] == "ok"  # same id retries cleanly
+
+
+@pytest.mark.parametrize("failure", ["decode", "lock_timeout", "detection", "persist"])
+def test_capacity_and_state_recover_after_every_failure_path(failure):
+    models = FakeModels(detect_fails=failure == "detection")
+    svc = service(models, queue_timeout_seconds=0.05)
+    data = b"\x89PNG\r\n\x1a\n" + b"0" * 64 if failure == "decode" else png()
+    persist = (lambda r: (_ for _ in ()).throw(OSError("disk"))) if failure == "persist" else stored
+    if failure == "lock_timeout":
+        svc._lock.acquire()
+    try:
+        if failure == "persist":
+            assert svc.analyze(data, persist=persist)[0]["persistence"]["status"] == "error"
+        else:
+            with pytest.raises(WorkbenchError) as error:
+                svc.analyze(data, persist=persist)
+            assert error.value.code == dict(decode="decode_failed", lock_timeout="busy", detection="inference_failed")[failure]
+    finally:
+        if failure == "lock_timeout":
+            svc._lock.release()
+    assert free_slots(svc) == 2 and not svc._inflight
+    assert svc._lock.acquire(blocking=False)
+    svc._lock.release()
+    models.detect_fails = False
+    assert run(svc, png(size=(70, 40)))["detection"]["status"] == "ok"  # capacity is usable again
+
+
+def test_concurrent_admission_never_exceeds_max_pending(monkeypatch):
+    calls = counting_decode(monkeypatch)
+    release, entered = threading.Event(), threading.Event()
+    models = FakeModels()
+    original = models.detect
+    models.detect = lambda images: (entered.set(), release.wait(5), original(images))[2]
+    svc = service(models)
+    results = []
+    workers = [threading.Thread(target=lambda i=i: results.append(run(svc, png(size=(60 + i, 40))))) for i in range(2)]
+    for worker in workers:
+        worker.start()
+    entered.wait(5)
+    while free_slots(svc) != 0:  # second request admitted and waiting on the inference lock
+        pass
+    with pytest.raises(WorkbenchError) as error:
+        svc.analyze(png(size=(90, 40)), persist=stored)
+    assert error.value.code == "busy" and len(calls) == 2
+    release.set()
+    for worker in workers:
+        worker.join()
+    assert len(results) == 2 and models.calls["detect"] == 2 and free_slots(svc) == 2
+
+
+def test_completed_request_is_reused_even_when_the_queue_is_full():
+    models = FakeModels()
+    svc = service(models)
+    rid = "00000000-0000-4000-8000-0000000000c2"
+    first = run(svc, request_id=rid)
+    while svc._gate.acquire(blocking=False):
+        pass
+    again, dedup = svc.analyze(png(), request_id=rid, persist=stored)
+    assert dedup and again is first and models.calls["detect"] == 1
+    with pytest.raises(WorkbenchError) as error:
+        svc.analyze(png(size=(65, 48)), request_id=rid)
+    assert error.value.code == "request_id_conflict"
+
+
 # ------------------------------------------------------------------ request id, modes, methods
 def test_request_id_dedupe_and_conflict():
     models = FakeModels()
@@ -285,9 +379,12 @@ def test_in_flight_duplicate_is_busy_not_rerun():
     with pytest.raises(WorkbenchError) as error:
         svc.analyze(png(), request_id=rid)
     assert error.value.code == "busy"
+    while free_slots(svc) != 1:  # worker admitted and blocked in detection
+        pass
+    assert free_slots(svc) == 1  # the duplicate did not take a second slot
     gate.set()
     worker.join()
-    assert models.calls["detect"] == 1
+    assert models.calls["detect"] == 1 and free_slots(svc) == 2
 
 
 @pytest.mark.parametrize("kwargs,code", [

@@ -7,6 +7,7 @@ No original image bytes, client paths or server paths are stored.
 from __future__ import annotations
 
 import copy
+from datetime import datetime, timezone
 from pathlib import PurePath
 from typing import Any
 
@@ -29,8 +30,8 @@ def image_report(result: dict[str, Any]) -> dict[str, Any]:
     """Deterministic template text from the structured result (no LLM, no visual 'evidence')."""
     d, a = result["detection"], result["attribution"]
     tendency = "AI 生成倾向" if d["label"] == "ai" else "真实图片倾向"
-    summary = (f"{tendency}：模型检测分数 {d['score'] * 100:.2f}%（{d['model_id']}，固定阈值 {d['threshold']}）。"
-               "该分数不是校准概率。")
+    summary = (f"{tendency}：AI 生成分数 {d['score'] * 100:.2f}%（{d['model_id']}，固定阈值 {d['threshold']}）。"
+               "该分数是 AI 类分数，不是校准概率，也不是真实图片的置信度。")
     evidence = [f"检测：{d['model_id']} score={d['score']:.6f}，threshold_id={d['threshold_id']}"]
     if a["status"] == "ok":
         top = "、".join(f"{t['source']} {t['score'] * 100:.2f}%" for t in a["top_k"][:3])
@@ -114,15 +115,47 @@ def _summary(content: Content, result: DetectionResult | None) -> dict[str, Any]
                 input_sha256=content.file_hash if content.modality == "image" else None)
 
 
+def parse_utc(value: str | None, field: str) -> datetime | None:
+    """ISO 8601 date or date-time. Without an offset it is UTC; with one it is converted to UTC.
+    Returned naive, like Content.created_at (written with datetime.utcnow)."""
+    if value is None or not value.strip():
+        return None
+    text = value.strip()
+    if text[-1] in "Zz":
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        raise WorkbenchError("invalid_time_range",
+                             f"{field} 不是有效的 ISO 8601 时间（例如 2026-10-30 或 2026-10-30T08:00:00Z）") from None
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+    return parsed
+
+
+def time_range(created_from: str | None, created_to: str | None) -> tuple[datetime | None, datetime | None]:
+    """Half-open UTC interval [created_from, created_to); either end may be omitted."""
+    start, end = parse_utc(created_from, "created_from"), parse_utc(created_to, "created_to")
+    if start is not None and end is not None and start >= end:
+        raise WorkbenchError("invalid_time_range", "开始时间必须早于结束时间（区间为 UTC [开始, 结束)）")
+    return start, end
+
+
 def list_reports(modality: str | None, status: str | None, limit: int, offset: int,
-                 query: str | None = None) -> dict[str, Any]:
+                 query: str | None = None, created_from: datetime | None = None,
+                 created_to: datetime | None = None) -> dict[str, Any]:
     """Status lives inside the JSON snapshot, so filtering happens after the modality query
-    (single-user preview scale)."""
+    (single-user preview scale). Times are naive UTC; the interval is [created_from, created_to).
+    Items, total and paging all come from the same filtered list."""
     session = get_session()
     try:
         rows = session.query(Content)
         if modality:
             rows = rows.filter(Content.modality == modality)
+        if created_from is not None:
+            rows = rows.filter(Content.created_at >= created_from)
+        if created_to is not None:
+            rows = rows.filter(Content.created_at < created_to)
         if query:
             like = f"%{query.strip()}%"
             rows = rows.filter(Content.filename.like(like) | Content.file_hash.like(like))

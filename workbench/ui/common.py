@@ -14,7 +14,7 @@ API_BASE = os.getenv("AIGC_API_BASE", "http://127.0.0.1:8611/api/v1")
 ERROR_TITLES = {
     "empty_file": "文件为空", "decode_failed": "图片无法解码", "unsupported_image_policy": "图片不符合输入要求",
     "too_large": "文件或像素超限", "unsupported_media_type": "不支持的文件类型",
-    "unsupported_mode": "不支持的模式", "unknown_method_id": "未知研究方法", "invalid_request_id": "请求 ID 无效",
+    "unsupported_mode": "不支持的模式", "unknown_method_id": "未知研究方法", "invalid_request_id": "请求 ID 无效", "invalid_time_range": "时间范围无效",
     "request_id_conflict": "请求 ID 冲突", "model_unavailable": "模型不可用", "artifact_mismatch": "模型产物校验失败",
     "busy": "服务繁忙", "inference_failed": "推理失败", "report_not_found": "找不到报告",
     "timeout": "结果暂未收到", "backend_unreachable": "后端不可达",
@@ -58,7 +58,8 @@ div[data-testid="stButton"] button:active:not(:disabled), div[data-testid="stDow
   transform: scale(.985); }
 div[data-testid="stButton"] button:focus-visible, div[data-testid="stDownloadButton"] button:focus-visible,
 div[data-testid="stFileUploader"] button:focus-visible { outline: 2px solid var(--wb-blue); outline-offset: 2px; }
-div[data-testid="stButton"] button:disabled { cursor: not-allowed; }
+div[data-testid="stButton"] button:disabled, div[data-testid="stDownloadButton"] button:disabled {
+  cursor: not-allowed; opacity: .55; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 """
@@ -145,8 +146,7 @@ def header(title: str, subtitle: str) -> dict | None:
     image_state = {"ready": "图片模型就绪", "loading": "图片模型加载中", "not_loaded": "图片模型未加载",
                    "disabled": "图片模型未配置", "unavailable": "图片模型不可用",
                    "artifact_mismatch": "图片模型校验失败"}.get(image["state"], image["state"])
-    chips = ["隔离预览" if caps.get("preview") else "非预览配置", f"设备 {image.get('device') or '—'}",
-             image_state, "不保存原图", "无外部调用"]
+    chips = ["隔离预览" if caps.get("preview") else "非预览配置", image_state, "不保存原图"]
     st.markdown("".join(f'<span class="wb-chip{" blue" if i == 0 else ""}">{esc(c)}</span>'
                         for i, c in enumerate(chips)), unsafe_allow_html=True)
     return caps
