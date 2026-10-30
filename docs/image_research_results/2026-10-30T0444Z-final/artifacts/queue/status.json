@@ -1,0 +1,23 @@
+{
+  "launch": {
+    "pid": 3264845,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "34318054",
+    "started_unix": 1793331750.2555223
+  },
+  "status": "awaiting_git_archive",
+  "exit_code": 0,
+  "completed_stages": [
+    "dna",
+    "omnidfa",
+    "ofa-tplus1",
+    "convnext-comparison",
+    "convnext-parent-dev-reference",
+    "dna-comparison",
+    "dna-parent-dev-reference",
+    "omnidfa-comparison",
+    "omnidfa-parent-dev-reference",
+    "ofa-tplus1-comparison"
+  ],
+  "updated_unix": 1793333988.064525
+}

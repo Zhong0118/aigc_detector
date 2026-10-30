@@ -1,0 +1,13 @@
+{
+  "inputs": {
+    "configs/image_experiments/iab_dna_comparison_20261029.json": "715c5838b3c1c18d819685a9fea958f7ca475c37146867c8901e8e526ff172d5",
+    "scripts/compare_image_next_routes.py": "d22b411c01344f3f1c88615815384a97f1fb57b3934c5a1b8f96a598ec2a5fe6",
+    "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/status.json": "788b12d8f0ed5dc75b44b5b290bd580c65590e30516261d84d0da98f651f119e",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/predictions.jsonl": "5af97a22eb477569ea882bda3215d75dfae8cfcdcc68b9d36b4b2b89efb1fce6",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/status.json": "59a6fe8aa615ad6505059483dd0da022381b1a3b7e4187d742a0fb54f171fb88",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/predictions.jsonl": "f67e86e7296cacf2827509f7dcaa77c0773393823dc53d04858bae4cbf36cfd8"
+  },
+  "holdout_scored": false,
+  "images_read": false
+}

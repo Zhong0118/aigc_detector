@@ -1,0 +1,15 @@
+{
+  "inputs": {
+    "configs/image_experiments/iab_omnidfa_comparison_20261029.json": "0ae6d4a91c5fbe527f32144434664b4f1ab95dc7c2252a7d0f5b72386f435d08",
+    "scripts/compare_image_next_routes.py": "d22b411c01344f3f1c88615815384a97f1fb57b3934c5a1b8f96a598ec2a5fe6",
+    "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/status.json": "788b12d8f0ed5dc75b44b5b290bd580c65590e30516261d84d0da98f651f119e",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/predictions.jsonl": "5af97a22eb477569ea882bda3215d75dfae8cfcdcc68b9d36b4b2b89efb1fce6",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/status.json": "91bc476f84b514a48033f12590e0dcab6d98de41c792c9c58f286005e3da46d9",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/predictions.jsonl": "973cecf0f6d9fab86090f64a773914873ed00a0cdb92b9cb05ce283d8b40561f",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/status.json": "cc69414f5e766c877935efcd70742fe1982905b6ab7f263063ed62cccc557018",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/predictions.jsonl": "d3cf4f325299492304bf7e4d69add4237144604e110264e359f7c369b8ad6a2e"
+  },
+  "holdout_scored": false,
+  "images_read": false
+}

@@ -1,0 +1,13 @@
+{
+  "pid": 3406559,
+  "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+  "process_start_ticks": "34478530",
+  "command_line": [
+    "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.venv-image-next/bin/python",
+    "scripts/run_image_ofa_tplus1.py",
+    "--config",
+    "configs/image_experiments/iab_ofa_tplus1_q179_20261029.json",
+    "--execute"
+  ],
+  "started_unix": 1793333361.1974757
+}

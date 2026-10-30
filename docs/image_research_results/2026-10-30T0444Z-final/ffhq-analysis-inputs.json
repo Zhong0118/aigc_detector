@@ -1,0 +1,30 @@
+{
+  "inputs": {
+    "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate/status.json": "46be5c9d6ac517d1077f7a875b78df94e13c34c83affc314247b66a54ace1912",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate/predictions.jsonl": "a2af0222e6b3bed87f0acbc10583d5579704204bcc6ad7d43605672e9372293b",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate/metrics.json": "c842d205f1f6ec7aef54bb1af35e70fa5c7925c9d2e40c0ce4fddd6dbf1e9220",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/status.json": "55940892c7a0116184172c838a106bf1d6659348e26d7d30f975f18248a51f9d",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/predictions.jsonl": "0c926694d4521acaebcf2e604743f6043c8094e906d5d62cdb24f96f96b518ca",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/calibration/predictions.jsonl": "5434e29f2012a64969da752faff5e0cc9af45d385463399809502e339628d656",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/linear/predictions.jsonl": "41acb075b2138e1b528941bccf3fed8d0c5f43910e88e6837fc97ca9cb5df454",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/metrics.json": "910cb66251ac74ef5af7ff77e415093eca47cf77441f97cd5067cfd8c799302c",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/status.json": "53e644cf8c82b724875a8db6f5c394a3e0360466f4163036f3eee4f5920be97f",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/predictions.jsonl": "e58b47fd00a35eb2eced523eb97842d04df56c18b5cbbc632bba8bd18b766a54",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/calibration/predictions.jsonl": "78b8584ae329049bb35cd74c09fbcccce7213152c5f3e216740cc339dc344474",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/predictions.jsonl": "1b366e4c33b262b46dde0bd9e7f9016d07136355d00f674f2dee0f6199c796cb",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/metrics.json": "1451c552b2a9519111f602da6a66dc1b6cf7d163bf1cdc7695facb0b05d4636b",
+    "docs/image_research_results/2026-10-30T0444Z-final/ffhq_score_audit.py": "244193d9199a7b278090bae3cfc18c714b680e40637ad22417f3a848a348e316"
+  },
+  "role_ids_sha256": {
+    "calibration": "b3bee63f6f9fae4efff6ba50476e8a6b4282cf1eb38282b4b6bcd824a7c308a2",
+    "evaluation": "1895d806b47535af3da598a164f9bf60c23bf2b79dcb60dff39f87e436464b4f"
+  },
+  "threshold_targets": [
+    0.01,
+    0.05
+  ],
+  "bootstrap_repeats": 1000,
+  "images_read": false,
+  "holdout_scored": false
+}

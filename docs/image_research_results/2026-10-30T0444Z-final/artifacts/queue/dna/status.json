@@ -1,0 +1,11 @@
+{
+  "stage": "dna",
+  "child": {
+    "pid": 3264979,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "34318060"
+  },
+  "updated_unix": 1793332572.1279263,
+  "status": "completed",
+  "exit_code": 0
+}

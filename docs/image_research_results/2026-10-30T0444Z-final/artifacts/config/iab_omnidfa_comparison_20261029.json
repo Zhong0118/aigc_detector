@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "automatic_execution": false,
+  "manifest": "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "pairs": [
+    {
+      "id": "A-OmniDFA-LP22-vs-openclip",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "A-OmniDFA-prototype22-K10-vs-openclip",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    }
+  ],
+  "note": "All1331 matched evaluation IDs, no intersection dropping or evaluation tuning. OpenCLIP A22 is the primary matched-selection frozen-head reference. Prototype cosine softmax is uncalibrated and only supports closed-class rank metrics. Pretraining and preprocessing differ; no causal backbone-only claim."
+}

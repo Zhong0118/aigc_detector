@@ -1,0 +1,7 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "summary_sha256": "3e9695d41578f5f5237928ad54d28cca35db172f8785600ae77c3ce3b81fd04a",
+  "provenance_sha256": "2309bbf6454ab3fd43badfa7b343131353badc481d5d94190738dd74d3c08737",
+  "holdout_scored": false
+}

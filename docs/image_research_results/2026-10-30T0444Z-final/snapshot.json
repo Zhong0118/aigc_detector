@@ -1,0 +1,559 @@
+{
+  "sources": {
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/registration.json": "03d3ad703b880f79941d770f76133893073e5cb2e06765e2e40eb763e4af76c9",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/status.json": "3cd489d4e266cf2ec516ac37bb033dfd93c7874726de73e9ef8ccfccf499fd0d",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna/status.json": "e6b7082f240130e2c4347e53981167983ee83abb391894227a5efc8844fa8292",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna/exit.json": "b033d72d85f978627099f4e014a895287761ad570de173fb77a1cce281c89fda",
+    "outputs/image_experiments/dna-wild-q179-20261029/status.json": "8f30238381787fccac386424a84d4361e5786b178264322b9f0d521627a4b692",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna/launch.json": "d6d85ca03562f962f2a1ae3435eaf4af9601b857d833fcfceb4c3cfe6466294a",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa/status.json": "67bf5dd86f350d87a11a1318049538c4fb35b789be42cbbb44cfc381f3992bfe",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa/exit.json": "17d549ede085eba99f27295b2bb7ea0c5b3720d8393a1eac16d3a96bb6a22f86",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/status.json": "bf3d4be21c8b46b72490bd337413f08a0d6e1267b690024a7539b753420d3c59",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa/launch.json": "abd5193853d1e880885eab4f83c8b7e503d592780e0f2c5362d3c074e8d1ca1f",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1/status.json": "85e4a3e24d5bfa2c48606c3393b5f71aa535f2ee421eebfe46a4328378c54877",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1/exit.json": "b525d620956e57cc0639a81fa9a655dea4f263886e9eefd791bc1130b1051b7f",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/status.json": "e24fb6a4255201f3db76a380142951ba79245a794c926fa2eed438b1138c47a8",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1/launch.json": "9a054ced75a1877ed943acf1bd4869e790a0b2575dc19746829cc3bd08a4ebf2",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-comparison/status.json": "5dad16db2c3386755d87f043935ebf32e380a4828a33aae3ae2294e8a97cbd44",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-comparison/exit.json": "a27b9338f0a56c1f8c76405b6d8f39f176a8a0135a7fe67e6562ecafd727bd7e",
+    "outputs/image-remaining-routes-20261029/convnext-comparison/completion.json": "77eccecbb20f0103ec8124d4e6967a40946f802156805bb99c4f6a0181337727",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-comparison/launch.json": "b7f1d3ebe59183332b90a72c68e6423c6bb5c47b5f8951def720d555948acfb6",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-parent-dev-reference/status.json": "882729477ca18aace3e3a3d6c63e09b459c4f88bb81bf11d6d73cfb2d464e4b4",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-parent-dev-reference/exit.json": "d3d48906ab2e5593c59239c2097f3b9991493f4b3fa0a75bf57ce0018ee066d8",
+    "outputs/image-remaining-routes-20261029/convnext-parent-dev-reference/completion.json": "c7480669350a0293b35941d9bedf3d3226e5872d5e06ae58c82283d5c90625dc",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-parent-dev-reference/launch.json": "7398ff6e268b1178e06f28da2582bef2998bdf8542ac49b16d994cd0b4942753",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-comparison/status.json": "55868417a4c67ba3299aeaa8da8e8efc0bb51c6380772855fd6fae70e3014735",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-comparison/exit.json": "3fbedd1e258224d818701c5edc89658ddcf747b6ccbda39130173b981425def2",
+    "outputs/image-remaining-routes-20261029/dna-comparison/completion.json": "7c6bb15c4c910d1040e713c51d6afa4f7813e7fa00e0c0ddf8419f9a94bc89e3",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-comparison/launch.json": "c91e443b17a4f572157e202091939bd8ecb0864132e9b47329e06b5b78ebc31c",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-parent-dev-reference/status.json": "32ea7c60475adad781f7d745097039fdbfe95b83a002a508b327032fe017e470",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-parent-dev-reference/exit.json": "f31f6235b31169b93f080c2cea3a5da74ed9a65f8acbdb40091612fef2234dbc",
+    "outputs/image-remaining-routes-20261029/dna-parent-dev-reference/completion.json": "673269a275bba52e9c87de637fd81955768cea4ca4513bbabe1ef910d1f02eb7",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-parent-dev-reference/launch.json": "538ebc78586706bb3cef674b084a1b48fee64f36aa8fff53461d07c5ae56c73f",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-comparison/status.json": "52fc28ccde4b3d0a6f3fb576a37f50c16f8773813b764d94db40750836d78df4",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-comparison/exit.json": "85633ae3a287eed5ea4f52cc31d3301d94ddc6365748da66bb37dadf244104e7",
+    "outputs/image-remaining-routes-20261029/omnidfa-comparison/completion.json": "ce7fe627c41bce366ac82f7af553280fde6d434b072cc7bac1a3248f15e974d4",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-comparison/launch.json": "d30f18a14a3e040c9c3354d04b47394ee804674729efee03bf75da4ab0b40277",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-parent-dev-reference/status.json": "bb155c418801cafe296224957be3bf877d3f754fb3f3477d49e8fef50ea9b192",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-parent-dev-reference/exit.json": "ef260fd80f6daeb9c828ec873d7e4860f645a4ae90ce538980846fa9f0ba3c00",
+    "outputs/image-remaining-routes-20261029/omnidfa-parent-dev-reference/completion.json": "1d29f7d09aea52bd81e1335ddc2938ee6ae5eded6fd93b8e47fb87e5625c23fa",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-parent-dev-reference/launch.json": "4bd959d6620511d8f7aeec7b6922930b8e2534dfcd22752bcea7148690091845",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1-comparison/status.json": "13a6f8f75f916eb30f2b6b9243ffc7b40caf51e03fa2fd1743df1fbd5b5d15ea",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1-comparison/exit.json": "4b069f39407a0c390fc548f8ac9195e8c4754136395e97361afadfeb8c59f42b",
+    "outputs/image-remaining-routes-20261029/ofa-tplus1-comparison/completion.json": "317b534065da0efd0615f91593cf7861af63755ff5ff6e1c923f59f223f31ca1",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1-comparison/launch.json": "029f42684319ea5e2ba3904fd92a004634a5144d29b1c4742e7a598f4c8bf9f1",
+    "outputs/image-remaining-routes-20261029/queue-continuation-v1/launch.json": "72cd46c919ed915eab173f57c2a203aec662744d04916194d603b1a124b4d9be",
+    "configs/image_experiments/iab_ofa_tplus1_q179_20261029.json": "9b8ccf082236e2c0006d27b6f334a0965036098467ac2f563de24db8a5c1121f",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/registration.json": "9b8ccf082236e2c0006d27b6f334a0965036098467ac2f563de24db8a5c1121f",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/provenance.json": "7a959bd69644c33d39a23aef0dbcee139e9af414a6ce132ff3de3d6c4ccc65ce",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/metrics.json": "e33f4b96f44c0a60de164fff473d9646e1e8bfbaf4a3164bbefdc9f5615cf1d5",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/roles.json": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/derived_training.jsonl": "2ff2b08e233ba096fa4b87d785e87a66b79be5f2c1266d8945638b3c55b5de51",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/architecture_traces.json": "04432027dc68aa843a281495bdd1c5e7130c14a83480660b9da79aa771bc47d1",
+    "outputs/image_experiments/assets/ofa-simulator-20261029/cpu-verification-tplus1.json": "5d4c3d91e9c487120d5ddecd0afb6e42049e4c73d3241ab2575e1ea6f86908d2",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/known_features.pt": "219306be509380bd2d92ee7134cde25e6f336278a38ef0e3c0c5ae40f9f6cb74",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/unknown_train_features.pt": "1e4d5ccba3d6c789cc34c335b9e9e90b9ce94cf22f78984dfcac44d609a00554",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/head.pth": "a514b1d7193a1d70d74e9ba990d8222b9a1234ee17e77d700e8264265f972c8e",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/history.jsonl": "6e6839c5aee29a81e760215bac5a6497c273c98daf216a3ef8005513f7dd0670",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/actual_selection_verification.json": "6bcb4b9eea85cf7431a959b81af2577655f35f4455d7abdd580babe213b30bd4",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/predictions.jsonl": "7fc97d5ef03ab475b39fec2317787f92ca11e8955c475bcd42a88d68478291a9",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/launch.json": "f1d600b1af1f788893e5dcef4790e7afe659e719e98115945a0f480e10135ae1",
+    "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "outputs/image-remaining-routes-20261029/convnext-comparison/provenance.json": "703f7c387de52efa80740a4f6c63b07657420dbd0c8eabe3cb2db53ced2c864d",
+    "configs/image_experiments/iab_convnext_comparison_20261029.json": "f08c7e0048f78843522e3c7975ee7e95e35d6ae42fa0cb2d2d3c37c18979e389",
+    "scripts/compare_image_next_routes.py": "d22b411c01344f3f1c88615815384a97f1fb57b3934c5a1b8f96a598ec2a5fe6",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/status.json": "649c52d3080e25c343c48ee587ffb5cd17462602205d1c36f2358e8034b2fb52",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/predictions.jsonl": "f72478d4bcdef2e6c2a65164ec258a8464fc7f1ccb1f6d77809b3812da296b01",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/status.json": "8971244122a3ef3330b2a5bc752a3edf0dcdc2f444162e2658cc50239a102ac1",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/predictions.jsonl": "49426f1dbb217e054850e9a62b43ebca70609e0fd87ee71e7bc7539969d30c86",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/status.json": "b897eca0b1fbe5f883c271c7296b194357fd5f1ac41a4ed18c7e85e27e0bcb17",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/predictions.jsonl": "07a59004a4583292f23f248972d52343152a4becc0e0e5ca24bc4ae1b79bd9e2",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/status.json": "55940892c7a0116184172c838a106bf1d6659348e26d7d30f975f18248a51f9d",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/predictions.jsonl": "0c926694d4521acaebcf2e604743f6043c8094e906d5d62cdb24f96f96b518ca",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/status.json": "53e644cf8c82b724875a8db6f5c394a3e0360466f4163036f3eee4f5920be97f",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/predictions.jsonl": "e58b47fd00a35eb2eced523eb97842d04df56c18b5cbbc632bba8bd18b766a54",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate/status.json": "46be5c9d6ac517d1077f7a875b78df94e13c34c83affc314247b66a54ace1912",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate/predictions.jsonl": "a2af0222e6b3bed87f0acbc10583d5579704204bcc6ad7d43605672e9372293b",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/status.json": "788b12d8f0ed5dc75b44b5b290bd580c65590e30516261d84d0da98f651f119e",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/predictions.jsonl": "5af97a22eb477569ea882bda3215d75dfae8cfcdcc68b9d36b4b2b89efb1fce6",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/status.json": "0e16a6bfc0e6c67d00a5ca4f94ff53b7aa1943aee6e5454a4429bb3e863d19fa",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/predictions.jsonl": "b4e601a66efe44378fb1f711a41fe2bbe3d18908e82934cb61aa89b9a635034c",
+    "outputs/image-remaining-routes-20261029/convnext-comparison/summary.json": "d776068e22d8209f86eff995314ceb591a0604245c2472187e690e27f5331473",
+    "outputs/image-remaining-routes-20261029/convnext-parent-dev-reference/provenance.json": "24f50338bb8e28376bd26488ecb48a524c988633072a9c6fce54a5889e58fb2c",
+    "configs/image_experiments/iab_convnext_parent_dev_reference_20261029.json": "ce32bcc5e531c7170866066fa99eddc65e8597eb7862c1a4d183b770392c6e80",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate/status.json": "283d3581e9a33ac362b15d4649af503a3e209eb0a1801495cc16e966f89316c2",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate/predictions.jsonl": "d45b90581e938674335e45ce0ff4087c25971b9afa10350c048aece8d37afa4f",
+    "outputs/image-remaining-routes-20261029/convnext-parent-dev-reference/summary.json": "a535df8685d0b03486eafb78d29c4c4b71abe1c3008d3289a104d8d9791e302f",
+    "outputs/image-remaining-routes-20261029/dna-comparison/provenance.json": "687fb43dafbbb44e27592d693041259f0a16e5b24549690c383f2394a33f3aad",
+    "configs/image_experiments/iab_dna_comparison_20261029.json": "715c5838b3c1c18d819685a9fea958f7ca475c37146867c8901e8e526ff172d5",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/status.json": "59a6fe8aa615ad6505059483dd0da022381b1a3b7e4187d742a0fb54f171fb88",
+    "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22/predictions.jsonl": "f67e86e7296cacf2827509f7dcaa77c0773393823dc53d04858bae4cbf36cfd8",
+    "outputs/image-remaining-routes-20261029/dna-comparison/summary.json": "b5241a2dc4de4c4786360dc830c4e83ee5fa57fed3da07b48badbbc4636bba74",
+    "outputs/image-remaining-routes-20261029/dna-parent-dev-reference/provenance.json": "2309bbf6454ab3fd43badfa7b343131353badc481d5d94190738dd74d3c08737",
+    "configs/image_experiments/iab_dna_parent_dev_reference_20261029.json": "c7dd38f2074db83b58dd1cef363971d8029cd64bc17f9507add8f644096acd13",
+    "outputs/image-remaining-routes-20261029/dna-parent-dev-reference/summary.json": "3e9695d41578f5f5237928ad54d28cca35db172f8785600ae77c3ce3b81fd04a",
+    "outputs/image-remaining-routes-20261029/omnidfa-comparison/provenance.json": "c7b758b2ce51386f999409aea3b8331a6ab6955945fb128d43a993a968496cf4",
+    "configs/image_experiments/iab_omnidfa_comparison_20261029.json": "0ae6d4a91c5fbe527f32144434664b4f1ab95dc7c2252a7d0f5b72386f435d08",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/status.json": "91bc476f84b514a48033f12590e0dcab6d98de41c792c9c58f286005e3da46d9",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22/predictions.jsonl": "973cecf0f6d9fab86090f64a773914873ed00a0cdb92b9cb05ce283d8b40561f",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/status.json": "cc69414f5e766c877935efcd70742fe1982905b6ab7f263063ed62cccc557018",
+    "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10/predictions.jsonl": "d3cf4f325299492304bf7e4d69add4237144604e110264e359f7c369b8ad6a2e",
+    "outputs/image-remaining-routes-20261029/omnidfa-comparison/summary.json": "458e300d13298cc70b4a56e21952d895e165a91fcca382798c80b5f5c4254974",
+    "outputs/image-remaining-routes-20261029/omnidfa-parent-dev-reference/provenance.json": "eaf1e5f62b8730a20cd660de0a9252fb1189aa2dd9cb2304c0d36a66c7f75f16",
+    "configs/image_experiments/iab_omnidfa_parent_dev_reference_20261029.json": "42650719967ce84c3dc72e76113b7436718e512b36b8ebcf80d1ae0740a4558c",
+    "outputs/image-remaining-routes-20261029/omnidfa-parent-dev-reference/summary.json": "1eb2cc0ced6ecf74916f2d7542205fb32ef4f1afc9f94a0c9fa6afced51b25ad",
+    "outputs/image-remaining-routes-20261029/ofa-tplus1-comparison/provenance.json": "dd2cbd0f02f6bd8c1ec81fac143c833152bbc963b7d9b0699505cc14dc374ec3",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/status.json": "2c943db113a1577713000155ba442b4d4ea5ff47e81260ab3cca856f4a36db5e",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/roles.json": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/metrics.json": "03f478636749d0003a4c4edc4afae2f1eb5ad889efa58d864bc557bf0547d039",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/predictions.jsonl": "5863231c617ac3d5b99f180f25b365af342ef165bb7b55ffc112a94e815aac6d",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/status.json": "69f79ab969ddb0da12bc29e9852fbb74d41a1760baeb6b36441c4a9da32fc309",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/roles.json": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/metrics.json": "e301a060d3ba581432746b32df329b8a7e9b92b301ec242a2357711d67b9ea10",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/predictions.jsonl": "ee038c330c0df3c3449dccfdd0989fb1991c898a03f66d222cbfea76777544f0",
+    "scripts/compare_ofa_tplus1.py": "e964fc846903ff01f346150936db6a8d63fc5d6bd525ab7ddbc5ab3e081615af",
+    "scripts/compare_image_rejection_routes.py": "6deb2b9edc551d40de048619062af96c00ce6c97f8cc721490861645c3eefc38",
+    "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+    "scripts/compare_image_scale_epochs.py": "752764997b36a0b664170251df9ac0494de45fb692b7d1b0b705b7e5a6e53e4e",
+    "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584",
+    "outputs/image-remaining-routes-20261029/ofa-tplus1-comparison/summary.json": "37f57d923b2d05f9bcfc62dff9d16303ad42f0dc7d749a85cd0f76c7b83fb64f",
+    "scripts/run_remaining_image_queue.py": "c064e44839da7a5f5e864ec47617dca1148c531eeaf6743cdd75eda12f935e97",
+    "scripts/wait_convnext_q179.py": "ea57afdec98f32e3d10acae1d40a9cad27ee8fb00b49873d9a240eded86578e3",
+    "scripts/compare_iab_v6_100_vs_v7_200_q179.py": "717d8d159e31713b07eb3e1fd29bc64eb3e2eb4336ad3c00343130372e32174f",
+    "configs/image_experiments/iab_convnext_q179_20261029.json": "ad56361e341a408d3bc9d2802fc6336701621670916636a53002bad84a45cdec",
+    "scripts/run_image_openclip.py": "115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3",
+    "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+    "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+    "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+    "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3",
+    "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+    "scripts/run_image_convnext.py": "185062177f863a333b1e1974d8f24f8c4c9cb6bccd05a4806cd4d3a30b2a4b8a",
+    "configs/image_experiments/iab_dna_q179_20261029.json": "4edfe24b56cb19624d83154510e2e2afd7f100907ce83f32bd9f380c4b7eca04",
+    "scripts/run_image_dna.py": "a285b9f8e5c9a2edc1559a96370b08b2b3f3b420384d46654c76ad38a5215af4",
+    "research/image_attribution/dna_route.py": "cbbd143b3aa64e69496c3f9d079ee6124dc74ee3b47e85ab4d5dd5209839900e",
+    "research/image_attribution/iab_protocol.py": "16d6a70f408f7e6ea77bbae123b20e743b8c119bfbc3378f568b624375a7ce60",
+    "configs/image_experiments/iab_omnidfa_q179_20261029.json": "b6c49d1dcc678360167bc582e962ac80b1a65d724e072c197817f43c41d0f2cd",
+    "scripts/run_image_omnidfa.py": "5d37c60a674893fd1bb9c8df82f996bb1beecb743ceb6f3b63067d2c37daea71",
+    "research/image_attribution/omnidfa_route.py": "4ad85918179cae8c1d36ace250c5eaf985643a0f494b55f1fa09cbb6f7630e6d",
+    "research/image_attribution/ofa_tplus1.py": "aa1af4036982b0a07b9368e0f55295415bca13dc467d00dab0d84cfc1260ee20",
+    "scripts/run_image_ofa_tplus1.py": "54be4ce5639b66a686217297ce61e8d3bc34098e796bba0ee4e16545c3661906",
+    "outputs/image_experiments/convnext-q179-20261029/launch.json": "9187138ef4650ff6e43288a159ff14dd374ae3e871ea3e60bb00969d5a144990",
+    "outputs/image-remaining-routes-20261029/queue-convnext-v1/launch.json": "74a8d054c8220103ce454be1369ba748caaa69d75bb58f66e8ea115b2fb70713"
+  },
+  "copied": [
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna/status.json",
+      "path": "artifacts/queue/dna/status.json",
+      "sha256": "e6b7082f240130e2c4347e53981167983ee83abb391894227a5efc8844fa8292",
+      "bytes": 233
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna/exit.json",
+      "path": "artifacts/queue/dna/exit.json",
+      "sha256": "b033d72d85f978627099f4e014a895287761ad570de173fb77a1cce281c89fda",
+      "bytes": 60
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna/launch.json",
+      "path": "artifacts/queue/dna/launch.json",
+      "sha256": "d6d85ca03562f962f2a1ae3435eaf4af9601b857d833fcfceb4c3cfe6466294a",
+      "bytes": 402
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa/status.json",
+      "path": "artifacts/queue/omnidfa/status.json",
+      "sha256": "67bf5dd86f350d87a11a1318049538c4fb35b789be42cbbb44cfc381f3992bfe",
+      "bytes": 237
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa/exit.json",
+      "path": "artifacts/queue/omnidfa/exit.json",
+      "sha256": "17d549ede085eba99f27295b2bb7ea0c5b3720d8393a1eac16d3a96bb6a22f86",
+      "bytes": 59
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa/launch.json",
+      "path": "artifacts/queue/omnidfa/launch.json",
+      "sha256": "abd5193853d1e880885eab4f83c8b7e503d592780e0f2c5362d3c074e8d1ca1f",
+      "bytes": 411
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1/status.json",
+      "path": "artifacts/queue/ofa-tplus1/status.json",
+      "sha256": "85e4a3e24d5bfa2c48606c3393b5f71aa535f2ee421eebfe46a4328378c54877",
+      "bytes": 240
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1/exit.json",
+      "path": "artifacts/queue/ofa-tplus1/exit.json",
+      "sha256": "b525d620956e57cc0639a81fa9a655dea4f263886e9eefd791bc1130b1051b7f",
+      "bytes": 59
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1/launch.json",
+      "path": "artifacts/queue/ofa-tplus1/launch.json",
+      "sha256": "9a054ced75a1877ed943acf1bd4869e790a0b2575dc19746829cc3bd08a4ebf2",
+      "bytes": 416
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-comparison/status.json",
+      "path": "artifacts/queue/convnext-comparison/status.json",
+      "sha256": "5dad16db2c3386755d87f043935ebf32e380a4828a33aae3ae2294e8a97cbd44",
+      "bytes": 249
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-comparison/exit.json",
+      "path": "artifacts/queue/convnext-comparison/exit.json",
+      "sha256": "a27b9338f0a56c1f8c76405b6d8f39f176a8a0135a7fe67e6562ecafd727bd7e",
+      "bytes": 60
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-comparison/launch.json",
+      "path": "artifacts/queue/convnext-comparison/launch.json",
+      "sha256": "b7f1d3ebe59183332b90a72c68e6423c6bb5c47b5f8951def720d555948acfb6",
+      "bytes": 492
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-parent-dev-reference/status.json",
+      "path": "artifacts/queue/convnext-parent-dev-reference/status.json",
+      "sha256": "882729477ca18aace3e3a3d6c63e09b459c4f88bb81bf11d6d73cfb2d464e4b4",
+      "bytes": 258
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-parent-dev-reference/exit.json",
+      "path": "artifacts/queue/convnext-parent-dev-reference/exit.json",
+      "sha256": "d3d48906ab2e5593c59239c2097f3b9991493f4b3fa0a75bf57ce0018ee066d8",
+      "bytes": 60
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/convnext-parent-dev-reference/launch.json",
+      "path": "artifacts/queue/convnext-parent-dev-reference/launch.json",
+      "sha256": "7398ff6e268b1178e06f28da2582bef2998bdf8542ac49b16d994cd0b4942753",
+      "bytes": 512
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-comparison/status.json",
+      "path": "artifacts/queue/dna-comparison/status.json",
+      "sha256": "55868417a4c67ba3299aeaa8da8e8efc0bb51c6380772855fd6fae70e3014735",
+      "bytes": 243
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-comparison/exit.json",
+      "path": "artifacts/queue/dna-comparison/exit.json",
+      "sha256": "3fbedd1e258224d818701c5edc89658ddcf747b6ccbda39130173b981425def2",
+      "bytes": 58
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-comparison/launch.json",
+      "path": "artifacts/queue/dna-comparison/launch.json",
+      "sha256": "c91e443b17a4f572157e202091939bd8ecb0864132e9b47329e06b5b78ebc31c",
+      "bytes": 482
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-parent-dev-reference/status.json",
+      "path": "artifacts/queue/dna-parent-dev-reference/status.json",
+      "sha256": "32ea7c60475adad781f7d745097039fdbfe95b83a002a508b327032fe017e470",
+      "bytes": 253
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-parent-dev-reference/exit.json",
+      "path": "artifacts/queue/dna-parent-dev-reference/exit.json",
+      "sha256": "f31f6235b31169b93f080c2cea3a5da74ed9a65f8acbdb40091612fef2234dbc",
+      "bytes": 60
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/dna-parent-dev-reference/launch.json",
+      "path": "artifacts/queue/dna-parent-dev-reference/launch.json",
+      "sha256": "538ebc78586706bb3cef674b084a1b48fee64f36aa8fff53461d07c5ae56c73f",
+      "bytes": 501
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-comparison/status.json",
+      "path": "artifacts/queue/omnidfa-comparison/status.json",
+      "sha256": "52fc28ccde4b3d0a6f3fb576a37f50c16f8773813b764d94db40750836d78df4",
+      "bytes": 248
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-comparison/exit.json",
+      "path": "artifacts/queue/omnidfa-comparison/exit.json",
+      "sha256": "85633ae3a287eed5ea4f52cc31d3301d94ddc6365748da66bb37dadf244104e7",
+      "bytes": 60
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-comparison/launch.json",
+      "path": "artifacts/queue/omnidfa-comparison/launch.json",
+      "sha256": "d30f18a14a3e040c9c3354d04b47394ee804674729efee03bf75da4ab0b40277",
+      "bytes": 490
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-parent-dev-reference/status.json",
+      "path": "artifacts/queue/omnidfa-parent-dev-reference/status.json",
+      "sha256": "bb155c418801cafe296224957be3bf877d3f754fb3f3477d49e8fef50ea9b192",
+      "bytes": 258
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-parent-dev-reference/exit.json",
+      "path": "artifacts/queue/omnidfa-parent-dev-reference/exit.json",
+      "sha256": "ef260fd80f6daeb9c828ec873d7e4860f645a4ae90ce538980846fa9f0ba3c00",
+      "bytes": 60
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/omnidfa-parent-dev-reference/launch.json",
+      "path": "artifacts/queue/omnidfa-parent-dev-reference/launch.json",
+      "sha256": "4bd959d6620511d8f7aeec7b6922930b8e2534dfcd22752bcea7148690091845",
+      "bytes": 510
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1-comparison/status.json",
+      "path": "artifacts/queue/ofa-tplus1-comparison/status.json",
+      "sha256": "13a6f8f75f916eb30f2b6b9243ffc7b40caf51e03fa2fd1743df1fbd5b5d15ea",
+      "bytes": 251
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1-comparison/exit.json",
+      "path": "artifacts/queue/ofa-tplus1-comparison/exit.json",
+      "sha256": "4b069f39407a0c390fc548f8ac9195e8c4754136395e97361afadfeb8c59f42b",
+      "bytes": 59
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/ofa-tplus1-comparison/launch.json",
+      "path": "artifacts/queue/ofa-tplus1-comparison/launch.json",
+      "sha256": "029f42684319ea5e2ba3904fd92a004634a5144d29b1c4742e7a598f4c8bf9f1",
+      "bytes": 400
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/status.json",
+      "path": "artifacts/queue/status.json",
+      "sha256": "3cd489d4e266cf2ec516ac37bb033dfd93c7874726de73e9ef8ccfccf499fd0d",
+      "bytes": 547
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/registration.json",
+      "path": "artifacts/queue/registration.json",
+      "sha256": "03d3ad703b880f79941d770f76133893073e5cb2e06765e2e40eb763e4af76c9",
+      "bytes": 8135
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/queue-continuation-v1/launch.json",
+      "path": "artifacts/queue/launch.json",
+      "sha256": "72cd46c919ed915eab173f57c2a203aec662744d04916194d603b1a124b4d9be",
+      "bytes": 149
+    },
+    {
+      "source": "outputs/image_experiments/ofa-tplus1-q179-20261029/metrics.json",
+      "path": "artifacts/ofa-tplus1/metrics.json",
+      "sha256": "e33f4b96f44c0a60de164fff473d9646e1e8bfbaf4a3164bbefdc9f5615cf1d5",
+      "bytes": 10001
+    },
+    {
+      "source": "outputs/image_experiments/ofa-tplus1-q179-20261029/history.jsonl",
+      "path": "artifacts/ofa-tplus1/history.jsonl",
+      "sha256": "6e6839c5aee29a81e760215bac5a6497c273c98daf216a3ef8005513f7dd0670",
+      "bytes": 3815
+    },
+    {
+      "source": "outputs/image_experiments/ofa-tplus1-q179-20261029/provenance.json",
+      "path": "artifacts/ofa-tplus1/provenance.json",
+      "sha256": "7a959bd69644c33d39a23aef0dbcee139e9af414a6ce132ff3de3d6c4ccc65ce",
+      "bytes": 9141
+    },
+    {
+      "source": "outputs/image_experiments/ofa-tplus1-q179-20261029/registration.json",
+      "path": "artifacts/ofa-tplus1/registration.json",
+      "sha256": "9b8ccf082236e2c0006d27b6f334a0965036098467ac2f563de24db8a5c1121f",
+      "bytes": 7342
+    },
+    {
+      "source": "outputs/image_experiments/ofa-tplus1-q179-20261029/status.json",
+      "path": "artifacts/ofa-tplus1/status.json",
+      "sha256": "e24fb6a4255201f3db76a380142951ba79245a794c926fa2eed438b1138c47a8",
+      "bytes": 543
+    },
+    {
+      "source": "outputs/image_experiments/ofa-tplus1-q179-20261029/launch.json",
+      "path": "artifacts/ofa-tplus1/launch.json",
+      "sha256": "f1d600b1af1f788893e5dcef4790e7afe659e719e98115945a0f480e10135ae1",
+      "bytes": 422
+    },
+    {
+      "source": "outputs/image_experiments/ofa-tplus1-q179-20261029/actual_selection_verification.json",
+      "path": "artifacts/ofa-tplus1/actual_selection_verification.json",
+      "sha256": "6bcb4b9eea85cf7431a959b81af2577655f35f4455d7abdd580babe213b30bd4",
+      "bytes": 421
+    },
+    {
+      "source": "outputs/image_experiments/ofa-tplus1-q179-20261029/architecture_traces.json",
+      "path": "artifacts/ofa-tplus1/architecture_traces.json",
+      "sha256": "04432027dc68aa843a281495bdd1c5e7130c14a83480660b9da79aa771bc47d1",
+      "bytes": 15372
+    },
+    {
+      "source": "configs/image_experiments/iab_ofa_tplus1_q179_20261029.json",
+      "path": "artifacts/config/iab_ofa_tplus1_q179_20261029.json",
+      "sha256": "9b8ccf082236e2c0006d27b6f334a0965036098467ac2f563de24db8a5c1121f",
+      "bytes": 7342
+    },
+    {
+      "source": "configs/image_experiments/iab_convnext_comparison_20261029.json",
+      "path": "artifacts/config/iab_convnext_comparison_20261029.json",
+      "sha256": "f08c7e0048f78843522e3c7975ee7e95e35d6ae42fa0cb2d2d3c37c18979e389",
+      "bytes": 3484
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/convnext-comparison/summary.json",
+      "path": "artifacts/convnext-comparison/summary.json",
+      "sha256": "d776068e22d8209f86eff995314ceb591a0604245c2472187e690e27f5331473",
+      "bytes": 21255
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/convnext-comparison/provenance.json",
+      "path": "artifacts/convnext-comparison/provenance.json",
+      "sha256": "703f7c387de52efa80740a4f6c63b07657420dbd0c8eabe3cb2db53ced2c864d",
+      "bytes": 2942
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/convnext-comparison/completion.json",
+      "path": "artifacts/convnext-comparison/completion.json",
+      "sha256": "77eccecbb20f0103ec8124d4e6967a40946f802156805bb99c4f6a0181337727",
+      "bytes": 252
+    },
+    {
+      "source": "configs/image_experiments/iab_convnext_parent_dev_reference_20261029.json",
+      "path": "artifacts/config/iab_convnext_parent_dev_reference_20261029.json",
+      "sha256": "ce32bcc5e531c7170866066fa99eddc65e8597eb7862c1a4d183b770392c6e80",
+      "bytes": 1074
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/convnext-parent-dev-reference/summary.json",
+      "path": "artifacts/convnext-parent-dev-reference/summary.json",
+      "sha256": "a535df8685d0b03486eafb78d29c4c4b71abe1c3008d3289a104d8d9791e302f",
+      "bytes": 13029
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/convnext-parent-dev-reference/provenance.json",
+      "path": "artifacts/convnext-parent-dev-reference/provenance.json",
+      "sha256": "24f50338bb8e28376bd26488ecb48a524c988633072a9c6fce54a5889e58fb2c",
+      "bytes": 1086
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/convnext-parent-dev-reference/completion.json",
+      "path": "artifacts/convnext-parent-dev-reference/completion.json",
+      "sha256": "c7480669350a0293b35941d9bedf3d3226e5872d5e06ae58c82283d5c90625dc",
+      "bytes": 252
+    },
+    {
+      "source": "configs/image_experiments/iab_dna_comparison_20261029.json",
+      "path": "artifacts/config/iab_dna_comparison_20261029.json",
+      "sha256": "715c5838b3c1c18d819685a9fea958f7ca475c37146867c8901e8e526ff172d5",
+      "bytes": 1010
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/dna-comparison/summary.json",
+      "path": "artifacts/dna-comparison/summary.json",
+      "sha256": "b5241a2dc4de4c4786360dc830c4e83ee5fa57fed3da07b48badbbc4636bba74",
+      "bytes": 12985
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/dna-comparison/provenance.json",
+      "path": "artifacts/dna-comparison/provenance.json",
+      "sha256": "687fb43dafbbb44e27592d693041259f0a16e5b24549690c383f2394a33f3aad",
+      "bytes": 1073
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/dna-comparison/completion.json",
+      "path": "artifacts/dna-comparison/completion.json",
+      "sha256": "7c6bb15c4c910d1040e713c51d6afa4f7813e7fa00e0c0ddf8419f9a94bc89e3",
+      "bytes": 252
+    },
+    {
+      "source": "configs/image_experiments/iab_dna_parent_dev_reference_20261029.json",
+      "path": "artifacts/config/iab_dna_parent_dev_reference_20261029.json",
+      "sha256": "c7dd38f2074db83b58dd1cef363971d8029cd64bc17f9507add8f644096acd13",
+      "bytes": 1044
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/dna-parent-dev-reference/summary.json",
+      "path": "artifacts/dna-parent-dev-reference/summary.json",
+      "sha256": "3e9695d41578f5f5237928ad54d28cca35db172f8785600ae77c3ce3b81fd04a",
+      "bytes": 12920
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/dna-parent-dev-reference/provenance.json",
+      "path": "artifacts/dna-parent-dev-reference/provenance.json",
+      "sha256": "2309bbf6454ab3fd43badfa7b343131353badc481d5d94190738dd74d3c08737",
+      "bytes": 1087
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/dna-parent-dev-reference/completion.json",
+      "path": "artifacts/dna-parent-dev-reference/completion.json",
+      "sha256": "673269a275bba52e9c87de637fd81955768cea4ca4513bbabe1ef910d1f02eb7",
+      "bytes": 252
+    },
+    {
+      "source": "configs/image_experiments/iab_omnidfa_comparison_20261029.json",
+      "path": "artifacts/config/iab_omnidfa_comparison_20261029.json",
+      "sha256": "0ae6d4a91c5fbe527f32144434664b4f1ab95dc7c2252a7d0f5b72386f435d08",
+      "bytes": 1635
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/omnidfa-comparison/summary.json",
+      "path": "artifacts/omnidfa-comparison/summary.json",
+      "sha256": "458e300d13298cc70b4a56e21952d895e165a91fcca382798c80b5f5c4254974",
+      "bytes": 26134
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/omnidfa-comparison/provenance.json",
+      "path": "artifacts/omnidfa-comparison/provenance.json",
+      "sha256": "c7b758b2ce51386f999409aea3b8331a6ab6955945fb128d43a993a968496cf4",
+      "bytes": 1425
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/omnidfa-comparison/completion.json",
+      "path": "artifacts/omnidfa-comparison/completion.json",
+      "sha256": "ce7fe627c41bce366ac82f7af553280fde6d434b072cc7bac1a3248f15e974d4",
+      "bytes": 252
+    },
+    {
+      "source": "configs/image_experiments/iab_omnidfa_parent_dev_reference_20261029.json",
+      "path": "artifacts/config/iab_omnidfa_parent_dev_reference_20261029.json",
+      "sha256": "42650719967ce84c3dc72e76113b7436718e512b36b8ebcf80d1ae0740a4558c",
+      "bytes": 1590
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/omnidfa-parent-dev-reference/summary.json",
+      "path": "artifacts/omnidfa-parent-dev-reference/summary.json",
+      "sha256": "1eb2cc0ced6ecf74916f2d7542205fb32ef4f1afc9f94a0c9fa6afced51b25ad",
+      "bytes": 25942
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/omnidfa-parent-dev-reference/provenance.json",
+      "path": "artifacts/omnidfa-parent-dev-reference/provenance.json",
+      "sha256": "eaf1e5f62b8730a20cd660de0a9252fb1189aa2dd9cb2304c0d36a66c7f75f16",
+      "bytes": 1439
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/omnidfa-parent-dev-reference/completion.json",
+      "path": "artifacts/omnidfa-parent-dev-reference/completion.json",
+      "sha256": "1d29f7d09aea52bd81e1335ddc2938ee6ae5eded6fd93b8e47fb87e5625c23fa",
+      "bytes": 252
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/ofa-tplus1-comparison/summary.json",
+      "path": "artifacts/ofa-tplus1-comparison/summary.json",
+      "sha256": "37f57d923b2d05f9bcfc62dff9d16303ad42f0dc7d749a85cd0f76c7b83fb64f",
+      "bytes": 8767
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/ofa-tplus1-comparison/provenance.json",
+      "path": "artifacts/ofa-tplus1-comparison/provenance.json",
+      "sha256": "dd2cbd0f02f6bd8c1ec81fac143c833152bbc963b7d9b0699505cc14dc374ec3",
+      "bytes": 3841
+    },
+    {
+      "source": "outputs/image-remaining-routes-20261029/ofa-tplus1-comparison/completion.json",
+      "path": "artifacts/ofa-tplus1-comparison/completion.json",
+      "sha256": "317b534065da0efd0615f91593cf7861af63755ff5ff6e1c923f59f223f31ca1",
+      "bytes": 252
+    }
+  ]
+}

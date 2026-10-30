@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "automatic_execution": false,
+  "manifest": "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "pairs": [
+    {
+      "id": "A-DNA-Wild-LP22-vs-resnet",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate",
+        "recipe": {
+          "task": "attribution",
+          "mode": "postprocess",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    }
+  ],
+  "note": "EXPLORATORY ONLY: A2-clean reuses A0 selected using full parent-dev including these evaluation IDs. DNA selects using selection only. Same IDs do not mean identical model-selection protocols. Exclude this reference from the matched-selection main ranking."
+}

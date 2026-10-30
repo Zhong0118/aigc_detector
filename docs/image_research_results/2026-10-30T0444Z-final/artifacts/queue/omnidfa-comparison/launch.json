@@ -1,0 +1,14 @@
+{
+  "pid": 3461457,
+  "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+  "process_start_ticks": "34540322",
+  "command": [
+    "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.venv-image-next/bin/python",
+    "scripts/compare_image_next_routes.py",
+    "--config",
+    "configs/image_experiments/iab_omnidfa_comparison_20261029.json",
+    "--output",
+    "outputs/image-remaining-routes-20261029/omnidfa-comparison"
+  ],
+  "started_unix": 1793333972.9060724
+}

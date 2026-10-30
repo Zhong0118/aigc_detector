@@ -1,0 +1,890 @@
+{
+  "4": {
+    "seed": 13776384425461499959,
+    "trace": [
+      {
+        "index": 1,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 2,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 3,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 4,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 5,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 6,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 7,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 8,
+        "type": "Upsample",
+        "op": "bilinear"
+      },
+      {
+        "index": 9,
+        "type": "norm",
+        "op": "GroupNorm"
+      },
+      {
+        "index": 10,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 11,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 12,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 13,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 14,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 15,
+        "type": "Upsample",
+        "op": "pixelshuffle"
+      },
+      {
+        "index": 16,
+        "type": "norm",
+        "op": "GroupNorm"
+      },
+      {
+        "index": 17,
+        "type": "act",
+        "op": "LeakyReLU"
+      },
+      {
+        "index": 18,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 19,
+        "type": "norm",
+        "op": "InstanceNorm2d"
+      },
+      {
+        "index": 20,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 21,
+        "type": "act",
+        "op": "LeakyReLU"
+      }
+    ],
+    "sha256": "512e9184dc156f8377d40d338aad92eb6d614beeca4f062568cdceabe6c89a74"
+  },
+  "2": {
+    "seed": 11263136234996247488,
+    "trace": [
+      {
+        "index": 1,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 2,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 3,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 4,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 5,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 6,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 7,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 8,
+        "type": "Upsample",
+        "op": "bilinear"
+      },
+      {
+        "index": 9,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 10,
+        "type": "norm",
+        "op": "BatchNorm2d"
+      },
+      {
+        "index": 11,
+        "type": "act",
+        "op": "GELU"
+      },
+      {
+        "index": 12,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 13,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 14,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 15,
+        "type": "Upsample",
+        "op": "bicubic"
+      },
+      {
+        "index": 16,
+        "type": "norm",
+        "op": "BatchNorm2d"
+      },
+      {
+        "index": 17,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 18,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 19,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 20,
+        "type": "norm",
+        "op": "BatchNorm2d"
+      },
+      {
+        "index": 21,
+        "type": "act",
+        "op": "LeakyReLU"
+      }
+    ],
+    "sha256": "0d346a384b094ef249fb0d3c6c378dc8c1d8d6e2b5f8dadd507eb9d9d2ed5d01"
+  },
+  "0": {
+    "seed": 13453820608980520055,
+    "trace": [
+      {
+        "index": 1,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 2,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 3,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 4,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 5,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 6,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 7,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 8,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 9,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 10,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 11,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 12,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 13,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 14,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 15,
+        "type": "Upsample",
+        "op": "bilinear"
+      },
+      {
+        "index": 16,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 17,
+        "type": "norm",
+        "op": "InstanceNorm2d"
+      },
+      {
+        "index": 18,
+        "type": "act",
+        "op": "GELU"
+      },
+      {
+        "index": 19,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 20,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 21,
+        "type": null,
+        "op": null
+      }
+    ],
+    "sha256": "263e830827cc7abcb28f7b2c2de46651bb7936738b950cd6f6fc932bbcffda4e"
+  },
+  "5": {
+    "seed": 11771889144081192110,
+    "trace": [
+      {
+        "index": 1,
+        "type": "Upsample",
+        "op": "bicubic"
+      },
+      {
+        "index": 2,
+        "type": "norm",
+        "op": "GroupNorm"
+      },
+      {
+        "index": 3,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 4,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 5,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 6,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 7,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 8,
+        "type": "Upsample",
+        "op": "bicubic"
+      },
+      {
+        "index": 9,
+        "type": "norm",
+        "op": "GroupNorm"
+      },
+      {
+        "index": 10,
+        "type": "act",
+        "op": "LeakyReLU"
+      },
+      {
+        "index": 11,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 12,
+        "type": "act",
+        "op": "GELU"
+      },
+      {
+        "index": 13,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 14,
+        "type": "norm",
+        "op": "InstanceNorm2d"
+      },
+      {
+        "index": 15,
+        "type": "Upsample",
+        "op": "bicubic"
+      },
+      {
+        "index": 16,
+        "type": "act",
+        "op": "LeakyReLU"
+      },
+      {
+        "index": 17,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 18,
+        "type": "norm",
+        "op": "GroupNorm"
+      },
+      {
+        "index": 19,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 20,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 21,
+        "type": null,
+        "op": null
+      }
+    ],
+    "sha256": "920891a7e6a9c3760c9613abc3f1f21375b0548a147ee1d3f86bd98d62e0586e"
+  },
+  "3": {
+    "seed": 10824060116877188032,
+    "trace": [
+      {
+        "index": 1,
+        "type": "Upsample",
+        "op": "bicubic"
+      },
+      {
+        "index": 2,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 3,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 4,
+        "type": "norm",
+        "op": "GroupNorm"
+      },
+      {
+        "index": 5,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 6,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 7,
+        "type": "norm",
+        "op": "BatchNorm2d"
+      },
+      {
+        "index": 8,
+        "type": "Upsample",
+        "op": "bilinear"
+      },
+      {
+        "index": 9,
+        "type": "norm",
+        "op": "GroupNorm"
+      },
+      {
+        "index": 10,
+        "type": "act",
+        "op": "GELU"
+      },
+      {
+        "index": 11,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 12,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 13,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 14,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 15,
+        "type": "Upsample",
+        "op": "bilinear"
+      },
+      {
+        "index": 16,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 17,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 18,
+        "type": "norm",
+        "op": "BatchNorm2d"
+      },
+      {
+        "index": 19,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 20,
+        "type": "act",
+        "op": "LeakyReLU"
+      },
+      {
+        "index": 21,
+        "type": "norm",
+        "op": "InstanceNorm2d"
+      }
+    ],
+    "sha256": "6ef3219ff599ff2208c2542d06e24d34aef4ada33188a12d0d66cc6ff3886282"
+  },
+  "6": {
+    "seed": 4409604645599235464,
+    "trace": [
+      {
+        "index": 1,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 2,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 3,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 4,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 5,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 6,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 7,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 8,
+        "type": "Upsample",
+        "op": "bicubic"
+      },
+      {
+        "index": 9,
+        "type": "norm",
+        "op": "GroupNorm"
+      },
+      {
+        "index": 10,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 11,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 12,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 13,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 14,
+        "type": "norm",
+        "op": "BatchNorm2d"
+      },
+      {
+        "index": 15,
+        "type": "Upsample",
+        "op": "nearest"
+      },
+      {
+        "index": 16,
+        "type": "norm",
+        "op": "InstanceNorm2d"
+      },
+      {
+        "index": 17,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 18,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 19,
+        "type": "norm",
+        "op": "BatchNorm2d"
+      },
+      {
+        "index": 20,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 21,
+        "type": "act",
+        "op": "GELU"
+      }
+    ],
+    "sha256": "d448269a66422970ac573dfebd0c6804ea33a3bc31ab27ee13dd481c2d40f6a1"
+  },
+  "1": {
+    "seed": 5872617466849777715,
+    "trace": [
+      {
+        "index": 1,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 2,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 3,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 4,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 5,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 6,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 7,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 8,
+        "type": "Upsample",
+        "op": "bicubic"
+      },
+      {
+        "index": 9,
+        "type": "act",
+        "op": "LeakyReLU"
+      },
+      {
+        "index": 10,
+        "type": "norm",
+        "op": "GroupNorm"
+      },
+      {
+        "index": 11,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 12,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 13,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 14,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 15,
+        "type": "Upsample",
+        "op": "bilinear"
+      },
+      {
+        "index": 16,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 17,
+        "type": "norm",
+        "op": "BatchNorm2d"
+      },
+      {
+        "index": 18,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 19,
+        "type": "norm",
+        "op": "BatchNorm2d"
+      },
+      {
+        "index": 20,
+        "type": "act",
+        "op": "SiLU"
+      },
+      {
+        "index": 21,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      }
+    ],
+    "sha256": "3862820257afc2c22ed19cc19e9b73dac44b22d68335f1d19b402f162a2ecbf3"
+  },
+  "7": {
+    "seed": 15823373751967439221,
+    "trace": [
+      {
+        "index": 1,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 2,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 3,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 4,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 5,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 6,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 7,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 8,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 9,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 10,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 11,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 12,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 13,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 14,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 15,
+        "type": "Upsample",
+        "op": "bicubic"
+      },
+      {
+        "index": 16,
+        "type": "norm",
+        "op": "InstanceNorm2d"
+      },
+      {
+        "index": 17,
+        "type": "act",
+        "op": "LeakyReLU"
+      },
+      {
+        "index": 18,
+        "type": "conv",
+        "op": "WeightedConvPool3"
+      },
+      {
+        "index": 19,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 20,
+        "type": null,
+        "op": null
+      },
+      {
+        "index": 21,
+        "type": null,
+        "op": null
+      }
+    ],
+    "sha256": "db37128ebacba9dcaa87e2964caee3242e15e703aaaadc370f8a1782b58fdfcb"
+  }
+}

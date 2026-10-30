@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "automatic_execution": false,
+  "manifest": "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "pairs": [
+    {
+      "id": "A-DNA-Wild-LP22-vs-openclip",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/dna-wild-q179-20261029/A-DNA-Wild-LP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    }
+  ],
+  "note": "Main matched-selection frozen-head comparison on all 1331 developer evaluation IDs. No intersection dropping, no evaluation tuning. Different official pretraining and preprocessing prevent a causal backbone-only interpretation."
+}

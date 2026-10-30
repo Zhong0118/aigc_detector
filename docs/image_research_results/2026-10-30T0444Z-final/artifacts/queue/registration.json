@@ -1,0 +1,142 @@
+{
+  "inputs": {
+    "scripts/run_remaining_image_queue.py": "c064e44839da7a5f5e864ec47617dca1148c531eeaf6743cdd75eda12f935e97",
+    "scripts/wait_convnext_q179.py": "ea57afdec98f32e3d10acae1d40a9cad27ee8fb00b49873d9a240eded86578e3",
+    "scripts/compare_image_next_routes.py": "d22b411c01344f3f1c88615815384a97f1fb57b3934c5a1b8f96a598ec2a5fe6",
+    "scripts/compare_image_scale_epochs.py": "752764997b36a0b664170251df9ac0494de45fb692b7d1b0b705b7e5a6e53e4e",
+    "scripts/compare_iab_v6_100_vs_v7_200_q179.py": "717d8d159e31713b07eb3e1fd29bc64eb3e2eb4336ad3c00343130372e32174f",
+    "scripts/compare_ofa_tplus1.py": "e964fc846903ff01f346150936db6a8d63fc5d6bd525ab7ddbc5ab3e081615af",
+    "scripts/compare_image_rejection_routes.py": "6deb2b9edc551d40de048619062af96c00ce6c97f8cc721490861645c3eefc38",
+    "configs/image_experiments/iab_convnext_q179_20261029.json": "ad56361e341a408d3bc9d2802fc6336701621670916636a53002bad84a45cdec",
+    "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584",
+    "scripts/run_image_openclip.py": "115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3",
+    "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+    "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+    "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+    "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+    "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3",
+    "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+    "scripts/run_image_convnext.py": "185062177f863a333b1e1974d8f24f8c4c9cb6bccd05a4806cd4d3a30b2a4b8a",
+    "configs/image_experiments/iab_dna_q179_20261029.json": "4edfe24b56cb19624d83154510e2e2afd7f100907ce83f32bd9f380c4b7eca04",
+    "scripts/run_image_dna.py": "a285b9f8e5c9a2edc1559a96370b08b2b3f3b420384d46654c76ad38a5215af4",
+    "research/image_attribution/dna_route.py": "cbbd143b3aa64e69496c3f9d079ee6124dc74ee3b47e85ab4d5dd5209839900e",
+    "research/image_attribution/iab_protocol.py": "16d6a70f408f7e6ea77bbae123b20e743b8c119bfbc3378f568b624375a7ce60",
+    "configs/image_experiments/iab_omnidfa_q179_20261029.json": "b6c49d1dcc678360167bc582e962ac80b1a65d724e072c197817f43c41d0f2cd",
+    "scripts/run_image_omnidfa.py": "5d37c60a674893fd1bb9c8df82f996bb1beecb743ceb6f3b63067d2c37daea71",
+    "research/image_attribution/omnidfa_route.py": "4ad85918179cae8c1d36ace250c5eaf985643a0f494b55f1fa09cbb6f7630e6d",
+    "configs/image_experiments/iab_ofa_tplus1_q179_20261029.json": "9b8ccf082236e2c0006d27b6f334a0965036098467ac2f563de24db8a5c1121f",
+    "research/image_attribution/ofa_tplus1.py": "aa1af4036982b0a07b9368e0f55295415bca13dc467d00dab0d84cfc1260ee20",
+    "scripts/run_image_ofa_tplus1.py": "54be4ce5639b66a686217297ce61e8d3bc34098e796bba0ee4e16545c3661906",
+    "configs/image_experiments/iab_convnext_comparison_20261029.json": "f08c7e0048f78843522e3c7975ee7e95e35d6ae42fa0cb2d2d3c37c18979e389",
+    "configs/image_experiments/iab_convnext_parent_dev_reference_20261029.json": "ce32bcc5e531c7170866066fa99eddc65e8597eb7862c1a4d183b770392c6e80",
+    "configs/image_experiments/iab_dna_comparison_20261029.json": "715c5838b3c1c18d819685a9fea958f7ca475c37146867c8901e8e526ff172d5",
+    "configs/image_experiments/iab_dna_parent_dev_reference_20261029.json": "c7dd38f2074db83b58dd1cef363971d8029cd64bc17f9507add8f644096acd13",
+    "configs/image_experiments/iab_omnidfa_comparison_20261029.json": "0ae6d4a91c5fbe527f32144434664b4f1ab95dc7c2252a7d0f5b72386f435d08",
+    "configs/image_experiments/iab_omnidfa_parent_dev_reference_20261029.json": "42650719967ce84c3dc72e76113b7436718e512b36b8ebcf80d1ae0740a4558c",
+    "outputs/image_experiments/convnext-q179-20261029/launch.json": "9187138ef4650ff6e43288a159ff14dd374ae3e871ea3e60bb00969d5a144990",
+    "outputs/image-remaining-routes-20261029/queue-convnext-v1/launch.json": "74a8d054c8220103ce454be1369ba748caaa69d75bb58f66e8ea115b2fb70713"
+  },
+  "stages": [
+    {
+      "name": "dna",
+      "script": "scripts/run_image_dna.py",
+      "config": "configs/image_experiments/iab_dna_q179_20261029.json",
+      "output": "outputs/image_experiments/dna-wild-q179-20261029",
+      "gpu": true,
+      "completion": "status.json"
+    },
+    {
+      "name": "omnidfa",
+      "script": "scripts/run_image_omnidfa.py",
+      "config": "configs/image_experiments/iab_omnidfa_q179_20261029.json",
+      "output": "outputs/image_experiments/omnidfa-part1-q179-20261029",
+      "gpu": true,
+      "completion": "status.json"
+    },
+    {
+      "name": "ofa-tplus1",
+      "script": "scripts/run_image_ofa_tplus1.py",
+      "config": "configs/image_experiments/iab_ofa_tplus1_q179_20261029.json",
+      "output": "outputs/image_experiments/ofa-tplus1-q179-20261029",
+      "gpu": true,
+      "completion": "status.json"
+    },
+    {
+      "name": "convnext-comparison",
+      "gpu": false,
+      "script": "scripts/compare_image_next_routes.py",
+      "config": "configs/image_experiments/iab_convnext_comparison_20261029.json",
+      "output": "outputs/image-remaining-routes-20261029/convnext-comparison",
+      "completion": "completion.json"
+    },
+    {
+      "name": "convnext-parent-dev-reference",
+      "gpu": false,
+      "script": "scripts/compare_image_next_routes.py",
+      "config": "configs/image_experiments/iab_convnext_parent_dev_reference_20261029.json",
+      "output": "outputs/image-remaining-routes-20261029/convnext-parent-dev-reference",
+      "completion": "completion.json"
+    },
+    {
+      "name": "dna-comparison",
+      "gpu": false,
+      "script": "scripts/compare_image_next_routes.py",
+      "config": "configs/image_experiments/iab_dna_comparison_20261029.json",
+      "output": "outputs/image-remaining-routes-20261029/dna-comparison",
+      "completion": "completion.json"
+    },
+    {
+      "name": "dna-parent-dev-reference",
+      "gpu": false,
+      "script": "scripts/compare_image_next_routes.py",
+      "config": "configs/image_experiments/iab_dna_parent_dev_reference_20261029.json",
+      "output": "outputs/image-remaining-routes-20261029/dna-parent-dev-reference",
+      "completion": "completion.json"
+    },
+    {
+      "name": "omnidfa-comparison",
+      "gpu": false,
+      "script": "scripts/compare_image_next_routes.py",
+      "config": "configs/image_experiments/iab_omnidfa_comparison_20261029.json",
+      "output": "outputs/image-remaining-routes-20261029/omnidfa-comparison",
+      "completion": "completion.json"
+    },
+    {
+      "name": "omnidfa-parent-dev-reference",
+      "gpu": false,
+      "script": "scripts/compare_image_next_routes.py",
+      "config": "configs/image_experiments/iab_omnidfa_parent_dev_reference_20261029.json",
+      "output": "outputs/image-remaining-routes-20261029/omnidfa-parent-dev-reference",
+      "completion": "completion.json"
+    },
+    {
+      "name": "ofa-tplus1-comparison",
+      "gpu": false,
+      "script": "scripts/compare_ofa_tplus1.py",
+      "output": "outputs/image-remaining-routes-20261029/ofa-tplus1-comparison",
+      "completion": "completion.json"
+    }
+  ],
+  "predecessors": [
+    {
+      "launch": "outputs/image_experiments/convnext-q179-20261029/launch.json",
+      "status": "outputs/image_experiments/convnext-q179-20261029/status.json",
+      "terminal": "completed",
+      "identity": {
+        "pid": 1002134,
+        "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+        "process_start_ticks": "28907415"
+      }
+    },
+    {
+      "launch": "outputs/image-remaining-routes-20261029/queue-convnext-v1/launch.json",
+      "status": "outputs/image-remaining-routes-20261029/queue-convnext-v1/status.json",
+      "terminal": "awaiting_analysis",
+      "identity": {
+        "pid": 1002130,
+        "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+        "process_start_ticks": "28907410"
+      }
+    }
+  ]
+}

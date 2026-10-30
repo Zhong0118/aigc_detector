@@ -1,0 +1,357 @@
+{
+  "schema": "ofa-simulator-tplus1-linear-v1",
+  "classes": [
+    "4o",
+    "CogView3_PLUS",
+    "FLUX",
+    "KANDINSKY",
+    "PIXART",
+    "PLAYGROUND_2_5",
+    "SD1_5",
+    "SD2_1",
+    "SD3",
+    "SD3_5",
+    "SDXL",
+    "dalle3",
+    "gemini",
+    "hidream",
+    "hunyuan",
+    "ideogram",
+    "infinity",
+    "janus-pro",
+    "mid-5.2",
+    "mid-6.0",
+    "simulated_unknown"
+  ],
+  "known_classes": [
+    "4o",
+    "CogView3_PLUS",
+    "FLUX",
+    "KANDINSKY",
+    "PIXART",
+    "PLAYGROUND_2_5",
+    "SD1_5",
+    "SD2_1",
+    "SD3",
+    "SD3_5",
+    "SDXL",
+    "dalle3",
+    "gemini",
+    "hidream",
+    "hunyuan",
+    "ideogram",
+    "infinity",
+    "janus-pro",
+    "mid-5.2",
+    "mid-6.0"
+  ],
+  "input_dimensions": 128,
+  "training_epochs": 30,
+  "best_epoch": 18,
+  "selection_macro_f1": 0.4613535366503222,
+  "selection_note": "Fixed known labels; 21-way argmax unknown is an error; earliest best epoch",
+  "rejection": {
+    "score_method": "one_minus_simulated_unknown",
+    "acceptance_threshold": 0.9998470891150647,
+    "threshold_fitted_role": "calibration",
+    "unknown_false_acceptance_target": 0.05,
+    "calibration": {
+      "n": 1482,
+      "known_n": 1418,
+      "unknown_n": 64,
+      "acceptance_threshold": 0.9998470891150647,
+      "unknown_auroc": 0.4182717736248237,
+      "known_closed_set_accuracy": 0.5,
+      "score_note": "1 - simulated_unknown softmax score is acceptance confidence, not calibrated origin probability",
+      "uncertainty_note": "Wilson intervals treat images as independent; groups may be correlated",
+      "known_retention": 0.047954866008462625,
+      "known_retention_wilson95": [
+        0.038002974449980305,
+        0.06034938259598855
+      ],
+      "known_correct_and_retained": 0.027503526093088856,
+      "known_correct_and_retained_wilson95": [
+        0.020183958572613275,
+        0.03737622741927303
+      ],
+      "unknown_false_acceptance": 0.046875,
+      "unknown_false_acceptance_wilson95": [
+        0.016069016786292974,
+        0.12899653740093686
+      ],
+      "unknown_rejection": 0.953125,
+      "unknown_rejection_wilson95": [
+        0.8710034625990631,
+        0.983930983213707
+      ],
+      "per_source": {
+        "4o": {
+          "n": 68,
+          "acceptance_rate": 0.0
+        },
+        "CogView3_PLUS": {
+          "n": 67,
+          "acceptance_rate": 0.0
+        },
+        "FLUX": {
+          "n": 69,
+          "acceptance_rate": 0.0
+        },
+        "KANDINSKY": {
+          "n": 73,
+          "acceptance_rate": 0.0958904109589041
+        },
+        "PIXART": {
+          "n": 82,
+          "acceptance_rate": 0.036585365853658534
+        },
+        "PLAYGROUND_2_5": {
+          "n": 62,
+          "acceptance_rate": 0.04838709677419355
+        },
+        "SD1_5": {
+          "n": 71,
+          "acceptance_rate": 0.0
+        },
+        "SD2_1": {
+          "n": 75,
+          "acceptance_rate": 0.0
+        },
+        "SD3": {
+          "n": 77,
+          "acceptance_rate": 0.0
+        },
+        "SD3_5": {
+          "n": 69,
+          "acceptance_rate": 0.0
+        },
+        "SDXL": {
+          "n": 63,
+          "acceptance_rate": 0.1746031746031746
+        },
+        "dalle3": {
+          "n": 85,
+          "acceptance_rate": 0.0
+        },
+        "gemini": {
+          "n": 68,
+          "acceptance_rate": 0.0
+        },
+        "hidream": {
+          "n": 71,
+          "acceptance_rate": 0.0
+        },
+        "hunyuan": {
+          "n": 69,
+          "acceptance_rate": 0.34782608695652173
+        },
+        "ideogram": {
+          "n": 76,
+          "acceptance_rate": 0.25
+        },
+        "infinity": {
+          "n": 71,
+          "acceptance_rate": 0.014084507042253521
+        },
+        "janus-pro": {
+          "n": 63,
+          "acceptance_rate": 0.0
+        },
+        "kling": {
+          "n": 64,
+          "acceptance_rate": 0.046875
+        },
+        "mid-5.2": {
+          "n": 70,
+          "acceptance_rate": 0.0
+        },
+        "mid-6.0": {
+          "n": 69,
+          "acceptance_rate": 0.0
+        }
+      },
+      "counts": {
+        "known_retention": {
+          "successes": 68,
+          "total": 1418
+        },
+        "known_correct_and_retained": {
+          "successes": 39,
+          "total": 1418
+        },
+        "unknown_false_acceptance": {
+          "successes": 3,
+          "total": 64
+        },
+        "unknown_rejection": {
+          "successes": 61,
+          "total": 64
+        }
+      },
+      "threshold_fitted_role": "calibration",
+      "threshold_unknown_source": "kling"
+    },
+    "evaluation": {
+      "n": 1275,
+      "known_n": 1212,
+      "unknown_n": 63,
+      "acceptance_threshold": 0.9998470891150647,
+      "unknown_auroc": 0.43383624076693383,
+      "known_closed_set_accuracy": 0.4876237623762376,
+      "score_note": "1 - simulated_unknown softmax score is acceptance confidence, not calibrated origin probability",
+      "uncertainty_note": "Wilson intervals treat images as independent; groups may be correlated",
+      "known_retention": 0.04785478547854786,
+      "known_retention_wilson95": [
+        0.03720018153581678,
+        0.06136650078223346
+      ],
+      "known_correct_and_retained": 0.0231023102310231,
+      "known_correct_and_retained_wilson95": [
+        0.016031429401350793,
+        0.03318671362754161
+      ],
+      "unknown_false_acceptance": 0.0,
+      "unknown_false_acceptance_wilson95": [
+        3.469446951953614e-18,
+        0.05747119958885172
+      ],
+      "unknown_rejection": 1.0,
+      "unknown_rejection_wilson95": [
+        0.9425288004111484,
+        1.0
+      ],
+      "per_source": {
+        "4o": {
+          "n": 59,
+          "acceptance_rate": 0.0
+        },
+        "CogView3_PLUS": {
+          "n": 61,
+          "acceptance_rate": 0.0
+        },
+        "FLUX": {
+          "n": 67,
+          "acceptance_rate": 0.0
+        },
+        "KANDINSKY": {
+          "n": 66,
+          "acceptance_rate": 0.13636363636363635
+        },
+        "PIXART": {
+          "n": 54,
+          "acceptance_rate": 0.05555555555555555
+        },
+        "PLAYGROUND_2_5": {
+          "n": 65,
+          "acceptance_rate": 0.1076923076923077
+        },
+        "SD1_5": {
+          "n": 61,
+          "acceptance_rate": 0.0
+        },
+        "SD2_1": {
+          "n": 61,
+          "acceptance_rate": 0.0
+        },
+        "SD3": {
+          "n": 71,
+          "acceptance_rate": 0.0
+        },
+        "SD3_5": {
+          "n": 56,
+          "acceptance_rate": 0.0
+        },
+        "SDXL": {
+          "n": 60,
+          "acceptance_rate": 0.16666666666666666
+        },
+        "dalle3": {
+          "n": 61,
+          "acceptance_rate": 0.0
+        },
+        "gemini": {
+          "n": 51,
+          "acceptance_rate": 0.0
+        },
+        "grok3": {
+          "n": 63,
+          "acceptance_rate": 0.0
+        },
+        "hidream": {
+          "n": 61,
+          "acceptance_rate": 0.0
+        },
+        "hunyuan": {
+          "n": 53,
+          "acceptance_rate": 0.20754716981132076
+        },
+        "ideogram": {
+          "n": 63,
+          "acceptance_rate": 0.25396825396825395
+        },
+        "infinity": {
+          "n": 53,
+          "acceptance_rate": 0.018867924528301886
+        },
+        "janus-pro": {
+          "n": 58,
+          "acceptance_rate": 0.0
+        },
+        "mid-5.2": {
+          "n": 63,
+          "acceptance_rate": 0.0
+        },
+        "mid-6.0": {
+          "n": 68,
+          "acceptance_rate": 0.014705882352941176
+        }
+      },
+      "counts": {
+        "known_retention": {
+          "successes": 58,
+          "total": 1212
+        },
+        "known_correct_and_retained": {
+          "successes": 28,
+          "total": 1212
+        },
+        "unknown_false_acceptance": {
+          "successes": 0,
+          "total": 63
+        },
+        "unknown_rejection": {
+          "successes": 63,
+          "total": 63
+        }
+      },
+      "threshold_fitted_role": "calibration",
+      "threshold_unknown_source": "kling"
+    }
+  },
+  "actual_selection_verification": {
+    "images_opened": 2,
+    "selection_sample_ids": [
+      "iab-001a5c897bb7d92889f3804a",
+      "iab-004be1c1a405329c87b8041c"
+    ],
+    "full_offline_backbone_reload": true,
+    "cache_feature_max_error": 2.9802322387695312e-08,
+    "single_batch_feature_max_error": 5.960464477539063e-08,
+    "cache_score_max_error": 2.9802322387695312e-08,
+    "single_batch_score_max_error": 5.960464477539063e-08,
+    "head_reload_max_error": 0.0
+  },
+  "holdout_scored": false,
+  "synthetic_unknown_training_n": 1024,
+  "limitations": [
+    "Frozen official simulator and OFA extractor plus 20+1 project linear head; not full OFA pretraining or exact paper reproduction.",
+    "1024 distinct real train groups, balanced across ten semantics and eight fixed random architectures; class-frequency pilot budget fixed without evaluation tuning.",
+    "Simulator inputs use existing OFA deterministic center crop256, while the official DAIR demo uses Resize256/RandomCrop256. Outputs remain tensors without image quantization.",
+    "Native Python-RNG architecture replay avoids the upstream arch_json shallow-start defect. Source and trace hashes are pinned.",
+    "Known-only selection uses fixed20-label Macro-F1 with21-way argmax: unknown predictions count as errors. Threshold fitted only on64 kling calibration examples;63 grok3 unknown evaluation examples.",
+    "1-p_unknown is acceptance confidence, not a calibrated origin probability. No real-image detector is trained by this route.",
+    "Single seed and exploratory previously inspected parent development roles; no independent test. Official pretraining overlap with IAB is unknown.",
+    "All19294 holdout images remain excluded from inference. No source/version-family claims from publisher folder labels.",
+    "Wilson intervals treat images as independent; separate group-bootstrap comparison is required for correlated data. OSCR is deferred to score-only comparison."
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "openclip_prototype_saved_scores_recomputed": true,
+  "oscr": 0.28416889307978416,
+  "inputs": {
+    "scripts/compare_ofa_tplus1.py": "e964fc846903ff01f346150936db6a8d63fc5d6bd525ab7ddbc5ab3e081615af",
+    "scripts/compare_image_rejection_routes.py": "6deb2b9edc551d40de048619062af96c00ce6c97f8cc721490861645c3eefc38",
+    "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/predictions.jsonl": "ee038c330c0df3c3449dccfdd0989fb1991c898a03f66d222cbfea76777544f0"
+  },
+  "images_read": false,
+  "holdout_scored": false
+}

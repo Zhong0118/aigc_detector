@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "automatic_execution": false,
+  "manifest": "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "pairs": [
+    {
+      "id": "A-ConvNeXt22-vs-resnet",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate",
+        "recipe": {
+          "task": "attribution",
+          "mode": "postprocess",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    }
+  ],
+  "note": "EXPLORATORY ONLY: reference A2-clean reuses A0 selected using the full parent dev, including these evaluation IDs. ConvNeXt selects using only selection. Same IDs are not identical model-selection protocols. Exclude from the matched-selection primary ranking; no new tuning or A0 retraining."
+}

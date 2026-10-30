@@ -1,0 +1,14 @@
+{
+  "pid": 3461183,
+  "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+  "process_start_ticks": "34539835",
+  "command": [
+    "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.venv-image-next/bin/python",
+    "scripts/compare_image_next_routes.py",
+    "--config",
+    "configs/image_experiments/iab_dna_comparison_20261029.json",
+    "--output",
+    "outputs/image-remaining-routes-20261029/dna-comparison"
+  ],
+  "started_unix": 1793333968.0368037
+}

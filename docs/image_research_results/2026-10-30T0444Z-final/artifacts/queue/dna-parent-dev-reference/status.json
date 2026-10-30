@@ -1,0 +1,11 @@
+{
+  "stage": "dna-parent-dev-reference",
+  "child": {
+    "pid": 3461326,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "34540069"
+  },
+  "updated_unix": 1793333972.902885,
+  "status": "completed",
+  "exit_code": 0
+}

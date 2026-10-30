@@ -1,0 +1,25 @@
+{
+  "inputs": {
+    "configs/image_experiments/iab_convnext_comparison_20261029.json": "f08c7e0048f78843522e3c7975ee7e95e35d6ae42fa0cb2d2d3c37c18979e389",
+    "scripts/compare_image_next_routes.py": "d22b411c01344f3f1c88615815384a97f1fb57b3934c5a1b8f96a598ec2a5fe6",
+    "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/status.json": "649c52d3080e25c343c48ee587ffb5cd17462602205d1c36f2358e8034b2fb52",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP/predictions.jsonl": "f72478d4bcdef2e6c2a65164ec258a8464fc7f1ccb1f6d77809b3812da296b01",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/status.json": "8971244122a3ef3330b2a5bc752a3edf0dcdc2f444162e2658cc50239a102ac1",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/predictions.jsonl": "49426f1dbb217e054850e9a62b43ebca70609e0fd87ee71e7bc7539969d30c86",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/status.json": "b897eca0b1fbe5f883c271c7296b194357fd5f1ac41a4ed18c7e85e27e0bcb17",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D1-control/evaluate/predictions.jsonl": "07a59004a4583292f23f248972d52343152a4becc0e0e5ca24bc4ae1b79bd9e2",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/status.json": "55940892c7a0116184172c838a106bf1d6659348e26d7d30f975f18248a51f9d",
+    "outputs/image_experiments/openclip-q179-20261029/D-OpenCLIP-FFHQ/predictions.jsonl": "0c926694d4521acaebcf2e604743f6043c8094e906d5d62cdb24f96f96b518ca",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/status.json": "53e644cf8c82b724875a8db6f5c394a3e0360466f4163036f3eee4f5920be97f",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/predictions.jsonl": "e58b47fd00a35eb2eced523eb97842d04df56c18b5cbbc632bba8bd18b766a54",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate/status.json": "46be5c9d6ac517d1077f7a875b78df94e13c34c83affc314247b66a54ace1912",
+    "outputs/image_experiments/followups-v7-200-q179-e30/D2-semantic/evaluate/predictions.jsonl": "a2af0222e6b3bed87f0acbc10583d5579704204bcc6ad7d43605672e9372293b",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/status.json": "788b12d8f0ed5dc75b44b5b290bd580c65590e30516261d84d0da98f651f119e",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP22/predictions.jsonl": "5af97a22eb477569ea882bda3215d75dfae8cfcdcc68b9d36b4b2b89efb1fce6",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/status.json": "0e16a6bfc0e6c67d00a5ca4f94ff53b7aa1943aee6e5454a4429bb3e863d19fa",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/predictions.jsonl": "b4e601a66efe44378fb1f711a41fe2bbe3d18908e82934cb61aa89b9a635034c"
+  },
+  "holdout_scored": false,
+  "images_read": false
+}

@@ -1,0 +1,13 @@
+{
+  "images_opened": 2,
+  "selection_sample_ids": [
+    "iab-001a5c897bb7d92889f3804a",
+    "iab-004be1c1a405329c87b8041c"
+  ],
+  "full_offline_backbone_reload": true,
+  "cache_feature_max_error": 2.9802322387695312e-08,
+  "single_batch_feature_max_error": 5.960464477539063e-08,
+  "cache_score_max_error": 2.9802322387695312e-08,
+  "single_batch_score_max_error": 5.960464477539063e-08,
+  "head_reload_max_error": 0.0
+}

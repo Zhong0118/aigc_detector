@@ -48,3 +48,7 @@ ConvNeXt三个头已各完成30轮exit0，真实selection全重载和单批一�
 DNA-Det、OmniDFA及OFA20+1入口已通过95项组合CPU测试和独立审查。OmniDFA官方checkpoint688状态张量CPU严格加载，观察SHA与收据绑定，仅局部允许argparse.Namespace且始终weights_only=True；OFA模拟器218状态张量严格加载、8架构trace互异、合成张量重复误差0且恢复Python随机状态。上述CPU检查不是正式图像成绩。
 
 scripts/run_remaining_image_queue.py仅等待原ConvNeXt和waiter同时成功后，依次DNA骨干A22线性头30轮、OmniDFA A22线性头30轮及train-only K10原型、OFA官方冻结模拟器/提取器20+1头30轮，再执行6个闭集/parent-dev参考比较与OFA拒识比较。每阶段重新检查GPU0显存<=1024MiB、共享锁、磁盘>=20GiB，独占输出并绑定代码/配置SHA，失败即停不自动重试。OFA模拟未知只由1024个不同real-train组重建，8架构各128张；known selection选epoch，kling只拟阈值，grok3只评估，报告已知覆盖/正确且保留/未知误接收/OSCR及group bootstrap。完整模拟器和提取器预训练不在本轮范围；A3完整映射仍blocked。
+
+
+## 2026-10-30最终验收
+本轮已登记ConvNeXt、DNA、OmniDFA及OFA20+1和七对照全部完成exit0并核验。最终各路线结果、FFHQ阈值迁移、未知覆盖代价、配对区间及限制见[阶段总览](image_research_results/2026-10-30T0444Z-final/README.md)。完整预训练和A3仍按所选范围与证据限制未执行。

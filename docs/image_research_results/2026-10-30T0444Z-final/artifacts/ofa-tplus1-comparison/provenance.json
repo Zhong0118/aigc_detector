@@ -1,0 +1,42 @@
+{
+  "inputs": {
+    "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/status.json": "2c943db113a1577713000155ba442b4d4ea5ff47e81260ab3cca856f4a36db5e",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/roles.json": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/metrics.json": "03f478636749d0003a4c4edc4afae2f1eb5ad889efa58d864bc557bf0547d039",
+    "outputs/image_experiments/followups-v7-200-q179-e30/A1/evaluate/predictions.jsonl": "5863231c617ac3d5b99f180f25b365af342ef165bb7b55ffc112a94e815aac6d",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/status.json": "69f79ab969ddb0da12bc29e9852fbb74d41a1760baeb6b36441c4a9da32fc309",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/roles.json": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/metrics.json": "e301a060d3ba581432746b32df329b8a7e9b92b301ec242a2357711d67b9ea10",
+    "outputs/image_experiments/openclip-q179-20261029/A-OpenCLIP-open20/predictions.jsonl": "ee038c330c0df3c3449dccfdd0989fb1991c898a03f66d222cbfea76777544f0",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/status.json": "e24fb6a4255201f3db76a380142951ba79245a794c926fa2eed438b1138c47a8",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/roles.json": "eb440bd2ce8658650a936b1c2468db0a37dec043f33b919fd21ee485bc3c9164",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/metrics.json": "e33f4b96f44c0a60de164fff473d9646e1e8bfbaf4a3164bbefdc9f5615cf1d5",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/predictions.jsonl": "7fc97d5ef03ab475b39fec2317787f92ca11e8955c475bcd42a88d68478291a9",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/provenance.json": "7a959bd69644c33d39a23aef0dbcee139e9af414a6ce132ff3de3d6c4ccc65ce",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/registration.json": "9b8ccf082236e2c0006d27b6f334a0965036098467ac2f563de24db8a5c1121f",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/head.pth": "a514b1d7193a1d70d74e9ba990d8222b9a1234ee17e77d700e8264265f972c8e",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/architecture_traces.json": "04432027dc68aa843a281495bdd1c5e7130c14a83480660b9da79aa771bc47d1",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/derived_training.jsonl": "2ff2b08e233ba096fa4b87d785e87a66b79be5f2c1266d8945638b3c55b5de51",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/history.jsonl": "6e6839c5aee29a81e760215bac5a6497c273c98daf216a3ef8005513f7dd0670",
+    "outputs/image_experiments/ofa-tplus1-q179-20261029/actual_selection_verification.json": "6bcb4b9eea85cf7431a959b81af2577655f35f4455d7abdd580babe213b30bd4",
+    "scripts/compare_ofa_tplus1.py": "e964fc846903ff01f346150936db6a8d63fc5d6bd525ab7ddbc5ab3e081615af",
+    "scripts/compare_image_rejection_routes.py": "6deb2b9edc551d40de048619062af96c00ce6c97f8cc721490861645c3eefc38",
+    "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+    "scripts/compare_image_scale_epochs.py": "752764997b36a0b664170251df9ac0494de45fb692b7d1b0b705b7e5a6e53e4e",
+    "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584"
+  },
+  "recipe": {
+    "task": "attribution",
+    "mode": "open_set",
+    "seed": 42,
+    "unknown_calibration": [
+      "kling"
+    ],
+    "unknown_evaluation": [
+      "grok3"
+    ]
+  },
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "images_read": false
+}
