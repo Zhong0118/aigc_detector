@@ -169,6 +169,46 @@ ssh -N -L 18612:127.0.0.1:8612 school
   - 冷加载 6.3–8.6 s，完整重载 4.9 s；
   - 温推理：标准约 0.45–0.49 s（检测约 448 ms，来源约 32 ms），DNA 研究约 80 ms。
 
+### 第二轮修正验收（2026-10-30）
+
+上面的 A–C 是首版（f4709a5 / 842a03f）的记录，保留不改。第二轮的证据放在新的时间戳目录，旧证据文件未覆盖。
+
+- 提交对应关系：
+  - `2f5c876`：主体代码（启动器存活判定、解码前准入、历史时间筛选、实验元数据、提示文案）。
+  - `54654d8`：浏览器验收中发现的小问题——快速双击“开始分析”时第二次回调替换了待处理任务，页面显示 busy 而不是结果（服务端只推理一次）；导出 Markdown 中未运行阶段的耗时显示为 None；导航链接缺少焦点描边。
+  - 本节与证据所在的提交：只含文档和证据，不改代码。预览运行的代码与新报告的 `inference_code_commit` 都是 `54654d8`。
+- 证据目录：
+  - `evidence/2026-10-30T1454Z-round2/`：`adapter_acceptance.json`（真实模型数值复核）和 `live_acceptance.json`（在 `2f5c876` 上运行）。
+  - `evidence/2026-10-30T1515Z-round2-fix/live_acceptance.json`：在 `54654d8` 上运行，`--expect-commit 54654d8…`。
+- live 验收 `workbench-live-acceptance-v2` 共 13 项，两次均全部通过。新增三项：
+  - `recovery`：失败后能恢复；
+  - `code_version`：新结果的 `inference_code_commit` 等于期望提交，且不带 `+dirty`；
+  - `history_time_filter`：边界、组合条件、反向区间。
+- 真实模型回归：只用登记过、manifest 确认、SHA 已核对的非 holdout selection 图片，最大误差 ≤3.6e-7（≤1e-5），没有重跑数据集评估。
+- 测试：
+  - 命令：`.venv-image-next/bin/python -m pytest -q tests/test_workbench_image_engine.py tests/test_workbench_api.py tests/test_workbench_catalog.py tests/test_workbench_ui.py tests/test_dashboard_integration.py tests/test_report_and_providers.py tests/test_workbench_preview_launcher.py`
+  - 结果：140 passed。
+  - 全量 `tests/`：只有 `test_supports_sklearn_cloning_string_tags_and_pipeline_fit_transform`（`AttributeError: _get_tags`，sklearn 版本问题）失败。在干净的 `git archive 842a03f` 上同样失败，属于既有失败，与本轮无关，未屏蔽。
+- 浏览器检查（通过 SSH 隧道访问 `http://localhost:18612`，桌面 1366×900 与 375×812）：
+  - 图片：AI 图 96.45%；真实图 1.67%，来源显示“未运行”并附分数说明；双击只产生 1 次 `POST /analyze/file` 和 1 条报告；换图复用会话内结果；导航往返后结果保留；“清空”有效。
+  - 输入错误：截断的 PNG 返回 `decode_failed`；11 MiB 文件在上传控件内被拒，服务器端 413 由 live 验收覆盖。
+  - 研究模式：DNA 结果单独展示。
+  - 实验页：表格不被说明挤到下方；epoch、训练范围列正确；FFHQ 误报和未知拒识的覆盖损失保持可见。
+  - 历史：
+    - 开始日和结束日都设为 2026-10-30（结束日含当天）时为 41 条、3 页；反向区间显示明确错误。
+    - 组合条件：日期加类型“文本”为 4 条；日期、类型“图片”、状态“完成”加关键字 `ai` 为 5 条，与 API 一致。“部分成功”给出空结果提示。
+    - 在第 2 页改变筛选会回到第 1 页。快照能还原。
+    - JSON 和 Markdown 导出在服务器端用同一导出函数生成：JSON 有效，含 `inference_code_commit`；Markdown 使用“AI 生成分数”。为避免在浏览器下载文件，没有点击下载按钮。
+  - 文本页能正常显示；文本流程由 live 验收的 `text_flow` 覆盖。
+- reduced-motion：用本机 Google Chrome（Playwright 无头模式，`reducedMotion: 'reduce'`，375×812）实际开启。
+  - `matchMedia('(prefers-reduced-motion: reduce)')` 为 true，页面上有过渡或动画的元素从 6 个降到 0 个。
+  - 同次 Tab 遍历：导航链接在修复前没有可见焦点。`54654d8` 给它们加了 2px 蓝色 `:focus-visible` 描边，其余按钮和上传控件已有描边或阴影。
+- 隔离：
+  - 预览使用独立的 `.preview/config.yaml` 和 `.preview/preview.db`，只用 CPU（预览进程未出现在 GPU 进程列表中），外部调用关闭。
+  - 生产库 `data/aigc_detection.db` 的 mtime 保持 2026-09-09 17:18:34，sync 生产树 HEAD 未变。sync 树中 16 个未提交修改的 mtime 都不晚于 2026-09-09，为既有修改，本轮未触碰。
+  - 研究结果与 inventory 无改动。
+- 重启方式：先用 `status` 确认 pid、start_ticks 与 `/proc` 一致、进程组首进程等于 pid，且端口由该 pid 监听；再用 `stop`、`start` 重启。没有使用 pkill，也没有按端口停止进程；8611 和 8612 未被其他进程占用。
+
 ## 已知限制
 
 - 真实人脸误报：held-FFHQ 同 93 张真实图上，OpenCLIP 固定 0.5 误报 15 张，ResNet 与 ConvNeXt 各 56 张。按 calibration 目标 1% 选阈值后，OpenCLIP 仍误报 7/93。

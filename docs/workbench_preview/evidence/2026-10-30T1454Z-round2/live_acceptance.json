@@ -1,0 +1,198 @@
+{
+  "schema": "workbench-live-acceptance-v2",
+  "created_unix": 1793372306,
+  "api": "loopback preview",
+  "device": "cpu",
+  "holdout_opened": false,
+  "images": [
+    "iab-001a5c897bb7d92889f3804a",
+    "iab-004be1c1a405329c87b8041c",
+    "iab-0030eb0c8e2e097c20d35b57"
+  ],
+  "tolerance": 1e-05,
+  "passed": true,
+  "checks": {
+    "capabilities": {
+      "ok": true,
+      "load_seconds": 6.39,
+      "bundle_id": "image-standard-q179-v1",
+      "registry_sha256": "09daa5afd087558d0f71681ddb7d3a7061de1cf97ab468a0fc754087eaf8433e"
+    },
+    "standard_live_vs_offline": {
+      "ok": true,
+      "per_image": {
+        "iab-001a5c897bb7d92889f3804a": {
+          "status": 200,
+          "is_ai": 1,
+          "label": "ai",
+          "detection_error": 2.384185791015625e-07,
+          "attribution": "ok",
+          "attribution_error": 1.0755285551056204e-16,
+          "gate_ok": true,
+          "unknown_null": true,
+          "persisted": true,
+          "legacy_keys": true,
+          "client_seconds": 0.52,
+          "server_total_ms": 493.2
+        },
+        "iab-004be1c1a405329c87b8041c": {
+          "status": 200,
+          "is_ai": 1,
+          "label": "ai",
+          "detection_error": 0.0,
+          "attribution": "ok",
+          "attribution_error": 1.1920928955078125e-07,
+          "gate_ok": true,
+          "unknown_null": true,
+          "persisted": true,
+          "legacy_keys": true,
+          "client_seconds": 0.393,
+          "server_total_ms": 364.1
+        },
+        "iab-0030eb0c8e2e097c20d35b57": {
+          "status": 200,
+          "is_ai": 0,
+          "label": "real",
+          "detection_error": 0.0,
+          "attribution": "skipped",
+          "attribution_error": null,
+          "gate_ok": true,
+          "unknown_null": true,
+          "persisted": true,
+          "legacy_keys": true,
+          "client_seconds": 0.49,
+          "server_total_ms": 467.4
+        }
+      }
+    },
+    "research": {
+      "ok": true,
+      "dna": {
+        "iab-001a5c897bb7d92889f3804a": {
+          "dna_error": 2.980232238769531e-07,
+          "standard_unchanged": true
+        },
+        "iab-004be1c1a405329c87b8041c": {
+          "dna_error": 3.2782554626464844e-07,
+          "standard_unchanged": true
+        }
+      },
+      "assumed_status": "skipped"
+    },
+    "dedupe": {
+      "ok": true
+    },
+    "typed_errors": {
+      "ok": true,
+      "cases": {
+        "empty": {
+          "status": 400,
+          "code": "empty_file",
+          "ok": true
+        },
+        "garbage_named_png": {
+          "status": 400,
+          "code": "decode_failed",
+          "ok": true
+        },
+        "rgba": {
+          "status": 400,
+          "code": "unsupported_image_policy",
+          "ok": true
+        },
+        "cmyk_jpeg": {
+          "status": 400,
+          "code": "unsupported_image_policy",
+          "ok": true
+        },
+        "exif_orientation_6": {
+          "status": 400,
+          "code": "unsupported_image_policy",
+          "ok": true
+        },
+        "gif": {
+          "status": 415,
+          "code": "unsupported_media_type",
+          "ok": true
+        },
+        "over_10mib": {
+          "status": 413,
+          "code": "too_large",
+          "ok": true
+        },
+        "over_pixels": {
+          "status": 413,
+          "code": "too_large",
+          "ok": true
+        },
+        "bad_mode": {
+          "status": 422,
+          "code": "unsupported_mode",
+          "ok": true
+        },
+        "offline_only_method": {
+          "status": 422,
+          "code": "unknown_method_id",
+          "ok": true
+        },
+        "bad_request_id": {
+          "status": 422,
+          "code": "invalid_request_id",
+          "ok": true
+        },
+        "text_research": {
+          "status": 422,
+          "code": "unsupported_mode",
+          "ok": true
+        }
+      }
+    },
+    "concurrency": {
+      "ok": true,
+      "status_codes": [
+        200,
+        200,
+        503,
+        503,
+        503,
+        503
+      ]
+    },
+    "recovery": {
+      "ok": true,
+      "after_decode_failure": 200
+    },
+    "code_version": {
+      "ok": true,
+      "commits": [
+        "2f5c876dbcc53476a7b344261eda61ac4e578968"
+      ]
+    },
+    "history": {
+      "ok": true,
+      "image_reports": 34,
+      "reports_before": 27
+    },
+    "history_time_filter": {
+      "ok": true,
+      "anchor": "2026-10-30T14:58:20Z",
+      "day_total": 37,
+      "pages": 8
+    },
+    "experiments": {
+      "ok": true,
+      "groups": 9,
+      "methods": 24
+    },
+    "text_flow": {
+      "ok": true,
+      "seconds": 0.42
+    },
+    "isolation": {
+      "ok": true,
+      "main_db_mtime_unchanged": true,
+      "upload_files_left": 0
+    }
+  },
+  "wall_seconds": 7.3
+}

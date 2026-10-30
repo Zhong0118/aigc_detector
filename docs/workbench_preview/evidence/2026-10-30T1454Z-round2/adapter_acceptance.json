@@ -1,0 +1,151 @@
+{
+  "schema": "workbench-adapter-acceptance-v1",
+  "created_unix": 1793372100,
+  "device": "cpu",
+  "precision": "fp32",
+  "tf32": false,
+  "torch_threads": 8,
+  "torch": "2.6.0+cu124",
+  "python": "3.10.20",
+  "cpu": "x86_64",
+  "tolerance": 1e-05,
+  "registry_sha256": "09daa5afd087558d0f71681ddb7d3a7061de1cf97ab468a0fc754087eaf8433e",
+  "bundle_id": "image-standard-q179-v1",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "holdout_opened": false,
+  "images_opened": 3,
+  "images": [
+    {
+      "sample_id": "iab-001a5c897bb7d92889f3804a",
+      "split": "dev",
+      "is_ai": 1
+    },
+    {
+      "sample_id": "iab-004be1c1a405329c87b8041c",
+      "split": "dev",
+      "is_ai": 1
+    },
+    {
+      "sample_id": "iab-0030eb0c8e2e097c20d35b57",
+      "split": "dev",
+      "is_ai": 0
+    }
+  ],
+  "components": {
+    "det-openclip-q179-v1": {
+      "passed": true,
+      "max_error": 2.384185791015625e-07,
+      "checks": {
+        "single_vs_batch": 6.146728992462158e-08,
+        "full_reload": 0.0,
+        "vs_registered_feature_cache_and_head": 2.384185791015625e-07,
+        "vs_research_reference_on_device": 0.0,
+        "service_vs_direct": 6.146728992462158e-08
+      },
+      "assets_sha256": {
+        "backbone": "9ce2e8a8ebfff3793d7d375ad6d3c35cb9aebf3de7ace0fc7308accab7cd207e",
+        "head": "0432c050a2c9afcb1845e31651586032e5672f0e4096713fdd4a9f0d64ea4bbb"
+      },
+      "selection_sample_ids": [
+        "iab-001a5c897bb7d92889f3804a",
+        "iab-004be1c1a405329c87b8041c",
+        "iab-0030eb0c8e2e097c20d35b57"
+      ]
+    },
+    "attr-resnet50-q179-v1": {
+      "passed": true,
+      "max_error": 1.1920928955078125e-07,
+      "checks": {
+        "single_vs_batch": 3.2741809263825417e-11,
+        "full_reload": 0.0,
+        "vs_registered_saved_predictions": 1.1920928955078125e-07,
+        "vs_research_reference_on_device": 0.0,
+        "service_research_vs_direct": 3.2741809263825417e-11,
+        "service_gated_vs_direct": 3.2741809263825417e-11
+      },
+      "assets_sha256": {
+        "model": "c3756dd56fbd3d151ebda8db69b683fd8c78cd773a9967af6e70a3565891562b"
+      },
+      "selection_sample_ids": [
+        "iab-001a5c897bb7d92889f3804a",
+        "iab-004be1c1a405329c87b8041c"
+      ]
+    },
+    "research-dna-lp22": {
+      "passed": true,
+      "max_error": 3.5762786865234375e-07,
+      "checks": {
+        "single_vs_batch": 5.960464477539063e-08,
+        "full_reload": 0.0,
+        "vs_registered_feature_cache_and_head": 3.5762786865234375e-07,
+        "vs_research_reference_on_device": 0.0,
+        "service_vs_direct": 5.960464477539063e-08
+      },
+      "assets_sha256": {
+        "backbone": "641cf077f667636c62828227cd1d4ecb78494744245186062973b0f31d962d92",
+        "head": "d1e5651ab26ca56314d5a88d0e6b27a375328275ecf1fe7b5e4c384424ed12a7"
+      },
+      "selection_sample_ids": [
+        "iab-001a5c897bb7d92889f3804a",
+        "iab-004be1c1a405329c87b8041c"
+      ]
+    }
+  },
+  "detection_labels": {
+    "iab-001a5c897bb7d92889f3804a": "ai",
+    "iab-004be1c1a405329c87b8041c": "ai",
+    "iab-0030eb0c8e2e097c20d35b57": "real"
+  },
+  "gate": {
+    "iab-001a5c897bb7d92889f3804a": "ok",
+    "iab-004be1c1a405329c87b8041c": "ok",
+    "iab-0030eb0c8e2e097c20d35b57": "skipped"
+  },
+  "unknown": [
+    {
+      "status": "unavailable",
+      "score": null,
+      "reason_code": "not_calibrated_for_22_classes",
+      "message": "尚无经验证的通用未知来源拒识能力"
+    },
+    {
+      "status": "unavailable",
+      "score": null,
+      "reason_code": "not_calibrated_for_22_classes",
+      "message": "尚无经验证的通用未知来源拒识能力"
+    },
+    {
+      "status": "unavailable",
+      "score": null,
+      "reason_code": "not_calibrated_for_22_classes",
+      "message": "尚无经验证的通用未知来源拒识能力"
+    }
+  ],
+  "load_seconds": {
+    "cold_first_load": 7.6,
+    "second_full_reload": 5.0
+  },
+  "warm_inference_ms": {
+    "standard_total_ms": [
+      519.3,
+      570.5,
+      555.2
+    ],
+    "standard_detection_ms": [
+      477.0,
+      515.9,
+      552.9
+    ],
+    "standard_attribution_ms": [
+      34.3,
+      42.7,
+      null
+    ],
+    "research_dna_ms": [
+      93.3,
+      97.6
+    ]
+  },
+  "offline_reference_note": "Registered caches/predictions were produced by the registered GPU0 runs; the adapter and the on-device research reference run on CPU.",
+  "a0_predictions_sha256": "a2e31045aef03f24916ac9ef8de74eebdb51a977c6430e94d13394fdbd1ca453"
+}
