@@ -1,0 +1,169 @@
+{
+  "sources": {
+    "configs/image_experiments/iab_convnext_q179_20261029.json": "ad56361e341a408d3bc9d2802fc6336701621670916636a53002bad84a45cdec",
+    "outputs/image_experiments/convnext-q179-20261029/status.json": "d624b76d5f10a106ad4f17a8f4d584154cf67a6021a0db7e1e67c1e2e2041d28",
+    "outputs/image_experiments/convnext-q179-20261029/registration.json": "125c6e95346e8e585d19ae1702c4ca32e5dfbdba50f826407a6ecc8f57a226bf",
+    "outputs/image_experiments/convnext-q179-20261029/cache.json": "2e7336979d4d85a48265a6f8e23e70581b0a5c74e58ab1f428da646dc423714f",
+    "outputs/image_experiments/convnext-q179-20261029/features.pt": "2c85344bd452f10f6b261138310c9fb645da6e56d8e35da3c29637065805689d",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/roles.json": "82d3a0bd55628a154060fd0fe9458bf3584399366422ce58ea7cd6eba662e4a5",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/status.json": "8971244122a3ef3330b2a5bc752a3edf0dcdc2f444162e2658cc50239a102ac1",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/linear/status.json": "e9a034c48d74dbb0d30a22e5077bc060fa807b8a5a5e18d752c8dfc9438e6f0f",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/metrics.json": "a06e21ff127fef48f25be9efad088fa5ab24e4d626e0a5b065b2963204a2573b",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/provenance.json": "af8e063a08525abc672a2d3a8444177cf32364dd0dc17a1f9016fd335c920011",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/linear/history.jsonl": "8baf6bc8913ee502674c07e84c776f1d9f43aaf370ddbc16aeb7d8260c5d9c35",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/linear/head.pth": "467c2be35913291d3849e8c6f60458005257e7c476486be182476e0e270b1fa5",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/predictions.jsonl": "49426f1dbb217e054850e9a62b43ebca70609e0fd87ee71e7bc7539969d30c86",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/linear/calibration/predictions.jsonl": "9412dde773871b5bd0a9226fac3cc04dc41f85d97e49280f52994ac19fb55b28",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/linear/predictions.jsonl": "00bf090817e09185d2e88570178a75adee14812b2bea333839c651d6185034f8",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/roles.json": "e1441837145a22e8aa5726036101a18aca2d4b53f80812e3563763926f40b666",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/status.json": "53e644cf8c82b724875a8db6f5c394a3e0360466f4163036f3eee4f5920be97f",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/status.json": "45cdce9f8add6b4d71c134cf27c4fcbe9a1332f843587c4f1d5f8b43b43574f8",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/metrics.json": "1451c552b2a9519111f602da6a66dc1b6cf7d163bf1cdc7695facb0b05d4636b",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/provenance.json": "20ab44b563486198bf12cd16a8848126b7c283f7fdb3f3b636f5ae21e845dcd1",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/history.jsonl": "6b56ba551e23cd66703598249f6bb3e75ed07cfaae3db0090ce7e5cd205a1de7",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/head.pth": "781f6492a602f5b4acd7dd860371bd3e250239bb73af036f98eeae3cc5a6d479",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/predictions.jsonl": "e58b47fd00a35eb2eced523eb97842d04df56c18b5cbbc632bba8bd18b766a54",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/calibration/predictions.jsonl": "78b8584ae329049bb35cd74c09fbcccce7213152c5f3e216740cc339dc344474",
+    "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/predictions.jsonl": "1b366e4c33b262b46dde0bd9e7f9016d07136355d00f674f2dee0f6199c796cb",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/roles.json": "5395a9a1ae5731716afd9509127f98fe896a857159a8348f117620d1d8431246",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/status.json": "0e16a6bfc0e6c67d00a5ca4f94ff53b7aa1943aee6e5454a4429bb3e863d19fa",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/linear/status.json": "da6ef4cc7b6bc8be324f760c2b0278bb4d0054de7fc047c9695e50d0047f07b1",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/metrics.json": "9d85808dba8a3887e22f469a9dfb5e590475db9b01cfaa900ec12ca9d9ba15a2",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/provenance.json": "1d1a90b5ad88e3e7f1525d554a133a066b8f8ca62f31203ec9a3e90800e942c2",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/linear/history.jsonl": "a231d0f1b3a41c9c8124ac0def10a7da22897529f41c8c8de2b778b54a3cd2fc",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/linear/head.pth": "d5c911e5dc8c8fdad3ae182e07910fe2a786a1ec1febb452b096278f12618df3",
+    "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/predictions.jsonl": "b4e601a66efe44378fb1f711a41fe2bbe3d18908e82934cb61aa89b9a635034c",
+    "research/image_attribution/openclip_route.py": "25912901555979a4f10f55184f85425b9dd389b9299f879e12d57a9d982d7584",
+    "scripts/run_image_openclip.py": "115dad8a8327097a168e11bc5448ab630ffad6fca9f461f2266a91f01a902af3",
+    "research/image_attribution/feature_ablation.py": "a001f7caa1afe3e2c0dfabb67dd3ad43b62d0349df799ffe1ae9228a646ddb27",
+    "research/image_attribution/followups.py": "b35151909664d9ee36320ee163eb20e413af561eaef8294f4a3590bf4593e621",
+    "research/image_attribution/protocol.py": "3e1a446cb5801f0267bac72d728bd4724937249772c0008ed283c47bf8cb0ba7",
+    "research/image_attribution/models.py": "2aacdf65bbc165e77463446455d4bb3d98415e48b9c66689ac802b505121a3f5",
+    "scripts/run_image_experiment.py": "6f54f056663e48d48a6dea8b5f74e304d044afd9eba1303f6c1687037e5351b3",
+    "scripts/run_image_followup.py": "9a4ac9f85dfa79068a0da66f6e329aa47d5747a80dff8933b1b13a9baa0d019d",
+    "scripts/run_image_convnext.py": "185062177f863a333b1e1974d8f24f8c4c9cb6bccd05a4806cd4d3a30b2a4b8a",
+    "outputs/image_experiments/assets/convnext-tiny-in22k-20261029/model.safetensors": "77b619e187de71bce58721689da0c009e84cc20677293d7d43105307e34d868a",
+    "outputs/image_experiments/assets/convnext-tiny-in22k-20261029/config.json": "05b31a3e4e2f16a1ad61f64ea4b34ba2e17fb10e72c48490de088b92b97a6151",
+    "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+    "outputs/image_experiments/iab-balanced-v7-200-q179/selection.json": "1c8dee2e17cc128867562186cee7bc4f8cb82042b26ddb6d5569d703ab77876b",
+    "outputs/image_experiments/convnext-q179-20261029/launch.json": "9187138ef4650ff6e43288a159ff14dd374ae3e871ea3e60bb00969d5a144990"
+  },
+  "copied": [
+    {
+      "source": "configs/image_experiments/iab_convnext_q179_20261029.json",
+      "path": "artifacts/config/iab_convnext_q179_20261029.json",
+      "sha256": "ad56361e341a408d3bc9d2802fc6336701621670916636a53002bad84a45cdec",
+      "bytes": 4388
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/status.json",
+      "path": "artifacts/status.json",
+      "sha256": "d624b76d5f10a106ad4f17a8f4d584154cf67a6021a0db7e1e67c1e2e2041d28",
+      "bytes": 537
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/launch.json",
+      "path": "artifacts/launch.json",
+      "sha256": "9187138ef4650ff6e43288a159ff14dd374ae3e871ea3e60bb00969d5a144990",
+      "bytes": 337
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/registration.json",
+      "path": "artifacts/registration.json",
+      "sha256": "125c6e95346e8e585d19ae1702c4ca32e5dfbdba50f826407a6ecc8f57a226bf",
+      "bytes": 6956
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/status.json",
+      "path": "artifacts/D-ConvNeXt/status.json",
+      "sha256": "8971244122a3ef3330b2a5bc752a3edf0dcdc2f444162e2658cc50239a102ac1",
+      "bytes": 76
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/metrics.json",
+      "path": "artifacts/D-ConvNeXt/metrics.json",
+      "sha256": "a06e21ff127fef48f25be9efad088fa5ab24e4d626e0a5b065b2963204a2573b",
+      "bytes": 11826
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/provenance.json",
+      "path": "artifacts/D-ConvNeXt/provenance.json",
+      "sha256": "af8e063a08525abc672a2d3a8444177cf32364dd0dc17a1f9016fd335c920011",
+      "bytes": 4859
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/linear/history.jsonl",
+      "path": "artifacts/D-ConvNeXt/linear/history.jsonl",
+      "sha256": "8baf6bc8913ee502674c07e84c776f1d9f43aaf370ddbc16aeb7d8260c5d9c35",
+      "bytes": 21558
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt/linear/status.json",
+      "path": "artifacts/D-ConvNeXt/linear/status.json",
+      "sha256": "e9a034c48d74dbb0d30a22e5077bc060fa807b8a5a5e18d752c8dfc9438e6f0f",
+      "bytes": 106
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/status.json",
+      "path": "artifacts/D-ConvNeXt-FFHQ/status.json",
+      "sha256": "53e644cf8c82b724875a8db6f5c394a3e0360466f4163036f3eee4f5920be97f",
+      "bytes": 81
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/metrics.json",
+      "path": "artifacts/D-ConvNeXt-FFHQ/metrics.json",
+      "sha256": "1451c552b2a9519111f602da6a66dc1b6cf7d163bf1cdc7695facb0b05d4636b",
+      "bytes": 6867
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/provenance.json",
+      "path": "artifacts/D-ConvNeXt-FFHQ/provenance.json",
+      "sha256": "20ab44b563486198bf12cd16a8848126b7c283f7fdb3f3b636f5ae21e845dcd1",
+      "bytes": 4893
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/history.jsonl",
+      "path": "artifacts/D-ConvNeXt-FFHQ/linear/history.jsonl",
+      "sha256": "6b56ba551e23cd66703598249f6bb3e75ed07cfaae3db0090ce7e5cd205a1de7",
+      "bytes": 21552
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/D-ConvNeXt-FFHQ/linear/status.json",
+      "path": "artifacts/D-ConvNeXt-FFHQ/linear/status.json",
+      "sha256": "45cdce9f8add6b4d71c134cf27c4fcbe9a1332f843587c4f1d5f8b43b43574f8",
+      "bytes": 107
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/status.json",
+      "path": "artifacts/A-ConvNeXt22/status.json",
+      "sha256": "0e16a6bfc0e6c67d00a5ca4f94ff53b7aa1943aee6e5454a4429bb3e863d19fa",
+      "bytes": 78
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/metrics.json",
+      "path": "artifacts/A-ConvNeXt22/metrics.json",
+      "sha256": "9d85808dba8a3887e22f469a9dfb5e590475db9b01cfaa900ec12ca9d9ba15a2",
+      "bytes": 8305
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/provenance.json",
+      "path": "artifacts/A-ConvNeXt22/provenance.json",
+      "sha256": "1d1a90b5ad88e3e7f1525d554a133a066b8f8ca62f31203ec9a3e90800e942c2",
+      "bytes": 5160
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/linear/history.jsonl",
+      "path": "artifacts/A-ConvNeXt22/linear/history.jsonl",
+      "sha256": "a231d0f1b3a41c9c8124ac0def10a7da22897529f41c8c8de2b778b54a3cd2fc",
+      "bytes": 34681
+    },
+    {
+      "source": "outputs/image_experiments/convnext-q179-20261029/A-ConvNeXt22/linear/status.json",
+      "path": "artifacts/A-ConvNeXt22/linear/status.json",
+      "sha256": "da6ef4cc7b6bc8be324f760c2b0278bb4d0054de7fc047c9695e50d0047f07b1",
+      "bytes": 107
+    }
+  ],
+  "images_read": false,
+  "model_data_copied": false
+}

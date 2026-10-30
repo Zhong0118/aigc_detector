@@ -1,0 +1,1 @@
+ConvNeXt三项真实完成30轮并通过保存分数、完整角色、源/模型/缓存SHA和selection重载验收。clean2310 AUROC99.6180%、FPR3.5751%、TPR97.6709%；FFHQ225仍56/93真实图误报60.2151%；来源1331 Top1 61.9083%、Top3 84.8234%。单seed开发结果，不能称已解决FFHQ。配对group区间由串行队列后续独立比较产生，此快照未声称已有。阈值逐项使用linear/calibration保存的原batch32分数精确复算；根目录另导出的batch128分数有float32数值微差，逐ID校验最大误差<=1e-5且固定.5决策一致，漂移值另存summary。只读保存scores，未推理holdout。模型、缓存、每图预测均未复制。

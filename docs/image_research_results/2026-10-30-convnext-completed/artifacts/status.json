@@ -1,0 +1,21 @@
+{
+  "launch": {
+    "pid": 1002134,
+    "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+    "process_start_ticks": "28907415",
+    "command_line": [
+      "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.venv-image-next/bin/python",
+      "scripts/run_image_convnext.py",
+      "--execute"
+    ],
+    "started_unix": 1793277650.5356228
+  },
+  "updated_unix": 1793278590.385701,
+  "status": "completed",
+  "exit_code": 0,
+  "experiments": [
+    "D-ConvNeXt",
+    "D-ConvNeXt-FFHQ",
+    "A-ConvNeXt22"
+  ]
+}

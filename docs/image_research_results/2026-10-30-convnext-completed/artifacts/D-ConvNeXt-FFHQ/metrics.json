@@ -1,0 +1,249 @@
+{
+  "n": 225,
+  "accuracy": 0.7422222222222222,
+  "macro_f1": 0.6891080617495712,
+  "auroc": 0.9808569566634083,
+  "threshold_0_5": 0.5,
+  "fpr_0_5": 0.6021505376344086,
+  "tpr_0_5": 0.9848484848484849,
+  "real_count": 93,
+  "ai_count": 132,
+  "fixed_0_5": {
+    "n": 225,
+    "accuracy": 0.7422222222222222,
+    "macro_f1": 0.6891080617495712,
+    "auroc": 0.9808569566634083,
+    "threshold": 0.5,
+    "negative_count": 93,
+    "positive_count": 132,
+    "fpr": 0.6021505376344086,
+    "tpr": 0.9848484848484849,
+    "fpr_resolution": 0.010752688172043012,
+    "fpr_wilson95": [
+      0.5005311962132275,
+      0.6956657656187837
+    ],
+    "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+  },
+  "per_semantic": {
+    "FFHQ": {
+      "n": 225,
+      "accuracy": 0.7422222222222222,
+      "macro_f1": 0.6891080617495712,
+      "auroc": 0.9808569566634083,
+      "threshold": 0.5,
+      "negative_count": 93,
+      "positive_count": 132,
+      "fpr": 0.6021505376344086,
+      "tpr": 0.9848484848484849,
+      "fpr_resolution": 0.010752688172043012,
+      "fpr_wilson95": [
+        0.5005311962132275,
+        0.6956657656187837
+      ],
+      "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+    }
+  },
+  "per_source": {
+    "4o": {
+      "n": 5,
+      "predicted_ai_rate": 0.8
+    },
+    "CogView3_PLUS": {
+      "n": 7,
+      "predicted_ai_rate": 1.0
+    },
+    "FLUX": {
+      "n": 5,
+      "predicted_ai_rate": 1.0
+    },
+    "KANDINSKY": {
+      "n": 11,
+      "predicted_ai_rate": 1.0
+    },
+    "PIXART": {
+      "n": 4,
+      "predicted_ai_rate": 1.0
+    },
+    "PLAYGROUND_2_5": {
+      "n": 4,
+      "predicted_ai_rate": 1.0
+    },
+    "SD1_5": {
+      "n": 8,
+      "predicted_ai_rate": 1.0
+    },
+    "SD2_1": {
+      "n": 7,
+      "predicted_ai_rate": 0.8571428571428571
+    },
+    "SD3": {
+      "n": 7,
+      "predicted_ai_rate": 1.0
+    },
+    "SD3_5": {
+      "n": 3,
+      "predicted_ai_rate": 1.0
+    },
+    "SDXL": {
+      "n": 5,
+      "predicted_ai_rate": 1.0
+    },
+    "dalle3": {
+      "n": 10,
+      "predicted_ai_rate": 1.0
+    },
+    "gemini": {
+      "n": 4,
+      "predicted_ai_rate": 1.0
+    },
+    "grok3": {
+      "n": 4,
+      "predicted_ai_rate": 1.0
+    },
+    "hidream": {
+      "n": 8,
+      "predicted_ai_rate": 1.0
+    },
+    "hunyuan": {
+      "n": 6,
+      "predicted_ai_rate": 1.0
+    },
+    "ideogram": {
+      "n": 9,
+      "predicted_ai_rate": 1.0
+    },
+    "infinity": {
+      "n": 4,
+      "predicted_ai_rate": 1.0
+    },
+    "janus-pro": {
+      "n": 4,
+      "predicted_ai_rate": 1.0
+    },
+    "kling": {
+      "n": 5,
+      "predicted_ai_rate": 1.0
+    },
+    "mid-5.2": {
+      "n": 6,
+      "predicted_ai_rate": 1.0
+    },
+    "mid-6.0": {
+      "n": 6,
+      "predicted_ai_rate": 1.0
+    },
+    "real": {
+      "n": 93,
+      "predicted_ai_rate": 0.6021505376344086
+    }
+  },
+  "calibrated": {
+    "0.01": {
+      "calibration_negative_n": 914,
+      "calibration_fpr": 0.009846827133479213,
+      "evaluation": {
+        "n": 225,
+        "accuracy": 0.8844444444444445,
+        "macro_f1": 0.875912099100628,
+        "auroc": 0.9808569566634083,
+        "threshold": 0.7890945672988893,
+        "negative_count": 93,
+        "positive_count": 132,
+        "fpr": 0.24731182795698925,
+        "tpr": 0.9772727272727273,
+        "fpr_resolution": 0.010752688172043012,
+        "fpr_wilson95": [
+          0.17082219153553632,
+          0.3438484818273836
+        ],
+        "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+      },
+      "threshold_stability": {
+        "repeats": 1000,
+        "calibration_negative_groups": 914,
+        "median": 0.7890945672988893,
+        "p025": 0.6710917353630067,
+        "p975": 0.8200093507766725,
+        "method": "group bootstrap of calibration negatives only"
+      }
+    },
+    "0.05": {
+      "calibration_negative_n": 914,
+      "calibration_fpr": 0.04923413566739606,
+      "evaluation": {
+        "n": 225,
+        "accuracy": 0.7244444444444444,
+        "macro_f1": 0.6549079754601227,
+        "auroc": 0.9808569566634083,
+        "threshold": 0.3646966218948365,
+        "negative_count": 93,
+        "positive_count": 132,
+        "fpr": 0.6666666666666666,
+        "tpr": 1.0,
+        "fpr_resolution": 0.010752688172043012,
+        "fpr_wilson95": [
+          0.5659347000595181,
+          0.7541761324032368
+        ],
+        "uncertainty_note": "Wilson interval treats images as independent; correlated groups reduce effective sample size"
+      },
+      "threshold_stability": {
+        "repeats": 1000,
+        "calibration_negative_groups": 914,
+        "median": 0.3646966218948365,
+        "p025": 0.29983839392662054,
+        "p975": 0.4403292536735535,
+        "method": "group bootstrap of calibration negatives only"
+      }
+    }
+  },
+  "calibration_protocol": {
+    "task": "detection",
+    "mode": "calibration",
+    "target_fprs": [
+      0.01,
+      0.05
+    ],
+    "seed": 42,
+    "bootstrap_repeats": 1000
+  },
+  "task": "detection",
+  "score_semantics": "softmax probabilities ordered [real, ai]; column 1 is p_ai",
+  "best_epoch": 30,
+  "head_parameters": 1538,
+  "reload_max_error": 0.0,
+  "single_batch_max_error": 0.0,
+  "holdout_scored": false,
+  "calibration_used": true,
+  "note": "Exploratory parent-dev evaluation; parent dev informed earlier experiments",
+  "selection_auroc": 0.997357463164638,
+  "actual_image_verification": {
+    "image_cache_feature_max_error": 3.2782554626464844e-07,
+    "image_single_batch_feature_max_error": 6.332993507385254e-08,
+    "image_cache_score_max_error": 4.6566128730773926e-09,
+    "image_single_batch_score_max_error": 0.0,
+    "images_opened": 2,
+    "full_offline_backbone_reload": true,
+    "selection_sample_ids": [
+      "iab-004be1c1a405329c87b8041c",
+      "iab-005780cb481b2e5b089f3340"
+    ]
+  },
+  "head_asset_sha256": "781f6492a602f5b4acd7dd860371bd3e250239bb73af036f98eeae3cc5a6d479",
+  "training_epochs": 30,
+  "epoch": 30,
+  "classes": [
+    "real",
+    "ai"
+  ],
+  "failed_samples": [],
+  "limitations": [
+    "Frozen ImageNet22k/1k ConvNeXt-Tiny project linear-head adaptation, not an original forgery-detector reproduction.",
+    "Official test 288 RGB/bicubic/crop1.0/ImageNet normalization followed by pooled-feature L2. Different from OpenCLIP224 and ResNet preprocessing.",
+    "Single seed; previously inspected parent-dev evaluation, no independent test.",
+    "Publisher directory labels are not verified exact generator versions or architecture families.",
+    "Official pretraining overlap with IAB unknown. Holdout is never read for inference.",
+    "No unknown rejection head in this registration; closed source scores are conditional on known AI."
+  ]
+}
