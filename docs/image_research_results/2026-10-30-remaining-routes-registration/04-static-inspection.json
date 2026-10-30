@@ -1,0 +1,11 @@
+{
+  "asset_sha256": "91d368bbd24a20a3cbe9b1f381e334580cef7f4c1c10f7d058961371945d1e33",
+  "asset_size": 1198070905,
+  "images_opened": 0,
+  "gpu_used": false,
+  "checked_unix": 1793277697.245472,
+  "unsafe_globals": [
+    "argparse.Namespace"
+  ],
+  "status": "static_inspection_completed"
+}

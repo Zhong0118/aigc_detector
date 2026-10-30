@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "repository": "jumpycat/DAIR",
+  "revision": "1ec4fd41d70270fc20f62cbd716491b29fc7e6ee",
+  "files": [
+    {
+      "path": "encoder2.py",
+      "bytes": 2038,
+      "sha256": "743bf1cbe6d08537d96582267363599c0e273e2dd9c072ebf6bbb5862a16bca0",
+      "github_blob_sha": "82f256a23bb0f81d95040b287b6a26710c238644",
+      "url": "https://github.com/jumpycat/DAIR/blob/1ec4fd41d70270fc20f62cbd716491b29fc7e6ee/encoder2.py"
+    },
+    {
+      "path": "decoder24_with_graph.py",
+      "bytes": 10964,
+      "sha256": "7e748b55f1f27cdf679e3a471ec3f7894cd0513c03d652795293383e6dcc1fa2",
+      "github_blob_sha": "5bd945390215c0267eef10b22d41d684f6f39b71",
+      "url": "https://github.com/jumpycat/DAIR/blob/1ec4fd41d70270fc20f62cbd716491b29fc7e6ee/decoder24_with_graph.py"
+    }
+  ]
+}

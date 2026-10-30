@@ -20,7 +20,7 @@ ConvNeXt-Tiny官方ImageNet22k→1k权重：timm/convnext_tiny.fb_in22k_ft_in1k�
 最轻路线是原11类Simple_CNN完整strict load后提取pool(embedding).flatten的512维特征，冻结并接22来源30轮新头。输入RGB，非正方形先CenterCrop128，resize128再512，mean/std .5，完整图评估。必须称“DNA-Det预训练骨干线性适配”，不是完整CE+SupCon+AWL训练。官方balance模式batch32表示每类32组，22类×32×16patch=11264patch/step，不是32图片；完整训练另列资源协议。官方将softmax后结果交CrossEntropyLoss，若修正为logits也须披露。原任务GAN架构标签与本项目发布目录标签不等价。
 
 ## OFA全预训练与T+1：有新入口但仍需资产/预算门槛
-现有冻结OFA已完成，不能重跑或改原结果。[DAIR固定代码](https://github.com/jumpycat/DAIR/tree/1ec4fd41d70270fc20f62cbd716491b29fc7e6ee)README确有[模拟器权重入口](https://drive.google.com/file/d/1v5V1u6873oNj1sSwURqnhIK4A3r3QrM1/view)，期待250708204953-4m.pth的encoder/decoder键。当前只核验链接存在，尚未核验真实文件/大小/SHA/加载，旧“未找到公开入口”应更新为此状态。
+现有冻结OFA已完成，不能重跑或改原结果。[DAIR固定代码](https://github.com/jumpycat/DAIR/tree/1ec4fd41d70270fc20f62cbd716491b29fc7e6ee)README确有[模拟器权重入口](https://drive.google.com/file/d/1v5V1u6873oNj1sSwURqnhIK4A3r3QrM1/view)，期待250708204953-4m.pth的encoder/decoder键。此入口已完成真实文件导入、大小/SHA及CPU严格加载；详见文末本轮后续核验。
 
 DAIR默认COCO真图、crop256、MSE+.25LPIPS(VGG)、batch4累计32、100万microsteps；OFA提取器默认10万steps、batch16且每项8架构，多种输入分支；论文memorybank1024与代码65536不同。不能归入30epoch分类头预算，也不能凭batch16估显存。固定OFA代码train_noiser_fft_bank.py对decoder(latents).detach()调用，而decoder24_with_graph.py返回(output,arch)，存在静态接口不一致；缺模拟器还可能继续使用未初始化encoder，启动前必须复现修正/失败保护。
 
@@ -40,3 +40,11 @@ DAIR默认COCO真图、crop256、MSE+.25LPIPS(VGG)、batch4累计32、100万micr
 ## 本轮后续核验补充
 DNA-Det官方权重现已完整导入并CPU安全strict-load，实际SHA641cf077f667636c62828227cd1d4ecb78494744245186062973b0f31d962d92；独立新入口run_image_dna.py已通过47项CPU测试/独立审查，已绑定CPU收据，尚未做正式q179GPU推理。OmniDFA part1的1198070905字节和发布者SHA已全文件核验，静态extra globals仅argparse.Namespace，安全适配开发中。
 用户已明确优先官方模拟器＋20+1拒识头30轮。OFA模拟器138627153字节SHA7ee94487217a8ff9fad3b0da1bdbb60b89f923be09b377b5f1ef17d9e8eb3de8通过weights_only及官方encoder/decoder CPU严格加载；未运行完整预训练。另发现官方arch_json回放会把浅层架构误解为深层（CPU合成输入复现），本轮使用隔离Python RNG种子回放并核验真实trace，保留上游源码不修改。重建未知类预登记1024个不同real-train组、8架构各128张；20+1头只以known selection选epoch，kling仅cal，grok3仅eval。这些资产/合成CPU检查均不是模型成绩。
+
+
+## 2026-10-30继续执行登记
+ConvNeXt三个头已各完成30轮exit0，真实selection全重载和单批一致性通过。clean2310开发evaluation：AUROC99.6180%、FPR3.5751%、TPR97.6709%；FFHQ225：FPR56/93=60.2151%、TPR130/132=98.4848%；来源1331：Top1 61.9083%、Top3 84.8234%。跨语义误报仍明显，不能称已解决FFHQ。配对区间由后续只读比较另生成。
+
+DNA-Det、OmniDFA及OFA20+1入口已通过95项组合CPU测试和独立审查。OmniDFA官方checkpoint688状态张量CPU严格加载，观察SHA与收据绑定，仅局部允许argparse.Namespace且始终weights_only=True；OFA模拟器218状态张量严格加载、8架构trace互异、合成张量重复误差0且恢复Python随机状态。上述CPU检查不是正式图像成绩。
+
+scripts/run_remaining_image_queue.py仅等待原ConvNeXt和waiter同时成功后，依次DNA骨干A22线性头30轮、OmniDFA A22线性头30轮及train-only K10原型、OFA官方冻结模拟器/提取器20+1头30轮，再执行6个闭集/parent-dev参考比较与OFA拒识比较。每阶段重新检查GPU0显存<=1024MiB、共享锁、磁盘>=20GiB，独占输出并绑定代码/配置SHA，失败即停不自动重试。OFA模拟未知只由1024个不同real-train组重建，8架构各128张；known selection选epoch，kling只拟阈值，grok3只评估，报告已知覆盖/正确且保留/未知误接收/OSCR及group bootstrap。完整模拟器和提取器预训练不在本轮范围；A3完整映射仍blocked。

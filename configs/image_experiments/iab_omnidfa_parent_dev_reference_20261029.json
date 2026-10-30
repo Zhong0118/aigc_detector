@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "automatic_execution": false,
+  "manifest": "outputs/image_experiments/iab-balanced-v7-200-q179/manifest.jsonl",
+  "manifest_sha256": "9dd85636e2a19dbe833d9ebe2bee0c2a6b6eaf43015699e4fd9f27db3694b4c3",
+  "pairs": [
+    {
+      "id": "A-OmniDFA-LP22-vs-resnet",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate",
+        "recipe": {
+          "task": "attribution",
+          "mode": "postprocess",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-LP22",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    },
+    {
+      "id": "A-OmniDFA-prototype22-K10-vs-resnet",
+      "task": "attribution",
+      "before": {
+        "run": "outputs/image_experiments/followups-v7-200-q179-e30/A2/evaluate",
+        "recipe": {
+          "task": "attribution",
+          "mode": "postprocess",
+          "seed": 42
+        }
+      },
+      "after": {
+        "run": "outputs/image_experiments/omnidfa-part1-q179-20261029/A-OmniDFA-prototype22-K10",
+        "recipe": {
+          "task": "attribution",
+          "mode": "clean",
+          "seed": 42
+        }
+      }
+    }
+  ],
+  "note": "EXPLORATORY ONLY: A2-clean reuses A0 selected on full parent-dev including evaluation IDs. OmniDFA linear uses selection only; prototype has fixed train-only supports and no model selection. Exclude A0 from the matched-selection primary ranking."
+}

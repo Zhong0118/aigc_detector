@@ -1,0 +1,56 @@
+{
+  "status": "cpu_preflight_verified",
+  "model_results": false,
+  "tests_passed": 95,
+  "independent_review": "Critical/Important findings fixed and rechecked",
+  "sources": [
+    {
+      "source": "configs/image_experiments/iab_omnidfa_q179_20261029.json",
+      "path": "00-iab_omnidfa_q179_20261029.json",
+      "sha256": "b6c49d1dcc678360167bc582e962ac80b1a65d724e072c197817f43c41d0f2cd",
+      "bytes": 10266
+    },
+    {
+      "source": "configs/image_experiments/iab_ofa_tplus1_q179_20261029.json",
+      "path": "01-iab_ofa_tplus1_q179_20261029.json",
+      "sha256": "9b8ccf082236e2c0006d27b6f334a0965036098467ac2f563de24db8a5c1121f",
+      "bytes": 7342
+    },
+    {
+      "source": "outputs/image_experiments/assets/omnidfa-part1-20261029/cpu-verification.json",
+      "path": "02-cpu-verification.json",
+      "sha256": "2d2f731ad55031c51d2f8d1892b1828783903226c021f9e64339e14237baedbc",
+      "bytes": 1923
+    },
+    {
+      "source": "outputs/image_experiments/assets/omnidfa-part1-20261029/import.json",
+      "path": "03-import.json",
+      "sha256": "7b5f1e659f147d75b5782dac630459a0746d5c469465e77295cb120cd30fe752",
+      "bytes": 652
+    },
+    {
+      "source": "outputs/image_experiments/assets/omnidfa-part1-20261029/static-inspection.json",
+      "path": "04-static-inspection.json",
+      "sha256": "a7cc94344767935eb09f71acb1e28e657ca3f6e498b1f50790ef9c815248e319",
+      "bytes": 292
+    },
+    {
+      "source": "outputs/image_experiments/assets/ofa-simulator-20261029/cpu-verification-tplus1.json",
+      "path": "05-cpu-verification-tplus1.json",
+      "sha256": "5d4c3d91e9c487120d5ddecd0afb6e42049e4c73d3241ab2575e1ea6f86908d2",
+      "bytes": 2393
+    },
+    {
+      "source": "outputs/image_experiments/assets/ofa-simulator-20261029/250708204953-4m.pth.import.json",
+      "path": "06-250708204953-4m.pth.import.json",
+      "sha256": "22c73a5f27a983b2ed103d9ce37ef43c0950d0480be9cb3ce253cfd882687b87",
+      "bytes": 425
+    },
+    {
+      "source": "outputs/image_experiments/assets/ofa-simulator-20261029/source/source_receipt.json",
+      "path": "07-source_receipt.json",
+      "sha256": "4bc6ca4631d934435e00a23ba3b3997e9a424d4858fed5c6d7641147f7fa1615",
+      "bytes": 805
+    }
+  ]
+}

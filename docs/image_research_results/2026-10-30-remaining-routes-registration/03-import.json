@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "bytes": 1198070905,
+  "expected_bytes": 1198070905,
+  "started_unix": 1793277159.3860707,
+  "updated_unix": 1793277657.3648965,
+  "pid": 953223,
+  "boot_id": "c57302cb-f225-4cb9-8f13-2424628e7687",
+  "process_start_ticks": "28858968",
+  "exit_code": 0,
+  "sha256": "91d368bbd24a20a3cbe9b1f381e334580cef7f4c1c10f7d058961371945d1e33",
+  "source_url": "https://huggingface.co/MoeNew/OmniDFA/resolve/b4c0f420461f154c0d71f1abc13fa01e11e4975b/OmniDFA_part1_epoch%5B20%5D.pth",
+  "revision": "b4c0f420461f154c0d71f1abc13fa01e11e4975b",
+  "transport": "official pinned HTTPS to ssh school",
+  "publisher_sha256_available": true
+}
