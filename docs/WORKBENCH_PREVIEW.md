@@ -210,6 +210,48 @@ ssh -N -L 18612:127.0.0.1:8612 school
   - 研究结果与 inventory 无改动。
 - 重启方式：先用 `status` 确认 pid、start_ticks 与 `/proc` 一致、进程组首进程等于 pid，且端口由该 pid 监听；再用 `stop`、`start` 重启。没有使用 pkill，也没有按端口停止进程；8611 和 8612 未被其他进程占用。
 
+### 第三轮定向修正验收（2026-10-30）
+
+基线为 `217ee1a`（仅文档与证据，运行代码为 `54654d8`）。本轮只修四项已知问题，不训练、不下载、不重跑研究或数据集评估。旧证据目录全部保留。
+
+- 提交对应关系：
+  - `c6169bc`：四项修正及其回归测试，以及验收脚本新增的检查。
+  - `827fb10`：真实预览中发现的文案问题。原型说明里括号套括号，已改写，UI 测试同时拒绝嵌套括号。
+  - 本节与证据所在的提交：只含文档和证据。预览运行的代码、最终验收中新报告的 `inference_code_commit` 均为 `827fb10`。
+- 四项问题，均先写出能复现故障的测试，在未修改的代码上确认失败，再修复：
+  - P2-1 启动器：修复前，API 通过初检后在 UI 启动期间退出（退出码 7）或停止监听，`launch()` 仍返回成功（pytest：`DID NOT RAISE StartupFailed`）。修复后，返回成功前统一复查所有子进程：仍在运行、身份一致、仍在监听。任一不满足即启动失败，清理本次创建的全部子进程，不写 `pids.json`，日志保留。新增测试覆盖：退出与停止监听两种情形（UI 一并被清理）、UI 启动失败时 API 被清理、启动失败不写记录。
+  - P2-2 原型 epoch：修复前，`/experiments` 的原型行显示 30/29，骨干写“冻结骨干，只训练头”。修复后，原型自身的两个 epoch 均为 `null`（`not_applicable`，类原型 = train 特征均值）。30/29 移到单独的 `support_head`，即配套 open20 线性分类头，它为原型行提供已知类预测（研究脚本中 `prototype_cosine` 的“正确且保留”使用线性头的 argmax）。页面显示为“配套分类头 epoch”列、“说明”列和表下说明。OpenCLIP MSP 行和方法表仍为 30/29。各行元数据改为深拷贝，测试证明修改一行不影响其他行，也不影响下一次构建。
+  - P3-1 UTC 溢出：修复前，`created_from=0001-01-01T00:00:00+14:00` 与 `created_to=9999-12-31T23:59:59-14:00` 在实时 API 上都返回 HTTP 500。修复后只捕获 `OverflowError`，返回 422 `invalid_time_range`（`retryable=false`），提示中写明字段名和可表示范围，不暴露堆栈或路径，也不截断时间。
+  - P3-2 证据回退：修复前，提示称“相关元数据按未登记显示”，但实现仍保留 inventory 中登记的 epoch。修复后提示与文档改为如实描述（见“实验页元数据”）。新增测试：子证据被篡改时 A0 仍保留 inventory 中的 30/29，无有效来源的字段显示未登记；inventory 被篡改时整份不用，篡改值 31 不出现。
+- 测试：
+  - 规定命令加启动器测试：**153 passed**（基线 140，新增 13）。启动器测试连续 3 次各 21 passed。
+  - 全量 `tests/`：1275 passed、1 failed。失败项仍是 `test_supports_sklearn_cloning_string_tags_and_pipeline_fit_transform`（`AttributeError`，sklearn 版本），在干净的 `git archive 217ee1a` 上同样失败，未屏蔽。
+  - 一条既有断言随需求更新：原型行原先断言旧说明字符串，现改为断言 `not_applicable` 加 train 特征说明，要求更严格。
+- 证据：
+  - `evidence/2026-10-30T1556Z-round3/`：`adapter_acceptance.json` 和 `live_acceptance.json`（在 `c6169bc` 上运行）。
+  - `evidence/2026-10-30T1605Z-round3-final/live_acceptance.json`（在 `827fb10` 上运行）。
+  - 真实模型数值复核使用同 3 张登记过的 dev selection 图，SHA 与 manifest 核对一致，未打开 holdout，CPU，最大误差 3.6e-7（≤1e-5）。
+  - live 验收两次均 13/13 通过。`history_time_filter` 新增溢出 422 和偏移时区等价检查，`experiments` 新增原型、分类头与 MSP 的 epoch 检查。
+- 浏览器检查（桌面 1366×900；375×812 用本机 Chrome 无头模式）：
+  - 实验页：原型行为“不适用 / 配套分类头 30/29”，MSP 行为 30/29，ResNet MSP 为“未登记”，表下说明可见，375 下同样可见。
+  - 历史：仅结束日、开始日与结束日同为一天、反向区间报错、空结果、日期加类型“文本”（7 条）、第 2 页改变筛选后回到第 1 页；文本快照与图片快照均能还原。
+  - JSON 与 Markdown 导出在服务器端用同一导出函数核对（未点击下载）。
+  - 图片：
+    - AI 图 100.00% 和 96.45%，Top3 为原始 softmax；
+    - 真实图 1.67%，来源未运行；未知来源为 null；
+    - DNA 研究结果单列，不改写标准结论；
+    - 截断 PNG 返回解码错误，11 MiB 文件在上传控件内被拒；
+    - 双击只产生 1 条报告；
+    - 待处理时上传控件锁定，不会串图；
+    - 导航往返结果保留，“清空”有效。
+  - 375 无横向溢出。Tab 遍历中所有可操作控件都有焦点描边或阴影，唯一例外是 Streamlit 自带的主内容滚动 `section`。
+  - reduced-motion 实际开启后，有过渡或动画的元素从 6 个降到 0 个。
+- 文本：检测与报告正常返回（例如 high_risk_ai 0.9997），快照能还原。文本来源分支 `window_a0_equal_fusion` 的状态为 `error`，原因是 “resolved recipe hash does not match recipe content; legacy window artifacts require an explicit audited migration”。预览中从第一条文本报告（05:55Z，f4709a5 时期）到本轮全部 7 条都相同，且 `217ee1a..HEAD` 未改动文本路径代码，属于既有问题，本轮按要求不改文本模型。因此不能宣称完整文本来源能力正常。
+- 隔离与重启：
+  - 每次重启前用 `/proc` 核对 pid、start_ticks、进程组和端口归属，全部一致才执行 `stop` 与 `start`。第一次重启时独立核对脚本因语法错误未输出，但 `stop` 自带的身份校验仍然生效，停止的正是本启动器记录的两个进程。
+  - 生产库 mtime 仍为 2026-09-09 17:18:34。sync 树 HEAD 最后一次移动在 2026-09-08。研究结果、inventory 与旧证据无改动，预览进程不在 GPU 上。本用户可见的其他监听服务只有 2026-10-26 启动的 openclaw-gateway，未触碰。
+- Streamlit 原生限制：鼠标悬停在表格上时，表格工具栏图标可能暂时盖住紧邻上方说明的末尾，移开即恢复。
+
 ## 已知限制
 
 - 真实人脸误报：held-FFHQ 同 93 张真实图上，OpenCLIP 固定 0.5 误报 15 张，ResNet 与 ConvNeXt 各 56 张。按 calibration 目标 1% 选阈值后，OpenCLIP 仍误报 7/93。
