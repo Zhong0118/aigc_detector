@@ -70,7 +70,7 @@ def image_markdown(r: dict[str, Any]) -> str:
             lines += ["", out.get("conditional_statement", ""), ""]
             _ranked(lines, out["top_k"], 3)
         lines += [""] + [f"- {x}" for x in item.get("limitations", [])]
-    t = rt["timing_ms"]
+    t = {k: "未运行" if v is None else v for k, v in rt["timing_ms"].items()}
     lines += ["", "## 运行环境", "",
               f"- 设备：{rt['device']}，精度 {rt['precision']}；外部调用：{'有' if rt['external_calls'] else '无'}",
               f"- 耗时（毫秒）：解码 {t.get('decode_ms')}，排队 {t.get('queue_ms')}，检测 {t.get('detection_ms')}，"

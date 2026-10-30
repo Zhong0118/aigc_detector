@@ -107,6 +107,10 @@ def _key() -> tuple | None:
 
 
 def _submit_image() -> None:
+    if S.get("img_pending"):
+        # A second click can fire its callback before the rerun disables the button; it must not replace the
+        # running job (that would drop its result and re-send the same request_id as an in-flight duplicate).
+        return
     key, file = _key(), S["img_file"]
     S.pop("img_error", None)
     if key in S.setdefault("img_results", {}):

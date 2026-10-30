@@ -230,8 +230,11 @@ def test_markdown_export_keeps_semantics():
     md = export.image_markdown(r)
     assert "AI 生成倾向" in md and "不是校准概率" in md and "score = null" in md and CONDITIONAL_STATEMENT in md
     assert "/home/" not in md and "未重新归一化" in md
-    low = export.image_markdown(image_result(score=0.2))
+    low_result = image_result(score=0.2)
+    low_result["runtime"]["timing_ms"].update(attribution_ms=None, research_ms=None)
+    low = export.image_markdown(low_result)
     assert "未运行来源模型" in low and "真实图片倾向" in low
+    assert "来源 未运行，研究 未运行" in low and "None" not in low
 
 
 @pytest.mark.skipif(not __import__("pathlib").Path(__file__).resolve().parents[1].joinpath(
@@ -283,3 +286,18 @@ def test_history_date_filter_sends_utc_half_open_bounds_and_resets_page(monkeypa
     assert params["created_to"] == "2026-11-01T00:00:00Z" and params["offset"] == 0  # end day inclusive
     assert any("没有符合筛选条件的记录" in i.value for i in app.info)
     assert "UTC" in text_of(app)
+
+
+def test_rapid_double_submit_keeps_the_first_job(monkeypatch):
+    """Two click callbacks before the rerun: one job, same request_id, the first job is not replaced."""
+    from workbench.ui import pages
+    jobs = []
+    monkeypatch.setattr(pages, "start_job", lambda fn: jobs.append(fn) or dict(done=False, n=len(jobs)))
+    data = png()
+    state = dict(img_file=dict(name="a.png", data=data, sha256=hashlib.sha256(data).hexdigest()),
+                 img_mode_saved="标准模式")
+    monkeypatch.setattr(pages, "S", state)
+    pages._submit_image()
+    first = state["img_pending"]
+    pages._submit_image()
+    assert len(jobs) == 1 and state["img_pending"] is first and first["job"]["n"] == 1

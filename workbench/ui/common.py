@@ -57,7 +57,9 @@ div[data-testid="stButton"] button:hover:not(:disabled), div[data-testid="stDown
 div[data-testid="stButton"] button:active:not(:disabled), div[data-testid="stDownloadButton"] button:active:not(:disabled) {
   transform: scale(.985); }
 div[data-testid="stButton"] button:focus-visible, div[data-testid="stDownloadButton"] button:focus-visible,
-div[data-testid="stFileUploader"] button:focus-visible { outline: 2px solid var(--wb-blue); outline-offset: 2px; }
+div[data-testid="stFileUploader"] button:focus-visible,
+a[data-testid="stTopNavLink"]:focus-visible, a[data-testid="stSidebarNavLink"]:focus-visible {
+  outline: 2px solid var(--wb-blue); outline-offset: 2px; }
 div[data-testid="stButton"] button:disabled, div[data-testid="stDownloadButton"] button:disabled {
   cursor: not-allowed; opacity: .55; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
