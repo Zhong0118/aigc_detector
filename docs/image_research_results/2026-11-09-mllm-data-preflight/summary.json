@@ -1,0 +1,53 @@
+{
+  "stage": "sample_acquisition_and_integrity_completed",
+  "training_started": false,
+  "training_ready": false,
+  "source_dataset": "zr-zhang/MLLM-Generated-Image-Detection-Dataset",
+  "revision": "651a325f0ece2744c21d6c68280d2aaac227177b",
+  "intended_source_target": "publisher_platform_family_only",
+  "family_map": {
+    "GPT Image 2": "OpenAI",
+    "Nano Banana 2": "Google",
+    "Seedream": "ByteDance (not yet acquired)"
+  },
+  "sample_files": 96,
+  "verified_bytes": 136811306,
+  "file_and_pixel_decode_failures": 0,
+  "near_duplicate_pairs_in_this_sample": 0,
+  "transport": "local verified HTTPS followed by SSH relay; server original bytes rechecked",
+  "current_blockers": [
+    "GPU0 occupied by another active VLLM workload; no process interrupted",
+    "ByteDance training rows not acquired: official OpenFake filter returned HTTP500 internal/auth-check timeout",
+    "Dataset quality gate remains open: file format and resolution correlated with publisher; source/protocol provenance incomplete"
+  ],
+  "visual_spot_check": {
+    "Real": "underwater natural scene",
+    "GPT Image 2": "beetle image with scientific text annotations; not a plain unannotated photo",
+    "Nano Banana 2": "bird image bearing a source copyright watermark",
+    "limitation": "Appearance is not evidence that publisher authenticity/source labels are correct; generation vs editing not independently established"
+  },
+  "verification": {
+    "pytest_passed": 47,
+    "subtests_passed": 22,
+    "independent_review": "no Critical or Important findings; offline acquisition tests passed"
+  },
+  "source_hashes": {
+    "scripts/prepare_mllm_adaptation.py": "25e9faa0caaed6423bbaec2c1e1489fcd58310d707035c291f815fac746334de",
+    "tests/test_mllm_adaptation.py": "edfc3264c52e1c72b8826ef1bb679154c99ede7bb8c647e0af43fbee321cd2d6",
+    "outputs/image-new-adaptation-20261109/mllm-audit-sample-v1/selection.json": "f4ed2b6548607d801c8a19d9c6fd2d029cd8ebd4a08145a42ee303f94f9617a6",
+    "outputs/image-new-adaptation-20261109/mllm-audit-sample-v1/manifest.jsonl": "8e692ba40ccbe38ca855d022825a4ff0ccdd694966104b7b7b6a92d1a62c41a9",
+    "outputs/image-new-adaptation-20261109/mllm-audit-sample-v1/receipts.jsonl": "fc31b2543793fa8bd744c23e9221caff45c13861ba222ae1c6c3a7b2de906bc9",
+    "outputs/image-new-adaptation-20261109/mllm-audit-sample-v1/source-data-card.md": "1c7e4f0b9e6f9720a8e8cba9d848ec2b78f1ee363bcd79c18bf3253a22f2ef6f",
+    "outputs/image-new-adaptation-20261109/mllm-audit-sample-v1/metadata-pages.json": "f5aed191cdc9e218c4f1da5722fd5f845fa9975eed51c8bdc668336ccba31b0e",
+    "outputs/image-new-adaptation-20261109/mllm-audit-sample-v1/status.json": "a19cb61896bbb7212e16e5810c5624e2da4b1a7cb5c5c51e90dd7b3f985f39f2",
+    "outputs/image-new-adaptation-20261109/mllm-audit-sample-v1/pixel-audit.json": "9deaf5551d6ef6ab1ef248cd44410faa67d1aeb03f7e6729912b5617877a1326"
+  },
+  "limitations": [
+    "96 files are a diagnostic data audit, not an independent accuracy estimate",
+    "No new training epochs, new model acceptance, or deployment occurred",
+    "Publisher folder names are platform labels, not verified exact backend versions",
+    "Sample decode checks do not prove label correctness or legal provenance",
+    "Original images, per-image audit records and download metadata remain excluded from Git",
+    "selection metadata_only describes its selection-time metadata; acquisition completion is certified by completed status, verified receipts and server byte checks"
+  ]
+}
