@@ -124,6 +124,17 @@ class ReportGenerator:
             ]
             if reason_names:
                 evidence.append("不确定/拒判原因：" + "；".join(reason_names) + "。")
+            if modality == "text":
+                for provider in detection.get("providers", []):
+                    details = provider.get("details") or {}
+                    segments = details.get("segments") or []
+                    screening = details.get("screening_threshold")
+                    if provider.get("status") == "ok" and segments and screening is not None:
+                        count = sum(float(s["score"]) >= float(screening) for s in segments if s.get("score") is not None)
+                        evidence.append(
+                            f"检测分支中有 {count}/{len(segments)} 个窗口达到提示阈值 {float(screening):.2%}；"
+                            "这些窗口仅用于定位复核线索，文档结论仍依据独立校准阈值。"
+                        )
 
         if provenance["deep_triggered"]:
             evidence.append("检测分数达到深层溯源阈值，已继续执行内容凭证、水印和指纹库检查。")
@@ -174,10 +185,18 @@ class ReportGenerator:
             if status == "data_mismatch":
                 evidence.append("实验性 LLMDet 分支的数据缓存不完整或版本不匹配，本次未采用其候选来源结果。")
 
+        review = modality == "text" and label == "uncertain" and any(
+            provider.get("status") == "ok"
+            and (provider.get("details") or {}).get("screening_threshold") is not None
+            and score >= float(provider["details"]["screening_threshold"])
+            for provider in detection.get("providers", [])
+        )
         return {
             "provider": "template",
             "status": "ok",
-            "summary": self._summary(label, score, modality),
+            "review_label": "疑似 AI，需复核" if review else None,
+            "summary": (f"检测到疑似 AI 生成线索，风险分数为 {score:.2%}，建议复核高分段落；严格判定仍不确定。"
+                        if review else self._summary(label, score, modality)),
             "evidence": evidence,
             "limitations": [
                 "检测分数是模型风险输出，不是内容由 AI 生成的概率，不能单独作为最终结论；"
@@ -596,6 +615,7 @@ class ReportGenerator:
             "calibrated_high_threshold_replaced_by_floor": "运行高阈值已回落到有效的产品阈值",
             "runtime_high_threshold_capped_to_floor": "阈值产物中的运行高阈值曾被调整",
             "effective_high_threshold_not_evaluated": "当前运行阈值未完成独立验证，暂不报告误报率和召回率",
+            "scoring_protocol_not_evaluated": "文本评分方法已更新，旧校准指标不再适用，需重新验证误报率和召回率",
             "holdout_fpr_above_target": "真人验证集误报率显著高于目标",
             "insufficient_human_validation": "真人验证样本不足",
             "insufficient_ai_validation": "AI 验证样本不足",

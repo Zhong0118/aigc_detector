@@ -196,16 +196,15 @@ def summarize_segments(segments: list[dict], low_threshold: float, high_threshol
 def render_segment_panel(segments: list[dict], low_threshold: float, high_threshold: float) -> None:
     """展示整篇计数，以及每一块的 AI 率与原文摘要。"""
     stats = summarize_segments(segments, low_threshold, high_threshold)
-    st.subheader("分块 AI 率")
+    st.subheader("分段复核线索")
     cols = st.columns(5)
     cols[0].metric("总块数", stats["total"])
     cols[1].metric("疑似 AI", stats["ai"])
     cols[2].metric("不确定", stats["uncertain"])
     cols[3].metric("更像人工", stats["human"])
-    cols[4].metric("AI 块占比", f"{stats['ai_block_rate']:.1%}")
+    cols[4].metric("高分窗口占比", f"{stats['ai_block_rate']:.1%}")
     st.caption(
-        f"字符加权 AI 率 {stats['weighted_ai_rate']:.1%}。"
-        f"单块超过高风险阈值 {high_threshold:.0%} 计为疑似 AI，"
+        f"单块超过提示阈值 {high_threshold:.2%} 用于定位疑似 AI 线索，"
         f"低于低风险阈值 {low_threshold:.0%} 计为更像人工。"
     )
 
@@ -222,7 +221,7 @@ def render_segment_panel(segments: list[dict], low_threshold: float, high_thresh
             st.markdown(
                 f"""
                 <div class="segment-card {css}">
-                  <div class="segment-title">第 {block_no} 块 · {verdict} · AI率 {score:.1%}</div>
+                  <div class="segment-title">第 {block_no} 块 · {verdict} · 模型分数 {score:.1%}</div>
                   <div class="segment-meta">字符 {start}-{end} · {max(0, int(end) - int(start))} 字</div>
                   <div class="segment-text">{html.escape(preview)}</div>
                 </div>
@@ -277,7 +276,14 @@ def render_analysis(data: dict):
     low_threshold = float(decision.get("low_threshold") or 0.4)
     high_threshold = float(decision.get("high_threshold") or detection.get("threshold") or 0.8)
     segments = collect_segments(data)
-    segment_stats = summarize_segments(segments, low_threshold, high_threshold) if segments else None
+    segment_high_threshold = high_threshold
+    if report.get("review_label"):
+        for provider in detection.get("providers", []):
+            screening = (provider.get("details") or {}).get("screening_threshold")
+            if screening is not None:
+                segment_high_threshold = float(screening)
+                break
+    segment_stats = summarize_segments(segments, low_threshold, segment_high_threshold) if segments else None
 
     # 顶部 metric 用来快速回答：分数、结论、分块 AI 计数。
     label_names = {
@@ -296,20 +302,20 @@ def render_analysis(data: dict):
     }
     if segment_stats:
         top = st.columns([1.1, 1.1, 0.9, 0.9, 0.9])
-        top[0].metric("整篇加权 AI 率", f"{segment_stats['weighted_ai_rate']:.1%}")
-        top[1].metric("检测结论", label_names.get(detection["label"], detection["label"]))
+        top[0].metric("AI 特征风险分数", f"{detection['score']:.2%}")
+        top[1].metric("检测结论", report.get("review_label") or label_names.get(detection["label"], detection["label"]))
         top[2].metric("总块数", segment_stats["total"])
         top[3].metric("疑似 AI 块", f"{segment_stats['ai']} / {segment_stats['total']}")
-        top[4].metric("AI 块占比", f"{segment_stats['ai_block_rate']:.1%}")
+        top[4].metric("高分窗口占比", f"{segment_stats['ai_block_rate']:.1%}")
         st.caption(
             f"文本类型：{domain_names.get(decision.get('domain'), data['modality'].upper())}。"
-            f"单块超过 {high_threshold:.0%} 计为疑似 AI；"
-            f"整篇加权 AI 率按字符长度加权，不是简单块数平均。"
+            f"单块超过提示阈值 {segment_high_threshold:.2%} 用于定位疑似 AI 线索；"
+            f"整篇严格确认阈值为 {high_threshold:.2%}。风险分数与块占比均用于辅助复核。"
         )
     else:
         top = st.columns([1.15, 1.15, 1, 0.8])
         top[0].metric("AI 特征风险分数", f"{detection['score']:.2%}")
-        top[1].metric("检测结论", label_names.get(detection["label"], detection["label"]))
+        top[1].metric("检测结论", report.get("review_label") or label_names.get(detection["label"], detection["label"]))
         top[2].metric("文本类型", domain_names.get(decision.get("domain"), data["modality"].upper()))
         top[3].metric("记录 ID", data["content_id"])
         st.caption(
@@ -318,7 +324,8 @@ def render_analysis(data: dict):
         )
 
     if detection["label"] == "uncertain":
-        st.warning("当前分数位于不确定区间，不能直接判为 AI。")
+        st.warning("检测到疑似 AI 线索，请复核高分窗口；严格判定仍不确定。" if report.get("review_label")
+                   else "当前分数位于不确定区间，不能直接判为 AI。")
     elif detection["label"] == "insufficient_evidence":
         st.info("当前没有足够的有效模型证据，系统没有把 0 分解释为人类文本。")
 
@@ -378,6 +385,7 @@ def render_analysis(data: dict):
                     "calibrated_high_threshold_replaced_by_floor": "运行高阈值已回落到有效的产品阈值",
                     "runtime_high_threshold_capped_to_floor": "阈值产物中的运行高阈值曾被调整",
                     "effective_high_threshold_not_evaluated": "当前运行阈值未完成独立验证，暂不报告误报率和召回率",
+                    "scoring_protocol_not_evaluated": "文本评分方法已更新，旧校准指标不再适用，需重新验证误报率和召回率",
                     "holdout_fpr_above_target": "真人验证集误报率显著高于目标",
                     "insufficient_human_validation": "真人验证样本不足",
                     "insufficient_ai_validation": "AI 验证样本不足",
@@ -408,7 +416,7 @@ def render_analysis(data: dict):
             cols[3].caption(public_evidence_text(str(caption)))
 
         if segments:
-            render_segment_panel(segments, low_threshold, high_threshold)
+            render_segment_panel(segments, low_threshold, segment_high_threshold)
             st.subheader("片段风险分布")
             segment_scores = [float(item.get("score") or 0.0) for item in segments]
             colors = [

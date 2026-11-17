@@ -1,0 +1,157 @@
+{
+  "created_at": "2026-11-17T06:28:06.053215+00:00",
+  "data_sha256": "5ad7db3f3f328693079927d0b3734e4ab9cde715340901b2cb02b50819701352",
+  "script_sha256": "ec0affe09cafce63e60e2eabe47372b8ba6975d7585f3cadd0297f524495a920",
+  "base_model": "/home/zhongxu/projects/aigc_detector/models/huggingface/models--microsoft--mdeberta-v3-base/snapshots/a0484667b22365f84929a935b5e50a51f71f159d",
+  "base_config_sha256": "bcffcd343dc5efa5ef2d5a58d2b405eed108f01cc45b48d0a907b333ec41801f",
+  "arguments": {
+    "data": "outputs/binary-data/dataset.jsonl",
+    "base_model": "/home/zhongxu/projects/aigc_detector/models/huggingface/models--microsoft--mdeberta-v3-base/snapshots/a0484667b22365f84929a935b5e50a51f71f159d",
+    "output": "/home/zhongxu/projects/aigc_detector/models/text_binary/20261117-mdeberta-v1",
+    "device": "cuda:0",
+    "epochs": 4,
+    "batch_size": 16,
+    "eval_batch_size": 32,
+    "max_train_per_label": 5000,
+    "max_validation_per_label": 400,
+    "max_length": 512,
+    "lr": 2e-05,
+    "seed": 17
+  },
+  "label_mapping": {
+    "0": "human",
+    "1": "ai"
+  },
+  "parameters": {
+    "total": 278810882,
+    "trainable": 28943618
+  },
+  "splits": {
+    "train": {
+      "documents": 7310,
+      "labels": {
+        "0": 3000,
+        "1": 4310
+      },
+      "sources": {
+        "hc3": 3000,
+        "m4": 3000,
+        "modern": 1310
+      },
+      "identities_sha256": "a1b2b9e37be87d0da84369a5dde7605dc4377784c084391c0e0ccbdd81a141e4"
+    },
+    "validation": {
+      "documents": 1734,
+      "labels": {
+        "0": 800,
+        "1": 934
+      },
+      "sources": {
+        "hc3": 800,
+        "m4": 800,
+        "modern": 134
+      },
+      "identities_sha256": "a7d63c21a1c71212e53a7265b782a7df5bb3ffe2c3c05ca899b7d4702ba9fd8d"
+    },
+    "calibration": {
+      "documents": 1322,
+      "labels": {
+        "0": 1322
+      },
+      "sources": {
+        "hc3": 800,
+        "m4": 522
+      },
+      "identities_sha256": "b004b688cc201ce22c3ddf08fee16363a30ae17f4500cbf9f2f4f00d25081ddb"
+    },
+    "test": {
+      "documents": 3945,
+      "labels": {
+        "0": 1600,
+        "1": 2345
+      },
+      "sources": {
+        "hc3": 1600,
+        "m4": 1600,
+        "modern": 745
+      },
+      "identities_sha256": "6193df69a23a75869cf085d0e6556d7c99c8a829ea1c3576a505dffbd79dec24"
+    }
+  },
+  "selected_train": {
+    "documents": 7310,
+    "labels": {
+      "0": 3000,
+      "1": 4310
+    },
+    "sources": {
+      "hc3": 3000,
+      "m4": 3000,
+      "modern": 1310
+    },
+    "identities_sha256": "a1b2b9e37be87d0da84369a5dde7605dc4377784c084391c0e0ccbdd81a141e4"
+  },
+  "selected_validation": {
+    "documents": 800,
+    "labels": {
+      "0": 400,
+      "1": 400
+    },
+    "sources": {
+      "m4": 333,
+      "hc3": 334,
+      "modern": 133
+    },
+    "identities_sha256": "aba7127037bb3ad72df55929f944d9f283491f3955d3fa11b2162214423f61a5"
+  },
+  "training_windows": 8499,
+  "protocol": {
+    "scoring": "token-complete-v1",
+    "segments": {
+      "target_chars": 480,
+      "max_chars": 640,
+      "overlap_sentences": 1
+    },
+    "max_length": 512,
+    "training_windows_per_document": 2,
+    "window_selection": "evenly spaced including first and last",
+    "sampling": "class-balanced with equal probability per document",
+    "aggregation": "token-weighted segment mean then unique-character-weighted document mean",
+    "model_selection": "validation AUROC only",
+    "held_out": [
+      "calibration",
+      "test",
+      "user regression"
+    ]
+  },
+  "versions": {
+    "torch": "2.6.0+cu124"
+  },
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 0.16994049942117567,
+      "validation_auroc": 0.956415625
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.06892409662959002,
+      "validation_auroc": 0.99579375
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.05476466799248363,
+      "validation_auroc": 0.995028125
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.03141581010700746,
+      "validation_auroc": 0.9934875
+    }
+  ],
+  "best_epoch": 2,
+  "best_validation_auroc": 0.99579375,
+  "model_sha256": {
+    "model.safetensors": "044d4c22c9c659c11b8f6872f4d660cea48e73ac6ac4d7c9df77cbff003c77d9"
+  }
+}

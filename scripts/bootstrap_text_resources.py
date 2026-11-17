@@ -329,6 +329,9 @@ def build_threshold_artifact(
         max_source_items=max_source_items,
         max_windows_per_document=max_windows_per_document,
     )
+    protocol = getattr(detector, "scoring_protocol", None)
+    if protocol is not None:
+        payload["scoring_protocol"] = protocol
     _publish_artifact_atomic(manager.artifact_path, payload)
     return payload
 

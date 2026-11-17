@@ -11,6 +11,61 @@ from detection.false_positive_controller import FalsePositiveController
 
 
 class RuntimeThresholdTests(unittest.TestCase):
+    def test_explicit_mixed_language_calibration_is_used(self):
+        controller = FalsePositiveController()
+        controller.artifact = {"groups": {
+            "mixed": {"low_threshold": 0.4, "high_threshold": 0.9},
+            "zh": {"low_threshold": 0.4, "high_threshold": 0.95},
+        }}
+        result = controller.evaluate("中文技术说明 " * 30 + "English terms " * 15,
+            [SimpleNamespace(status="ok", score=0.92, details={})])
+        self.assertEqual(result.threshold_group, "mixed")
+        self.assertEqual(result.high_threshold, 0.9)
+        self.assertNotIn("mixed_language_threshold_fallback", result.threshold_warnings)
+
+    def test_protocol_tagged_calibration_preserves_a_valid_near_ceiling_cutoff(self):
+        controller = FalsePositiveController()
+        controller.artifact = {"scoring_protocol": "trained-v1", "groups": {"global": {
+            "low_threshold": 0.4, "high_threshold": 0.995, "validation_fpr": 0.02,
+            "ai_recall": 0.8, "reliability_status": "ok",
+        }}}
+        result = controller.evaluate("A plain passage about daily life. " * 8,
+            [SimpleNamespace(status="ok", score=0.95, details={"scoring_protocol": "trained-v1"})])
+        self.assertEqual(result.high_threshold, 0.995)
+        self.assertEqual(result.decision, "uncertain")
+        self.assertEqual(result.threshold_validation_fpr, 0.02)
+
+    def test_new_scoring_protocol_does_not_reuse_legacy_metrics(self):
+        controller = FalsePositiveController()
+        controller.artifact = {"groups": {"global": {
+            "low_threshold": 0.4, "high_threshold": 0.9, "validation_fpr": 0.02,
+            "ai_recall": 0.8, "validation_auroc": 0.9, "validation_samples": 100,
+            "ai_validation_samples": 100, "reliability_status": "ok",
+        }}}
+        providers = [SimpleNamespace(status="ok", score=0.2,
+                                    details={"scoring_protocol": "token-complete-v1"})]
+        decision = controller.evaluate("A plain passage about daily life. " * 8, providers)
+        self.assertEqual(decision.decision, "low_risk")
+        self.assertEqual(decision.high_threshold, 0.9)
+        self.assertIsNone(decision.threshold_validation_fpr)
+        self.assertIsNone(decision.threshold_ai_recall)
+        self.assertIsNone(decision.threshold_validation_auroc)
+        self.assertEqual(decision.threshold_validation_samples, 0)
+        self.assertEqual(decision.threshold_ai_validation_samples, 0)
+        self.assertEqual(decision.threshold_reliability_status, "not_evaluated")
+        self.assertIn("scoring_protocol_not_evaluated", decision.threshold_warnings)
+
+        controller.artifact["scoring_protocol"] = "token-complete-v1"
+        matched = controller.evaluate("A plain passage about daily life. " * 8, providers)
+        self.assertEqual(matched.threshold_validation_fpr, 0.02)
+        self.assertEqual(matched.threshold_ai_recall, 0.8)
+        providers.append(SimpleNamespace(status="ok", score=0.2, details={}))
+        mixed = controller.evaluate("A plain passage about daily life. " * 8, providers)
+        self.assertIsNone(mixed.threshold_ai_recall)
+        providers = [providers[-1]]
+        legacy = controller.evaluate("A plain passage about daily life. " * 8, providers)
+        self.assertIsNone(legacy.threshold_ai_recall)
+
     def evaluate(self, entry, **config):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "thresholds.json"

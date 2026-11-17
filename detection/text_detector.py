@@ -11,6 +11,8 @@
 """
 
 import math
+import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -102,6 +104,8 @@ class RoutedTextAigcDetector:
     权重通过 Hugging Face Transformers 加载，并缓存到项目内的 cache_dir。
     """
 
+    scoring_protocol = "token-complete-v1"
+
     def __init__(
         self,
         models: dict[str, str],
@@ -143,6 +147,14 @@ class RoutedTextAigcDetector:
         )
         self.segmenter = self.zh_segmenter
         self._loaded: dict[str, tuple[Any, Any]] = {}
+        protocol_config = dict(models=self.models, mixed_strategy=mixed_strategy,
+                               max_length=self.max_length, short_text_chars=self.short_text_chars,
+                               zh_window=[segment_target_chars, segment_max_chars],
+                               en_window=[en_segment_target_chars or 1400, en_segment_max_chars or 1800],
+                               overlap=overlap)
+        self.scoring_protocol = "token-complete-v1:" + hashlib.sha256(
+            json.dumps(protocol_config, sort_keys=True).encode()
+        ).hexdigest()[:16]
 
     def detect(self, text: str) -> DetectionResult:
         """执行一次本地文本检测。"""
@@ -201,9 +213,11 @@ class RoutedTextAigcDetector:
                 "selected_models": sorted(branch_details),
                 "cache_dir": self.cache_dir,
                 "model_scores": branch_scores,
+                "screening_threshold": self.threshold,
                 "branch_details": branch_details,
                 "segments": segment_details,
                 "aggregation": "unique-character-weighted-mean",
+                "scoring_protocol": self.scoring_protocol,
                 "note": "Local open-source text detector branch with language/length routing.",
             },
         )
@@ -219,6 +233,10 @@ class RoutedTextAigcDetector:
         language = self.detect_language(text)
         length = self.length_bucket(text)
         if language == "mixed":
+            if self.mixed_strategy == "dominant":
+                chinese = sum("\u4e00" <= char <= "\u9fff" for char in text)
+                english = sum(char.isascii() and char.isalpha() for char in text)
+                return [f"{'zh' if chinese >= english else 'en'}_{length}"]
             return [f"zh_{length}", f"en_{length}"]
         return [f"{language}_{length}"]
 
@@ -243,21 +261,36 @@ class RoutedTextAigcDetector:
         return "short" if len(text.strip()) <= self.short_text_chars else "long"
 
     def _run_model(self, key: str, model_name: str, text: str) -> float:
-        """加载并运行 Hugging Face sequence classification 模型。"""
+        """完整评分每个 token 窗口，避免字符窗口在 tokenizer 内静默截断。"""
         tokenizer, model = self._load_model(key, model_name)
+        limit = min(
+            self.max_length,
+            getattr(model.config, "max_position_embeddings", self.max_length),
+            tokenizer.model_max_length,
+        )
         encoded = tokenizer(
             text,
             return_tensors="pt",
             truncation=True,
-            max_length=self.max_length,
+            max_length=limit,
+            return_overflowing_tokens=True,
+            padding=True,
         )
-        encoded = {name: value.to(self.device) for name, value in encoded.items()}
+        encoded.pop("overflow_to_sample_mapping", None)
+        special_tokens = tokenizer.num_special_tokens_to_add(pair=False)
+        weighted_score = 0.0
+        total_tokens = 0
 
         with torch.no_grad():
-            outputs = model(**encoded)
-            probs = torch.softmax(outputs.logits, dim=-1)[0]
+            for index in range(encoded["input_ids"].shape[0]):
+                window = {name: value[index:index + 1].to(self.device) for name, value in encoded.items()}
+                outputs = model(**window)
+                probs = torch.softmax(outputs.logits, dim=-1)[0]
+                weight = max(1, int(window["attention_mask"].sum().item()) - special_tokens)
+                weighted_score += self._ai_probability(probs, model.config.id2label) * weight
+                total_tokens += weight
 
-        return self._ai_probability(probs, model.config.id2label)
+        return weighted_score / total_tokens
 
     def _load_model(self, key: str, model_name: str) -> tuple[Any, Any]:
         """懒加载 tokenizer/model，并把权重缓存到 cache_dir。"""

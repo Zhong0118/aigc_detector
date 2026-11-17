@@ -3,10 +3,53 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
+import torch
+import pytest
+from types import SimpleNamespace
+from transformers import BertTokenizerFast
+
 from detection.text_detector import RoutedTextAigcDetector
 
 
+def test_token_windows_keep_tail_and_respect_model_limit(tmp_path):
+    # The old truncation drops 智 entirely, turning a 0.3 score into 0.1.
+    vocab = tmp_path / "vocab.txt"
+    vocab.write_text("[PAD]\n[UNK]\n[CLS]\n[SEP]\n[MASK]\n人\n智\n")
+    tokenizer = BertTokenizerFast(vocab_file=str(vocab))
+
+    class Classifier:
+        config = SimpleNamespace(id2label={0: "human", 1: "ai"}, max_position_embeddings=8)
+
+        def __init__(self):
+            self.seen = []
+
+        def __call__(self, input_ids, attention_mask, token_type_ids=None):
+            self.seen.extend(input_ids[attention_mask.bool()].tolist())
+            assert input_ids.shape[1] <= 8
+            p = 0.9 if (input_ids == 6).any() else 0.1
+            return SimpleNamespace(logits=torch.tensor([[1 - p, p]]).log())
+
+    model = Classifier()
+    detector = RoutedTextAigcDetector(models={}, max_length=8, device="cpu")
+    with patch.object(detector, "_load_model", return_value=(tokenizer, model)):
+        score = detector._run_model("zh_long", "unused", "人" * 6 + "智" * 2)
+    assert score == pytest.approx(0.3)
+    assert model.seen.count(5) == 6
+    assert model.seen.count(6) == 2
+
+    detector.max_length = 512
+    with patch.object(detector, "_load_model", return_value=(tokenizer, model)):
+        assert detector._run_model("zh_long", "unused", "人" * 6 + "智" * 2) == pytest.approx(0.3)
+
+
 class RoutedTextAigcDetectorTests(unittest.TestCase):
+    def test_dominant_strategy_routes_chinese_with_english_terms_to_chinese(self):
+        models = {key: key for key in ("zh_long", "zh_short", "en_long", "en_short")}
+        detector = RoutedTextAigcDetector(models=models, device="cpu", mixed_strategy="dominant")
+        self.assertEqual(detector.select_model_keys("中文技术报告讨论 RSA 和 TLS 的安全迁移"), ["zh_short"])
+        changed = RoutedTextAigcDetector(models={**models, "zh_long": "new-model"}, device="cpu", mixed_strategy="dominant")
+        self.assertNotEqual(detector.scoring_protocol, changed.scoring_protocol)
+
     def test_routes_short_and_long_text_by_language(self) -> None:
         detector = RoutedTextAigcDetector(
             models={

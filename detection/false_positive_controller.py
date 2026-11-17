@@ -91,6 +91,12 @@ class FalsePositiveController:
             )
 
         provider_scores = [float(result.score) for result in usable]
+        protocols = {
+            (getattr(result, "details", None) or {}).get("scoring_protocol")
+            for result in usable
+        }
+        if protocols != {self.artifact.get("scoring_protocol")}:
+            threshold_warnings.append("scoring_protocol_not_evaluated")
         score = float(statistics.median(provider_scores))
         segments = self._segments(usable)
         coverage, high_coverage, adjacent = self._segment_evidence(text, segments, high_threshold)
@@ -273,6 +279,7 @@ class FalsePositiveController:
         for candidate in (
             f"{language}:{domain}:{length_bucket}",
             f"{language}:{domain}",
+            language,
         ):
             entry = groups.get(candidate)
             if isinstance(entry, dict):
@@ -292,7 +299,7 @@ class FalsePositiveController:
 
         high = float(entry.get("high_threshold", self.default_high))
         low = float(entry.get("low_threshold", self.default_low))
-        if high >= 0.99:
+        if high >= 0.99 and not self.artifact.get("scoring_protocol"):
             domain_entry = self.domain_thresholds.get(domain) or {}
             for candidate in (domain_entry.get("high_threshold"), self.default_high):
                 if isinstance(candidate, bool):
@@ -322,6 +329,8 @@ class FalsePositiveController:
         str,
         list[str],
     ]:
+        if "scoring_protocol_not_evaluated" in extra_warnings:
+            return None, 0, None, 0, None, "not_evaluated", list(dict.fromkeys(extra_warnings))
         entry = self.artifact.get("groups", {}).get(group)
         if not isinstance(entry, dict):
             reliability = "warning" if extra_warnings else "not_evaluated"

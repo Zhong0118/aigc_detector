@@ -1,0 +1,86 @@
+{
+  "artifact_schema_version": 2,
+  "dataset_profile": "binary-chinese-v1",
+  "version": "20261117-mdeberta-v1",
+  "scoring_protocol": "token-complete-v1:b93de5696c5e1c3d",
+  "metric_partition": "test",
+  "calibration_kind": "human_only_document_holdout",
+  "decision_operator": "score > high_threshold",
+  "target_fpr": 0.02,
+  "groups": {
+    "zh": {
+      "low_threshold": 0.4,
+      "high_threshold": 0.9997,
+      "threshold_floor": 0.0,
+      "target_fpr": 0.02,
+      "human_calibration_samples": 1099,
+      "human_validation_samples": 1328,
+      "ai_validation_samples": 2032,
+      "validation_false_positives": 14,
+      "validation_fpr": 0.010542,
+      "validation_fpr_interval_95": [
+        0.00629,
+        0.017618
+      ],
+      "ai_true_positives": 1919,
+      "ai_recall": 0.94439,
+      "ai_fnr": 0.05561,
+      "ai_recall_interval_95": [
+        0.933561,
+        0.953541
+      ],
+      "validation_auroc": 0.992877,
+      "calibration_quantiles": {
+        "p50": 0.0004,
+        "p90": 0.9923,
+        "p95": 0.9993,
+        "p98": 0.9997,
+        "p99": 0.9997,
+        "max": 0.9998
+      },
+      "reliability_status": "warning",
+      "warnings": [
+        "calibrated_threshold_near_score_ceiling"
+      ],
+      "human_samples": 1099,
+      "validation_samples": 1328
+    },
+    "mixed": {
+      "low_threshold": 0.4,
+      "high_threshold": 0.9996,
+      "threshold_floor": 0.0,
+      "target_fpr": 0.02,
+      "human_calibration_samples": 220,
+      "human_validation_samples": 267,
+      "ai_validation_samples": 276,
+      "validation_false_positives": 7,
+      "validation_fpr": 0.026217,
+      "validation_fpr_interval_95": [
+        0.012756,
+        0.053118
+      ],
+      "ai_true_positives": 238,
+      "ai_recall": 0.862319,
+      "ai_fnr": 0.137681,
+      "ai_recall_interval_95": [
+        0.816669,
+        0.898021
+      ],
+      "validation_auroc": 0.977399,
+      "calibration_quantiles": {
+        "p50": 0.0006,
+        "p90": 0.9927,
+        "p95": 0.9989,
+        "p98": 0.9995,
+        "p99": 0.9996,
+        "max": 0.9997
+      },
+      "reliability_status": "warning",
+      "warnings": [
+        "calibrated_threshold_near_score_ceiling"
+      ],
+      "human_samples": 220,
+      "validation_samples": 267
+    }
+  }
+}

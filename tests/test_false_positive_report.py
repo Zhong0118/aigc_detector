@@ -38,6 +38,20 @@ def analysis_for(label: str, score: float, reasons: list[str]) -> dict:
 
 
 class FalsePositiveReportTests(unittest.TestCase):
+    def test_uncertain_report_keeps_high_scoring_segment_clues_visible(self):
+        analysis = analysis_for("uncertain", 0.878, ["score_in_uncertain_interval"])
+        analysis["detection"]["providers"] = [{"status": "ok", "details": {
+            "screening_threshold": 0.8,
+            "segments": [{"score": 0.95}, {"score": 0.2}, {"score": 0.99}],
+        }}]
+        report = ReportGenerator(config={"report": {"provider": "template"}}).generate(analysis)
+        evidence = " ".join(report["evidence"])
+        self.assertIn("2/3", evidence)
+        self.assertIn("80.00%", evidence)
+        self.assertIn("复核线索", evidence)
+        self.assertIn("不确定", report["summary"])
+        self.assertEqual(report["review_label"], "疑似 AI，需复核")
+
     def test_uncertain_report_explains_calibrated_interval(self) -> None:
         report = ReportGenerator(config={"report": {"provider": "template"}}).generate(
             analysis_for("uncertain", 0.72, ["score_in_uncertain_interval"])

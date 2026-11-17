@@ -1,0 +1,14 @@
+{
+  "source": "/home/zhongxu/projects/aigc_detector/data/attribution/raw/zhizengzeng-attribution-server-6k-v5.jsonl",
+  "sha256": "6a3daa546771eb0be6a6a85ba4620d7ae070896038a71d754a8043f9a98b4af0",
+  "selected": 580,
+  "filters": {
+    "language": "zh",
+    "domains": [
+      "technology",
+      "science"
+    ],
+    "finish_reason": "stop",
+    "route_mismatch": false
+  }
+}

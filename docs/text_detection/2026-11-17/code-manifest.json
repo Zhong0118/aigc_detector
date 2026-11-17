@@ -1,0 +1,6 @@
+{
+  "detection/text_detector.py": "b0c8eaf49e991df29dfe0f5ae85234371475b90bc1ae10fdeaad57b2fa80c22a",
+  "scripts/evaluate_text_detector.py": "52aa6068a531460c5c45f1919ed6fb243f2ecb12729ca2e417ef63c9b4bd6ce3",
+  "detection/false_positive_controller.py": "ed95ed209278b0678827138a0a47b3c3e7f0c4095b641e6c22bc59b88d5c63f7",
+  "scripts/bootstrap_text_resources.py": "32d93dcd4088765d708d610df2f9ad447f608db613062b15ae01f493bd64f59a"
+}

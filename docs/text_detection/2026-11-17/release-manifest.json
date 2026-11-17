@@ -1,0 +1,35 @@
+{
+  "dataset_sha256": "5ad7db3f3f328693079927d0b3734e4ab9cde715340901b2cb02b50819701352",
+  "excluded_sha256": [
+    "362765c74e28b2612eead5de00e9a0501d7aa2d7cc0452f7cdcc77babf368828"
+  ],
+  "counts": {
+    "('calibration', 'hc3', 0)": 800,
+    "('calibration', 'm4', 0)": 522,
+    "('test', 'hc3', 0)": 800,
+    "('test', 'hc3', 1)": 800,
+    "('test', 'm4', 0)": 800,
+    "('test', 'm4', 1)": 800,
+    "('test', 'modern', 1)": 745,
+    "('train', 'hc3', 0)": 1500,
+    "('train', 'hc3', 1)": 1500,
+    "('train', 'm4', 0)": 1500,
+    "('train', 'm4', 1)": 1500,
+    "('train', 'modern', 1)": 1310,
+    "('validation', 'hc3', 0)": 400,
+    "('validation', 'hc3', 1)": 400,
+    "('validation', 'm4', 0)": 400,
+    "('validation', 'm4', 1)": 400,
+    "('validation', 'modern', 1)": 134
+  },
+  "heldout_families": [
+    "openai",
+    "claude"
+  ],
+  "arguments": {
+    "data_root": "/home/zhongxu/projects/aigc_detector/data",
+    "attribution": "/home/zhongxu/projects/aigc_detector/data/attribution/raw/zhizengzeng-attribution-server-6k-v5.jsonl",
+    "exclude_json": "regression-98.json",
+    "output": "outputs/binary-data"
+  }
+}

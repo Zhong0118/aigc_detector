@@ -3156,6 +3156,8 @@ class TextResourceManagerTests(unittest.TestCase):
 
     def test_artifact_v2_uses_human_calibration_and_reports_held_out_ai_metrics(self) -> None:
         class Detector:
+            scoring_protocol = "token-complete-v1"
+
             def detect(self, text: str):
                 score = float(text.rsplit("=", 1)[1])
                 return type("Result", (), {"score": score})()
@@ -3241,6 +3243,7 @@ class TextResourceManagerTests(unittest.TestCase):
                 )
 
         group = payload["groups"]["en:general_qa:short"]
+        self.assertEqual(payload.get("scoring_protocol"), Detector.scoring_protocol)
         self.assertEqual(payload["artifact_schema_version"], 2)
         self.assertEqual(payload["decision_operator"], "score > high_threshold")
         self.assertEqual(group["high_threshold"], 0.4)
