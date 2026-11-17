@@ -1,0 +1,74 @@
+{
+  "text_patch_commit": "087a808d41b9a90040b9cfe491c14c5add3268cd",
+  "runtime_base_commit": "6cec92a5d8b2656cae49b2d79f17dee638d870bf",
+  "release": "/home/zhongxu/projects/aigc_detector/deployments/text-binary-20261117-v1",
+  "model": "/home/zhongxu/projects/aigc_detector/models/text_binary/20261117-mdeberta-v1",
+  "api_pid": 2295882,
+  "dashboard_pid": 2296076,
+  "api_port": 8611,
+  "dashboard_port": 8612,
+  "report_provider": "template",
+  "previous": {
+    "api": {
+      "pid": 2861670,
+      "args": [
+        "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.venv-image-next/bin/python",
+        "-m",
+        "uvicorn",
+        "api.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8611",
+        "--workers",
+        "1"
+      ],
+      "cwd": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline",
+      "config": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.preview/config.yaml"
+    },
+    "dashboard": {
+      "pid": 2862628,
+      "args": [
+        "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.venv-image-next/bin/python",
+        "-m",
+        "streamlit",
+        "run",
+        "workbench/ui/app.py",
+        "--server.address",
+        "127.0.0.1",
+        "--server.port",
+        "8612",
+        "--server.headless",
+        "true",
+        "--server.maxUploadSize",
+        "20",
+        "--server.fileWatcherType",
+        "none",
+        "--browser.gatherUsageStats",
+        "false",
+        "--client.toolbarMode",
+        "viewer",
+        "--client.showErrorDetails",
+        "none",
+        "--theme.base",
+        "light",
+        "--theme.primaryColor",
+        "#1d4ed8",
+        "--theme.backgroundColor",
+        "#ffffff",
+        "--theme.secondaryBackgroundColor",
+        "#f4f6fa",
+        "--theme.textColor",
+        "#111827"
+      ],
+      "cwd": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline",
+      "config": "/home/zhongxu/projects/aigc_detector/.worktrees/attribution-pilot-baseline/.preview/config.yaml"
+    }
+  },
+  "source_sha256": {
+    "detection/text_detector.py": "6ab0a1c08a7b6e0d5bf01a2946558f0103df7e675615ab93a602448f1348d407",
+    "detection/false_positive_controller.py": "69048be067e63b7fb01213b4f5f07c1edaaf68a5f7d140725c0be2104c8fa5a3",
+    "reports/generator.py": "1b2cd60964c5b7283673584fa40c7c7269055dd05d163e4f25ebabf4d04678fe",
+    "api/text_view.py": "bf618af5625756ecddf7d05472775ba87e81cfd50dd914d8f201db24b53206ff"
+  }
+}
