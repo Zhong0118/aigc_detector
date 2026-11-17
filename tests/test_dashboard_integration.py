@@ -83,3 +83,24 @@ def test_screening_review_shows_suspected_ai_and_high_score_windows(monkeypatch)
     assert metrics['AI 特征风险分数'] == '87.80%'
     assert metrics['疑似 AI 块'] == '2 / 3'
     assert any('严格判定仍不确定' in w.value for w in app.warning)
+
+
+def test_attribution_load_failure_is_visible_instead_of_none(monkeypatch):
+    providers = {'mode': 'api_first', 'ports': {'api': 8001, 'dashboard': 8501},
+                 'deep_provenance_threshold': 0.6, 'providers': []}
+    analysis = {'modality': 'text', 'content_id': 3,
+                'detection': {'score': 0.9, 'label': 'uncertain', 'threshold': 0.99,
+                              'providers': [], 'model_scores': {}, 'decision': {}},
+                'provenance': {'deep_triggered': True, 'attribution_triggered': True,
+                               'c2pa': {}, 'watermark': {}, 'fingerprint_registry': {},
+                               'attribution': {'status': 'error', 'top_k': [], 'confidence': 0,
+                                               'branches': [{'status': 'error', 'error': 'recipe hash mismatch'}]}},
+                'report': {'summary': '待复核', 'evidence': [], 'limitations': [], 'recommendation': '复核'}}
+    monkeypatch.setattr('requests.request', lambda method, url, **kwargs:
+                        SimpleNamespace(status_code=200, json=lambda: providers if method == 'GET' else analysis))
+    app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / 'api/dashboard.py')).run(timeout=20)
+    app.text_area[0].input('A document with an unavailable attribution model.')
+    app.button[0].click().run(timeout=20)
+    assert not app.exception
+    assert any('来源归因暂不可用' in e.value for e in app.error)
+    assert not any('家族溯源: None' in c.value for c in app.caption)

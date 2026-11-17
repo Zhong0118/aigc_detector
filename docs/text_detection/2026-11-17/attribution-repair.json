@@ -1,0 +1,170 @@
+{
+  "date": "2026-11-17",
+  "model_dir": "/home/zhongxu/projects/aigc_detector/outputs/attribution/family-window-split/A0-canonical-seed42-20261117",
+  "recipe": {
+    "stage_id": "A0-window-split",
+    "recipe_id": "A0-window-split",
+    "parent_recipe_id": "A0",
+    "backbone_model_id": "FacebookAI/xlm-roberta-base",
+    "max_length": 512,
+    "auxiliary_weight": 0.0,
+    "consistency_weight": 0.0,
+    "contrastive_weight": 0.0,
+    "contrastive_temperature": 0.07,
+    "projection_dimension": 256,
+    "window_mode": "single",
+    "per_device_train_batch_size": 16,
+    "gradient_accumulation_steps": 2,
+    "learning_rate": 2e-05,
+    "epochs": 6,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "label_smoothing_factor": 0.05,
+    "early_stopping_patience": 2,
+    "save_total_limit": 2,
+    "bf16": true,
+    "gradient_checkpointing": false,
+    "train_window_stride": 510,
+    "validation_window_mode": "nonoverlap-probability-mean",
+    "recipe_hash": "d2cfe938219e71ab28cf3101065434ca2be566fbb9c2fa4b02a8c4d4637d8ef2"
+  },
+  "run_config": {
+    "schema_version": 1,
+    "run_id": "family-attribution-a0-window-split-v1",
+    "stage_id": "A0-window-split",
+    "recipe_id": "A0-window-split",
+    "parent_recipe_id": "A0",
+    "recipe_hash": "d2cfe938219e71ab28cf3101065434ca2be566fbb9c2fa4b02a8c4d4637d8ef2",
+    "run_fingerprint": "3f2c3dc8500d2180b933cbe7119394d31c196d7e620f72dcf241ca6c5ee69f78",
+    "selection_scope": "validation_only",
+    "test_evaluated": false,
+    "view_id": "closed",
+    "training_seed": 42,
+    "input": "/home/zhongxu/projects/aigc_detector/data/attribution/raw/zhizengzeng-attribution-server-6k-v5.jsonl",
+    "catalog": "/home/zhongxu/projects/aigc_detector/configs/text_attribution/zhizengzeng_model_catalog.v5.json",
+    "split_manifest": "/home/zhongxu/projects/aigc_detector/data/attribution/splits/family-attribution-v5-seed42.json",
+    "split_dataset_fingerprint": "53d68b9cab02906c04f90b10764d8608bef7f015859d099a3097bccf53eba342",
+    "train_source_documents": 3981,
+    "train_window_rows": 7009,
+    "window_audit": {
+      "source_documents": 3981,
+      "window_rows": 7009,
+      "multi_window_documents": 2295,
+      "content_length": 510,
+      "stride": 510
+    },
+    "validation_documents": 912,
+    "family_labels": [
+      "openai",
+      "claude",
+      "gemini",
+      "deepseek",
+      "qwen",
+      "glm",
+      "minimax",
+      "kimi",
+      "doubao",
+      "mimo"
+    ],
+    "backbone_model_id": "FacebookAI/xlm-roberta-base",
+    "model_source": "/home/zhongxu/projects/aigc_detector/models/huggingface/models--FacebookAI--xlm-roberta-base/snapshots/e73636d4f797dec63c3081bb6ed5c7b0bb3f2089",
+    "max_length": 512,
+    "window_mode": "single",
+    "train_window_stride": 510,
+    "validation_window_mode": "nonoverlap-probability-mean",
+    "validation_window_stride": 510,
+    "validation_window_rows": 1573,
+    "smoke_test": false,
+    "device": "cuda:0",
+    "versions": {
+      "python": "3.10.20"
+    }
+  },
+  "training_result": {
+    "schema_version": 1,
+    "recipe_hash": "d2cfe938219e71ab28cf3101065434ca2be566fbb9c2fa4b02a8c4d4637d8ef2",
+    "seed": 42,
+    "view_id": "closed",
+    "best_checkpoint": "/home/zhongxu/projects/aigc_detector/outputs/attribution/family-window-split/.A0-canonical-seed42-20261117.run-f65d37569b334ed6887142f73788458f/checkpoints/checkpoint-1314",
+    "validation_sample_count": 912
+  },
+  "a0_validation": {
+    "accuracy": 0.6513157894736842,
+    "macro_f1": 0.6395601751565109,
+    "weighted_f1": 0.6443648540281302,
+    "support": 912
+  },
+  "artifact_sha256": {
+    "model/model.safetensors": "8281c9641341f0758b31a974c5b4e421370c07cbc8a97f898c8ddbe8abeff16a",
+    "model/resolved_recipe.json": "6c68bce9b7fe4b2f14feb10007b999eb94e6744f7a3cb8ac11eb4648560a90d2",
+    "tokenizer/tokenizer.json": "3a56def25aa40facc030ea8b0b87f3688e4b3c39eb8b45d5702b3a1300fe2a20",
+    "run_config.json": "856f8d55cf646dcc9b18ac2d4e2f06d8c40230bb30cf5c9ec7d7fab63e61a19c",
+    "training_result.json": "08fc9a26f9fe9a24e67130ddc718067ceb00b119d8ff25bb42adfc33af435f38",
+    "COMPLETED.json": "e0e04b4a63a2b6acfff3b29ba5effcdea2c43ae788b576f34d728dcb876f7907"
+  },
+  "production_check": {
+    "content_id": 110,
+    "detection_score": 0.878,
+    "review_label": "疑似 AI，需复核",
+    "attribution_status": "ok",
+    "family_status": "family_only",
+    "top_k": [
+      {
+        "model": "kimi",
+        "probability": 0.281362
+      },
+      {
+        "model": "doubao",
+        "probability": 0.159139
+      },
+      {
+        "model": "glm",
+        "probability": 0.11911
+      },
+      {
+        "model": "deepseek",
+        "probability": 0.112886
+      },
+      {
+        "model": "qwen",
+        "probability": 0.093444
+      }
+    ]
+  },
+  "test_result": {
+    "passed": 749,
+    "subtests_passed": 214,
+    "warnings": 8
+  },
+  "evaluation_scope": "A0 validation metrics only; fusion checked on known development regression, not independently benchmarked",
+  "local_forwarding_check": {
+    "content_id": 111,
+    "api": "http://127.0.0.1:8001",
+    "dashboard": "http://127.0.0.1:8501",
+    "detection_score": 0.878,
+    "attribution_status": "ok",
+    "family_status": "family_only",
+    "top_k": [
+      {
+        "model": "kimi",
+        "probability": 0.281362
+      },
+      {
+        "model": "doubao",
+        "probability": 0.159139
+      },
+      {
+        "model": "glm",
+        "probability": 0.11911
+      },
+      {
+        "model": "deepseek",
+        "probability": 0.112886
+      },
+      {
+        "model": "qwen",
+        "probability": 0.093444
+      }
+    ]
+  }
+}

@@ -480,9 +480,11 @@ def render_analysis(data: dict):
             st.success(verdict or "AI-家族明确")
         elif family_status == "unknown":
             st.warning(verdict or "AI-家族不明")
+        elif attribution.get("status") == "error":
+            st.error("来源归因暂不可用，来源模型加载或推理失败，未生成来源候选。")
         st.caption(
             "家族溯源: "
-            f"{family_status} | "
+            f"{family_status or ('运行失败' if attribution.get('status') == 'error' else '未运行')} | "
             f"confidence={float(attribution.get('confidence') or 0.0):.2%}"
             + (
                 f" | {attribution.get('recipe')}"
