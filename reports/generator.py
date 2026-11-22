@@ -185,12 +185,7 @@ class ReportGenerator:
             if status == "data_mismatch":
                 evidence.append("实验性 LLMDet 分支的数据缓存不完整或版本不匹配，本次未采用其候选来源结果。")
 
-        review = modality == "text" and label == "uncertain" and any(
-            provider.get("status") == "ok"
-            and (provider.get("details") or {}).get("screening_threshold") is not None
-            and score >= float(provider["details"]["screening_threshold"])
-            for provider in detection.get("providers", [])
-        )
+        review = modality == "text" and label == "uncertain" and self._text_review(detection, score)
         return {
             "provider": "template",
             "status": "ok",
@@ -547,6 +542,32 @@ class ReportGenerator:
     def _looks_like_env_name(self, value: str) -> bool:
         """判断一个字符串是否像环境变量名，而不是实际密钥。"""
         return bool(re.fullmatch(r"[A-Z][A-Z0-9_]*", value))
+
+    def _text_review(self, detection: dict[str, Any], score: float) -> bool:
+        policy = self.report_cfg.get("long_text_review") or {}
+        domain = (detection.get("decision") or {}).get("domain")
+        for provider in detection.get("providers", []):
+            details = provider.get("details") or {}
+            threshold = details.get("screening_threshold")
+            if provider.get("status") != "ok" or threshold is None or score < float(threshold):
+                continue
+            applies = (
+                policy.get("scoring_protocol")
+                and details.get("scoring_protocol") == policy["scoring_protocol"]
+                and "zh_long" in (details.get("selected_models") or [])
+                and details.get("effective_chars", 0) >= policy["min_chars"]
+                and domain != "academic_technical"
+            )
+            if not applies or score >= policy["document_threshold"]:
+                return True
+            segments = details.get("segments") or []
+            strong = sum(
+                segment.get("score") is not None and segment["score"] >= policy["segment_threshold"]
+                for segment in segments
+            )
+            if segments and strong / len(segments) >= policy["min_high_segment_share"]:
+                return True
+        return False
 
     def _summary(self, label: str, score: float, modality: str) -> str:
         modality_name = self._modality_name(modality)

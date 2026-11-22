@@ -38,6 +38,33 @@ def analysis_for(label: str, score: float, reasons: list[str]) -> dict:
 
 
 class FalsePositiveReportTests(unittest.TestCase):
+    def test_long_chinese_review_requires_document_or_window_evidence(self):
+        config = {"report": {"provider": "template", "long_text_review": {
+            "scoring_protocol": "review-fixture", "min_chars": 1500,
+            "document_threshold": 0.9995, "segment_threshold": 0.9997,
+            "min_high_segment_share": 0.5,
+        }}}
+        reporter = ReportGenerator(config=config)
+        for domain, chars, protocol, score, scores, expected in (
+            ("official_news", 3000, "review-fixture", 0.98, [0.9997, 0.96, 0.98], False),
+            ("official_news", 3000, "review-fixture", 0.98, [0.9997, 0.9998, 0.95, 0.94], True),
+            ("official_news", 3000, "review-fixture", 0.9995, [0.9995, 0.9995], True),
+            ("academic_technical", 3531, "review-fixture", 0.878, [0.5235, 0.9994], True),
+            ("official_news", 800, "review-fixture", 0.98, [0.97, 0.99], True),
+            ("official_news", 3000, "different-model", 0.98, [0.97, 0.99], True),
+        ):
+            with self.subTest(domain=domain, chars=chars, protocol=protocol, score=score, scores=scores):
+                analysis = analysis_for("uncertain", score, ["score_in_uncertain_interval"])
+                detection = analysis["detection"]
+                detection["decision"]["domain"] = domain
+                detection["providers"] = [{"status": "ok", "details": {
+                    "selected_models": ["zh_long"], "screening_threshold": 0.8,
+                    "scoring_protocol": protocol, "effective_chars": chars,
+                    "segments": [{"score": value} for value in scores],
+                }}]
+                report = reporter.generate(analysis)
+                self.assertEqual(bool(report["review_label"]), expected)
+
     def test_uncertain_report_keeps_high_scoring_segment_clues_visible(self):
         analysis = analysis_for("uncertain", 0.878, ["score_in_uncertain_interval"])
         analysis["detection"]["providers"] = [{"status": "ok", "details": {

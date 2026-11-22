@@ -210,6 +210,7 @@ class RoutedTextAigcDetector:
             details={
                 "language": language,
                 "length_bucket": self.length_bucket(text),
+                "effective_chars": sum(not char.isspace() for char in text),
                 "selected_models": sorted(branch_details),
                 "cache_dir": self.cache_dir,
                 "model_scores": branch_scores,
