@@ -145,16 +145,17 @@ def test_freezing_keeps_only_last_four_layers_pooler_and_head_trainable(tiny_ber
 
 
 def test_batched_document_scores_match_runtime_token_and_character_weights(tiny_bert):
-    torch = pytest.importorskip("torch")
     from detection.text_detector import RoutedTextAigcDetector
 
     tokenizer, model = tiny_bert
     model.eval()
-    rows = [_row("人" * 12 + "智" * 2), _row("人。智。人。智。", identity="other", group="other")]
-    detector = RoutedTextAigcDetector(models={"zh_short": "fixture", "zh_long": "fixture"}, device="cpu", max_length=8)
+    rows = [_row("人" * 12 + "智" * 2), _row("人。智。" * 135, identity="other", group="other")]
+    detector = RoutedTextAigcDetector(
+        models={"zh_short": "fixture", "zh_long": "fixture"}, device="cpu", max_length=8,
+    )
     detector._loaded = {"zh_short": (tokenizer, model), "zh_long": (tokenizer, model)}
     expected = [detector.detect(row["text"]).score for row in rows]
-    actual = _module().score_documents(model, tokenizer, rows, device="cpu", batch_size=3, max_length=8)
+    actual = _module().score_documents(model, tokenizer, rows, device="cpu", batch_size=24, max_length=8)
     assert actual == pytest.approx(expected, abs=0.0001)
     assert model.training is False
 
@@ -179,6 +180,7 @@ def test_tiny_offline_training_saves_reloadable_binary_checkpoint(tiny_bert, tmp
     _module().main([
         "--data", str(data), "--base-model", str(base), "--output", str(output),
         "--device", "cpu", "--epochs", "1", "--batch-size", "2", "--eval-batch-size", "2",
+        "--max-windows-per-document", "6", "--validation-aggregation", "logit_mean", "--label-smoothing", "0.05",
     ])
     checkpoint = transformers.AutoModelForSequenceClassification.from_pretrained(output, local_files_only=True)
     assert checkpoint.config.id2label == {0: "human", 1: "ai"}
@@ -186,6 +188,9 @@ def test_tiny_offline_training_saves_reloadable_binary_checkpoint(tiny_bert, tmp
     assert metadata["selected_train"]["documents"] == 2
     assert metadata["selected_validation"]["documents"] == 2
     assert metadata["best_epoch"] == 1
+    assert metadata["protocol"]["training_windows_per_document"] == 6
+    assert metadata["protocol"]["validation_aggregation"] == "logit_mean"
+    assert metadata["base_model_sha256"]["model.safetensors"]
     assert metadata["model_sha256"]["model.safetensors"]
     assert len(metadata["epochs"]) == 1
     assert metadata["epochs"][0]["validation_auroc"] in (0.0, 0.5, 1.0)
