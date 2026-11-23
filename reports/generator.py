@@ -128,7 +128,9 @@ class ReportGenerator:
                 for provider in detection.get("providers", []):
                     details = provider.get("details") or {}
                     segments = details.get("segments") or []
-                    screening = details.get("screening_threshold")
+                    screening = decision.get("screening_threshold")
+                    if screening is None:
+                        screening = details.get("screening_threshold")
                     if provider.get("status") == "ok" and segments and screening is not None:
                         count = sum(float(s["score"]) >= float(screening) for s in segments if s.get("score") is not None)
                         evidence.append(
@@ -544,30 +546,14 @@ class ReportGenerator:
         return bool(re.fullmatch(r"[A-Z][A-Z0-9_]*", value))
 
     def _text_review(self, detection: dict[str, Any], score: float) -> bool:
-        policy = self.report_cfg.get("long_text_review") or {}
-        domain = (detection.get("decision") or {}).get("domain")
-        for provider in detection.get("providers", []):
-            details = provider.get("details") or {}
-            threshold = details.get("screening_threshold")
-            if provider.get("status") != "ok" or threshold is None or score < float(threshold):
-                continue
-            applies = (
-                policy.get("scoring_protocol")
-                and details.get("scoring_protocol") == policy["scoring_protocol"]
-                and "zh_long" in (details.get("selected_models") or [])
-                and details.get("effective_chars", 0) >= policy["min_chars"]
-                and domain != "academic_technical"
-            )
-            if not applies or score >= policy["document_threshold"]:
-                return True
-            segments = details.get("segments") or []
-            strong = sum(
-                segment.get("score") is not None and segment["score"] >= policy["segment_threshold"]
-                for segment in segments
-            )
-            if segments and strong / len(segments) >= policy["min_high_segment_share"]:
-                return True
-        return False
+        cutoff = (detection.get("decision") or {}).get("screening_threshold")
+        if cutoff is not None:
+            return score >= float(cutoff)
+        return any(
+            provider.get("status") == "ok" and threshold is not None and score >= float(threshold)
+            for provider in detection.get("providers", [])
+            for threshold in [(provider.get("details") or {}).get("screening_threshold")]
+        )
 
     def _summary(self, label: str, score: float, modality: str) -> str:
         modality_name = self._modality_name(modality)

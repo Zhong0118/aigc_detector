@@ -18,10 +18,13 @@ class TextDomainRouter:
 
     _TIE_BREAK_PRIORITY = {
         "literature": 1,
-        "official_news": 2,
-        "academic_technical": 3,
+        "official_news": 3,
+        "academic_technical": 2,
     }
     _ACADEMIC_NOVEL_CONTEXT = ("method", "model", "approach", "algorithm", "framework")
+    _GENERIC_ACADEMIC = {"本文", "研究", "方法", "模型"}
+    _ACADEMIC_METHODS = {"实验", "算法", "数据集", "experiment", "algorithm", "dataset", "neural"}
+    _ACADEMIC_FORM = ("实验结果", "结果表明", "摘要", "本文提出", "experimental results", "abstract", "we propose")
     _DOMAIN_MARKERS = (
         (
             "literature",
@@ -102,6 +105,7 @@ class TextDomainRouter:
 
     def classify(self, text: str) -> DomainDecision:
         candidates: list[tuple[int, int, float, str, tuple[str, ...]]] = []
+        news = any(self._contains(text, marker) for marker in self._DOMAIN_MARKERS[-1][1])
         for domain, markers, base_confidence in self._DOMAIN_MARKERS:
             evidence = tuple(marker for marker in markers if self._contains(text, marker))
             if domain == "literature" and evidence and self._contains(text, "novel"):
@@ -112,6 +116,11 @@ class TextDomainRouter:
                     for context in self._ACADEMIC_NOVEL_CONTEXT
                     if self._contains(text, f"novel {context}")
                 )
+                if evidence and set(evidence) <= self._GENERIC_ACADEMIC:
+                    continue
+                if news and not (len(self._ACADEMIC_METHODS.intersection(evidence)) >= 2
+                                 or (len(evidence) >= 2 and any(self._contains(text, marker) for marker in self._ACADEMIC_FORM))):
+                    continue
             if evidence:
                 candidates.append(
                     (

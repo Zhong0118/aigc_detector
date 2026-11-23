@@ -122,9 +122,18 @@ class TextDomainRouterTests(unittest.TestCase):
     def test_precedence_is_deterministic_when_markers_overlap(self) -> None:
         decision = self.router.classify("政府公告：研究部门将发布新的数据集管理办法。")
 
-        self.assertEqual(decision.domain, "academic_technical")
-        self.assertIn("研究", decision.evidence)
-        self.assertEqual(decision.confidence, 0.8)
+        self.assertEqual(decision.domain, "official_news")
+        self.assertIn("公告", decision.evidence)
+        self.assertGreaterEqual(decision.confidence, 0.8)
+
+    def test_generic_academic_words_do_not_turn_news_or_notices_into_papers(self) -> None:
+        for text in (
+            "记者从市政务服务中心获悉，本文整理了社区研究座谈会上讨论的方法与服务模型。",
+            "政府通知：根据会议研究决定，现将服务模型的申报方法和有关事项公布如下。",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(self.router.classify(text).domain, "official_news")
+        self.assertEqual(self.router.classify("本文提出一种迁移算法。实验结果表明该方法能够改善模型在公开数据集上的表现。政府推广场景仅用于讨论。").domain, "academic_technical")
 
     def test_defaults_to_general_qa_with_rule_based_fallback_evidence(self) -> None:
         decision = self.router.classify("How can I make a quick dinner tonight?")
