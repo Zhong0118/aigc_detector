@@ -22,6 +22,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoModelForSequenceClassification, AutoTokenizer
 
 from detection.text_segmentation import SentenceAwareSegmenter
+from detection.text_threshold_artifact import model_calibration_group
 
 
 @dataclass
@@ -97,6 +98,19 @@ class TextDetector:
         return 0.7 * ppl_score + 0.3 * burst_score
 
 
+def margin_probability(margin: float, temperature: float) -> float:
+    """Stable sigmoid in double precision, with finite-precision endpoints excluded."""
+    scaled = margin / temperature
+    e = math.exp(-abs(scaled))
+    score = 1 / (1 + e) if scaled >= 0 else e / (1 + e)
+    return min(math.nextafter(1.0, 0.0), max(math.nextafter(0.0, 1.0), score))
+
+
+def branch_scoring_protocol(raw_protocol: str, routes: dict[str, str], temperatures: dict[str, float]) -> str:
+    payload = [raw_protocol, "executed-weight-calibration-v1", routes, temperatures]
+    return "token-logit-v1:" + hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
+
+
 class RoutedTextAigcDetector:
     """YuchuanTian AIGC_text_detector 的本地路由封装。
 
@@ -120,6 +134,10 @@ class RoutedTextAigcDetector:
         en_segment_target_chars: int | None = None,
         en_segment_max_chars: int | None = None,
         segment_overlap_sentences: int = 1,
+        aggregation_mode: str = "probability_mean",
+        temperature: float = 1.0,
+        length_routing: str = "segment",
+        branch_calibration_path: str | None = None,
     ) -> None:
         """初始化本地文本路由器。
 
@@ -130,10 +148,19 @@ class RoutedTextAigcDetector:
         self.models = models
         self.cache_dir = str(Path(cache_dir))
         self.short_text_chars = int(short_text_chars)
+        if length_routing not in {"segment", "document"}:
+            raise ValueError(f"Unknown text length routing: {length_routing}")
+        self.length_routing = length_routing
         self.threshold = float(threshold)
         self.device = self._resolve_device(device)
         self.mixed_strategy = mixed_strategy
         self.max_length = int(max_length)
+        if aggregation_mode not in {"probability_mean", "logit_mean"}:
+            raise ValueError(f"Unknown text aggregation mode: {aggregation_mode}")
+        self.aggregation_mode = aggregation_mode
+        self.temperature = float(temperature)
+        if not math.isfinite(self.temperature) or self.temperature <= 0:
+            raise ValueError("temperature must be finite and positive")
         overlap = int(segment_overlap_sentences)
         self.zh_segmenter = SentenceAwareSegmenter(
             target_chars=int(segment_target_chars),
@@ -152,9 +179,47 @@ class RoutedTextAigcDetector:
                                zh_window=[segment_target_chars, segment_max_chars],
                                en_window=[en_segment_target_chars or 1400, en_segment_max_chars or 1800],
                                overlap=overlap)
-        self.scoring_protocol = "token-complete-v1:" + hashlib.sha256(
+        if self.length_routing == "document":
+            protocol_config.update(length_routing="document", length_rule="non_whitespace_lt")
+        protocol_name = "token-complete-v1"
+        if self.aggregation_mode == "logit_mean":
+            protocol_name = "token-logit-v1"
+            protocol_config.update(aggregation_mode=self.aggregation_mode, temperature=self.temperature)
+        self.scoring_protocol = protocol_name + ":" + hashlib.sha256(
             json.dumps(protocol_config, sort_keys=True).encode()
         ).hexdigest()[:16]
+        self.model_routes: dict[str, str] = {}
+        self.branch_temperatures: dict[str, float] = {}
+        if branch_calibration_path:
+            self._load_branch_calibration(Path(branch_calibration_path))
+
+    def _load_branch_calibration(self, path: Path) -> None:
+        if self.aggregation_mode != "logit_mean" or self.length_routing != "document" or self.temperature != 1.0:
+            raise ValueError("Branch calibration requires document logit scoring with a unit base temperature")
+        fitted = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(fitted, dict) or fitted.get("raw_scoring_protocol") != self.scoring_protocol:
+            raise ValueError("Branch calibration does not match the raw scoring protocol")
+        routes = fitted.get("model_routes")
+        groups = fitted.get("groups")
+        if (not isinstance(routes, dict) or set(routes) != set(self.models)
+                or any(not isinstance(value, str) or not value or "+" in value for value in routes.values())
+                or not isinstance(groups, dict) or not groups or not groups.keys() <= set(routes.values())):
+            raise ValueError("Invalid branch calibration routes or groups")
+        weights_by_group: dict[str, set[str]] = {}
+        for key, group in routes.items():
+            weights_by_group.setdefault(group, set()).add(self.models[key])
+        if any(len(weights) != 1 for weights in weights_by_group.values()):
+            raise ValueError("Branch calibration cannot share one temperature between distinct weights")
+        temperatures = {}
+        for group, evidence in groups.items():
+            temperature = evidence.get("temperature") if isinstance(evidence, dict) else None
+            if isinstance(temperature, bool) or not isinstance(temperature, (int, float)) or not math.isfinite(temperature) or temperature <= 0:
+                raise ValueError(f"Invalid calibration temperature for {group}")
+            temperatures[group] = temperature
+        protocol = branch_scoring_protocol(self.scoring_protocol, routes, temperatures)
+        if fitted.get("scoring_protocol") != protocol:
+            raise ValueError("Branch calibration scoring protocol does not match its temperatures")
+        self.model_routes, self.branch_temperatures, self.scoring_protocol = routes, temperatures, protocol
 
     def detect(self, text: str) -> DetectionResult:
         """执行一次本地文本检测。"""
@@ -165,21 +230,26 @@ class RoutedTextAigcDetector:
         segment_details: list[dict[str, Any]] = []
         weighted_scores: list[tuple[float, int]] = []
         previous_end = 0
+        use_margin = self.aggregation_mode == "logit_mean"
+        # Keep the document's route for each segment, including short tails.
+        document_keys = self.select_model_keys(text) if self.length_routing == "document" else None
+        group = model_calibration_group({"selected_models": document_keys}, self.model_routes)
+        temperature = self.branch_temperatures.get(group, self.temperature)
 
         for segment in segments:
-            selected_keys = self.select_model_keys(segment.text)
+            selected_keys = document_keys if document_keys is not None else self.select_model_keys(segment.text)
             segment_branch_scores: dict[str, float] = {}
             for key in selected_keys:
                 model_name = self.models[key]
                 score = self._run_model(key, model_name, segment.text)
                 public_name = f"local-text-{key.replace('_', '-')}"
-                segment_branch_scores[public_name] = round(score, 4)
+                segment_branch_scores[public_name] = score if use_margin else round(score, 4)
                 branch_score_lists.setdefault(public_name, []).append(score)
                 branch_details[key] = {"model": model_name}
 
             segment_score = self._merge_branch_scores(list(segment_branch_scores.values()))
             unique_start = max(segment.start, previous_end)
-            weight = max(1, segment.end - unique_start)
+            weight = max(0 if use_margin else 1, segment.end - unique_start)
             previous_end = max(previous_end, segment.end)
             weighted_scores.append((segment_score, weight))
             segment_details.append(
@@ -188,8 +258,9 @@ class RoutedTextAigcDetector:
                     "start": segment.start,
                     "end": segment.end,
                     "text": segment.text,
-                    "score": round(segment_score, 4),
-                    "model_scores": segment_branch_scores,
+                    "score": self._as_probability(segment_score, temperature),
+                    "model_scores": {name: self._as_probability(value, temperature) for name, value in segment_branch_scores.items()},
+                    **({"raw_margin": segment_score} if use_margin else {}),
                 }
             )
 
@@ -200,13 +271,14 @@ class RoutedTextAigcDetector:
             else 0.0
         )
         branch_scores = {
-            name: round(sum(scores) / len(scores), 4)
+            name: self._as_probability(sum(scores) / len(scores), temperature)
             for name, scores in branch_score_lists.items()
             if scores
         }
+        probability = self._as_probability(final_score, temperature)
         return DetectionResult(
-            score=round(final_score, 4),
-            label="ai" if final_score >= self.threshold else "human",
+            score=probability,
+            label="ai" if (probability if use_margin else final_score) >= self.threshold else "human",
             details={
                 "language": language,
                 "length_bucket": self.length_bucket(text),
@@ -217,8 +289,10 @@ class RoutedTextAigcDetector:
                 "screening_threshold": self.threshold,
                 "branch_details": branch_details,
                 "segments": segment_details,
-                "aggregation": "unique-character-weighted-mean",
+                "aggregation": "unique-character-weighted-logit-mean" if use_margin else "unique-character-weighted-mean",
                 "scoring_protocol": self.scoring_protocol,
+                **({"aggregation_mode": self.aggregation_mode, "raw_margin": final_score,
+                    "temperature": temperature} if use_margin else {}),
                 "note": "Local open-source text detector branch with language/length routing.",
             },
         )
@@ -259,10 +333,12 @@ class RoutedTextAigcDetector:
 
     def length_bucket(self, text: str) -> str:
         """判断短文本或长文本。"""
+        if self.length_routing == "document":
+            return "short" if sum(not char.isspace() for char in text) < self.short_text_chars else "long"
         return "short" if len(text.strip()) <= self.short_text_chars else "long"
 
     def _run_model(self, key: str, model_name: str, text: str) -> float:
-        """完整评分每个 token 窗口，避免字符窗口在 tokenizer 内静默截断。"""
+        """Return the token-weighted segment value in the configured score space."""
         tokenizer, model = self._load_model(key, model_name)
         limit = min(
             self.max_length,
@@ -286,12 +362,29 @@ class RoutedTextAigcDetector:
             for index in range(encoded["input_ids"].shape[0]):
                 window = {name: value[index:index + 1].to(self.device) for name, value in encoded.items()}
                 outputs = model(**window)
-                probs = torch.softmax(outputs.logits, dim=-1)[0]
-                weight = max(1, int(window["attention_mask"].sum().item()) - special_tokens)
-                weighted_score += self._ai_probability(probs, model.config.id2label) * weight
+                content_tokens = int(window["attention_mask"].sum().item()) - special_tokens
+                logits = outputs.logits[0]
+                if self.aggregation_mode == "logit_mean":
+                    if logits.numel() != 2:
+                        raise ValueError("logit_mean requires two output classes")
+                    ai = self._ai_label_index(model.config.id2label, 2)
+                    value = float(logits[ai].item()) - float(logits[1 - ai].item())
+                    if not math.isfinite(value):
+                        raise ValueError("Non-finite binary classifier margin")
+                    weight = max(0, content_tokens)
+                else:
+                    probs = torch.softmax(outputs.logits, dim=-1)[0]
+                    value = self._ai_probability(probs, model.config.id2label)
+                    weight = max(1, content_tokens)
+                weighted_score += value * weight
                 total_tokens += weight
 
-        return weighted_score / total_tokens
+        return weighted_score / total_tokens if total_tokens else 0.0
+
+    def _as_probability(self, value: float, temperature: float | None = None) -> float:
+        if self.aggregation_mode == "logit_mean":
+            return margin_probability(value, self.temperature if temperature is None else temperature)
+        return round(value, 4)
 
     def _load_model(self, key: str, model_name: str) -> tuple[Any, Any]:
         """懒加载 tokenizer/model，并把权重缓存到 cache_dir。"""
@@ -327,13 +420,15 @@ class RoutedTextAigcDetector:
 
     def _ai_probability(self, probs: torch.Tensor, id2label: dict[int, str]) -> float:
         """从分类器输出里提取 AI 类概率。"""
+        return float(probs[self._ai_label_index(id2label, len(probs))].item())
+
+    @staticmethod
+    def _ai_label_index(id2label: dict[int, str], size: int) -> int:
         normalized_labels = {idx: str(label).lower() for idx, label in id2label.items()}
         for idx, label in normalized_labels.items():
             if any(token in label for token in ["ai", "machine", "generated", "gpt"]):
-                return float(probs[int(idx)].item())
-        if len(probs) == 1:
-            return float(probs[0].item())
-        return float(probs[-1].item())
+                return int(idx)
+        return size - 1
 
     def _merge_branch_scores(self, scores: list[float]) -> float:
         """合并中英混合文本的多个分支分数。"""

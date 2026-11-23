@@ -10,6 +10,16 @@ ValidationMode = Literal["runtime", "readiness"]
 _MISSING = object()
 
 
+def model_calibration_group(details: Mapping[str, Any], model_routes: Mapping[str, str]) -> str | None:
+    """Resolve the set of weights actually executed, merging aliases of one snapshot."""
+    selected = details.get("selected_models")
+    if not isinstance(selected, list) or not selected:
+        return None
+    if any(not isinstance(key, str) or key not in model_routes for key in selected):
+        return None
+    return "+".join(sorted({model_routes[key] for key in selected}))
+
+
 @dataclass(frozen=True)
 class ArtifactValidationResult:
     errors: tuple[str, ...]
@@ -81,6 +91,17 @@ def validate_text_threshold_artifact(
     if strict and not groups:
         add("artifact_groups_must_be_non_empty_mapping")
 
+    branch_grouped = "model_routes" in payload
+    if branch_grouped:
+        routes = payload["model_routes"]
+        if not isinstance(routes, Mapping) or not routes or any(
+            not isinstance(key, str) or not key or not isinstance(value, str) or not value or "+" in value
+            for key, value in routes.items()
+        ):
+            add("artifact_model_routes_invalid")
+        elif not groups.keys() <= set(routes.values()):
+            add("artifact_model_group_not_in_routes")
+
     for group_name, group in groups.items():
         if not isinstance(group_name, str) or not group_name:
             add("artifact_invalid_group_entry", "artifact_group_name_invalid")
@@ -91,11 +112,11 @@ def validate_text_threshold_artifact(
 
         low = group.get(
             "low_threshold",
-            _MISSING if strict else default_low_threshold,
+            _MISSING if strict or branch_grouped else default_low_threshold,
         )
         high = group.get(
             "high_threshold",
-            _MISSING if strict else default_high_threshold,
+            _MISSING if strict or branch_grouped else default_high_threshold,
         )
         if low is _MISSING:
             add(
@@ -117,6 +138,10 @@ def validate_text_threshold_artifact(
                 "artifact_invalid_thresholds",
                 "artifact_group_high_threshold_invalid",
             )
+        if "screening_threshold" in group:
+            screen = group["screening_threshold"]
+            if not _unit_interval_number(screen) or not _unit_interval_number(high) or screen >= high:
+                add("artifact_screening_threshold_must_be_below_high_threshold")
         if (
             low is not _MISSING
             and high is not _MISSING
@@ -156,6 +181,7 @@ def validate_text_threshold_artifact(
                     rel_tol=0.0,
                     abs_tol=1e-12,
                 )
+                and not (branch_grouped and group_target_fpr < root_target_fpr)
             ):
                 add("artifact_group_target_fpr_mismatch")
 

@@ -144,11 +144,11 @@ class ApiFirstDetectionEngine:
             final_score = float(decision.score or 0.0)
             high_threshold = float(decision.high_threshold or self.threshold)
             return DetectionPackage(
-                score=round(final_score, 4),
+                score=final_score,
                 label=decision.decision,
                 threshold=high_threshold,
                 provider_results=results,
-                modality_scores={modality: round(final_score, 4)},
+                modality_scores={modality: final_score},
                 model_scores=self._merge_model_scores(results),
                 decision_details=decision.to_dict(),
             )
@@ -159,13 +159,17 @@ class ApiFirstDetectionEngine:
         final_score = sum(usable_scores) / len(usable_scores) if usable_scores else 0.0
         label = "ai" if final_score >= self.threshold else "human"
         model_scores = self._merge_model_scores(results)
+        if modality != "text" or not any(
+            result.details.get("aggregation_mode") == "logit_mean" for result in results
+        ):
+            final_score = round(final_score, 4)
 
         return DetectionPackage(
-            score=round(final_score, 4),
+            score=final_score,
             label=label,
             threshold=self.threshold,
             provider_results=results,
-            modality_scores={modality: round(final_score, 4)},
+            modality_scores={modality: final_score},
             model_scores=model_scores,
         )
 
@@ -340,6 +344,10 @@ class ApiFirstDetectionEngine:
                 en_segment_target_chars=int(cfg.get("en_segment_target_chars", 1400)),
                 en_segment_max_chars=int(cfg.get("en_segment_max_chars", 1800)),
                 segment_overlap_sentences=int(cfg.get("segment_overlap_sentences", 1)),
+                aggregation_mode=cfg.get("aggregation_mode", "probability_mean"),
+                temperature=cfg.get("temperature", 1.0),
+                length_routing=cfg.get("length_routing", "segment"),
+                branch_calibration_path=cfg.get("branch_calibration_path"),
             )
         return self._local_text_detector
 

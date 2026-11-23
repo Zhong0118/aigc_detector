@@ -1171,6 +1171,10 @@ def _build_detector(config: dict[str, Any]) -> RoutedTextAigcDetector:
         segment_overlap_sentences=int(
             local.get("segment_overlap_sentences", 1)
         ),
+        aggregation_mode=local.get("aggregation_mode", "probability_mean"),
+        temperature=local.get("temperature", 1.0),
+        length_routing=local.get("length_routing", "segment"),
+        branch_calibration_path=local.get("branch_calibration_path"),
     )
 
 

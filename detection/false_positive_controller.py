@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from detection.text_domain import TextDomainRouter
-from detection.text_threshold_artifact import validate_text_threshold_artifact
+from detection.text_threshold_artifact import model_calibration_group, validate_text_threshold_artifact
 
 
 @dataclass
@@ -27,6 +27,7 @@ class FalsePositiveDecision:
     analyzed_coverage: float
     high_risk_coverage: float
     adjacent_high_segments: int
+    screening_threshold: float | None = None
     threshold_validation_fpr: float | None = None
     threshold_validation_samples: int = 0
     threshold_ai_recall: float | None = None
@@ -65,16 +66,47 @@ class FalsePositiveController:
         language = self._language(text)
         domain, domain_confidence = self._domain(text)
         length_bucket = "short" if effective_chars <= self.short_text_chars else "long"
-        group, low_threshold, high_threshold, threshold_warnings = self._thresholds(
-            language,
-            domain,
-            length_bucket,
-        )
         usable = [
             result
             for result in provider_results
             if getattr(result, "status", None) == "ok" and getattr(result, "score", None) is not None
         ]
+        protocols = {
+            (getattr(result, "details", None) or {}).get("scoring_protocol")
+            for result in usable
+        }
+        artifact_protocol = self.artifact.get("scoring_protocol")
+        logit_protocol = any(
+            isinstance(protocol, str) and protocol.startswith("token-logit-v1:")
+            for protocol in (*protocols, artifact_protocol)
+        )
+        if usable and logit_protocol and protocols != {artifact_protocol}:
+            return self._decision(
+                score=float(statistics.median(float(result.score) for result in usable)),
+                decision="insufficient_evidence", low=None, high=None, group=None,
+                domain=domain, domain_confidence=domain_confidence, length_bucket=length_bucket,
+                reasons=["scoring_protocol_not_evaluated"], segments=self._segments(usable),
+                threshold_warnings=[*self.artifact_warnings, "scoring_protocol_not_evaluated"],
+            )
+
+        screening_threshold = None
+        if usable and (routes := self.artifact.get("model_routes")):
+            groups = {model_calibration_group(getattr(result, "details", None) or {}, routes) for result in usable}
+            group = next(iter(groups)) if len(groups) == 1 else None
+            entry = self.artifact["groups"].get(group)
+            if entry is None:
+                return self._decision(
+                    score=float(statistics.median(float(result.score) for result in usable)),
+                    decision="insufficient_evidence", low=None, high=None, group=group,
+                    domain=domain, domain_confidence=domain_confidence, length_bucket=length_bucket,
+                    reasons=["model_branch_not_calibrated"], segments=self._segments(usable),
+                    threshold_warnings=[*self.artifact_warnings, "model_branch_not_calibrated"],
+                )
+            low_threshold, high_threshold = entry["low_threshold"], entry["high_threshold"]
+            screening_threshold = entry.get("screening_threshold")
+            threshold_warnings = list(self.artifact_warnings)
+        else:
+            group, low_threshold, high_threshold, threshold_warnings = self._thresholds(language, domain, length_bucket)
 
         if not usable:
             return self._decision(
@@ -91,11 +123,7 @@ class FalsePositiveController:
             )
 
         provider_scores = [float(result.score) for result in usable]
-        protocols = {
-            (getattr(result, "details", None) or {}).get("scoring_protocol")
-            for result in usable
-        }
-        if protocols != {self.artifact.get("scoring_protocol")}:
+        if protocols != {artifact_protocol}:
             threshold_warnings.append("scoring_protocol_not_evaluated")
         score = float(statistics.median(provider_scores))
         segments = self._segments(usable)
@@ -139,6 +167,7 @@ class FalsePositiveController:
             coverage=coverage,
             high_coverage=high_coverage,
             adjacent=adjacent,
+            screening_threshold=screening_threshold,
             reasons=reasons,
             segments=segments,
             threshold_warnings=threshold_warnings,
@@ -161,15 +190,16 @@ class FalsePositiveController:
         *,
         score: float | None,
         decision: str,
-        low: float,
-        high: float,
-        group: str,
+        low: float | None,
+        high: float | None,
+        group: str | None,
         domain: str,
         domain_confidence: float,
         length_bucket: str,
         coverage: float = 0.0,
         high_coverage: float = 0.0,
         adjacent: int = 0,
+        screening_threshold: float | None = None,
         reasons: list[str] | None = None,
         segments: list[dict[str, Any]] | None = None,
         threshold_warnings: list[str] | None = None,
@@ -180,10 +210,10 @@ class FalsePositiveController:
             extra_warnings=threshold_warnings or [],
         )
         return FalsePositiveDecision(
-            score=None if score is None else round(score, 4),
+            score=score,
             decision=decision,
-            low_threshold=round(low, 4),
-            high_threshold=round(high, 4),
+            low_threshold=low,
+            high_threshold=high,
             threshold_group=group,
             domain=domain,
             domain_confidence=round(domain_confidence, 4),
@@ -191,6 +221,7 @@ class FalsePositiveController:
             analyzed_coverage=round(coverage, 4),
             high_risk_coverage=round(high_coverage, 4),
             adjacent_high_segments=adjacent,
+            screening_threshold=screening_threshold,
             threshold_validation_fpr=diagnostics[0],
             threshold_validation_samples=diagnostics[1],
             threshold_ai_recall=diagnostics[2],
@@ -316,9 +347,9 @@ class FalsePositiveController:
 
     def _threshold_diagnostics(
         self,
-        group: str,
+        group: str | None,
         *,
-        effective_high: float,
+        effective_high: float | None,
         extra_warnings: list[str],
     ) -> tuple[
         float | None,

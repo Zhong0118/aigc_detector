@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import unittest
+import hashlib
+import json
 from unittest.mock import patch
 
 import torch
@@ -9,6 +11,62 @@ from types import SimpleNamespace
 from transformers import BertTokenizerFast
 
 from detection.text_detector import RoutedTextAigcDetector
+
+
+def test_document_detector_applies_only_the_executed_branch_temperature(tmp_path):
+    import math
+
+    options = dict(models={"zh_short": "short", "zh_long": "long"}, device="cpu", aggregation_mode="logit_mean",
+                   short_text_chars=500, length_routing="document")
+    raw = RoutedTextAigcDetector(**options)
+    routes = {"zh_short": "zh_short", "zh_long": "zh_long"}
+    temperatures = {"zh_short": 4.0, "zh_long": 2.0}
+    raw_protocol = raw.scoring_protocol
+    expected = "token-logit-v1:" + hashlib.sha256(json.dumps(
+        [raw_protocol, "executed-weight-calibration-v1", routes, temperatures], sort_keys=True,
+    ).encode()).hexdigest()[:16]
+    path = tmp_path / "temperatures.json"
+    path.write_text(json.dumps({"raw_scoring_protocol": raw_protocol, "scoring_protocol": expected,
+                                "model_routes": routes, "groups": {k: {"temperature": v} for k, v in temperatures.items()}}))
+    detector = RoutedTextAigcDetector(**options, branch_calibration_path=str(path))
+    with patch.object(detector, "_run_model", return_value=2.0):
+        for chars, temperature in ((499, 4.0), (500, 2.0)):
+            result = detector.detect("文" * chars)
+            assert result.score == pytest.approx(1 / (1 + math.exp(-2 / temperature)))
+            assert result.details["segments"][0]["score"] == pytest.approx(result.score)
+            assert result.details["scoring_protocol"] == expected
+    with pytest.raises(ValueError, match="protocol"):
+        RoutedTextAigcDetector(**dict(options, short_text_chars=501), branch_calibration_path=str(path))
+
+
+def test_document_routing_uses_effective_length_and_keeps_chinese_tail_on_long_weights():
+    from scripts.bootstrap_text_resources import _build_detector
+
+    models = {key: key for key in ("zh_long", "zh_short", "en_long", "en_short")}
+    config = {"models": models, "device": "cpu", "mixed_strategy": "dominant",
+              "short_text_chars": 500, "length_routing": "document",
+              "segment_target_chars": 32, "segment_max_chars": 48, "segment_overlap_sentences": 0}
+    detector = _build_detector({"detection": {"local_models": {"text_yuchuan": config}}})
+    assert detector.length_bucket("文 " * 499) == "short"
+    assert detector.length_bucket("文 " * 500) == "long"
+
+    text = "中文章节介绍技术背景和主要结论。" * 40 + "\nAppendix: RSA ECDSA PQC."
+    with patch.object(detector, "_run_model", return_value=0.5) as run:
+        result = detector.detect(text)
+    assert len(result.details["segments"]) > 1
+    assert detector.select_model_keys(result.details["segments"][-1]["text"]) != ["zh_long"]
+    assert {call.args[0] for call in run.call_args_list} == {"zh_long"}
+    assert result.details["selected_models"] == ["zh_long"]
+    assert result.details["length_bucket"] == "long"
+
+    with patch.object(detector, "_run_model", return_value=0.5) as run:
+        detector.detect("问 " * 499)
+    assert {call.args[0] for call in run.call_args_list} == {"zh_short"}
+    assert detector.select_model_keys("English appendix " * 40) == ["en_long"]
+
+    legacy = _build_detector({"detection": {"local_models": {"text_yuchuan": dict(config, length_routing="segment")}}})
+    assert legacy.length_bucket("文" * 500) == "short"
+    assert legacy.scoring_protocol != detector.scoring_protocol
 
 
 def test_token_windows_keep_tail_and_respect_model_limit(tmp_path):
