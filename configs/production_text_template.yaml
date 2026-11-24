@@ -1,0 +1,85 @@
+# Render with scripts/deploy_runtime.sh. Paths are replaced after asset verification.
+database:
+  path: "${APP_ROOT}/data/aigc_detection.db"
+api:
+  host: 127.0.0.1
+  port: ${API_PORT}
+dashboard:
+  port: ${UI_PORT}
+detection:
+  mode: api_first
+  threshold: 0.8
+  deep_provenance_threshold: 0.6
+  demo_provider_enabled: false
+  api_providers: {}
+  local_models:
+    enabled: true
+    text_yuchuan:
+      enabled: true
+      cache_dir: "${APP_ROOT}/runtime_state/hf-cache"
+      device: "${DEVICE}"
+      threshold: 0.8
+      short_text_chars: 500
+      max_length: 512
+      mixed_strategy: dominant
+      models:
+        zh_short: "${APP_ROOT}/runtime_assets/models/text_binary/20261117-mdeberta-v1"
+        zh_long: "${APP_ROOT}/runtime_assets/models/text_binary/20261123-mdeberta-v2-six-layer"
+        en_short: "${APP_ROOT}/runtime_assets/models/text_binary/20261124-en-v2"
+        en_long: "${APP_ROOT}/runtime_assets/models/text_binary/20261124-en-v2"
+      segment_target_chars: 480
+      segment_max_chars: 640
+      en_segment_target_chars: 1400
+      en_segment_max_chars: 1800
+      segment_overlap_sentences: 1
+      length_routing: document
+      aggregation_mode: logit_mean
+      temperature: 1.0
+      preprocessing:
+        enabled: false
+      branch_calibration_path: "${APP_ROOT}/runtime_state/temperature.json"
+  text_false_positive_control:
+    enabled: true
+    dataset_profile: multidomain
+    artifact_path: "${APP_ROOT}/runtime_state/thresholds.json"
+    default_low_threshold: 0.4
+    default_high_threshold: 0.8
+    min_effective_chars: 120
+    short_text_chars: 500
+    min_analyzed_coverage: 0.7
+    min_high_coverage: 0.3
+    min_adjacent_high_segments: 2
+provenance:
+  fingerprint_db_path: "${APP_ROOT}/data/fingerprint_registry.db"
+  c2pa:
+    enabled: false
+  watermark:
+    enabled: false
+  attribution:
+    enabled: true
+    text:
+      enabled: true
+      top_k: 5
+      providers:
+        window_a0_equal_fusion:
+          enabled: true
+          provider: window_a0_equal_fusion
+          device: "${DEVICE}"
+          seed: 42
+          control_seed: 62
+          top_k: 5
+          min_blocks: 8
+          max_blocks: 12
+          min_family_probability: 0.2
+          a0_model_dir: "${APP_ROOT}/runtime_assets/attribution/A0/model"
+          a0_tokenizer_dir: "${APP_ROOT}/runtime_assets/attribution/A0/tokenizer"
+          b0_model_path: "${APP_ROOT}/runtime_assets/attribution/B0/model.joblib"
+          b1_model_path: "${APP_ROOT}/runtime_assets/attribution/B1/model.joblib"
+          b3_model_path: "${APP_ROOT}/runtime_assets/attribution/B3/model.joblib"
+          weights:
+            A0: 0.25
+            B0: 0.25
+            B1: 0.25
+            B3: 0.25
+report:
+  provider: template

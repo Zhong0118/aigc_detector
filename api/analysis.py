@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -237,5 +238,5 @@ def get_analysis_service() -> AnalysisService:
     """
     global _service
     if _service is None:
-        _service = AnalysisService()
+        _service = AnalysisService(config_path=os.getenv("AIGC_CONFIG") or "config.yaml")
     return _service

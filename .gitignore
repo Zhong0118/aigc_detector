@@ -69,6 +69,8 @@ logs/
 # Data files (keep structure but ignore contents)
 data/
 models/
+runtime_assets/
+runtime_state/
 ckpts/
 third_party/
 tools/c2patool/

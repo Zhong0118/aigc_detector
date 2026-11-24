@@ -1,0 +1,15 @@
+# Text-only deployment. Core inference and pickle ABI match the verified runtime.
+torch==2.6.0
+transformers==4.57.6
+numpy==2.2.6
+scikit-learn==1.7.2
+sentencepiece==0.2.1
+safetensors>=0.4,<1
+fastapi==0.136.0
+uvicorn==0.45.0
+python-multipart>=0.0.20,<1
+streamlit==1.56.0
+plotly>=5.15,<7
+sqlalchemy>=2,<3
+pyyaml>=6,<7
+requests>=2.31,<3
