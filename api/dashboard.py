@@ -18,6 +18,12 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
+from reports.generator import (
+    UNCALIBRATED_TEXT_LABEL,
+    UNCALIBRATED_TEXT_SCORE,
+    uncalibrated_text_reason,
+)
+
 
 API_BASE = os.getenv("AIGC_API_BASE", "http://localhost:8000/api/v1")
 
@@ -270,6 +276,15 @@ def render_analysis(data: dict):
     - 原始 JSON
     """
     detection = data["detection"]
+    if reason := uncalibrated_text_reason(data):
+        top = st.columns(2)
+        top[0].metric("AI 特征风险分数", UNCALIBRATED_TEXT_SCORE)
+        top[1].metric("检测结论", UNCALIBRATED_TEXT_LABEL)
+        st.info(reason)
+        with st.expander("Raw JSON"):
+            st.json(data)
+        return
+
     decision = detection.get("decision") or {}
     provenance = data["provenance"]
     report = data["report"]

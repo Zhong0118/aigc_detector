@@ -104,3 +104,37 @@ def test_attribution_load_failure_is_visible_instead_of_none(monkeypatch):
     assert not app.exception
     assert any('来源归因暂不可用' in e.value for e in app.error)
     assert not any('家族溯源: None' in c.value for c in app.caption)
+
+
+def test_uncalibrated_text_score_is_only_visible_in_diagnostics(monkeypatch):
+    providers = {"mode": "api_first", "ports": {"api": 8001, "dashboard": 8501},
+                 "deep_provenance_threshold": 0.6, "providers": []}
+    analysis = {
+        "modality": "text", "content_id": 4,
+        "detection": {
+            "score": 0.999, "label": "insufficient_evidence", "threshold": 0.9,
+            "providers": [], "model_scores": {"english": 0.999},
+            "decision": {
+                "decision": "insufficient_evidence",
+                "uncertainty_reasons": ["model_branch_not_calibrated"],
+                "segments": [{"index": 0, "start": 0, "end": 10, "text": "English text", "score": 0.999}],
+            },
+        },
+        "provenance": {"deep_triggered": False, "c2pa": {}, "watermark": {}, "fingerprint_registry": {}},
+        "report": {"summary": "旧报告风险分数 99.90%", "evidence": [], "limitations": [],
+                   "recommendation": "复核"},
+    }
+    monkeypatch.setattr("requests.request", lambda method, url, **kwargs:
+                        SimpleNamespace(status_code=200, json=lambda: providers if method == "GET" else analysis))
+    app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "api/dashboard.py")).run(timeout=20)
+    app.text_area[0].input("A document scored by an uncalibrated English model.")
+    app.button[0].click().run(timeout=20)
+
+    assert not app.exception
+    metrics = {metric.label: metric.value for metric in app.metric}
+    assert metrics["AI 特征风险分数"] == "不输出可比风险分"
+    assert metrics["检测结论"] == "未校准 / 证据不足"
+    assert any("模型分支尚未完成独立校准" in info.value for info in app.info)
+    assert not app.get("plotly_chart")
+    assert all("99.90%" not in item.value for item in app.markdown)
+    assert any('"score": 0.999' in item.value for item in app.json)

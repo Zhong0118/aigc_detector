@@ -11,6 +11,24 @@ import requests
 import yaml
 
 
+UNCALIBRATED_TEXT_LABEL = "未校准 / 证据不足"
+UNCALIBRATED_TEXT_SCORE = "不输出可比风险分"
+
+
+def uncalibrated_text_reason(analysis: dict[str, Any]) -> str | None:
+    if analysis.get("modality") != "text":
+        return None
+    decision = (analysis.get("detection") or {}).get("decision") or {}
+    if decision.get("decision") != "insufficient_evidence":
+        return None
+    reasons = decision.get("uncertainty_reasons") or []
+    if "scoring_protocol_not_evaluated" in reasons:
+        return "当前评分协议尚未完成独立验证，原始分仅供诊断，不能作为 AI 判定依据。"
+    if "model_branch_not_calibrated" in reasons:
+        return "当前文本模型分支尚未完成独立校准，原始分仅供诊断，不能作为 AI 判定依据。"
+    return None
+
+
 class ReportGenerator:
     """解释报告生成器。
 
@@ -37,6 +55,16 @@ class ReportGenerator:
         返回结构固定为 provider/status/summary/evidence/limitations/recommendation。
         前端可以不用关心报告来自模板还是 LLM。
         """
+        if reason := uncalibrated_text_reason(analysis):
+            return {
+                "provider": "template",
+                "status": "ok",
+                "review_label": None,
+                "summary": f"{UNCALIBRATED_TEXT_LABEL}（{UNCALIBRATED_TEXT_SCORE}）。",
+                "evidence": [reason],
+                "limitations": ["该模型输出不能与通过独立验证的风险分数比较。"],
+                "recommendation": "如需判断文本来源，请结合写作过程与来源记录人工复核。",
+            }
         provider = str(self.report_cfg.get("provider", "template")).lower()
         if provider == "llm":
             cached = self._load_cached_report(analysis)

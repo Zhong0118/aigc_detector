@@ -99,6 +99,20 @@ class FalsePositiveReportTests(unittest.TestCase):
         self.assertIn("没有可用的检测模型分数", joined)
         self.assertNotIn("未明显检出 AIGC", report["summary"])
 
+    def test_uncalibrated_scores_are_hidden_in_template_and_llm_reports(self):
+        for reason in ("model_branch_not_calibrated", "scoring_protocol_not_evaluated"):
+            for provider in ("template", "llm"):
+                with self.subTest(reason=reason, provider=provider):
+                    analysis = analysis_for("insufficient_evidence", 0.999, [reason])
+                    reporter = ReportGenerator(config={"report": {"provider": provider}})
+                    report = reporter.generate(analysis)
+                    text = json.dumps(report, ensure_ascii=False)
+                    self.assertIn("未校准 / 证据不足", report["summary"])
+                    self.assertIn("不输出可比风险分", report["summary"])
+                    self.assertNotIn("99.90%", text)
+                    self.assertIsNone(report["review_label"])
+                    self.assertEqual(analysis["detection"]["score"], 0.999)
+
     def test_report_explains_human_fpr_ai_recall_and_reliability_warnings(self) -> None:
         analysis = analysis_for("uncertain", 0.72, ["score_in_uncertain_interval"])
         analysis["detection"]["decision"].update(
