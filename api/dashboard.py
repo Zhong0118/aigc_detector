@@ -207,7 +207,7 @@ def render_segment_panel(segments: list[dict], low_threshold: float, high_thresh
     cols[3].metric("更像人工", stats["human"])
     cols[4].metric("高分窗口占比", f"{stats['ai_block_rate']:.1%}")
     st.caption(
-        f"单块超过提示阈值 {high_threshold:.2%} 用于定位疑似 AI 线索，"
+        f"单块超过严格线 {high_threshold:.2%} 用于定位疑似 AI 线索，"
         f"低于低风险阈值 {low_threshold:.0%} 计为更像人工。"
     )
 
@@ -402,7 +402,7 @@ def render_analysis(data: dict):
                             f"字符 {item.get('start', 0)}-{item.get('end', 0)}"
                             for item in segments
                         ],
-                        hovertemplate="%{x}<br>AI率=%{y:.1%}<br>%{customdata}<extra></extra>",
+                        hovertemplate="%{x}<br>窗口风险分=%{y:.1%}<br>%{customdata}<extra></extra>",
                     )
                 ]
             )

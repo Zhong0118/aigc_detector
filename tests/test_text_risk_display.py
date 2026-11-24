@@ -66,11 +66,16 @@ def test_dashboard_uses_conclusion_as_header(label, score, expected):
     headings = [h.value for h in [*app.header, *app.subheader]]
     assert expected in headings
     captions = [c.value for c in app.caption]
+    assert all("AI率" not in line for line in [*headings, *captions])
     if label == "insufficient_evidence":
         assert not app.get("plotly_chart")
         assert all("99.90%" not in line for line in captions)
         return
     assert any("模型校准风险分" in line and f"{score:.2%}" in line for line in captions)
+    assert any("单块超过严格线 94.56%" in line for line in captions)
+    charts = [chart.proto.spec for chart in app.get("plotly_chart")]
+    assert any("窗口风险分=%{y:.1%}" in chart for chart in charts)
+    assert all("AI率" not in chart for chart in charts)
     metrics = {m.label: m.value for m in app.metric}
     assert metrics["复核线"] == "90.29%"
     assert metrics["严格线"] == "94.56%"

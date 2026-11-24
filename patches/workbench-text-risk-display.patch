@@ -8,6 +8,9 @@
 -)
 +from api.text_result_view import render_text_risk, render_uncalibrated_text
 +from reports.text_risk import text_risk
+@@ -176 +173 @@
+-        f"单块超过提示阈值 {high_threshold:.2%} 用于定位疑似 AI 线索，"
++        f"单块超过严格线 {high_threshold:.2%} 用于定位疑似 AI 线索，"
 @@ -242,7 +239 @@
 -    if reason := uncalibrated_text_reason(data):
 -        top = st.columns(2)
@@ -90,6 +93,9 @@
 @@ -397 +351 @@
 -            render_segment_panel(segments, low_threshold, segment_high_threshold)
 +            render_segment_panel(segments, low_threshold, high_threshold)
+@@ -414 +368 @@
+-                        hovertemplate="%{x}<br>AI率=%{y:.1%}<br>%{customdata}<extra></extra>",
++                        hovertemplate="%{x}<br>窗口风险分=%{y:.1%}<br>%{customdata}<extra></extra>",
 @@ -454 +408 @@
 -            st.caption("整篇 AI 率未过 0.6，但高分检测块已触发家族溯源。")
 +            st.caption("家族溯源由局部高分窗口触发。")
