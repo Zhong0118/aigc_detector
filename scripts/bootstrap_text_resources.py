@@ -1175,6 +1175,7 @@ def _build_detector(config: dict[str, Any]) -> RoutedTextAigcDetector:
         temperature=local.get("temperature", 1.0),
         length_routing=local.get("length_routing", "segment"),
         branch_calibration_path=local.get("branch_calibration_path"),
+        preprocessing_enabled=(local.get("preprocessing") or {}).get("enabled") is True,
     )
 
 

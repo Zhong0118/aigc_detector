@@ -85,6 +85,8 @@ detection:
       # 原来的 480 字符窗口只用到了长模型大约四分之一容量。
       en_segment_target_chars: 1400
       en_segment_max_chars: 1800
+      preprocessing:
+        enabled: false
       segment_overlap_sentences: 1
   text:
     model_name: "distilgpt2"

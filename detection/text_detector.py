@@ -13,7 +13,7 @@
 import math
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +21,7 @@ import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoModelForSequenceClassification, AutoTokenizer
 
+from detection.text_preprocessing import RULE_VERSION, preprocess_text
 from detection.text_segmentation import SentenceAwareSegmenter
 from detection.text_threshold_artifact import model_calibration_group
 
@@ -138,6 +139,7 @@ class RoutedTextAigcDetector:
         temperature: float = 1.0,
         length_routing: str = "segment",
         branch_calibration_path: str | None = None,
+        preprocessing_enabled: bool = False,
     ) -> None:
         """初始化本地文本路由器。
 
@@ -188,16 +190,27 @@ class RoutedTextAigcDetector:
         self.scoring_protocol = protocol_name + ":" + hashlib.sha256(
             json.dumps(protocol_config, sort_keys=True).encode()
         ).hexdigest()[:16]
+        self.preprocessing_enabled = preprocessing_enabled
+        disabled_protocol = None
+        if preprocessing_enabled:
+            if self.aggregation_mode != "logit_mean" or self.length_routing != "document":
+                raise ValueError("Text preprocessing requires document logit scoring")
+            disabled_protocol = self.scoring_protocol
+            protocol_config["preprocessing"] = {"enabled": True, "rule": RULE_VERSION}
+            self.scoring_protocol = protocol_name + ":" + hashlib.sha256(
+                json.dumps(protocol_config, sort_keys=True).encode()
+            ).hexdigest()[:16]
         self.model_routes: dict[str, str] = {}
         self.branch_temperatures: dict[str, float] = {}
         if branch_calibration_path:
-            self._load_branch_calibration(Path(branch_calibration_path))
+            self._load_branch_calibration(Path(branch_calibration_path), disabled_protocol)
 
-    def _load_branch_calibration(self, path: Path) -> None:
+    def _load_branch_calibration(self, path: Path, disabled_protocol: str | None) -> None:
         if self.aggregation_mode != "logit_mean" or self.length_routing != "document" or self.temperature != 1.0:
             raise ValueError("Branch calibration requires document logit scoring with a unit base temperature")
         fitted = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(fitted, dict) or fitted.get("raw_scoring_protocol") != self.scoring_protocol:
+        fitted_protocol = fitted.get("raw_scoring_protocol") if isinstance(fitted, dict) else None
+        if fitted_protocol is None or fitted_protocol not in (self.scoring_protocol, disabled_protocol):
             raise ValueError("Branch calibration does not match the raw scoring protocol")
         routes = fitted.get("model_routes")
         groups = fitted.get("groups")
@@ -216,13 +229,17 @@ class RoutedTextAigcDetector:
             if isinstance(temperature, bool) or not isinstance(temperature, (int, float)) or not math.isfinite(temperature) or temperature <= 0:
                 raise ValueError(f"Invalid calibration temperature for {group}")
             temperatures[group] = temperature
-        protocol = branch_scoring_protocol(self.scoring_protocol, routes, temperatures)
+        protocol = branch_scoring_protocol(fitted_protocol, routes, temperatures)
         if fitted.get("scoring_protocol") != protocol:
             raise ValueError("Branch calibration scoring protocol does not match its temperatures")
-        self.model_routes, self.branch_temperatures, self.scoring_protocol = routes, temperatures, protocol
+        if fitted_protocol == self.scoring_protocol:
+            self.model_routes, self.branch_temperatures, self.scoring_protocol = routes, temperatures, protocol
 
     def detect(self, text: str) -> DetectionResult:
         """执行一次本地文本检测。"""
+        prepared = preprocess_text(text) if self.preprocessing_enabled else None
+        if prepared:
+            text = prepared.text
         language = self.detect_language(text)
         segments = self._segmenter_for(language).split(text)
         branch_score_lists: dict[str, list[float]] = {}
@@ -264,6 +281,13 @@ class RoutedTextAigcDetector:
                 }
             )
 
+        if prepared and prepared.excluded_ranges:
+            for segment in segment_details:
+                start, end = segment["start"], segment["end"]
+                ranges = prepared.source_ranges(start, end)
+                segment.update(analysis_start=start, analysis_end=end, source_ranges=ranges,
+                               start=ranges[0][0], end=ranges[-1][1])
+
         total_weight = sum(weight for _, weight in weighted_scores)
         final_score = (
             sum(score * weight for score, weight in weighted_scores) / total_weight
@@ -293,6 +317,8 @@ class RoutedTextAigcDetector:
                 "scoring_protocol": self.scoring_protocol,
                 **({"aggregation_mode": self.aggregation_mode, "raw_margin": final_score,
                     "temperature": temperature} if use_margin else {}),
+                **({"excluded_ranges": [asdict(item) for item in prepared.excluded_ranges]}
+                   if prepared else {}),
                 "note": "Local open-source text detector branch with language/length routing.",
             },
         )

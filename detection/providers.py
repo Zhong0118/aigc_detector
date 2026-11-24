@@ -348,6 +348,7 @@ class ApiFirstDetectionEngine:
                 temperature=cfg.get("temperature", 1.0),
                 length_routing=cfg.get("length_routing", "segment"),
                 branch_calibration_path=cfg.get("branch_calibration_path"),
+                preprocessing_enabled=(cfg.get("preprocessing") or {}).get("enabled") is True,
             )
         return self._local_text_detector
 

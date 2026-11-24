@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from detection.text_domain import TextDomainRouter
+from detection.text_preprocessing import complement
 from detection.text_threshold_artifact import model_calibration_group, validate_text_threshold_artifact
 
 
@@ -62,15 +63,20 @@ class FalsePositiveController:
         self.artifact_version = str(self.artifact.get("version", "built-in"))
 
     def evaluate(self, text: str, provider_results: Iterable[Any]) -> FalsePositiveDecision:
-        effective_chars = len(re.sub(r"\s+", "", text))
-        language = self._language(text)
-        domain, domain_confidence = self._domain(text)
-        length_bucket = "short" if effective_chars <= self.short_text_chars else "long"
         usable = [
             result
             for result in provider_results
             if getattr(result, "status", None) == "ok" and getattr(result, "score", None) is not None
         ]
+        exclusions = next((details["excluded_ranges"] for result in usable
+                           if (details := getattr(result, "details", None) or {}).get("excluded_ranges")), [])
+        if exclusions:
+            ranges = complement(len(text), [(r["start"],r["end"]) for r in exclusions])
+            text = "".join(text[start:end] for start,end in ranges)
+        effective_chars = len(re.sub(r"\s+", "", text))
+        language = self._language(text)
+        domain, domain_confidence = self._domain(text)
+        length_bucket = "short" if effective_chars <= self.short_text_chars else "long"
         protocols = {
             (getattr(result, "details", None) or {}).get("scoring_protocol")
             for result in usable
@@ -439,8 +445,8 @@ class FalsePositiveController:
         high: set[int] = set()
         high_flags: list[bool] = []
         for segment in sorted(segments, key=lambda item: int(item.get("index", 0))):
-            start = max(0, int(segment.get("start", 0)))
-            end = min(text_length, int(segment.get("end", start)))
+            start = max(0, int(segment.get("analysis_start", segment.get("start", 0))))
+            end = min(text_length, int(segment.get("analysis_end", segment.get("end", start))))
             positions = range(start, max(start, end))
             covered.update(positions)
             is_high = float(segment["score"]) > high_threshold
