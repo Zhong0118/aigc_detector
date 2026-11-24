@@ -10,6 +10,8 @@ from typing import Any
 import requests
 import yaml
 
+from reports.text_risk import REVIEW_LABEL, text_risk
+
 
 UNCALIBRATED_TEXT_LABEL = "未校准 / 证据不足"
 UNCALIBRATED_TEXT_SCORE = "不输出可比风险分"
@@ -72,9 +74,18 @@ class ReportGenerator:
                 cached = dict(cached)
                 cached["status"] = "cached"
                 cached["cache_hit"] = True
-                return cached
-            return self._generate_llm_report(analysis)
+                return self._present_text_risk(analysis, cached)
+            return self._present_text_risk(analysis, self._generate_llm_report(analysis))
         return self._generate_template_report(analysis)
+
+    def _present_text_risk(self, analysis: dict[str, Any], report: dict[str, Any]) -> dict[str, Any]:
+        view = text_risk(analysis)
+        if view is None:
+            return report
+        evidence = dict.fromkeys([*view.evidence(), *report.get("evidence", [])])
+        return dict(report, summary=f"{view.conclusion}。",
+                    review_label=REVIEW_LABEL if view.review else None,
+                    evidence=list(evidence))
 
     def _generate_template_report(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """生成不依赖外部服务的模板报告。"""
@@ -91,19 +102,16 @@ class ReportGenerator:
             f"系统识别输入类型为“{modality_name}”。",
         ]
         decision = detection.get("decision") if isinstance(detection.get("decision"), dict) else {}
+        view = text_risk(analysis)
         if decision:
             low = float(decision.get("low_threshold") or 0.0)
-            high = float(decision.get("high_threshold") or threshold)
             domain = self._domain_name(str(decision.get("domain") or "unknown"))
             coverage = float(decision.get("analyzed_coverage") or 0.0)
-            evidence[0] = (
-                f"AI 特征风险分数为 {score:.2%}，低风险阈值为 {low:.2%}，"
-                f"高风险阈值为 {high:.2%}，当前结论为“{self._label_name(label)}”。"
-            )
-            evidence.append(
-                "系统校准的是判定阈值；该分数是检测模型的风险输出，"
-                "不是文本由 AI 生成的概率。"
-            )
+            if view:
+                evidence[0:1] = view.evidence()
+                evidence.append(f"低风险阈值为 {low:.2%}。")
+            else:
+                evidence[0] = f"当前结论为“{self._label_name(label)}”。"
             evidence.append(
                 f"文本路由为“{domain}”，实际检测覆盖率为 {coverage:.2%}，"
                 f"阈值组为“{decision.get('threshold_group', 'unknown')}”。"
@@ -152,19 +160,6 @@ class ReportGenerator:
             ]
             if reason_names:
                 evidence.append("不确定/拒判原因：" + "；".join(reason_names) + "。")
-            if modality == "text":
-                for provider in detection.get("providers", []):
-                    details = provider.get("details") or {}
-                    segments = details.get("segments") or []
-                    screening = decision.get("screening_threshold")
-                    if screening is None:
-                        screening = details.get("screening_threshold")
-                    if provider.get("status") == "ok" and segments and screening is not None:
-                        count = sum(float(s["score"]) >= float(screening) for s in segments if s.get("score") is not None)
-                        evidence.append(
-                            f"检测分支中有 {count}/{len(segments)} 个窗口达到提示阈值 {float(screening):.2%}；"
-                            "这些窗口仅用于定位复核线索，文档结论仍依据独立校准阈值。"
-                        )
 
         if provenance["deep_triggered"]:
             evidence.append("检测分数达到深层溯源阈值，已继续执行内容凭证、水印和指纹库检查。")
@@ -215,13 +210,12 @@ class ReportGenerator:
             if status == "data_mismatch":
                 evidence.append("实验性 LLMDet 分支的数据缓存不完整或版本不匹配，本次未采用其候选来源结果。")
 
-        review = modality == "text" and label == "uncertain" and self._text_review(detection, score)
+        review = view is not None and view.review
         return {
             "provider": "template",
             "status": "ok",
-            "review_label": "疑似 AI，需复核" if review else None,
-            "summary": (f"检测到疑似 AI 生成线索，风险分数为 {score:.2%}，建议复核高分段落；严格判定仍不确定。"
-                        if review else self._summary(label, score, modality)),
+            "review_label": REVIEW_LABEL if review else None,
+            "summary": f"{view.conclusion}。" if view else self._summary(label, score, modality),
             "evidence": evidence,
             "limitations": [
                 "检测分数是模型风险输出，不是内容由 AI 生成的概率，不能单独作为最终结论；"
@@ -572,16 +566,6 @@ class ReportGenerator:
     def _looks_like_env_name(self, value: str) -> bool:
         """判断一个字符串是否像环境变量名，而不是实际密钥。"""
         return bool(re.fullmatch(r"[A-Z][A-Z0-9_]*", value))
-
-    def _text_review(self, detection: dict[str, Any], score: float) -> bool:
-        cutoff = (detection.get("decision") or {}).get("screening_threshold")
-        if cutoff is not None:
-            return score >= float(cutoff)
-        return any(
-            provider.get("status") == "ok" and threshold is not None and score >= float(threshold)
-            for provider in detection.get("providers", [])
-            for threshold in [(provider.get("details") or {}).get("screening_threshold")]
-        )
 
     def _summary(self, label: str, score: float, modality: str) -> str:
         modality_name = self._modality_name(modality)

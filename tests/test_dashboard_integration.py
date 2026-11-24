@@ -79,9 +79,9 @@ def test_screening_review_shows_suspected_ai_and_high_score_windows(monkeypatch)
     app.button[0].click().run(timeout=20)
     assert not app.exception
     metrics = {m.label: m.value for m in app.metric}
-    assert metrics['检测结论'] == '疑似 AI，需复核'
-    assert metrics['AI 特征风险分数'] == '87.80%'
-    assert metrics['疑似 AI 块'] == '2 / 3'
+    assert any(h.value == '不确定 · 疑似 AI，需复核' for h in app.subheader)
+    assert any('模型校准风险分 87.80%' in c.value for c in app.caption)
+    assert metrics['严格线以上窗口'] == '0 / 3'
     assert any('严格判定仍不确定' in w.value for w in app.warning)
 
 
@@ -132,8 +132,8 @@ def test_uncalibrated_text_score_is_only_visible_in_diagnostics(monkeypatch):
 
     assert not app.exception
     metrics = {metric.label: metric.value for metric in app.metric}
-    assert metrics["AI 特征风险分数"] == "不输出可比风险分"
-    assert metrics["检测结论"] == "未校准 / 证据不足"
+    assert any(h.value == "未校准 / 证据不足" for h in app.subheader)
+    assert any(c.value == "不输出可比风险分" for c in app.caption)
     assert any("模型分支尚未完成独立校准" in info.value for info in app.info)
     assert not app.get("plotly_chart")
     assert all("99.90%" not in item.value for item in app.markdown)

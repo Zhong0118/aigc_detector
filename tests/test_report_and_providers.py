@@ -22,7 +22,8 @@ class ReportGeneratorLlmTests(unittest.TestCase):
         report_source = (project_root / "reports" / "generator.py").read_text(
             encoding="utf-8"
         )
-        combined = dashboard_source + report_source
+        presentation = (project_root / "reports" / "text_risk.py").read_text(encoding="utf-8")
+        combined = dashboard_source + report_source + presentation
 
         for forbidden in (
             "AI 概率仪表盘",
@@ -33,9 +34,9 @@ class ReportGeneratorLlmTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, combined)
 
-        self.assertIn("AI 特征风险分数", dashboard_source)
-        self.assertIn("不是内容由 AI 生成的概率", dashboard_source)
-        self.assertIn("不是文本由 AI 生成的概率", report_source)
+        self.assertIn("模型校准风险分", presentation)
+        self.assertIn("非 AI 撰写字数比例", presentation)
+        self.assertNotIn("检测 AI 率", dashboard_source)
 
     def test_template_report_is_chinese_and_explains_evidence_layers(self) -> None:
         analysis = {

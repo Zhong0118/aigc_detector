@@ -18,11 +18,8 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
-from reports.generator import (
-    UNCALIBRATED_TEXT_LABEL,
-    UNCALIBRATED_TEXT_SCORE,
-    uncalibrated_text_reason,
-)
+from api.text_result_view import render_text_risk, render_uncalibrated_text
+from reports.text_risk import text_risk
 
 
 API_BASE = os.getenv("AIGC_API_BASE", "http://localhost:8000/api/v1")
@@ -276,13 +273,7 @@ def render_analysis(data: dict):
     - 原始 JSON
     """
     detection = data["detection"]
-    if reason := uncalibrated_text_reason(data):
-        top = st.columns(2)
-        top[0].metric("AI 特征风险分数", UNCALIBRATED_TEXT_SCORE)
-        top[1].metric("检测结论", UNCALIBRATED_TEXT_LABEL)
-        st.info(reason)
-        with st.expander("Raw JSON"):
-            st.json(data)
+    if render_uncalibrated_text(data):
         return
 
     decision = detection.get("decision") or {}
@@ -291,55 +282,16 @@ def render_analysis(data: dict):
     low_threshold = float(decision.get("low_threshold") or 0.4)
     high_threshold = float(decision.get("high_threshold") or detection.get("threshold") or 0.8)
     segments = collect_segments(data)
-    segment_high_threshold = high_threshold
-    if report.get("review_label"):
-        for provider in detection.get("providers", []):
-            screening = (provider.get("details") or {}).get("screening_threshold")
-            if screening is not None:
-                segment_high_threshold = float(screening)
-                break
-    segment_stats = summarize_segments(segments, low_threshold, segment_high_threshold) if segments else None
-
-    # 顶部 metric 用来快速回答：分数、结论、分块 AI 计数。
-    label_names = {
-        "low_risk": "未明显检出",
-        "uncertain": "不确定",
-        "high_risk_ai": "高风险疑似 AI",
-        "insufficient_evidence": "证据不足",
-        "human": "未明显检出",
-        "ai": "疑似 AI",
-    }
-    domain_names = {
-        "literature": "经典文学",
-        "academic_technical": "论文/技术",
-        "official_news": "公文/新闻",
-        "general_qa": "普通写作/问答",
-    }
-    if segment_stats:
-        top = st.columns([1.1, 1.1, 0.9, 0.9, 0.9])
-        top[0].metric("AI 特征风险分数", f"{detection['score']:.2%}")
-        top[1].metric("检测结论", report.get("review_label") or label_names.get(detection["label"], detection["label"]))
-        top[2].metric("总块数", segment_stats["total"])
-        top[3].metric("疑似 AI 块", f"{segment_stats['ai']} / {segment_stats['total']}")
-        top[4].metric("高分窗口占比", f"{segment_stats['ai_block_rate']:.1%}")
-        st.caption(
-            f"文本类型：{domain_names.get(decision.get('domain'), data['modality'].upper())}。"
-            f"单块超过提示阈值 {segment_high_threshold:.2%} 用于定位疑似 AI 线索；"
-            f"整篇严格确认阈值为 {high_threshold:.2%}。风险分数与块占比均用于辅助复核。"
-        )
+    view = text_risk(data)
+    if view:
+        render_text_risk(view)
     else:
-        top = st.columns([1.15, 1.15, 1, 0.8])
-        top[0].metric("AI 特征风险分数", f"{detection['score']:.2%}")
-        top[1].metric("检测结论", report.get("review_label") or label_names.get(detection["label"], detection["label"]))
-        top[2].metric("文本类型", domain_names.get(decision.get("domain"), data["modality"].upper()))
-        top[3].metric("记录 ID", data["content_id"])
-        st.caption(
-            "该数值是检测模块输出并用于阈值判定的风险分数，"
-            "不是内容由 AI 生成的概率。"
-        )
+        columns = st.columns(2)
+        columns[0].metric("检测结论", detection["label"])
+        columns[1].metric("检测分数", f"{detection['score']:.2%}")
 
     if detection["label"] == "uncertain":
-        st.warning("检测到疑似 AI 线索，请复核高分窗口；严格判定仍不确定。" if report.get("review_label")
+        st.warning("检测到疑似 AI 线索，请复核高分窗口；严格判定仍不确定。" if view and view.review
                    else "当前分数位于不确定区间，不能直接判为 AI。")
     elif detection["label"] == "insufficient_evidence":
         st.info("当前没有足够的有效模型证据，系统没有把 0 分解释为人类文本。")
@@ -347,12 +299,14 @@ def render_analysis(data: dict):
     left, right = st.columns([0.92, 1.08])
     with left:
         # 左侧主要展示检测层证据。
-        render_score_gauge(detection["score"], low_threshold, high_threshold)
+        if not view:
+            render_score_gauge(detection["score"], low_threshold, high_threshold)
         if decision:
-            threshold_cols = st.columns(3)
-            threshold_cols[0].metric("低风险阈值", f"{low_threshold:.2%}")
-            threshold_cols[1].metric("高风险阈值", f"{high_threshold:.2%}")
-            threshold_cols[2].metric("检测覆盖", f"{float(decision.get('analyzed_coverage') or 0.0):.2%}")
+            if not view:
+                threshold_cols = st.columns(3)
+                threshold_cols[0].metric("低风险阈值", f"{low_threshold:.2%}")
+                threshold_cols[1].metric("高风险阈值", f"{high_threshold:.2%}")
+                threshold_cols[2].metric("检测覆盖", f"{float(decision.get('analyzed_coverage') or 0.0):.2%}")
             st.caption(
                 f"阈值组：{decision.get('threshold_group', 'unknown')} | "
                 f"校准版本：{decision.get('artifact_version', 'built-in')}"
@@ -431,7 +385,7 @@ def render_analysis(data: dict):
             cols[3].caption(public_evidence_text(str(caption)))
 
         if segments:
-            render_segment_panel(segments, low_threshold, segment_high_threshold)
+            render_segment_panel(segments, low_threshold, high_threshold)
             st.subheader("片段风险分布")
             segment_scores = [float(item.get("score") or 0.0) for item in segments]
             colors = [
@@ -488,7 +442,7 @@ def render_analysis(data: dict):
         pcols[3].metric("Fingerprint Hits", registry.get("match_count", 0))
         attribution = provenance.get("attribution", {})
         if provenance.get("attribution_triggered") and not provenance.get("deep_triggered"):
-            st.caption("整篇 AI 率未过 0.6，但高分检测块已触发家族溯源。")
+            st.caption("家族溯源由局部高分窗口触发。")
         family_status = attribution.get("family_status")
         verdict = attribution.get("verdict")
         if family_status == "family_only":
@@ -542,7 +496,7 @@ def render_analysis(data: dict):
                 title = "、".join(f"第 {int(idx) + 1} 块" for idx in indices) or "检测块"
                 score = float(block.get("detection_score") or 0.0)
                 block_verdict = block.get("verdict") or block.get("family_status") or ""
-                st.markdown(f"**{title}** · 检测 AI 率 {score:.1%} · {block_verdict}")
+                st.markdown(f"**{title}** · 窗口风险分 {score:.1%} · {block_verdict}")
                 preview = str(block.get("preview") or "").strip()
                 if preview:
                     st.caption(preview)
