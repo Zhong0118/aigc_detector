@@ -159,12 +159,21 @@ class ProvenanceAttributionEngine:
             )
             from provenance.window_a0_fusion import WindowA0EqualFusion
 
+            thresholds = thresholds_from_detection(detection)
+            if thresholds is None:
+                return {
+                    "status": "skipped",
+                    "source": "window_a0_equal_fusion",
+                    "top_k": [],
+                    "confidence": 0.0,
+                    "note": "Detection evidence is insufficient for text attribution.",
+                }
             if is_document_path(path):
                 text = extract_document_text(path)
             else:
                 text = path.read_text(encoding=cfg.get("encoding", "utf-8"), errors="ignore")
             segments = collect_detection_segments(detection)
-            low_threshold, high_threshold = thresholds_from_detection(detection)
+            low_threshold, high_threshold = thresholds
             low_threshold = float(cfg.get("low_threshold", low_threshold))
             high_threshold = float(cfg.get("high_threshold", high_threshold))
             if segments:

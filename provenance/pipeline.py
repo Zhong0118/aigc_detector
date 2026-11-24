@@ -216,7 +216,10 @@ class ProvenancePipeline:
             thresholds_from_detection,
         )
 
-        low_threshold, high_threshold = thresholds_from_detection(detection)
+        thresholds = thresholds_from_detection(detection)
+        if thresholds is None:
+            return False
+        low_threshold, high_threshold = thresholds
         return should_run_text_attribution(
             document_score=float(detection.score),
             segments=collect_detection_segments(detection),

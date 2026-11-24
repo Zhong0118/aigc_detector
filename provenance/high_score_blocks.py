@@ -49,8 +49,8 @@ def collect_detection_segments(detection: Any) -> list[dict[str, Any]]:
     return []
 
 
-def thresholds_from_detection(detection: Any) -> tuple[float, float]:
-    """Return (low, high) detector thresholds, with academic-technical defaults."""
+def thresholds_from_detection(detection: Any) -> tuple[float, float] | None:
+    """Return thresholds, or None when detector evidence cannot drive attribution."""
 
     decision = _mapping(getattr(detection, "decision_details", None))
     if not decision and isinstance(detection, Mapping):
@@ -58,6 +58,8 @@ def thresholds_from_detection(detection: Any) -> tuple[float, float]:
         decision = _mapping(nested.get("decision") or detection.get("decision"))
     low = decision.get("low_threshold", DEFAULT_LOW_THRESHOLD)
     high = decision.get("high_threshold", DEFAULT_HIGH_THRESHOLD)
+    if decision.get("decision") == "insufficient_evidence" or low is None or high is None:
+        return None
     return float(low), float(high)
 
 

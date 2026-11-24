@@ -116,3 +116,58 @@ class FingerprintRegistryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_attribution_thresholds_reject_null_or_insufficient_decisions():
+    from provenance.high_score_blocks import thresholds_from_detection
+
+    assert thresholds_from_detection({}) == (0.35, 0.88)
+    for decision in (
+        {"decision": "insufficient_evidence", "low_threshold": 0.35, "high_threshold": 0.88},
+        {"decision": "uncertain", "low_threshold": None, "high_threshold": 0.88},
+        {"decision": "uncertain", "low_threshold": 0.35, "high_threshold": None},
+    ):
+        assert thresholds_from_detection({"detection": {"decision": decision}}) is None
+
+
+def test_uncalibrated_text_api_skips_family_attribution_and_returns_report(monkeypatch):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from api.analysis import AnalysisService
+    from api.routes import router
+    from reports.generator import ReportGenerator
+
+    detection = DetectionPackage(
+        score=0.9997, label="insufficient_evidence", threshold=0.8,
+        provider_results=[], modality_scores={"text": 0.9997}, model_scores={},
+        decision_details={
+            "decision": "insufficient_evidence", "low_threshold": None, "high_threshold": None,
+            "uncertainty_reasons": ["model_branch_not_calibrated"],
+        },
+    )
+    service = AnalysisService.__new__(AnalysisService)
+    service.detector = Mock()
+    service.detector.detect.return_value = detection
+    service.provenance = ProvenancePipeline(deep_threshold=0.6)
+    monkeypatch.setattr(service.provenance, "_run_fingerprint_registry", Mock(return_value={}))
+    attribute = Mock(side_effect=AssertionError("Uncalibrated text must skip family attribution"))
+    monkeypatch.setattr(service.provenance.attributor, "attribute", attribute)
+    service.reporter = ReportGenerator(config={"report": {"provider": "template"}})
+    service._store_analysis = Mock(return_value=42)
+    monkeypatch.setattr("api.routes.get_analysis_service", lambda: service)
+    app = FastAPI()
+    app.include_router(router, prefix="/api/v1")
+
+    response = TestClient(app, raise_server_exceptions=False).post(
+        "/api/v1/analyze/text", json={"text": "A long English article. " * 40},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["detection"]["decision"]["decision"] == "insufficient_evidence"
+    assert body["detection"]["score"] == 0.9997
+    assert body["provenance"]["attribution"]["status"] == "skipped"
+    assert not body["provenance"]["attribution_triggered"]
+    assert "不输出可比风险分" in body["report"]["summary"]
+    attribute.assert_not_called()
