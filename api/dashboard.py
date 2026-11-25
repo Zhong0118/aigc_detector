@@ -18,7 +18,7 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
-from api.text_result_view import render_text_risk, render_uncalibrated_text
+from api.text_result_view import render_score_gauge, render_text_risk, render_uncalibrated_text
 from reports.text_risk import text_risk
 
 
@@ -233,33 +233,6 @@ def render_segment_panel(segments: list[dict], low_threshold: float, high_thresh
             )
 
 
-def render_score_gauge(score: float, low_threshold: float = 0.4, high_threshold: float = 0.8):
-    """渲染 AI 特征风险分数仪表盘。
-
-    score 范围是 0 到 1。颜色区间用于帮助用户快速判断风险：
-    低分灰色，中段黄色，高分红色。
-    """
-    fig = go.Figure(
-        go.Indicator(
-            mode="gauge+number",
-            value=score,
-            number={"valueformat": ".1%"},
-            gauge={
-                "axis": {"range": [0, 1]},
-                "bar": {"color": "#0f766e"},
-                "steps": [
-                    {"range": [0, low_threshold], "color": "#dbeafe"},
-                    {"range": [low_threshold, high_threshold], "color": "#fde68a"},
-                    {"range": [high_threshold, 1], "color": "#fecaca"},
-                ],
-                "threshold": {"line": {"color": "#991b1b", "width": 3}, "value": high_threshold},
-            },
-        )
-    )
-    fig.update_layout(height=260, margin={"l": 20, "r": 20, "t": 20, "b": 20})
-    st.plotly_chart(fig, use_container_width=True)
-
-
 def render_analysis(data: dict):
     """渲染一次完整分析结果。
 
@@ -284,7 +257,7 @@ def render_analysis(data: dict):
     segments = collect_segments(data)
     view = text_risk(data)
     if view:
-        render_text_risk(view)
+        render_text_risk(view, decision.get("analyzed_coverage"))
     else:
         columns = st.columns(2)
         columns[0].metric("检测结论", detection["label"])
@@ -299,8 +272,10 @@ def render_analysis(data: dict):
     left, right = st.columns([0.92, 1.08])
     with left:
         # 左侧主要展示检测层证据。
-        if not view:
-            render_score_gauge(detection["score"], low_threshold, high_threshold)
+        if view:
+            render_score_gauge(detection["score"], low_threshold, high_threshold, view.screening)
+        else:
+            render_score_gauge(detection["score"], low_threshold, high_threshold, title="检测分数")
         if decision:
             if not view:
                 threshold_cols = st.columns(3)

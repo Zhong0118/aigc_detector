@@ -80,7 +80,7 @@ def test_screening_review_shows_suspected_ai_and_high_score_windows(monkeypatch)
     assert not app.exception
     metrics = {m.label: m.value for m in app.metric}
     assert any(h.value == '不确定 · 疑似 AI，需复核' for h in app.subheader)
-    assert any('模型校准风险分 87.80%' in c.value for c in app.caption)
+    assert metrics['模型校准风险分'] == '87.80%'
     assert metrics['严格线以上窗口'] == '0 / 3'
     assert any('严格判定仍不确定' in w.value for w in app.warning)
 
@@ -106,7 +106,7 @@ def test_attribution_load_failure_is_visible_instead_of_none(monkeypatch):
     assert not any('家族溯源: None' in c.value for c in app.caption)
 
 
-def test_uncalibrated_text_score_is_only_visible_in_diagnostics(monkeypatch):
+def test_uncalibrated_text_score_is_hidden_in_the_dashboard(monkeypatch):
     providers = {"mode": "api_first", "ports": {"api": 8001, "dashboard": 8501},
                  "deep_provenance_threshold": 0.6, "providers": []}
     analysis = {
@@ -137,4 +137,4 @@ def test_uncalibrated_text_score_is_only_visible_in_diagnostics(monkeypatch):
     assert any("模型分支尚未完成独立校准" in info.value for info in app.info)
     assert not app.get("plotly_chart")
     assert all("99.90%" not in item.value for item in app.markdown)
-    assert any('"score": 0.999' in item.value for item in app.json)
+    assert not app.json
