@@ -4,30 +4,32 @@
 
 本服务提供中英文文本检测、分级判定和十个候选模型家族的文本归因。归因融合 A0、B0、B1、B3 四路结果。交付范围为文本，图片、音频和视频需另行部署。
 
-| 交付物 | 放置位置 |
-| --- | --- |
-| 已交付版本的 Git 仓库检出目录或源码归档解压目录 | `/srv/aigc_detector/` |
-| 模型资产包 `aigc-text-runtime-20261124.tar.gz` | `/srv/incoming/`，约 2.96 GB，解压约 4.29 GB |
-| Python 依赖 wheelhouse | `/srv/incoming/wheelhouse/`，仅完全离线安装需要 |
+交付总包为 `aigc-text-delivery-20261125.zip`（约 2.96 GB）。解压得到 `aigc-text-delivery-20261125/`，内含以下四项。
 
-用交付方经可信渠道提供的 SHA-256 核对资产包。下列值对应本手册所列版本。部署脚本还会按包内清单校验每个资产文件。
+| 文件或目录 | 内容 |
+| --- | --- |
+| `README_DELIVERY.md` | 本手册副本 |
+| `aigc-text-runtime-20261124.tar.gz` | 冻结的模型和校准资产，约 2.96 GB，运行期解压约 4.29 GB |
+| `bundle.sha256` | 模型资产包的 SHA-256 校验文件 |
+| `aigc_detector/` | 服务端、看板与部署脚本源码 |
+
+在 ZIP 所在目录解压并校验资产包。预期 SHA-256 为 `c1e52dd1ccf473b6c1b0aa86a14fbb72148b1489afb07d2c6592645a03cf334a`。部署脚本还会按包内清单逐个校验资产文件。
 
 ```bash
-cd /srv/incoming
-sha256sum aigc-text-runtime-20261124.tar.gz
-sha256sum -c <<'EOF_SHA256'
-c1e52dd1ccf473b6c1b0aa86a14fbb72148b1489afb07d2c6592645a03cf334a  aigc-text-runtime-20261124.tar.gz
-EOF_SHA256
+unzip aigc-text-delivery-20261125.zip
+(cd aigc-text-delivery-20261125 && sha256sum -c bundle.sha256)
 ```
 
 ## 2. 运行环境
 
-- Linux x86_64、Python 3.10（含 `venv` 模块）、Bash 和 curl。启动脚本依赖 Linux `/proc` 管理进程。macOS 和 Windows 可作为访问客户端。
-- 磁盘至少 10 GB。若同时保留 CUDA 依赖、wheelhouse 或多个版本，需额外预留磁盘。
+- Linux x86_64、Python 3.10（含 `venv` 模块）、Bash、curl 和 unzip。启动脚本依赖 Linux `/proc` 管理进程。macOS 和 Windows 可作为访问客户端。
+- 磁盘空间 CPU 至少 15 GB、CUDA 至少 20 GB，含外层 ZIP、解压后的模型包、运行期 `runtime_assets/` 与虚拟环境峰值占用。验收完成后可删除外层 ZIP，释放约 3 GB。保留 wheelhouse 或多个版本时需额外预留空间。
 - CPU 部署至少 8 GB 内存，推荐 16 GB。GPU 部署可选，需安装与所选 PyTorch CUDA wheel 兼容的 NVIDIA 驱动。
 - 负责部署的账号需要能写入代码目录。上传真正的旧版二进制 `.doc` 时，服务端还需安装 LibreOffice Writer，并能通过 `PATH` 找到 `soffice` 或 `libreoffice`。完全离线时请预装该系统依赖，或先将文档另存为 `.docx` / `.txt`。
 
 ## 3. 安装与启动
+
+以下命令从 ZIP 所在目录执行。若已进入解压目录中的 `aigc_detector/`，跳过对应的 `cd` 命令。
 
 ### 方式 A · 目标机器可访问 pip 软件源
 
@@ -36,27 +38,27 @@ EOF_SHA256
 **CPU**
 
 ```bash
-cd /srv/aigc_detector
+cd aigc-text-delivery-20261125/aigc_detector
 python3.10 -m venv .venv
 .venv/bin/python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
 .venv/bin/python -m pip install -r requirements-text-runtime.txt --index-url https://pypi.org/simple
 .venv/bin/python -m pip check
 PYTHON=python3.10 bash scripts/deploy_runtime.sh \
-  --bundle /srv/incoming/aigc-text-runtime-20261124.tar.gz \
+  --bundle ../aigc-text-runtime-20261124.tar.gz \
   --venv .venv --device cpu --api-port 8611 --ui-port 8612
 ```
 
 **CUDA 12.4 示例**
 
 ```bash
-cd /srv/aigc_detector
+cd aigc-text-delivery-20261125/aigc_detector
 python3.10 -m venv .venv-gpu
 .venv-gpu/bin/python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
 .venv-gpu/bin/python -m pip install -r requirements-text-runtime.txt --index-url https://pypi.org/simple
 .venv-gpu/bin/python -m pip check
 .venv-gpu/bin/python -c 'import torch; assert torch.cuda.is_available(); print(torch.version.cuda)'
 PYTHON=python3.10 bash scripts/deploy_runtime.sh \
-  --bundle /srv/incoming/aigc-text-runtime-20261124.tar.gz \
+  --bundle ../aigc-text-runtime-20261124.tar.gz \
   --venv .venv-gpu --device cuda:0 --api-port 8611 --ui-port 8612
 ```
 
@@ -67,9 +69,9 @@ CUDA 构建版本由驱动兼容性决定。选用其它 PyTorch 2.6.0 wheel 时
 在同为 Linux x86_64、Python 3.10，且系统兼容的**联网机**上，从交付代码目录执行。CPU 用 `cpu`，CUDA 12.4 改为 `cu124`。每种构建使用独立目录，确保一个 wheelhouse 中只有一种 PyTorch 构建。
 
 ```bash
-cd /srv/aigc_detector
+cd aigc-text-delivery-20261125/aigc_detector
 TORCH_BUILD=cpu
-WHEELHOUSE="$PWD/wheelhouse-$TORCH_BUILD"
+WHEELHOUSE="../wheelhouse-$TORCH_BUILD"
 mkdir -p "$WHEELHOUSE"
 printf 'torch==2.6.0+%s\n' "$TORCH_BUILD" > "$WHEELHOUSE/torch-constraint.txt"
 python3.10 -m pip download --only-binary=:all: \
@@ -79,13 +81,13 @@ python3.10 -m pip download --only-binary=:all: \
   -r requirements-text-runtime.txt --dest "$WHEELHOUSE"
 ```
 
-将该目录完整拷贝到离线机的 `/srv/incoming/wheelhouse/`。在**离线机**执行以下命令。首次启动会创建虚拟环境，并使用 `--no-index` 从 wheelhouse 安装全部依赖。已有 venv 会直接复用。
+将该目录完整拷贝到离线机的总包解压目录中，放在 `aigc_detector/` 同级并命名为 `wheelhouse/`。在**离线机**执行以下命令。首次启动会创建虚拟环境，并使用 `--no-index` 从 wheelhouse 安装全部依赖。已有 venv 会直接复用。
 
 ```bash
-cd /srv/aigc_detector
+cd aigc-text-delivery-20261125/aigc_detector
 PYTHON=python3.10 bash scripts/deploy_runtime.sh \
-  --bundle /srv/incoming/aigc-text-runtime-20261124.tar.gz \
-  --wheelhouse /srv/incoming/wheelhouse --venv .venv-offline \
+  --bundle ../aigc-text-runtime-20261124.tar.gz \
+  --wheelhouse ../wheelhouse --venv .venv-offline \
   --device cpu --api-port 8611 --ui-port 8612
 ```
 
@@ -96,7 +98,7 @@ PYTHON=python3.10 bash scripts/deploy_runtime.sh \
 启动成功表示 API 和看板均通过健康检查，内置中英文样本完成检测，且至少一条样本完成十家族四路归因。查看 `runtime_state/smoke.json` 可核对阈值组、分数、归因状态、耗时和本实例的报告 ID。启动烟测和下文的人工补测都会写入本实例的历史库。
 
 ```bash
-cd /srv/aigc_detector
+cd aigc-text-delivery-20261125/aigc_detector
 cat runtime_state/smoke.json
 curl -fsS http://127.0.0.1:8611/health
 curl -fsS http://127.0.0.1:8612/_stcore/health
@@ -168,13 +170,19 @@ PY
 | `POST /api/v1/analyze/file` | 用 `multipart/form-data` 上传 `file`，支持 `.txt`、`.md`、`.doc` 和 `.docx`。文本文件建议使用 UTF-8。 |
 | `GET /api/v1/report/{content_id}` | 按分析响应的 `content_id` 查询已保存的检测和归因记录。 |
 
-沿用上节变量可直接执行文件分析和历史查询。上传 Word 或 Markdown 时，把 `-F` 后的文件路径替换为实际路径。
+以下命令创建并上传一份独立示例，再用本次返回的报告 ID 查询历史。上传自己的 Word 或 Markdown 时，将 `EXAMPLE_FILE` 指向实际文件。
 
 ```bash
+API_BASE=http://127.0.0.1:8611
+EXAMPLE_DIR=$(mktemp -d)
+EXAMPLE_FILE="$EXAMPLE_DIR/delivery-example.txt"
+cat > "$EXAMPLE_FILE" <<'EOF_EXAMPLE'
+周六上午，社区图书馆临时把还书台移到了侧门。门口的通知写明，改动持续两周，借书仍在大厅办理。新位置离公交站更近，也给推婴儿车的读者留出了一条通道。志愿者每天闭馆前会记录各时段的排队人数，并收集读者建议。馆方计划在试行结束后公布统计结果，届时再决定是否保留侧门的还书台。
+EOF_EXAMPLE
 curl -fsS --max-time 180 "$API_BASE/api/v1/analyze/file" \
-  -F "file=@$SMOKE_DIR/short.txt"
+  -F "file=@$EXAMPLE_FILE" -o "$EXAMPLE_DIR/analysis.json"
 CONTENT_ID=$(python3.10 -c 'import json,sys; print(json.load(sys.stdin)["content_id"])' \
-  < "$SMOKE_DIR/short-result.json")
+  < "$EXAMPLE_DIR/analysis.json")
 curl -fsS "$API_BASE/api/v1/report/$CONTENT_ID"
 ```
 
@@ -195,7 +203,7 @@ curl -fsS "$API_BASE/api/v1/report/$CONTENT_ID"
 ## 6. 停止、切换、回退与排障
 
 ```bash
-cd /srv/aigc_detector
+cd aigc-text-delivery-20261125/aigc_detector
 PYTHON=python3.10 bash scripts/deploy_runtime.sh --stop
 ```
 
